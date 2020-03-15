@@ -23,16 +23,9 @@ public final class GreetingRouterTest {
         WebTestClient
                 .bindToRouterFunction(greetingRoute)
                 .build()
-
-                .get()
-                .uri("/greet?name=Alice")
-                .exchange()
-
-                .expectStatus()
-                .isOk()
-
-                .expectBody(String.class)
-                .isEqualTo(GREETING);
+                .get().uri("/greet?name=Alice").exchange()
+                .expectStatus().isOk()
+                .expectBody(String.class).isEqualTo(GREETING);
     }
 
     @Test
@@ -40,15 +33,8 @@ public final class GreetingRouterTest {
         WebTestClient
                 .bindToRouterFunction(greetingRoute)
                 .build()
-
-                .get()
-                .uri("/greet?name=")
-                .exchange()
-
-                .expectStatus()
-                .isBadRequest()
-
-                .expectBody(String.class)
-                .isEqualTo(ERROR);
+                .get().uri("/greet?name=").exchange()
+                .expectStatus().isBadRequest()
+                .expectBody(String.class).isEqualTo(ERROR);
     }
 }

@@ -22,15 +22,8 @@ public class StatusRouterTest {
         WebTestClient
                 .bindToRouterFunction(statusRoute)
                 .build()
-
-                .get()
-                .uri("/status")
-                .exchange()
-
-                .expectStatus()
-                .isOk()
-
-                .expectBody(String.class)
-                .isEqualTo(STATUS);
+                .get().uri("/status").exchange()
+                .expectStatus().isOk()
+                .expectBody(String.class).isEqualTo(STATUS);
     }
 }
