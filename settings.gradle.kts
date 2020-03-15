@@ -1,2 +1,1 @@
-include("api")
-include("web")
+include("api", "web")
