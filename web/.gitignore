@@ -1,4 +1,6 @@
 # dependencies
+node
+yarn
 /node_modules
 /.pnp
 .pnp.js
