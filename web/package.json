@@ -42,9 +42,10 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test",
-    "check": "react-scripts test --watchAll=false",
+    "test": "react-scripts test --passWithNoTests",
+    "check": "react-scripts test --passWithNoTests --watchAll=false",
     "eject": "react-scripts eject",
+    "clean": "rm -r build",
     "lint": "eslint --ext .js,.jsx,.ts,.tsx ./",
     "fix": "eslint --ext .js,.jsx,.ts,.tsx  --fix ./"
   },
