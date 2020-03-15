@@ -8,5 +8,5 @@ frontend {
     yarnVersion.set("1.22.4")
     cleanScript.set("run clean")
     assembleScript.set("run build")
-    checkScript.set("run check")
+    checkScript.set("run test")
 }
