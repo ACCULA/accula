@@ -15,7 +15,8 @@ public final class GreetingRouter {
     private final GreetingHandler handler;
 
     @Bean
-    @NotNull RouterFunction<ServerResponse> greetingRoute() {
+    @NotNull
+    public RouterFunction<ServerResponse> greetingRoute() {
         return RouterFunctions
                 .route()
                 .GET("/greet", handler::greet)
