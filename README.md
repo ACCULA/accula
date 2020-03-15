@@ -1,1 +1,1 @@
-# accula
+# Advanced Code Clones UniversaL Analyzer
