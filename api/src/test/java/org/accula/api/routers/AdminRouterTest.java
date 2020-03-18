@@ -35,7 +35,7 @@ public class AdminRouterTest {
                 .uri("/admin")
                 .exchange()
                 .expectStatus().isOk()
-                .expectBody(String.class).isEqualTo("You are the admin now.");
+                .expectBody(String.class).isEqualTo("You are an admin now.");
     }
 
     @Test
