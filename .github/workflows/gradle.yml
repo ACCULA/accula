@@ -17,5 +17,5 @@ jobs:
     - name: Build with Gradle
       run: ./gradlew build
 
-    - name: Collect JaCoCo reports and publish to codecov.io
     - uses: codecov/codecov-action@v1
+    - name: Collect JaCoCo reports and publish to codecov.io
