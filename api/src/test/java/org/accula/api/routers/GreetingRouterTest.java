@@ -29,14 +29,16 @@ public final class GreetingRouterTest {
 
     @Test
     public void testGreetingRouteOk() {
-        client.get().uri("/greet?name=Alice").exchange()
+        client.get().uri("/greet?name=Alice")
+                .exchange()
                 .expectStatus().isOk()
                 .expectBody(String.class).isEqualTo(GREETING);
     }
 
     @Test
     public void testGreetingRouteBadRequest() {
-        client.get().uri("/greet?name=").exchange()
+        client.get().uri("/greet?name=")
+                .exchange()
                 .expectStatus().isBadRequest()
                 .expectBody(String.class).isEqualTo(ERROR);
     }
