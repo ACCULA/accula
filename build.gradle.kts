@@ -7,6 +7,10 @@ plugins {
     jacoco
 }
 
+jacoco {
+    toolVersion = "0.8.5"
+}
+
 allprojects {
     group = "org.accula"
 }
@@ -39,7 +43,7 @@ configure(subprojects.filterNot(project(":web")::equals)) {
 
                 listOf(xml, html).forEach { report ->
                     report.isEnabled = true
-                    report.destination = file("$buildDir/reports/jacoco/report.${report.name}")
+                    report.destination = file("$buildDir/reports/jacoco/coverage.${report.name}")
                 }
             }
         }
@@ -54,9 +58,4 @@ configure(subprojects.filterNot(project(":web")::equals)) {
             finalizedBy(jacocoTestReport)
         }
     }
-}
-
-jacoco {
-    toolVersion = "0.8.5"
-    reportsDir = file("$buildDir/customJacocoReportDir")
 }
