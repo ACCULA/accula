@@ -1,10 +1,4 @@
-import org.gradle.api.tasks.testing.logging.TestLogEvent.PASSED
-import org.gradle.api.tasks.testing.logging.TestLogEvent.SKIPPED
-import org.gradle.api.tasks.testing.logging.TestLogEvent.FAILED
-
 plugins {
-    java
-
     id("org.springframework.boot") version "2.2.6.RELEASE"
     id("io.spring.dependency-management") version "1.0.9.RELEASE"
 }
@@ -27,16 +21,4 @@ dependencies {
 
     testCompileOnly(lombok)
     testAnnotationProcessor(lombok)
-}
-
-configure<JavaPluginConvention> {
-    sourceCompatibility = JavaVersion.VERSION_14
-}
-
-tasks.test {
-    useJUnitPlatform()
-
-    testLogging {
-        events(PASSED, SKIPPED, FAILED)
-    }
 }
