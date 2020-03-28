@@ -7,8 +7,8 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
 import static java.util.function.Predicate.not;
-import static org.springframework.web.reactive.function.server.ServerResponse.*;
 import static org.springframework.web.reactive.function.server.ServerResponse.badRequest;
+import static org.springframework.web.reactive.function.server.ServerResponse.ok;
 
 @Component
 public final class GreetingHandler {

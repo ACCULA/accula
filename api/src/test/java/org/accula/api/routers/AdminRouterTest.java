@@ -28,7 +28,7 @@ public class AdminRouterTest {
     }
 
     @Test
-    @WithMockUser(username="admin",roles={"ADMIN"})
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
     @DisplayName("Test correct admin request with ADMIN role")
     public void testAdminRouterOk() {
         client.get()
@@ -39,7 +39,7 @@ public class AdminRouterTest {
     }
 
     @Test
-    @WithMockUser(username="user")
+    @WithMockUser(username = "user")
     @DisplayName("Test invalid admin request with USER role")
     public void testAdminRouterNotLoggedIn() {
         client.get()
