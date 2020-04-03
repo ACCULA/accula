@@ -15,7 +15,6 @@ plugins:
         - "java-multithreading"
         - "java-performance"
         - "java-security"
-        - "java-security"
 
 checks:
   argument-count:
