@@ -29,6 +29,9 @@ plugins:
 
   checkstyle:
     enabled: true
+    checks:
+      com.puppycrawl.tools.checkstyle.checks.imports.CustomImportOrderCheck:
+        enabled: false
 
 checks:
   argument-count:
