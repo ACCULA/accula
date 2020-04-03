@@ -8,15 +8,15 @@ plugins:
     enabled: true
     checks:
       AtLeastOneConstructor:
-        enabled: false
+        enabled: false # Wince we use lombok, it's not actual
       LawOfDemeter:
-        enabled: false
+        enabled: false # We love Java Stream API and other chaining-friendly libraries!
       JUnitTestsShouldIncludeAssert:
-        enabled: false
+        enabled: false # Spring Boot tests use the underlying statements inside its own
       BeanMembersShouldSerialize:
-        enabled: false
+        enabled: false # Most of the declared beans in our app should not be serialized
       FormalParameterNamingConventions:
-        enabled: false
+        enabled: false # We think that lambda parameter named as double-underscore is not a crime :)
     config:
       rules:
         - "category/java/bestpractices.xml"
