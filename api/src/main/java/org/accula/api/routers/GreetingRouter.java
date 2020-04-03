@@ -22,7 +22,7 @@ public final class GreetingRouter {
         if (bool1) {
             if (bool2) {
                 if (bool1 && bool2) {
-                    if (bool1 || bool 2) {
+                    if (bool1 || bool2) {
                         if (bool1 ^ bool2) {
                             if (true) {
                                 System.out.println("");
