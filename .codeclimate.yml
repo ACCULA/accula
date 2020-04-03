@@ -27,6 +27,9 @@ plugins:
         - "category/java/performance.xml"
         - "category/java/security.xml"
 
+  checkstyle:
+    enabled: true
+
 checks:
   argument-count:
     config:
