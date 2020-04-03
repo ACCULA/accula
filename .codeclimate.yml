@@ -4,6 +4,19 @@ plugins:
     config:
       sonar.java.source: "14"
 
+  pmd:
+    enabled: true
+    config:
+      rules:
+        - "java-bestpractices"
+        - "java-codestyle"
+        - "java-design"
+        - "java-errorprone"
+        - "java-multithreading"
+        - "java-performance"
+        - "java-security"
+        - "java-security"
+
 checks:
   argument-count:
     config:
