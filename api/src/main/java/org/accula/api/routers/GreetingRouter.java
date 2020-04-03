@@ -32,34 +32,15 @@ public final class GreetingRouter {
                 }
             }
         }
-        new Object();
-        new Object();
-        new Object();
-        new Object();
-        new Object();
-        new Object();
-        new Object();
-        new Object();
-        new Object();
-        new Object();
-        new Object();
-        new Object();
-        new Object();
-        new Object();
-        new Object();
-        new Object();
-        new Object();
-        new Object();
-        new Object();
-        new Object();
-        new Object();
-        new Object();
-        new Object();
-        new Object();
-        new Object();
-        new Object();
-        new Object();
-        new Object();
+        final var l = new java.util.LinkedList<String>();
+        for (int i = 0; i < 100; ++i) {
+            l.add("" + 0);
+        }
+        
+        for (int i = 0; i < l.size(); ++i) {
+            System.out.println(l.get(i));
+        }
+        
         new Object();
         new Object();
         new Object();
