@@ -8,7 +8,7 @@ plugins:
     enabled: true
     checks:
       AtLeastOneConstructor:
-        enabled: false # Wince we use lombok, it's not actual
+        enabled: false # Since we use lombok, it's not actual
       LawOfDemeter:
         enabled: false # We love Java Stream API and other chaining-friendly libraries!
       JUnitTestsShouldIncludeAssert:
