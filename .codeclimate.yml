@@ -15,6 +15,15 @@ plugins:
         - "category/java/multithreading.xml"
         - "category/java/performance.xml"
         - "category/java/security.xml"
+      checks:
+        AtLeastOneConstructor:
+          enabled: false
+        LawOfDemeter:
+          enabled: false
+        JUnitTestsShouldIncludeAssert:
+          enabled: false
+        BeanMembersShouldSerialize:
+          enabled: false
 
 checks:
   argument-count:
