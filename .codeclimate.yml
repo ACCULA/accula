@@ -1,0 +1,69 @@
+plugins:
+  sonar-java:
+    enabled: true
+    config:
+      sonar.java.source: "14"
+
+  pmd:
+    enabled: true
+    checks:
+      AtLeastOneConstructor:
+        enabled: false # Since we use lombok, it's not actual
+      LawOfDemeter:
+        enabled: false # We love Java Stream API and other chaining-friendly libraries!
+      JUnitTestsShouldIncludeAssert:
+        enabled: false # Spring Boot tests use the underlying statements inside its own
+      BeanMembersShouldSerialize:
+        enabled: false # Most of the declared beans in our app should not be serialized
+      FormalParameterNamingConventions:
+        enabled: false # We think that lambda parameter named as double-underscore is not a crime :)
+    config:
+      rules:
+        - "category/java/bestpractices.xml"
+        - "category/java/codestyle.xml"
+        - "category/java/design.xml"
+        - "category/java/errorprone.xml"
+        - "category/java/multithreading.xml"
+        - "category/java/performance.xml"
+        - "category/java/security.xml"
+
+  checkstyle:
+    enabled: true
+    checks:
+      com.puppycrawl.tools.checkstyle.checks.imports.CustomImportOrderCheck:
+        enabled: false # We separate static imports from usual ones but this check does not expect that and thus warns
+
+checks:
+  argument-count:
+    config:
+      threshold: 5
+  complex-logic:
+    config:
+      threshold: 10
+  file-lines:
+    config:
+      threshold: 550
+  method-complexity:
+    config:
+      threshold: 10
+  method-count:
+    config:
+      threshold: 25
+  method-lines:
+    config:
+      threshold: 55
+  nested-control-flow:
+    config:
+      threshold: 5
+  return-statements:
+    config:
+      threshold: 5
+  similar-code:
+    config:
+      threshold: 50
+  identical-code:
+    config:
+      threshold: 50
+
+exclude_patterns:
+  - "/web/**"
