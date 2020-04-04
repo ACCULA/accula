@@ -9,6 +9,7 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
+@Deprecated
 @Component
 public final class StatusRouter {
     private static final String STATUS = "{\"status\":\"ONLINE\"}";
