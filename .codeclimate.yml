@@ -31,7 +31,7 @@ plugins:
     enabled: true
     checks:
       com.puppycrawl.tools.checkstyle.checks.imports.CustomImportOrderCheck:
-        enabled: false
+        enabled: false # We separate static imports from usual ones but this check does not expect that and thus warns
 
 checks:
   argument-count:
