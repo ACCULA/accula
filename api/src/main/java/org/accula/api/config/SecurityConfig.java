@@ -1,6 +1,5 @@
 package org.accula.api.config;
 
-import org.jetbrains.annotations.NotNull;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
@@ -21,9 +20,7 @@ public class SecurityConfig {
      * @return custom filter chain
      */
     @Bean
-    @NotNull
-    public SecurityWebFilterChain securityWebFilterChain(
-            @NotNull final ServerHttpSecurity http) {
+    public SecurityWebFilterChain securityWebFilterChain(final ServerHttpSecurity http) {
         return http.authorizeExchange()
                 .pathMatchers("/admin").hasAuthority("ROLE_ADMIN")
                 .anyExchange().permitAll()
@@ -36,7 +33,6 @@ public class SecurityConfig {
      * @return mocked user
      */
     @Bean
-    @NotNull
     public MapReactiveUserDetailsService userDetailsService() {
         final UserDetails user = User
                 .withUsername("user")
