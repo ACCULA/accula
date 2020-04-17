@@ -1,50 +1,48 @@
 package org.accula.api.handlers;
 
 import org.accula.api.model.FileModel;
+import org.accula.api.model.GitPullRequest;
 import org.accula.api.model.PullRequestModel;
 import org.accula.api.model.WebHookModel;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
-import reactor.core.publisher.Mono;
-import reactor.core.publisher.Flux;
-
 import static org.springframework.web.reactive.function.server.ServerResponse.ok;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 
 @Component
 public class DataParserHandler {
-    private static final String TOKEN = "5075f864c06cefe723555092d1fb8c342b67e3d4";
 
-    public Flux<PullRequestModel> getAllPR(@NotNull final String repo){
-        String API = "https://api.github.com";
-        WebClient cl = WebClient.create(API);
+    public Flux<GitPullRequest> getAllPR(@NotNull final String repo){
+        String api = "https://api.github.com";
+        WebClient cl = WebClient.create(api);
         return cl.get()
                 //TODO: get all pr (now it is only one page by 30 pr)
                 .uri("/repos/" + repo + "/pulls?state=all")
-                .headers(headers -> headers.setBearerAuth(TOKEN))
                 .retrieve()
-                .bodyToFlux(PullRequestModel.class);
+                .bodyToFlux(GitPullRequest.class);
     }
 
     public Flux<FileModel> getChangedFiles(@NotNull final String repo){
         WebClient cl = WebClient.create(repo);
         return cl.get()
                 .uri("/files")
-                .headers(headers -> headers.setBearerAuth(TOKEN))
                 .retrieve()
                 //TODO: filter files by name
                 .bodyToFlux(FileModel.class);
     }
-    public Flux<PullRequestModel> getProject(@NotNull final String repo){
-        Flux<PullRequestModel> pullRequests = getAllPR(repo);
+
+    public Flux<GitPullRequest> getProject(@NotNull final String repo){
+        Flux<GitPullRequest> pullRequests = getAllPR(repo);
         pullRequests.subscribe(pr -> {
            getChangedFiles(pr.getUrl()).collectList().subscribe(f -> {
-               pr.setChanged_files(f);
+               PullRequestModel pull_request = new PullRequestModel(pr,f);
                // only for debug
-               System.out.println(pr.getAll());
+               System.out.println(pull_request.getAll());
            });
         });
         // TODO: add saving to database
@@ -62,9 +60,8 @@ public class DataParserHandler {
     public Mono<ServerResponse> getWebHookInformation(@NotNull final ServerRequest request) {
         // TODO: think about filtering pr by state (modified, added, merged)
         request.bodyToFlux(WebHookModel.class).subscribe(pr -> {
-            getChangedFiles(pr.getPRUrl()).collectList().subscribe(f -> {
-                PullRequestModel pull = pr.formPullRequestModel();
-                pull.setChanged_files(f);
+            getChangedFiles(pr.getPull_request().getUrl()).collectList().subscribe(f -> {
+                PullRequestModel pull = new PullRequestModel(pr.getPull_request(),f);
                 // only for debug
                 System.out.println(pull.getAll());
             });

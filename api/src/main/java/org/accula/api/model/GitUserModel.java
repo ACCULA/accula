@@ -1,7 +1,5 @@
 package org.accula.api.model;
 
-import java.util.Date;
-
 public class GitUserModel {
     private String login;
     private String html_url;
@@ -10,7 +8,7 @@ public class GitUserModel {
         super();
     }
 
-    public GitUserModel (String login, String html_url) {
+    public GitUserModel(String login, String html_url) {
         this.login = login;
         this.html_url = html_url;
     }
@@ -22,5 +20,6 @@ public class GitUserModel {
     }
 
     public String getLogin() { return login; }
+
     public String getHtml_url() { return html_url; }
 }

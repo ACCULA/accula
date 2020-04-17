@@ -7,11 +7,11 @@ public class FileModel {
     private String patch;
 
 
-    public FileModel (){
+    public FileModel(){
         super();
     }
 
-    public FileModel (String filename, String status, String blob_url, String patch) {
+    public FileModel(String filename, String status, String blob_url, String patch) {
         this.filename = filename;
         this.status = status;
         this.blob_url = blob_url;
@@ -27,7 +27,10 @@ public class FileModel {
     }
 
     public String getFilename() { return filename; }
+
     public String getStatus() { return status; }
+
     public String getBlob_url() { return blob_url; }
+
     public String getPatch() { return patch; }
 }
