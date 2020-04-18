@@ -1,21 +1,52 @@
-import React from 'react'
-import { BrowserRouter, Route, Switch } from 'react-router-dom'
+import React, { useEffect } from 'react'
+import { Route, RouteComponentProps, Switch } from 'react-router-dom'
 
-import { Container } from 'react-bootstrap'
-import { Navbar } from './components/Navbar'
-import { About } from './pages/About'
-import { Home } from './pages/Home'
+import AdminNavbar from 'components/Navbars/Navbar'
+import Footer from 'components/Footer/Footer'
+import Sidebar from 'components/Sidebar/Sidebar'
 
-const App: React.FC = () => (
-  <BrowserRouter>
-    <Navbar />
-    <Switch>
-      <Container>
-        <Route path="/" component={Home} exact />
-        <Route path="/about" component={About} />
-      </Container>
-    </Switch>
-  </BrowserRouter>
-)
+import routes from 'routes'
+
+const App = (props: RouteComponentProps) => {
+  const { history, location } = props
+
+  useEffect(() => {
+    if (
+      window.innerWidth < 993 &&
+      history.location.pathname !== location.pathname &&
+      document.documentElement.className.indexOf('nav-open') !== -1
+    ) {
+      document.documentElement.classList.toggle('nav-open')
+    }
+    if (history.action === 'PUSH') {
+      document.documentElement.scrollTop = 0
+      document.scrollingElement.scrollTop = 0
+    }
+  })
+
+  const brand: string =
+    routes.filter(route => route.path === location.pathname)[0]?.name ||
+    'ACCULA'
+
+  return (
+    <div className="wrapper">
+      <Sidebar {...props} routes={routes} color="black" />
+      <div id="main-panel" className="main-panel">
+        <AdminNavbar {...props} brandText={brand} />
+        <Switch>
+          {routes.map(route => (
+            <Route
+              key={route.path}
+              path={route.path}
+              component={route.component}
+              exact={route.exact}
+            />
+          ))}
+        </Switch>
+        <Footer />
+      </div>
+    </div>
+  )
+}
 
 export default App
