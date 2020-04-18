@@ -25,14 +25,15 @@ const App = (props: RouteComponentProps) => {
   })
 
   const brand: string =
-    routes.filter(route => route.path === location.pathname)[0]?.name ||
-    'ACCULA'
+    routes.filter(route => route.path === location.pathname)[0]?.name || 'ACCULA'
+
+  const loggedIn = false
 
   return (
     <div className="wrapper">
-      <Sidebar {...props} routes={routes} color="black" />
+      <Sidebar {...props} routes={routes} color="black" loggedIn={loggedIn} />
       <div id="main-panel" className="main-panel">
-        <AdminNavbar {...props} brandText={brand} />
+        <AdminNavbar {...props} brandText={brand} loggedIn={loggedIn} />
         <Switch>
           {routes.map(route => (
             <Route

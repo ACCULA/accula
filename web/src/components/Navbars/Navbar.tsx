@@ -1,14 +1,15 @@
 import React from 'react'
 import { Navbar as BSNavbar } from 'react-bootstrap'
 
-import NavbarLinks from 'components/Navbars/NavbarLinks'
+import NavbarLinks from './NavbarLinks'
 
 interface AdminNavbarProps {
+  loggedIn: boolean
   brandText: string
 }
 
 const Navbar = (props: AdminNavbarProps) => {
-  const { brandText } = props
+  const { brandText, loggedIn } = props
   return (
     <BSNavbar fluid>
       <BSNavbar.Brand>{brandText}</BSNavbar.Brand>
@@ -19,7 +20,7 @@ const Navbar = (props: AdminNavbarProps) => {
         }}
       />
       <BSNavbar.Collapse>
-        <NavbarLinks />
+        <NavbarLinks loggedIn={loggedIn} />
       </BSNavbar.Collapse>
     </BSNavbar>
   )

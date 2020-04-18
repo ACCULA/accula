@@ -6,5 +6,5 @@ export interface RouteInfo {
   name: string
   icon: string
   component: ComponentType<any>
-  hide?: boolean
+  hidden?: boolean
 }

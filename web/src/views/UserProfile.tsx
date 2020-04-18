@@ -104,7 +104,7 @@ const UserProfile = () => (
                     <FormGroup controlId="formControlsTextarea">
                       <ControlLabel>About Me</ControlLabel>
                       <FormControl
-                        rows="5"
+                        rows={5}
                         componentClass="textarea"
                         bsClass="form-control"
                         placeholder="Here can be your description"

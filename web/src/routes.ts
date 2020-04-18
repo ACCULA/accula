@@ -1,20 +1,28 @@
 import UserProfile from 'views/UserProfile'
 import PullRequestList from 'views/PullRequestList'
 import { RouteInfo } from 'types'
+import Login from 'components/Login/Login'
 
 const routes: RouteInfo[] = [
   {
     path: '/',
     exact: true,
     name: 'Pull Requests',
-    icon: 'pe-7s-note2',
+    icon: 'list-ul',
     component: PullRequestList
   },
   {
     path: '/profile',
     name: 'Profile',
-    icon: 'pe-7s-user',
+    icon: 'user',
     component: UserProfile
+  },
+  {
+    path: '/login',
+    name: 'Login',
+    icon: 'sign-in-alt',
+    component: Login,
+    hidden: true
   }
 ]
 

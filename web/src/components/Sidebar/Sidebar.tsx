@@ -9,10 +9,11 @@ import NavbarLinks from '../Navbars/NavbarLinks'
 interface SidebarProps extends RouteComponentProps {
   routes: RouteInfo[]
   color: string
+  loggedIn: boolean
 }
 
 const Sidebar = (props: SidebarProps) => {
-  const { routes, color, location } = props
+  const { routes, color, location, loggedIn } = props
   const { width } = useWindowSize()
 
   return (
@@ -29,13 +30,13 @@ const Sidebar = (props: SidebarProps) => {
       </div>
       <div className="sidebar-wrapper">
         <ul className="nav">
-          {width <= 991 ? <NavbarLinks /> : null}
+          {width <= 991 ? <NavbarLinks loggedIn={loggedIn} /> : null}
           {routes.map(
             route =>
-              !route.hide && (
+              !route.hidden && (
                 <li className={location.pathname === route.path ? 'active' : ''} key={route.path}>
                   <NavLink to={route.path} className="nav-link" activeClassName="active">
-                    <i className={route.icon} />
+                    <i className={`fas fa-${route.icon}`} />
                     <p>{route.name}</p>
                   </NavLink>
                 </li>
