@@ -9,8 +9,7 @@ interface UserCardProps {
   socials: JSX.Element
 }
 
-export const UserCard = (props: UserCardProps) => {
-  const { socials, userName, name, bgImage, description, avatar } = props
+const UserCard = ({ socials, userName, name, bgImage, description, avatar }: UserCardProps) => {
   return (
     <div className="card card-user">
       <div className="image">

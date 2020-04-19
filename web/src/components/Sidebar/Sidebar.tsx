@@ -24,9 +24,8 @@ const Sidebar = (props: SidebarProps) => {
       </Link>
       <div className="sidebar-wrapper">
         <ul className="nav">
-          {width <= 991 ? <NavbarLinks loggedIn={loggedIn} /> : null}
           {routes.map(
-            (route) =>
+            route =>
               !route.hidden && (
                 <li className={location.pathname === route.path ? 'active' : ''} key={route.path}>
                   <NavLink to={route.path} className="nav-link" activeClassName="active">
@@ -36,6 +35,7 @@ const Sidebar = (props: SidebarProps) => {
                 </li>
               )
           )}
+          {width <= 991 ? <NavbarLinks loggedIn={loggedIn} /> : null}
         </ul>
       </div>
     </div>

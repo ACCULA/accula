@@ -5,8 +5,7 @@ import Settings from 'views/Settings'
 
 const routes: RouteInfo[] = [
   {
-    path: '/',
-    exact: true,
+    path: '/projects',
     name: 'Projects',
     icon: 'list-ul',
     component: Projects
@@ -20,7 +19,7 @@ const routes: RouteInfo[] = [
   {
     path: '/settings',
     name: 'Settings',
-    icon: 'cogs',
+    icon: 'cog',
     component: Settings
   }
 ]

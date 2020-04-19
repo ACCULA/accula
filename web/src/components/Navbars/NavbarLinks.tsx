@@ -1,12 +1,14 @@
 import React from 'react'
 import { MenuItem, Nav, NavDropdown, NavItem } from 'react-bootstrap'
-import { NavLink } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 
 const NavDropdownHack: any = NavDropdown
 
 interface NavbarLinksProps {
   loggedIn: boolean
 }
+
+const NavItemHack: any = NavItem
 
 const NavbarLinks = ({ loggedIn }: NavbarLinksProps) => {
   const notification = (
@@ -36,9 +38,6 @@ const NavbarLinks = ({ loggedIn }: NavbarLinksProps) => {
       <Nav pullRight>
         {loggedIn ? (
           <>
-            <NavItem eventKey={1} href="#">
-              Account
-            </NavItem>
             <NavDropdown eventKey={2} title="Dropdown" id="basic-nav-dropdown-right">
               <MenuItem eventKey={2.1}>Action</MenuItem>
               <MenuItem eventKey={2.2}>Another action</MenuItem>
@@ -48,16 +47,14 @@ const NavbarLinks = ({ loggedIn }: NavbarLinksProps) => {
               <MenuItem divider />
               <MenuItem eventKey={2.5}>Separated link</MenuItem>
             </NavDropdown>
-            <li>
-              <NavLink to="/logout">Log out</NavLink>
-            </li>
+            <NavItemHack componentClass={Link} to="/logout" href="/logout">
+              Log out
+            </NavItemHack>
           </>
         ) : (
-          <li>
-            <NavLink to="/">
-              <i className="fab fa-fw fa-github" /> Sign in with Github
-            </NavLink>
-          </li>
+          <NavItemHack componentClass={Link} to="/login" href="/login">
+            <i className="fab fa-fw fa-github" /> Sign in with Github
+          </NavItemHack>
         )}
       </Nav>
     </div>

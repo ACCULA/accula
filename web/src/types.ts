@@ -8,3 +8,21 @@ export interface RouteInfo {
   component: ComponentType<any>
   hidden?: boolean
 }
+
+export interface Project {
+  id: number
+  url: string
+  owner: string
+  name: string
+  description?: string
+  avatarUrl: string
+  openPullRequestCount: number
+}
+
+export interface ProjectSettings {
+  
+}
+
+export interface PullRequest {
+  
+}

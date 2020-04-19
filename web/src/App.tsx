@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { Route, RouteComponentProps, Switch } from 'react-router-dom'
+import { Redirect, Route, RouteComponentProps, Switch } from 'react-router-dom'
 
 import AdminNavbar from 'components/Navbars/Navbar'
 import Footer from 'components/Footer/Footer'
@@ -25,7 +25,7 @@ const App = (props: RouteComponentProps) => {
   })
 
   const brand: string =
-    routes.filter(route => route.path === location.pathname)[0]?.name || 'ACCULA'
+    routes.filter(route => location.pathname.indexOf(route.path) >= 0)[0]?.name || 'ACCULA'
 
   const loggedIn = false
 
@@ -43,6 +43,7 @@ const App = (props: RouteComponentProps) => {
               exact={route.exact}
             />
           ))}
+          <Redirect to="/projects" path="/" exact/>
         </Switch>
         <Footer />
       </div>
