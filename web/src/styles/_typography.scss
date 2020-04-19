@@ -73,7 +73,7 @@ h1 .subtitle{
     color: #9A9A9A;
 }
 .text-primary, .text-primary:hover{
-    color: #1D62F0 !important;
+    color: $primary-color !important;
 }
 .text-info, .text-info:hover{
     color: $info-color !important;
@@ -87,4 +87,9 @@ h1 .subtitle{
 .text-danger, .text-danger:hover{
     color: $danger-color !important;
 }
-
+.text-dark{
+    color: $black-color;
+    &:hover{
+        color: $black-hr
+    }
+}

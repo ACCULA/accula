@@ -2,6 +2,14 @@
 @mixin btn-styles($btn-color, $btn-states-color) {
   border-color: $btn-color;
   color: $btn-color;
+
+  &:hover,
+  &:active,
+  &.active {
+    background-color: $btn-color !important;
+    color: $white-color !important;
+    border-color: $btn-states-color !important;
+  }
   
   &:hover,
   &:focus,
@@ -32,8 +40,16 @@
   &.btn-fill {
     color: $white-color;
     background-color: $btn-color;
-    @include opacity(1);  
+    @include opacity(1);
 
+    &:hover,
+    &:active,
+    &.active {
+      background-color: $btn-states-color !important;
+      color: $white-color !important;
+      border-color: $btn-states-color !important;
+    }
+    
     &:hover,
     &:focus,
     &:active,

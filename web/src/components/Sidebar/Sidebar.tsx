@@ -2,9 +2,9 @@ import React from 'react'
 import { Link, NavLink, RouteComponentProps } from 'react-router-dom'
 
 import { RouteInfo } from 'types'
-import logo from 'images/logo.png'
 import { useWindowSize } from 'react-use'
-import NavbarLinks from '../Navbars/NavbarLinks'
+import logo from 'images/fin_tango.svg'
+import NavbarLinks from 'components/Navbars/NavbarLinks'
 
 interface SidebarProps extends RouteComponentProps {
   routes: RouteInfo[]
@@ -18,21 +18,15 @@ const Sidebar = (props: SidebarProps) => {
 
   return (
     <div id="sidebar" className="sidebar" data-color={color}>
-      <div className="logo">
-        <Link className="simple-text logo-mini" to="/">
-          <div className="logo-img">
-            <img src={logo} alt="logo_image" />
-          </div>
-        </Link>
-        <Link to="/" className="simple-text logo-normal">
-          ACCULA
-        </Link>
-      </div>
+      <Link to="/" className="logo">
+        <img src={logo} alt="A" />
+        <span>CCULA</span>
+      </Link>
       <div className="sidebar-wrapper">
         <ul className="nav">
           {width <= 991 ? <NavbarLinks loggedIn={loggedIn} /> : null}
           {routes.map(
-            route =>
+            (route) =>
               !route.hidden && (
                 <li className={location.pathname === route.path ? 'active' : ''} key={route.path}>
                   <NavLink to={route.path} className="nav-link" activeClassName="active">

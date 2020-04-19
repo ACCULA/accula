@@ -1,15 +1,15 @@
 import UserProfile from 'views/UserProfile'
-import PullRequestList from 'views/PullRequestList'
+import Projects from 'views/Projects'
 import { RouteInfo } from 'types'
-import Login from 'components/Login/Login'
+import Settings from 'views/Settings'
 
 const routes: RouteInfo[] = [
   {
     path: '/',
     exact: true,
-    name: 'Pull Requests',
+    name: 'Projects',
     icon: 'list-ul',
-    component: PullRequestList
+    component: Projects
   },
   {
     path: '/profile',
@@ -18,11 +18,10 @@ const routes: RouteInfo[] = [
     component: UserProfile
   },
   {
-    path: '/login',
-    name: 'Login',
-    icon: 'sign-in-alt',
-    component: Login,
-    hidden: true
+    path: '/settings',
+    name: 'Settings',
+    icon: 'cogs',
+    component: Settings
   }
 ]
 

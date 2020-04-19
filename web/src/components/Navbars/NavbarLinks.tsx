@@ -1,6 +1,6 @@
 import React from 'react'
 import { MenuItem, Nav, NavDropdown, NavItem } from 'react-bootstrap'
-import { Link } from 'react-router-dom'
+import { NavLink } from 'react-router-dom'
 
 const NavDropdownHack: any = NavDropdown
 
@@ -48,14 +48,16 @@ const NavbarLinks = ({ loggedIn }: NavbarLinksProps) => {
               <MenuItem divider />
               <MenuItem eventKey={2.5}>Separated link</MenuItem>
             </NavDropdown>
-            <NavItem eventKey={3} href="#">
-              Log out
-            </NavItem>
+            <li>
+              <NavLink to="/logout">Log out</NavLink>
+            </li>
           </>
         ) : (
-          <NavItem>
-            <Link to="/login">Login</Link>
-          </NavItem>
+          <li>
+            <NavLink to="/">
+              <i className="fab fa-fw fa-github" /> Sign in with Github
+            </NavLink>
+          </li>
         )}
       </Nav>
     </div>

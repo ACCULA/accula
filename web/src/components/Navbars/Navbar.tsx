@@ -14,7 +14,7 @@ const Navbar = (props: AdminNavbarProps) => {
     <BSNavbar fluid>
       <BSNavbar.Brand>{brandText}</BSNavbar.Brand>
       <BSNavbar.Toggle
-        onClick={e => {
+        onClick={(e: React.MouseEvent<any>) => {
           e.preventDefault()
           document.documentElement.classList.toggle('nav-open')
         }}

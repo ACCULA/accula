@@ -33,47 +33,27 @@
     }
 
     .logo{
-        padding: 10px 30px;
+        display: block;
+        height: 60px;
         border-bottom: 1px solid rgba(255, 255, 255, 0.2);
         position: relative;
         z-index: 4;
 
-        p{
-            float: left;
-            font-size: 20px;
-            margin: 10px 10px;
-            color: $white-color;
-            line-height: 20px;
-            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-        }
-
-        a.logo-mini{
-            float: left;
-            text-align: center;
-            width: 30px;
-            margin-right: 15px;
-
-            img{
-                width: 40px;
-                margin-left: -3px;
-                display: block;
-                margin-top: 2px;
-            }
-        }
-
-        a.logo-normal{
-            display: block;
-        }
-
-        .logo-img{
-            width: 34px;
+        img{
             display: inline-block;
-            height: 34px;
-            margin-left: -2px;
-            margin-top: -2px;
-            margin-right: 10px;
-            border-radius: 30px;
+            width: 42px;
+            height: 42px;
+            margin-top: -20px;
+            margin-left: 40px;
+            margin-right: 3px;
             text-align: center;
+        }
+
+        span{
+            display: inline-block;
+            color: $white-color;
+            font-family: Righteous, Helvetica, cursive;
+            font-size: $font-size-logo;
         }
     }
 
@@ -148,7 +128,6 @@
 .sidebar,
 body > .navbar-collapse{
     .logo{
-        padding: 10px 30px;
         border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 
         p{
@@ -204,7 +183,7 @@ body > .navbar-collapse{
     }
 
     &:after{
-       background: $primary-bg;
+       @include icon-gradient($info-bg, $info-states-color);
        z-index: 3;
        opacity: 1;
     }
