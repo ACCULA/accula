@@ -1,6 +1,5 @@
 import React from 'react'
 import { Project } from 'types'
-import './style.scss'
 import { Link } from 'react-router-dom'
 
 const ProjectCard = ({
@@ -9,14 +8,14 @@ const ProjectCard = ({
   owner,
   name,
   description,
-  avatarUrl,
+  avatar,
   openPullRequestCount
 }: Project) => {
   return (
     <div className="panel panel-default panel-project">
       <div className="panel-heading">
         <div className="avatar">
-          <img className="avatar border-gray" src={avatarUrl} alt={owner} />
+          <img className="border-gray" src={avatar} alt={owner} />
         </div>
         <div className="title">
           <div className="owner">{owner}/</div>
