@@ -13,7 +13,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-
 @Component
 public class DataParserHandler {
 
@@ -33,7 +32,6 @@ public class DataParserHandler {
                 });
     }
 
-
     public Flux<FileModel> getChangedFiles(@NotNull final String repo, @NotNull final Integer page){
         //TODO: error handling
         WebClient cl = WebClient.create(repo);
@@ -49,24 +47,24 @@ public class DataParserHandler {
                 });
     }
 
-    public Flux<GitPullRequest> getProject(@NotNull final String repo){
-        Flux<GitPullRequest> pullRequests = getAllPR(repo,1);
-        pullRequests.subscribe(pr -> {
-           getChangedFiles(pr.getUrl(), 1).collectList().subscribe(f -> {
+    public Flux<PullRequestModel> getProject(@NotNull final String repo){
+        return getAllPR(repo,1).flatMap(pr -> {
+           Mono<PullRequestModel> pull_request = getChangedFiles(pr.getUrl(), 1).collectList().flatMap(f -> {
                //TODO: filter files by name
-               PullRequestModel pull_request = new PullRequestModel(pr,f);
-               // only for debug
-               // System.out.println(pull_request.getAll());
+               return Mono.just(new PullRequestModel(pr,f));
            });
+           return pull_request;
         });
-        // TODO: add saving to database
-        return pullRequests;
     }
 
     @NotNull
     public Mono<ServerResponse> getOldProjects(@NotNull final ServerRequest request) {
-        //TODO: getting repo from request, working with more than one project
-        getProject("polis-mail-ru/2017-highload-kv");
+        Flux.fromArray(request.queryParam("repos").get().split(","))
+                .subscribe(repo ->
+                                getProject(repo).subscribe(pr -> System.out.println(pr.getPull_request().getTitle()))
+                        );
+       // test repo: polis-mail-ru/2017-highload-kv
+        // TODO: add saving pull requests to database
         return ok().build();
     }
 
