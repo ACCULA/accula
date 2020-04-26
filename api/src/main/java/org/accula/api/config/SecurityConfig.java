@@ -20,8 +20,7 @@ public class SecurityConfig {
      * @return custom filter chain
      */
     @Bean
-    public SecurityWebFilterChain securityWebFilterChain(
-            ServerHttpSecurity http) {
+    public SecurityWebFilterChain securityWebFilterChain(final ServerHttpSecurity http) {
         return http.csrf().disable()
         .authorizeExchange()
                 .pathMatchers("/admin").hasAuthority("ROLE_ADMIN")
@@ -36,7 +35,7 @@ public class SecurityConfig {
      */
     @Bean
     public MapReactiveUserDetailsService userDetailsService() {
-        UserDetails user = User
+        final UserDetails user = User
                 .withUsername("user")
                 .password(passwordEncoder().encode("password"))
                 .roles("ADMIN")
