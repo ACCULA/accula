@@ -1,6 +1,4 @@
-import org.gradle.api.tasks.testing.logging.TestLogEvent.FAILED
-import org.gradle.api.tasks.testing.logging.TestLogEvent.PASSED
-import org.gradle.api.tasks.testing.logging.TestLogEvent.SKIPPED
+import org.gradle.api.tasks.testing.logging.TestLogEvent.*
 
 plugins {
     java
@@ -28,6 +26,11 @@ configure(subprojects.filterNot(project(":web")::equals)) {
     }
 
     tasks {
+
+        withType(JavaCompile::class) {
+            options.compilerArgs.add("--enable-preview")
+        }
+
         jacocoTestReport {
             executionData(fileTree(project.rootDir.absolutePath).include("**/build/jacoco/*.exec"))
 
@@ -50,6 +53,7 @@ configure(subprojects.filterNot(project(":web")::equals)) {
 
         test {
             useJUnitPlatform()
+            jvmArgs("--enable-preview")
 
             testLogging {
                 events(PASSED, SKIPPED, FAILED)

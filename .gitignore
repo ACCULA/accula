@@ -3,3 +3,4 @@
 *.iml
 **/out
 /.gradle
+/core/src/main/java/org/accula/parser/

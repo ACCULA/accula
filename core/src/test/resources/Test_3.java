@@ -1,5 +1,4 @@
 package org.accula.api.config;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
@@ -10,7 +9,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.server.SecurityWebFilterChain;
-
 @EnableWebFluxSecurity
 @EnableReactiveMethodSecurity
 public class SecurityConfig {
@@ -21,15 +19,13 @@ public class SecurityConfig {
      */
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(final ServerHttpSecurity http) {
-        return http
-                .csrf().disable()
+        return http.csrf().disable()
                 .authorizeExchange()
                 .pathMatchers("/admin").hasAuthority("ROLE_ADMIN")
                 .anyExchange().permitAll()
                 .and().formLogin()
                 .and().build();
     }
-
     /**
      * Add a mock for an authorized user. Must be changed to real implementation.
      * @return mocked user
@@ -43,7 +39,6 @@ public class SecurityConfig {
                 .build();
         return new MapReactiveUserDetailsService(user);
     }
-
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();

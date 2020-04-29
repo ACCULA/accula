@@ -1,1 +1,1 @@
-include("api", "web")
+include("core", "api", "web")
