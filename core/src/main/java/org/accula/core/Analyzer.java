@@ -66,7 +66,7 @@ public class Analyzer {
         checkers.forEach(cloneChecker ->
                 Flux.fromIterable(processedFiles)
                         .filter(f -> !f.userName().equals(file1.userName()))
-                        .doOnNext(file -> System.err.printf("%s vs %s: %s%n",
+                        .doOnNext(file -> System.err.printf("%s vs %s = %s%n",
                                 String.format("%s : %s", file.userName(), file.fileName()),
                                 String.format("%s : %s", file1.userName(), file1.fileName()),
                                 cloneChecker.checkClones(file1.content(), file.content(), THRESHOLD).getNormalizedMetric()))

@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 
 public class CloneCheckerImpl implements CloneChecker <ParseTree, CloneInfo> {
-    private static final int CLONE_LENGTH = 40;
+    private static final int MIN_CLONE_LENGTH = 40;
 
     @NotNull
     @Override
@@ -27,8 +27,8 @@ public class CloneCheckerImpl implements CloneChecker <ParseTree, CloneInfo> {
                                    @NotNull CloneInfo cloneInfo) {
         if (tree1.getClass() == tree2.getClass() &&
                 tree1 instanceof Java9Parser.BlockStatementsContext) {
-            if (tree1.getText().length() > CLONE_LENGTH &&
-                    tree2.getText().length() > CLONE_LENGTH) {
+            if (tree1.getText().length() > MIN_CLONE_LENGTH &&
+                    tree2.getText().length() > MIN_CLONE_LENGTH) {
                 var j = new JaccardSimilarity();
                 var cmp = j.apply(tree1.getText(), tree2.getText()).floatValue();
                 cloneInfo.setCount(cloneInfo.getCount() + 1);

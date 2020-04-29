@@ -59,7 +59,7 @@ public class GitHubClient implements DataProvider<PullRequest, GFile<String>> {
     public Flux<GFile<String>> fetchRepoContent(@NotNull final Integer prNumber,
                                                 @NotNull final String userName,
                                                 @NotNull final GFileFilter filter) {
-        var link = String.format("%s/%d/files", getApiSource(), prNumber);
+        var link = String.format("%s/%d/files?per_page=100", getApiSource(), prNumber);
         return repositoryClient
                 .get()
                 .uri(link)
