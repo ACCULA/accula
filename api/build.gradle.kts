@@ -5,20 +5,26 @@ plugins {
 
 version = "1.0-SNAPSHOT"
 
+ext["spring.version"] = "5.2.5.RELEASE"
+ext["spring-security.version"] = "5.3.1.RELEASE"
+
 dependencies {
-    implementation("org.springframework.boot:spring-boot-starter-webflux:2.2.6.RELEASE")
-    implementation("org.springframework.boot:spring-boot-starter-security:2.2.6.RELEASE")
-    implementation("org.jetbrains:annotations:19.0.0")
-
-    val lombok = "org.projectlombok:lombok:1.18.12"
-    compileOnly(lombok)
-    annotationProcessor(lombok)
-
-    testImplementation("org.springframework.boot:spring-boot-starter-test:2.2.6.RELEASE") {
+    implementation("org.springframework.boot:spring-boot-starter-webflux")
+    testImplementation("org.springframework.boot:spring-boot-starter-test") {
         exclude(group = "org.junit.vintage", module = "junit-vintage-engine")
     }
-    testImplementation("org.springframework.security:spring-security-test:5.3.0.RELEASE")
+    implementation("org.springframework.boot:spring-boot-starter-security")
+    testImplementation("org.springframework.security:spring-security-test")
 
-    testCompileOnly(lombok)
-    testAnnotationProcessor(lombok)
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+
+    implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
+    implementation("org.springframework.security:spring-security-oauth2-client")
+
+    implementation("com.auth0:java-jwt:3.10.2")
+
+    implementation(project(":db"))
+    implementation(project(":auth"))
+
+    implementation("io.projectreactor:reactor-tools")
 }

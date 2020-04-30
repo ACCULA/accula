@@ -1,0 +1,32 @@
+spring:
+  profiles:
+    include:
+      - secrets
+
+  security:
+    oauth2:
+      client:
+        registration:
+          github:
+            client-id: ${github-app.client-id}
+            client-secret: ${github-app.client-secret}
+            scope: read:user,public_repo
+            redirect-uri: "{baseUrl}/login/github/callback"
+
+#management:
+#  endpoints:
+#    web:
+#      exposure:
+#        include: "*"
+
+logging:
+  level:
+    ROOT: DEBUG
+
+accula:
+  jwt:
+    signature:
+      public: "accula.public.der"
+      private: "accula.private.der"
+    issuer: ${jwt.issuer}
+    expiresInMins: ${jwt.expiresInMins}

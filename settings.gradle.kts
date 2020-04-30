@@ -1,1 +1,6 @@
-include("api", "web")
+include(
+        "api",
+        "web",
+        "db",
+        "auth"
+)
