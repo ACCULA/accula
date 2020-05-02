@@ -19,7 +19,7 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 @RequiredArgsConstructor
 public final class JwtAuthenticationConverter implements ServerAuthenticationConverter {
     private static final String BEARER_PREFIX = "Bearer ";
-    private static final int JWT_TOKEN_POSITION = BEARER_PREFIX.length();
+    private static final int TOKEN_POSITION = BEARER_PREFIX.length();
 
     private final Jwt jwt;
 
@@ -29,9 +29,8 @@ public final class JwtAuthenticationConverter implements ServerAuthenticationCon
 
     @Override
     public Mono<Authentication> convert(final ServerWebExchange exchange) {
-        final var request = exchange.getRequest();
         final var authorizationHeader = Optional
-                .ofNullable(request.getHeaders().getFirst(AUTHORIZATION));
+                .ofNullable(exchange.getRequest().getHeaders().getFirst(AUTHORIZATION));
 
         return Mono
                 .justOrEmpty(authorizationHeader)
@@ -41,7 +40,7 @@ public final class JwtAuthenticationConverter implements ServerAuthenticationCon
     }
 
     private Authentication tryAuthenticateWithBearerToken(final String header) {
-        final var bearerToken = header.substring(JWT_TOKEN_POSITION);
+        final var bearerToken = header.substring(TOKEN_POSITION);
         return new JwtAuthentication(new AuthorizedUser(decodeUserId(bearerToken)));
     }
 
