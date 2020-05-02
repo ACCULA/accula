@@ -24,7 +24,6 @@ import org.springframework.security.web.server.authentication.ServerAuthenticati
 import org.springframework.security.web.server.authorization.HttpStatusServerAccessDeniedHandler;
 import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository;
 import org.springframework.security.web.server.savedrequest.NoOpServerRequestCache;
-import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatchers;
 import org.springframework.web.server.WebFilter;
 
 import java.net.URISyntaxException;
@@ -50,10 +49,10 @@ public class WebSecurityConfig {
     private final JwtProperties jwtProperties;
 
     @Bean
-    SecurityWebFilterChain securityWebFilterChain(final ServerHttpSecurity http,
-                                                  final WebFilter authenticationFilter,
-                                                  final WebFilter jwtRefreshFilter,
-                                                  final OAuth2LoginSuccessHandler oauth2LoginSuccessHandler) {
+    public SecurityWebFilterChain securityWebFilterChain(final ServerHttpSecurity http,
+                                                         final WebFilter authenticationFilter,
+                                                         final WebFilter jwtRefreshFilter,
+                                                         final OAuth2LoginSuccessHandler oauth2LoginSuccessHandler) {
         return http
                 .httpBasic().disable()
                 .formLogin().disable()
@@ -88,26 +87,26 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    ECPublicKey publicKey() throws URISyntaxException {
+    public ECPublicKey publicKey() throws URISyntaxException {
         final var resource = requireNonNull(getClass().getClassLoader().getResource(jwtProperties.getSignature().getPublicKey()));
 
         return EcKeys.publicKey(Path.of(resource.toURI()));
     }
 
     @Bean
-    ECPrivateKey privateKey() throws URISyntaxException {
+    public ECPrivateKey privateKey() throws URISyntaxException {
         final var resource = requireNonNull(getClass().getClassLoader().getResource(jwtProperties.getSignature().getPrivateKey()));
 
         return EcKeys.privateKey(Path.of(resource.toURI()));
     }
 
     @Bean
-    Jwt jwt(final ECPrivateKey privateEcKey, final ECPublicKey publicEcKey) {
+    public Jwt jwt(final ECPrivateKey privateEcKey, final ECPublicKey publicEcKey) {
         return new Jwt(privateEcKey, publicEcKey, jwtProperties.getIssuer());
     }
 
     @Bean
-    JwtAccessTokenResponseProducer jwtAccessTokenResponseProducer(final Jwt jwt) {
+    public JwtAccessTokenResponseProducer jwtAccessTokenResponseProducer(final Jwt jwt) {
         return new JwtAccessTokenResponseProducer(
                 jwt,
                 jwtProperties.getExpiresIn().getAccess(),
@@ -116,7 +115,7 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    OAuth2LoginSuccessHandler oauth2LoginSuccessHandler(
+    public OAuth2LoginSuccessHandler oauth2LoginSuccessHandler(
             final JwtAccessTokenResponseProducer jwtAccessTokenResponseProducer,
             final Jwt jwt,
             final ReactiveOAuth2AuthorizedClientService authorizedClientService,
@@ -134,12 +133,12 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    ServerAuthenticationConverter authenticationConverter(final Jwt jwt) {
+    public ServerAuthenticationConverter authenticationConverter(final Jwt jwt) {
         return new JwtAuthenticationConverter(jwt);
     }
 
     @Bean
-    WebFilter authenticationFilter(final ServerAuthenticationConverter authenticationConverter) {
+    public WebFilter authenticationFilter(final ServerAuthenticationConverter authenticationConverter) {
         final var filter = new JwtAuthFilter();
         filter.setServerAuthenticationConverter(authenticationConverter);
 
@@ -147,11 +146,11 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    WebFilter jwtRefreshFilter(final JwtAccessTokenResponseProducer jwtAccessTokenResponseProducer,
-                               final Jwt jwt,
-                               final RefreshTokenRepository refreshTokens) {
+    public WebFilter jwtRefreshFilter(final JwtAccessTokenResponseProducer jwtAccessTokenResponseProducer,
+                                      final Jwt jwt,
+                                      final RefreshTokenRepository refreshTokens) {
         return new JwtRefreshFilter(
-                ServerWebExchangeMatchers.pathMatchers(GET, "/refreshToken"),
+                pathMatchers(GET, "/refreshToken"),
                 jwtAccessTokenResponseProducer,
                 jwt,
                 jwtProperties.getExpiresIn().getRefresh(),

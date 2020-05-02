@@ -17,22 +17,19 @@ import org.springframework.security.web.server.authentication.ServerAuthenticati
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
-import java.util.Objects;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * This class completes login with Github OAuth2 by signing-in or signing-up to our service.
  * It forms a response with our own access token, its expiration date, and refresh token:
- * <p>
- * 1. If DB ({@link UserRepository}) contains a user with obtained Github id and differ Github access token,
+ * <p>1. If DB ({@link UserRepository}) contains a user with obtained Github id and differ Github access token,
  * then Github access token is updated.
- * <p>
- * 2. If DB ({@link UserRepository}) doesn't contain a user with obtained Github id,
+ * <p> 2. If DB ({@link UserRepository}) doesn't contain a user with obtained Github id,
  * then new user with provided Github id is created.
- * <p>
- * 3. We generate our own access token (JWT with user id sub and short lifetime) which is then included
+ * <p> 3. We generate our own access token (JWT with user id sub and short lifetime) which is then included
  * in response body json using ({@link JwtAccessTokenResponseProducer}). We suppose client will store it in memory.
- * <p>
- * 4. We generate our own refresh token (also JWT with user id sub but longer lifetime)
+ * <p> 4. We generate our own refresh token (also JWT with user id sub but longer lifetime)
  * which is then saved in DB ({@link RefreshTokenRepository}) and included in response http-only cookie.
  *
  * @author Anton Lamtev
@@ -54,20 +51,20 @@ public final class OAuth2LoginSuccessHandler implements ServerAuthenticationSucc
             }
 
             final var authenticationToken = (OAuth2AuthenticationToken) authentication;
-            final var userGithubInfo = GithubUserInfoExtractor.extractUser(authenticationToken.getPrincipal().getAttributes());
+            final var githubUser = GithubUserInfoExtractor.extractUser(authenticationToken.getPrincipal().getAttributes());
 
             return authorizedClientService
                     .loadAuthorizedClient(authenticationToken.getAuthorizedClientRegistrationId(), authenticationToken.getName())
                     .map(OAuth2AuthorizedClient::getAccessToken)
                     .flatMap(accessToken -> users
-                            .findByGithubId(userGithubInfo.getId())
+                            .findByGithubId(githubUser.getId())
                             .filter(user -> !user.getGithubAccessToken().equals(accessToken.getTokenValue()))
                             .flatMap(user -> users
                                     .setNewAccessToken(user.getGithubId(), accessToken.getTokenValue())
-                                    .thenReturn(User.of(Objects.requireNonNull(user.getId()), userGithubInfo.getId(), accessToken.getTokenValue())))
-                            .switchIfEmpty(users.save(User.of(userGithubInfo.getId(), accessToken.getTokenValue()))))
+                                    .thenReturn(User.of(requireNonNull(user.getId()), githubUser.getId(), accessToken.getTokenValue())))
+                            .switchIfEmpty(users.save(User.of(githubUser.getId(), accessToken.getTokenValue()))))
                     .flatMap(user -> {
-                        final var userId = Objects.requireNonNull(user.getId());
+                        final var userId = requireNonNull(user.getId());
                         final var refreshJwtDetails = jwt.generate(user.getId().toString(), refreshExpiresIn);
 
                         return refreshTokens

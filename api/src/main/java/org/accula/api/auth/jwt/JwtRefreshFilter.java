@@ -14,11 +14,9 @@ import java.time.Duration;
 
 /**
  * Web filter that refreshes an access token using refresh token provided in cookies.
- * <p>
- * New refresh token replaces the previous one in DB
+ * <p> New refresh token replaces the previous one in DB
  * ({@link RefreshTokenRepository}) as well as in client cookies.
- * <p>
- * Response is constructed using {@link JwtAccessTokenResponseProducer}.
+ * <p> Response is constructed using {@link JwtAccessTokenResponseProducer}.
  *
  * @author Anton Lamtev
  */
