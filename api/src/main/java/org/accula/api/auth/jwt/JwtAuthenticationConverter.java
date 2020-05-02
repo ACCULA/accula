@@ -2,7 +2,6 @@ package org.accula.api.auth.jwt;
 
 import lombok.RequiredArgsConstructor;
 import org.accula.api.auth.jwt.crypto.Jwt;
-import org.accula.api.db.RefreshTokenRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.server.authentication.ServerAuthenticationConverter;
 import org.springframework.web.server.ServerWebExchange;
@@ -13,14 +12,7 @@ import java.util.Optional;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 /**
- * Performs user authentication and authorization using JWT Bearer token provided.
- * <p>
- * If JWT Bearer token has been expired we try to do silent-refresh using refresh token stored in cookies.
- * <p>
- * In case of a successful silent-refresh, new refresh token replaces an old one
- * in DB ({@link RefreshTokenRepository}) as well as in client cookies.
- * <p>
- * If there is no refresh token in cookies or it has been expired too, then authentication fails.
+ * Performs user authentication and authorization using JWT Bearer token provided
  *
  * @author Anton Lamtev
  */
