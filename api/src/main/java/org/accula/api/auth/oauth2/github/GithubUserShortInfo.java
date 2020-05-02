@@ -6,7 +6,7 @@ import lombok.Value;
  * @author Anton Lamtev
  */
 @Value
-public class UserShortInfo {
+public class GithubUserShortInfo {
     Long id;
     String login;
     String name;

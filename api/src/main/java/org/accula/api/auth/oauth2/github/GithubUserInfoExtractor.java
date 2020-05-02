@@ -5,15 +5,15 @@ import java.util.Map;
 /**
  * @author Anton Lamtev
  */
-public final class UserInfoExtractor {
-    private UserInfoExtractor() {
+public final class GithubUserInfoExtractor {
+    private GithubUserInfoExtractor() {
     }
 
-    public static UserShortInfo extractUser(final Map<String, Object> rawUserInfo) {
+    public static GithubUserShortInfo extractUser(final Map<String, Object> rawUserInfo) {
         final var id = (Integer) rawUserInfo.get("id");
         final var login = (String) rawUserInfo.get("login");
         final var name = (String) rawUserInfo.get("name");
 
-        return new UserShortInfo(id.longValue(), login, name);
+        return new GithubUserShortInfo(id.longValue(), login, name);
     }
 }

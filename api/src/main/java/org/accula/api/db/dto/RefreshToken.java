@@ -20,9 +20,7 @@ public class RefreshToken {
     private String token;
     private Instant expirationDate;
 
-    public static RefreshToken of(final Long userId,
-                                  final String token,
-                                  final Instant expirationDate) {
+    public static RefreshToken of(final Long userId, final String token, final Instant expirationDate) {
         return new RefreshToken(null, userId, token, expirationDate);
     }
 }

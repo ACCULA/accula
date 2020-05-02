@@ -30,8 +30,8 @@ logging:
 accula:
   jwt:
     signature:
-      public: "accula.public.der"
-      private: "accula.private.der"
+      publicKey: "accula.public.der"
+      privateKey: "accula.private.der"
     issuer: ${jwt.issuer}
     expiresIn:
       access: ${jwt.expiresIn.access}

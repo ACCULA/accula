@@ -1,15 +1,17 @@
 package org.accula.api.config;
 
 import lombok.RequiredArgsConstructor;
+import org.accula.api.auth.jwt.JwtAccessTokenResponseProducer;
 import org.accula.api.auth.jwt.JwtAuthFilter;
 import org.accula.api.auth.jwt.JwtAuthenticationConverter;
+import org.accula.api.auth.jwt.JwtRefreshFilter;
 import org.accula.api.auth.jwt.crypto.EcKeys;
 import org.accula.api.auth.jwt.crypto.Jwt;
 import org.accula.api.auth.oauth2.OAuth2LoginFailureHandler;
 import org.accula.api.auth.oauth2.OAuth2LoginSuccessHandler;
 import org.accula.api.db.RefreshTokenRepository;
 import org.accula.api.db.UserRepository;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
@@ -22,13 +24,13 @@ import org.springframework.security.web.server.authentication.ServerAuthenticati
 import org.springframework.security.web.server.authorization.HttpStatusServerAccessDeniedHandler;
 import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository;
 import org.springframework.security.web.server.savedrequest.NoOpServerRequestCache;
+import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatchers;
 import org.springframework.web.server.WebFilter;
 
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
-import java.time.Duration;
 
 import static java.util.Objects.requireNonNull;
 import static org.springframework.http.HttpMethod.GET;
@@ -41,13 +43,16 @@ import static org.springframework.security.web.server.util.matcher.ServerWebExch
  * @author Anton Lamtev
  */
 @EnableWebFluxSecurity
+@EnableConfigurationProperties(JwtProperties.class)
 @RequiredArgsConstructor
 public class WebSecurityConfig {
     private final ReactiveClientRegistrationRepository clientRegistrations;
+    private final JwtProperties jwtProperties;
 
     @Bean
     SecurityWebFilterChain securityWebFilterChain(final ServerHttpSecurity http,
                                                   final WebFilter authenticationFilter,
+                                                  final WebFilter jwtRefreshFilter,
                                                   final OAuth2LoginSuccessHandler oauth2LoginSuccessHandler) {
         return http
                 .httpBasic().disable()
@@ -69,6 +74,7 @@ public class WebSecurityConfig {
                         .pathMatchers("/greet").authenticated()
                         .anyExchange().permitAll())
 
+                .addFilterBefore(jwtRefreshFilter, AUTHENTICATION)
                 .addFilterAt(authenticationFilter, AUTHENTICATION)
 
                 .oauth2Login(oauth2 -> oauth2
@@ -82,44 +88,54 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    ECPublicKey publicKey(@Value("${accula.jwt.signature.public}") final String name) throws URISyntaxException {
-        final var resource = requireNonNull(getClass().getClassLoader().getResource(name));
+    ECPublicKey publicKey() throws URISyntaxException {
+        final var resource = requireNonNull(getClass().getClassLoader().getResource(jwtProperties.getSignature().getPublicKey()));
 
         return EcKeys.publicKey(Path.of(resource.toURI()));
     }
 
     @Bean
-    ECPrivateKey privateKey(@Value("${accula.jwt.signature.private}") final String name) throws URISyntaxException {
-        final var resource = requireNonNull(getClass().getClassLoader().getResource(name));
+    ECPrivateKey privateKey() throws URISyntaxException {
+        final var resource = requireNonNull(getClass().getClassLoader().getResource(jwtProperties.getSignature().getPrivateKey()));
 
         return EcKeys.privateKey(Path.of(resource.toURI()));
     }
 
     @Bean
-    Jwt jwt(final ECPrivateKey privateEcKey,
-            final ECPublicKey publicEcKey,
-            @Value("${accula.jwt.issuer}") final String issuer) {
+    Jwt jwt(final ECPrivateKey privateEcKey, final ECPublicKey publicEcKey) {
+        return new Jwt(privateEcKey, publicEcKey, jwtProperties.getIssuer());
+    }
 
-        return new Jwt(privateEcKey, publicEcKey, issuer);
+    @Bean
+    JwtAccessTokenResponseProducer jwtAccessTokenResponseProducer(final Jwt jwt) {
+        return new JwtAccessTokenResponseProducer(
+                jwt,
+                jwtProperties.getExpiresIn().getAccess(),
+                jwtProperties.getExpiresIn().getRefresh()
+        );
     }
 
     @Bean
     OAuth2LoginSuccessHandler oauth2LoginSuccessHandler(
+            final JwtAccessTokenResponseProducer jwtAccessTokenResponseProducer,
             final Jwt jwt,
-            @Value("${accula.jwt.expiresIn.access}") final Duration accessExpiresIn,
-            @Value("${accula.jwt.expiresIn.refresh}") final Duration refreshExpiresIn,
             final ReactiveOAuth2AuthorizedClientService authorizedClientService,
             final UserRepository users,
             final RefreshTokenRepository refreshTokens) {
 
-        return new OAuth2LoginSuccessHandler(jwt, accessExpiresIn, refreshExpiresIn, authorizedClientService, users, refreshTokens);
+        return new OAuth2LoginSuccessHandler(
+                jwtAccessTokenResponseProducer,
+                jwt,
+                jwtProperties.getExpiresIn().getRefresh(),
+                authorizedClientService,
+                users,
+                refreshTokens
+        );
     }
 
     @Bean
-    ServerAuthenticationConverter authenticationConverter(final Jwt jwt,
-                                                          @Value("${accula.jwt.expiresIn.refresh}") final Duration refreshExpiresIn,
-                                                          final RefreshTokenRepository refreshTokens) {
-        return new JwtAuthenticationConverter(jwt, refreshExpiresIn, refreshTokens);
+    ServerAuthenticationConverter authenticationConverter(final Jwt jwt) {
+        return new JwtAuthenticationConverter(jwt);
     }
 
     @Bean
@@ -128,5 +144,18 @@ public class WebSecurityConfig {
         filter.setServerAuthenticationConverter(authenticationConverter);
 
         return filter;
+    }
+
+    @Bean
+    WebFilter jwtRefreshFilter(final JwtAccessTokenResponseProducer jwtAccessTokenResponseProducer,
+                               final Jwt jwt,
+                               final RefreshTokenRepository refreshTokens) {
+        return new JwtRefreshFilter(
+                ServerWebExchangeMatchers.pathMatchers(GET, "/refreshToken"),
+                jwtAccessTokenResponseProducer,
+                jwt,
+                jwtProperties.getExpiresIn().getRefresh(),
+                refreshTokens
+        );
     }
 }

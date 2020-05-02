@@ -1,9 +1,9 @@
 package org.accula.api.auth.oauth2;
 
 import lombok.RequiredArgsConstructor;
+import org.accula.api.auth.jwt.JwtAccessTokenResponseProducer;
 import org.accula.api.auth.jwt.crypto.Jwt;
-import org.accula.api.auth.oauth2.github.UserInfoExtractor;
-import org.accula.api.auth.util.RefreshTokenCookies;
+import org.accula.api.auth.oauth2.github.GithubUserInfoExtractor;
 import org.accula.api.db.RefreshTokenRepository;
 import org.accula.api.db.UserRepository;
 import org.accula.api.db.dto.RefreshToken;
@@ -19,9 +19,6 @@ import reactor.core.publisher.Mono;
 import java.time.Duration;
 import java.util.Objects;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.springframework.http.MediaType.APPLICATION_JSON;
-
 /**
  * This class completes login with Github OAuth2 by signing-in or signing-up to our service.
  * It forms a response with our own access token, its expiration date, and refresh token:
@@ -29,11 +26,11 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
  * 1. If DB ({@link UserRepository}) contains a user with obtained Github id and differ Github access token,
  * then Github access token is updated.
  * <p>
- * 2. If DB ({@link UserRepository}) doesn't contain a user with obtained Github,
+ * 2. If DB ({@link UserRepository}) doesn't contain a user with obtained Github id,
  * then new user with provided Github id is created.
  * <p>
- * 3. We generate our own access token (JWT with user id sub and short lifetime)
- * which is then included in response body json ({@link RESPONSE_BODY_FORMAT}). We suppose client will store it in memory.
+ * 3. We generate our own access token (JWT with user id sub and short lifetime) which is then included
+ * in response body json using ({@link JwtAccessTokenResponseProducer}). We suppose client will store it in memory.
  * <p>
  * 4. We generate our own refresh token (also JWT with user id sub but longer lifetime)
  * which is then saved in DB ({@link RefreshTokenRepository}) and included in response http-only cookie.
@@ -42,9 +39,8 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
  */
 @RequiredArgsConstructor
 public final class OAuth2LoginSuccessHandler implements ServerAuthenticationSuccessHandler {
-    private static final String RESPONSE_BODY_FORMAT = "{\"jwt\":\"%s\",\"expirationDate\":\"%s\"}";
+    private final JwtAccessTokenResponseProducer responseProducer;
     private final Jwt jwt;
-    private final Duration accessExpiresIn;
     private final Duration refreshExpiresIn;
     private final ReactiveOAuth2AuthorizedClientService authorizedClientService;
     private final UserRepository users;
@@ -58,7 +54,7 @@ public final class OAuth2LoginSuccessHandler implements ServerAuthenticationSucc
             }
 
             final var authenticationToken = (OAuth2AuthenticationToken) authentication;
-            final var userGithubInfo = UserInfoExtractor.extractUser(authenticationToken.getPrincipal().getAttributes());
+            final var userGithubInfo = GithubUserInfoExtractor.extractUser(authenticationToken.getPrincipal().getAttributes());
 
             return authorizedClientService
                     .loadAuthorizedClient(authenticationToken.getAuthorizedClientRegistrationId(), authenticationToken.getName())
@@ -83,30 +79,8 @@ public final class OAuth2LoginSuccessHandler implements ServerAuthenticationSucc
                         final var userId = userIdAndRefreshToken.getT1();
                         final var refreshToken = userIdAndRefreshToken.getT2();
 
-                        return formResponse(exchange, userId, refreshToken.getToken());
+                        return responseProducer.formResponse(exchange.getExchange(), userId, refreshToken.getToken());
                     });
         });
-    }
-
-    private Mono<Void> formResponse(final WebFilterExchange exchange,
-                                    final Long userId,
-                                    final String refreshToken) {
-        final var response = exchange.getExchange().getResponse();
-
-        return response.writeWith(Mono.fromSupplier(() -> {
-            final var jwtDetails = jwt.generate(userId.toString(), accessExpiresIn);
-            final var respBody = String.format(
-                    RESPONSE_BODY_FORMAT,
-                    jwtDetails.getToken(),
-                    jwtDetails.getExpirationDate().toString()
-            ).getBytes(UTF_8);
-
-            response.getHeaders().setContentType(APPLICATION_JSON);
-            response.getHeaders().setContentLength(respBody.length);
-
-            RefreshTokenCookies.set(response.getCookies(), refreshToken, refreshExpiresIn);
-
-            return response.bufferFactory().wrap(respBody);
-        }));
     }
 }

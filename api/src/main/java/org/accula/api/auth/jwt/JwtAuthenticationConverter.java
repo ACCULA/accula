@@ -2,15 +2,12 @@ package org.accula.api.auth.jwt;
 
 import lombok.RequiredArgsConstructor;
 import org.accula.api.auth.jwt.crypto.Jwt;
-import org.accula.api.auth.util.RefreshTokenCookies;
 import org.accula.api.db.RefreshTokenRepository;
-import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.server.authentication.ServerAuthenticationConverter;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
-import java.time.Duration;
 import java.util.Optional;
 
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
@@ -33,8 +30,6 @@ public final class JwtAuthenticationConverter implements ServerAuthenticationCon
     private static final int JWT_TOKEN_POSITION = BEARER_PREFIX.length();
 
     private final Jwt jwt;
-    private final Duration refreshExpiresIn;
-    private final RefreshTokenRepository refreshTokens;
 
     private static boolean hasBearerToken(final String header) {
         return header.startsWith(BEARER_PREFIX);
@@ -50,7 +45,7 @@ public final class JwtAuthenticationConverter implements ServerAuthenticationCon
                 .justOrEmpty(authorizationHeader)
                 .filter(JwtAuthenticationConverter::hasBearerToken)
                 .map(this::tryAuthenticateWithBearerToken)
-                .onErrorResume(e -> tryAuthenticateWithRefreshToken(RefreshTokenCookies.get(request.getCookies()), exchange.getResponse()));
+                .onErrorResume(e -> Mono.empty());
     }
 
     private Authentication tryAuthenticateWithBearerToken(final String header) {
@@ -60,23 +55,5 @@ public final class JwtAuthenticationConverter implements ServerAuthenticationCon
 
     private Long decodeUserId(final String jwtToken) {
         return Long.valueOf(jwt.verify(jwtToken));
-    }
-
-    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    private Mono<Authentication> tryAuthenticateWithRefreshToken(final Optional<String> refreshToken,
-                                                                 final ServerHttpResponse response) {
-        return Mono
-                .justOrEmpty(refreshToken)
-                .flatMap(token -> {
-                    final var userId = decodeUserId(token);
-                    final var newToken = jwt.generate(userId.toString(), refreshExpiresIn);
-                    final var newTokenJwt = newToken.getToken();
-                    final var newTokenExpirationDate = newToken.getExpirationDate();
-                    return refreshTokens
-                            .replaceRefreshToken(userId, token, newTokenJwt, newTokenExpirationDate)
-                            .then(Mono.fromRunnable(() -> RefreshTokenCookies.set(response.getCookies(), newTokenJwt, refreshExpiresIn)))
-                            .thenReturn((Authentication) new JwtAuthentication(new AuthorizedUser(userId)));
-                })
-                .onErrorResume(e -> Mono.empty());
     }
 }
