@@ -6,6 +6,8 @@ plugins:
     checks:
       squid:S1068:
         enabled: false # Unused fields. Since we use lombok, the check results so many false positives
+      squid:S00112:
+        enabled: false # Use of generic exceptions method declaration.
 
   pmd:
     enabled: true
@@ -22,22 +24,10 @@ plugins:
         enabled: false # We think that lambda parameter named as double-underscore is not a crime :)
       UseProperClassLoader:
         enabled: false
-      LongVariable:
-        minimum: 32
-      ShortVariable:
-        minimum: 1
-      ShortMethodName:
-        minimum: 2
-      ShortClassName:
-        minimum: 4
-      LinguisticNaming:
-        checkSetters: false
-      TooManyStaticImports:
-        maximumStaticImports: 15
-      ClassNamingConventions:
-        utilityClassPattern: "[A-Z][a-zA-Z0-9]+(Utils?|Helper|Constants|s)"
-
+      CommentDefaultAccessModifier:
+        enabled: false
     config:
+      file: pmd-rules.xml
       rules:
         - "category/java/bestpractices.xml"
         - "category/java/codestyle.xml"
@@ -91,3 +81,4 @@ checks:
 
 exclude_patterns:
   - "/web/**"
+  - "/src/test/**"
