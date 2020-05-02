@@ -22,6 +22,24 @@ import java.util.Objects;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
+/**
+ * This class completes login with Github OAuth2 by signing-in or signing-up to our service.
+ * It forms a response with our own access token, its expiration date, and refresh token:
+ * <p>
+ * 1. If DB ({@link UserRepository}) contains a user with obtained Github id and differ Github access token,
+ * then Github access token is updated.
+ * <p>
+ * 2. If DB ({@link UserRepository}) doesn't contain a user with obtained Github,
+ * then new user with provided Github id is created.
+ * <p>
+ * 3. We generate our own access token (JWT with user id sub and short lifetime)
+ * which is then included in response body json ({@link RESPONSE_BODY_FORMAT}). We suppose client will store it in memory.
+ * <p>
+ * 4. We generate our own refresh token (also JWT with user id sub but longer lifetime)
+ * which is then saved in DB ({@link RefreshTokenRepository}) and included in response http-only cookie.
+ *
+ * @author Anton Lamtev
+ */
 @RequiredArgsConstructor
 public final class OAuth2LoginSuccessHandler implements ServerAuthenticationSuccessHandler {
     private static final String RESPONSE_BODY_FORMAT = "{\"jwt\":\"%s\",\"expirationDate\":\"%s\"}";

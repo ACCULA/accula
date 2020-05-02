@@ -16,6 +16,15 @@ import java.util.Optional;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 /**
+ * Performs user authentication and authorization using JWT Bearer token provided.
+ * <p>
+ * If JWT Bearer token has been expired we try to do silent-refresh using refresh token stored in cookies.
+ * <p>
+ * In case of a successful silent-refresh, new refresh token replaces an old one
+ * in DB ({@link RefreshTokenRepository}) as well as in client cookies.
+ * <p>
+ * If there is no refresh token in cookies or it has been expired too, then authentication fails.
+ *
  * @author Anton Lamtev
  */
 @RequiredArgsConstructor
