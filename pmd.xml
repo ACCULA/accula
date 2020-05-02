@@ -28,7 +28,7 @@
 
     <rule ref="category/java/codestyle.xml/ShortClassName">
         <properties>
-            <property name="minimum" value="4"/>
+            <property name="minimum" value="3"/>
         </properties>
     </rule>
 
@@ -46,7 +46,7 @@
 
     <rule ref="category/java/codestyle.xml/ClassNamingConventions">
         <properties>
-            <property name="utilityClassPattern" value="[A-Z][a-zA-Z0-9]+(Utils?|Helper|Constants|s)"/>
+            <property name="utilityClassPattern" value="[A-Z][a-zA-Z0-9]+(Utils?|Helper|Constants|s|or)"/>
         </properties>
     </rule>
 

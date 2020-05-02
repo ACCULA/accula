@@ -44,6 +44,6 @@ public final class EcKeys {
 
     @FunctionalInterface
     private interface BiFunction<T, U, R> {
-        R apply(T t, U u) throws Exception;
+        R apply(T p1, U p2) throws Exception;
     }
 }

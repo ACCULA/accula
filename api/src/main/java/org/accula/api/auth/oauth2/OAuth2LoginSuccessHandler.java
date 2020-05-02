@@ -25,11 +25,11 @@ import static java.util.Objects.requireNonNull;
  * It forms a response with our own access token, its expiration date, and refresh token:
  * <p>1. If DB ({@link UserRepository}) contains a user with obtained Github id and differ Github access token,
  * then Github access token is updated.
- * <p> 2. If DB ({@link UserRepository}) doesn't contain a user with obtained Github id,
+ * <p>2. If DB ({@link UserRepository}) doesn't contain a user with obtained Github id,
  * then new user with provided Github id is created.
- * <p> 3. We generate our own access token (JWT with user id sub and short lifetime) which is then included
+ * <p>3. We generate our own access token (JWT with user id sub and short lifetime) which is then included
  * in response body json using ({@link JwtAccessTokenResponseProducer}). We suppose client will store it in memory.
- * <p> 4. We generate our own refresh token (also JWT with user id sub but longer lifetime)
+ * <p>4. We generate our own refresh token (also JWT with user id sub but longer lifetime)
  * which is then saved in DB ({@link RefreshTokenRepository}) and included in response http-only cookie.
  *
  * @author Anton Lamtev

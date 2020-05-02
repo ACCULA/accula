@@ -26,16 +26,22 @@ plugins:
         enabled: false
       CommentDefaultAccessModifier:
         enabled: false
+      SignatureDeclareThrowsException:
+        enabled: false
+      ExcessiveImports:
+        enabled: false
     config:
-      file: pmd-rules.xml
+      file: pmd.xml
 
   checkstyle:
     enabled: true
+    config:
+      file: checkstyle.xml
     checks:
       com.puppycrawl.tools.checkstyle.checks.imports.CustomImportOrderCheck:
         enabled: false # We separate static imports from usual ones but this check does not expect that and thus warns
-      com.puppycrawl.tools.checkstyle.checks.sizes.LineLengthCheck:
-        max: 140
+      com.puppycrawl.tools.checkstyle.checks.javadoc.JavadocParagraphCheck:
+        enabled: false
       com.puppycrawl.tools.checkstyle.checks.javadoc.SummaryJavadocCheck:
         enabled: false
 
