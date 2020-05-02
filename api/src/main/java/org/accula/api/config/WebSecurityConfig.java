@@ -1,17 +1,19 @@
 package org.accula.api.config;
 
 import lombok.RequiredArgsConstructor;
-import org.accula.auth.jwt.JwtAuthFilter;
-import org.accula.auth.jwt.JwtAuthenticationConverter;
-import org.accula.auth.jwt.JwtRefreshFilter;
-import org.accula.auth.oauth2.OAuth2LoginFailureHandler;
-import org.accula.auth.oauth2.OAuth2LoginSuccessHandler;
-import org.accula.auth.jwt.crypto.Jwt;
-import org.accula.auth.jwt.crypto.EcKeys;
+import org.accula.api.auth.jwt.JwtAuthFilter;
+import org.accula.api.auth.jwt.JwtAuthenticationConverter;
+import org.accula.api.auth.jwt.crypto.EcKeys;
+import org.accula.api.auth.jwt.crypto.Jwt;
+import org.accula.api.auth.oauth2.OAuth2LoginFailureHandler;
+import org.accula.api.auth.oauth2.OAuth2LoginSuccessHandler;
+import org.accula.api.db.RefreshTokenRepository;
+import org.accula.api.db.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.security.oauth2.client.ReactiveOAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.registration.ReactiveClientRegistrationRepository;
 import org.springframework.security.oauth2.client.web.server.DefaultServerOAuth2AuthorizationRequestResolver;
 import org.springframework.security.web.server.SecurityWebFilterChain;
@@ -26,14 +28,13 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
+import java.time.Duration;
 
 import static java.util.Objects.requireNonNull;
 import static org.springframework.http.HttpMethod.GET;
-import static org.springframework.http.HttpMethod.POST;
 import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 import static org.springframework.security.config.web.server.SecurityWebFiltersOrder.AUTHENTICATION;
-import static org.springframework.security.config.web.server.SecurityWebFiltersOrder.HTTP_HEADERS_WRITER;
 import static org.springframework.security.web.server.util.matcher.ServerWebExchangeMatchers.pathMatchers;
 
 /**
@@ -68,7 +69,6 @@ public class WebSecurityConfig {
                         .pathMatchers("/greet").authenticated()
                         .anyExchange().permitAll())
 
-                .addFilterAt(new JwtRefreshFilter(pathMatchers(POST, "/refreshToken")), HTTP_HEADERS_WRITER)
                 .addFilterAt(authenticationFilter, AUTHENTICATION)
 
                 .oauth2Login(oauth2 -> oauth2
@@ -98,20 +98,28 @@ public class WebSecurityConfig {
     @Bean
     Jwt jwt(final ECPrivateKey privateEcKey,
             final ECPublicKey publicEcKey,
-            @Value("${accula.jwt.issuer}") final String issuer,
-            @Value("${accula.jwt.expiresInMins}") final int expiresInMins) {
+            @Value("${accula.jwt.issuer}") final String issuer) {
 
-        return new Jwt(privateEcKey, publicEcKey, issuer, expiresInMins);
+        return new Jwt(privateEcKey, publicEcKey, issuer);
     }
 
     @Bean
-    OAuth2LoginSuccessHandler oauth2LoginSuccessHandler(final Jwt jwt) {
-        return new OAuth2LoginSuccessHandler(jwt);
+    OAuth2LoginSuccessHandler oauth2LoginSuccessHandler(
+            final Jwt jwt,
+            @Value("${accula.jwt.expiresIn.access}") final Duration accessExpiresIn,
+            @Value("${accula.jwt.expiresIn.refresh}") final Duration refreshExpiresIn,
+            final ReactiveOAuth2AuthorizedClientService authorizedClientService,
+            final UserRepository users,
+            final RefreshTokenRepository refreshTokens) {
+
+        return new OAuth2LoginSuccessHandler(jwt, accessExpiresIn, refreshExpiresIn, authorizedClientService, users, refreshTokens);
     }
 
     @Bean
-    ServerAuthenticationConverter authenticationConverter(final Jwt jwt) {
-        return new JwtAuthenticationConverter(jwt);
+    ServerAuthenticationConverter authenticationConverter(final Jwt jwt,
+                                                          @Value("${accula.jwt.expiresIn.refresh}") final Duration refreshExpiresIn,
+                                                          final RefreshTokenRepository refreshTokens) {
+        return new JwtAuthenticationConverter(jwt, refreshExpiresIn, refreshTokens);
     }
 
     @Bean

@@ -1,4 +1,4 @@
-package org.accula.auth.jwt.crypto;
+package org.accula.api.auth.jwt.crypto;
 
 import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;

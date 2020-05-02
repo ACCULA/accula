@@ -1,4 +1,4 @@
-package org.accula.auth.oauth2;
+package org.accula.api.auth.oauth2;
 
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.server.WebFilterExchange;

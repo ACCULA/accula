@@ -1,4 +1,4 @@
-package org.accula.auth.jwt;
+package org.accula.api.auth.jwt;
 
 import org.springframework.security.web.server.authentication.AuthenticationWebFilter;
 

@@ -21,6 +21,10 @@ spring:
 
 logging:
   level:
+    org:
+      springframework:
+        data:
+          r2dbc=DEBUG:
     ROOT: DEBUG
 
 accula:
@@ -29,4 +33,18 @@ accula:
       public: "accula.public.der"
       private: "accula.private.der"
     issuer: ${jwt.issuer}
-    expiresInMins: ${jwt.expiresInMins}
+    expiresIn:
+      access: ${jwt.expiresIn.access}
+      refresh: ${jwt.expiresIn.refresh}
+
+  db:
+    host: ${db.host}
+    port: ${db.port}
+    user: ${db.user}
+    password: ${db.password}
+    database: ${db.database}
+
+    pool:
+      maxIdleTime: 5s
+      minSize: 2
+      maxSize: 20

@@ -1,12 +1,13 @@
 plugins {
-    id("org.springframework.boot") version "2.2.6.RELEASE"
+    id("org.springframework.boot") version "2.3.0.RC1"
     id("io.spring.dependency-management") version "1.0.9.RELEASE"
 }
 
 version = "1.0-SNAPSHOT"
 
-ext["spring.version"] = "5.2.5.RELEASE"
-ext["spring-security.version"] = "5.3.1.RELEASE"
+repositories {
+    maven(url = "https://repo.spring.io/milestone")
+}
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-webflux")
@@ -23,8 +24,12 @@ dependencies {
 
     implementation("com.auth0:java-jwt:3.10.2")
 
-    implementation(project(":db"))
-    implementation(project(":auth"))
-
     implementation("io.projectreactor:reactor-tools")
+
+    implementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
+    implementation("io.r2dbc:r2dbc-postgresql:0.8.2.RELEASE")
+    implementation("io.r2dbc:r2dbc-pool:0.8.2.RELEASE")
+    implementation("io.r2dbc:r2dbc-spi:0.8.1.RELEASE")
+
+    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 }

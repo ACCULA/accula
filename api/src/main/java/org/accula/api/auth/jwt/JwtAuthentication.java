@@ -1,6 +1,6 @@
-package org.accula.auth.jwt;
+package org.accula.api.auth.jwt;
 
-import org.accula.auth.github.User;
+import org.accula.api.auth.github.User;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
