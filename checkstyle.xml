@@ -8,6 +8,8 @@
 
     <property name="severity" value="warning"/>
 
+    <property name="fileExtensions" value="java"/>
+
     <module name="LineLength">
         <property name="fileExtensions" value="java"/>
         <property name="max" value="140"/>
