@@ -2,7 +2,6 @@ package org.accula.api.db.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
@@ -16,21 +15,19 @@ import org.springframework.data.relational.core.mapping.Table;
 public class User {
     @Id
     @Nullable
-    Long id;
+    private Long id;
     @Nullable
-    String firstName;
+    private String firstName;
     @Nullable
-    String lastName;
-    Long githubId;
-    String githubAccessToken;
+    private String lastName;
+    private Long githubId;
+    private String githubAccessToken;
 
-    @NotNull
-    public static User of(@NotNull final Long githubId, @NotNull final String githubAccessToken) {
+    public static User of(final Long githubId, final String githubAccessToken) {
         return new User(null, null, null, githubId, githubAccessToken);
     }
 
-    @NotNull
-    public static User of(@NotNull final Long id, @NotNull final Long githubId, @NotNull final String githubAccessToken) {
+    public static User of(final Long id, final Long githubId, final String githubAccessToken) {
         return new User(id, null, null, githubId, githubAccessToken);
     }
 }

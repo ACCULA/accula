@@ -7,7 +7,6 @@ import io.r2dbc.spi.ConnectionFactories;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.ConnectionFactoryOptions;
 import lombok.RequiredArgsConstructor;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -33,7 +32,6 @@ public class DbConfig extends AbstractR2dbcConfiguration {
     private final DbProperties dbProperties;
 
     @Bean
-    @NotNull
     @Override
     public ConnectionFactory connectionFactory() {
         final var pool = dbProperties.getPool();

@@ -1,4 +1,4 @@
-package org.accula.api.auth.github;
+package org.accula.api.auth.jwt;
 
 import lombok.Value;
 
@@ -6,6 +6,6 @@ import lombok.Value;
  * @author Anton Lamtev
  */
 @Value
-public class User {
+public class AuthorizedUser {
     Long id;
 }

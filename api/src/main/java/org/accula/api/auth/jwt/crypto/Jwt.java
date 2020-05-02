@@ -3,7 +3,6 @@ package org.accula.api.auth.jwt.crypto;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import lombok.Value;
-import org.jetbrains.annotations.NotNull;
 
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
@@ -18,15 +17,14 @@ public final class Jwt {
     private final Algorithm algorithm;
     private final String issuer;
 
-    public Jwt(@NotNull final ECPrivateKey privateEcKey,
-               @NotNull final ECPublicKey publicEcKey,
-               @NotNull final String issuer) {
+    public Jwt(final ECPrivateKey privateEcKey,
+               final ECPublicKey publicEcKey,
+               final String issuer) {
         this.algorithm = Algorithm.ECDSA256(publicEcKey, privateEcKey);
         this.issuer = issuer;
     }
 
-    @NotNull
-    public Details generate(@NotNull final String subject, @NotNull final Duration expiresIn) {
+    public Details generate(final String subject, final Duration expiresIn) {
         final var expirationDate = Instant.now().plus(expiresIn);
         final var token = JWT
                 .create()
@@ -38,8 +36,7 @@ public final class Jwt {
         return new Details(token, expirationDate);
     }
 
-    @NotNull
-    public String verify(@NotNull final String jwt) {
+    public String verify(final String jwt) {
         return JWT
                 .require(algorithm)
                 .withIssuer(issuer)

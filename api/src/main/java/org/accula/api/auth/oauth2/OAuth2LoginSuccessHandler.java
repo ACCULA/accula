@@ -8,7 +8,6 @@ import org.accula.api.db.RefreshTokenRepository;
 import org.accula.api.db.UserRepository;
 import org.accula.api.db.dto.RefreshToken;
 import org.accula.api.db.dto.User;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.ReactiveOAuth2AuthorizedClientService;
@@ -71,10 +70,9 @@ public final class OAuth2LoginSuccessHandler implements ServerAuthenticationSucc
         });
     }
 
-    @NotNull
-    private Mono<Void> formResponse(@NotNull final WebFilterExchange exchange,
-                                    @NotNull final Long userId,
-                                    @NotNull final String refreshToken) {
+    private Mono<Void> formResponse(final WebFilterExchange exchange,
+                                    final Long userId,
+                                    final String refreshToken) {
         final var response = exchange.getExchange().getResponse();
 
         return response.writeWith(Mono.fromSupplier(() -> {
