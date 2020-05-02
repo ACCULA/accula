@@ -10,44 +10,52 @@
 
     <rule ref="category/java/codestyle.xml/LongVariable">
         <properties>
-            <property name="minimum" value="32" />
+            <property name="minimum" value="32"/>
         </properties>
     </rule>
 
     <rule ref="category/java/codestyle.xml/ShortVariable">
         <properties>
-            <property name="minimum" value="1" />
+            <property name="minimum" value="1"/>
         </properties>
     </rule>
 
     <rule ref="category/java/codestyle.xml/ShortMethodName">
         <properties>
-            <property name="minimum" value="2" />
+            <property name="minimum" value="2"/>
         </properties>
     </rule>
 
     <rule ref="category/java/codestyle.xml/ShortClassName">
         <properties>
-            <property name="minimum" value="4" />
+            <property name="minimum" value="4"/>
         </properties>
     </rule>
 
     <rule ref="category/java/codestyle.xml/LinguisticNaming">
         <properties>
-            <property name="checkSetters" value="false" />
+            <property name="checkSetters" value="false"/>
         </properties>
     </rule>
 
     <rule ref="category/java/codestyle.xml/TooManyStaticImports">
         <properties>
-            <property name="maximumStaticImports" value="15" />
+            <property name="maximumStaticImports" value="15"/>
         </properties>
     </rule>
 
     <rule ref="category/java/codestyle.xml/ClassNamingConventions">
         <properties>
-            <property name="utilityClassPattern" value="[A-Z][a-zA-Z0-9]+(Utils?|Helper|Constants|s)" />
+            <property name="utilityClassPattern" value="[A-Z][a-zA-Z0-9]+(Utils?|Helper|Constants|s)"/>
         </properties>
     </rule>
+
+    <rule ref="category/java/bestpractices.xml"/>
+    <rule ref="category/java/codestyle.xml"/>
+    <rule ref="category/java/design.xml"/>
+    <rule ref="category/java/errorprone.xml"/>
+    <rule ref="category/java/multithreading.xml"/>
+    <rule ref="category/java/performance.xml"/>
+    <rule ref="category/java/security.xml"/>
 
 </ruleset>
