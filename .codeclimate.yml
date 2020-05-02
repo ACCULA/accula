@@ -20,8 +20,6 @@ plugins:
         enabled: false # Spring Boot tests use the underlying statements inside its own
       BeanMembersShouldSerialize:
         enabled: false # Most of the declared beans in our app should not be serialized
-      FormalParameterNamingConventions:
-        enabled: false # We think that lambda parameter named as double-underscore is not a crime :)
       UseProperClassLoader:
         enabled: false
       CommentDefaultAccessModifier:
@@ -30,6 +28,8 @@ plugins:
         enabled: false
       ExcessiveImports:
         enabled: false
+      DefaultPackage:
+        enabled: false # Lombok-associated issue
     config:
       file: pmd.xml
 
