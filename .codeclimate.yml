@@ -35,7 +35,7 @@ plugins:
       TooManyStaticImports:
         maximumStaticImports: 15
       ClassNamingConventions:
-        utilityClassPattern: [A-Z][a-zA-Z0-9]+(Utils?|Helper|Constants|s)
+        utilityClassPattern: "[A-Z][a-zA-Z0-9]+(Utils?|Helper|Constants|s)"
 
     config:
       rules:
