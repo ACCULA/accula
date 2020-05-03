@@ -11,6 +11,7 @@ import java.net.URI;
 import java.time.Duration;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.springframework.http.HttpStatus.FOUND;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 /**
@@ -34,11 +35,12 @@ public final class JwtAccessTokenResponseProducer {
             final var accessTokenDetails = jwt.generate(userId.toString(), accessExpiresIn);
             final var location = URI.create("http://localhost:3000/oauth2/redirect?accessToken=" + accessTokenDetails.getToken());
             response.getHeaders().setLocation(location);
-            response.setStatusCode(HttpStatus.FOUND);
+            response.getHeaders().setAccessControlMaxAge(Duration.ofDays(365));
+            response.setStatusCode(FOUND);
             RefreshTokenCookies.set(response.getCookies(), refreshToken, refreshExpiresIn);
         });
-    } 
-    
+    }
+
     public Mono<Void> formResponse(final ServerWebExchange exchange, final Long userId, final String refreshToken) {
         final var response = exchange.getResponse();
 
@@ -52,6 +54,7 @@ public final class JwtAccessTokenResponseProducer {
 
             response.getHeaders().setContentType(APPLICATION_JSON);
             response.getHeaders().setContentLength(respBody.length);
+            response.getHeaders().setAccessControlMaxAge(Duration.ofDays(365));
 
             RefreshTokenCookies.set(response.getCookies(), refreshToken, refreshExpiresIn);
 

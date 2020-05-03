@@ -36,13 +36,14 @@ public final class JwtRefreshFilter implements WebFilter {
                 .matches(exchange)
                 .filter(ServerWebExchangeMatcher.MatchResult::isMatch)
                 .flatMap(match -> doRefreshToken(exchange))
-                .switchIfEmpty(chain.filter(exchange).then(Mono.empty()));
+                .then(chain.filter(exchange));
     }
 
     private Mono<Void> doRefreshToken(final ServerWebExchange exchange) {
         return Mono
                 .justOrEmpty(RefreshTokenCookies.get(exchange.getRequest().getCookies()))
                 .flatMap(refreshToken -> {
+                    System.err.println("FLAT");
                     final var userIdString = jwt.verify(refreshToken);
                     final var userId = Long.valueOf(userIdString);
                     final var newRefreshTokenDetails = jwt.generate(userIdString, refreshExpiresIn);
@@ -54,7 +55,9 @@ public final class JwtRefreshFilter implements WebFilter {
                             .then(responseProducer.formResponse(exchange, userId, newRefreshToken));
                 })
                 .switchIfEmpty(Mono.fromRunnable(() -> {
-                    exchange.getResponse().setStatusCode(HttpStatus.BAD_REQUEST);
+                    System.err.println("SWITCH");
+                    exchange.getResponse().setStatusCode(HttpStatus.OK);
+                    exchange.getResponse().setComplete();
                 }));
     }
 }

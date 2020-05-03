@@ -162,16 +162,16 @@ public class WebSecurityConfig {
         );
     }
 
-    @Bean
-    public CorsWebFilter corsWebFilter() {
-        final var corsConfiguration = new CorsConfiguration();
-        corsConfiguration.setAllowCredentials(true);
-        corsConfiguration.addAllowedHeader("*");
-        corsConfiguration.addAllowedMethod("*");
-        corsConfiguration.addAllowedOrigin("*");
-        corsConfiguration.addExposedHeader(HttpHeaders.SET_COOKIE);
-        final var corsConfigurationSource = new UrlBasedCorsConfigurationSource();
-        corsConfigurationSource.registerCorsConfiguration("/**", corsConfiguration);
-        return new CorsWebFilter(corsConfigurationSource);
-    }
+//    @Bean
+//    public CorsWebFilter corsWebFilter() {
+//        final var corsConfiguration = new CorsConfiguration();
+//        corsConfiguration.setAllowCredentials(true);
+//        corsConfiguration.addAllowedHeader("*");
+//        corsConfiguration.addAllowedMethod("*");
+//        corsConfiguration.addAllowedOrigin("*");
+//        corsConfiguration.addExposedHeader(HttpHeaders.SET_COOKIE);
+//        final var corsConfigurationSource = new UrlBasedCorsConfigurationSource();
+//        corsConfigurationSource.registerCorsConfiguration("/**", corsConfiguration);
+//        return new CorsWebFilter(corsConfigurationSource);
+//    }
 }

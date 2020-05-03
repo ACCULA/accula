@@ -1,6 +1,5 @@
 import React from 'react'
 import { MenuItem, Nav, NavDropdown, NavItem } from 'react-bootstrap'
-import { Link } from 'react-router-dom'
 import { API_URL } from 'utils'
 
 const NavDropdownHack: any = NavDropdown
@@ -8,8 +7,6 @@ const NavDropdownHack: any = NavDropdown
 interface NavbarLinksProps {
   loggedIn: boolean
 }
-
-const NavItemHack: any = NavItem
 
 const NavbarLinks = ({ loggedIn }: NavbarLinksProps) => {
   const notification = (
@@ -48,12 +45,12 @@ const NavbarLinks = ({ loggedIn }: NavbarLinksProps) => {
               <MenuItem divider />
               <MenuItem eventKey={2.5}>Separated link</MenuItem>
             </NavDropdown>
-            <NavItemHack componentClass={Link} to="/logout" href="/logout">
-              Log out
-            </NavItemHack>
+            <NavItem href={`${API_URL}/logout`} className="navbar-link">
+              <i className="fab fa-fw fa-sign-out-alt" /> Log out
+            </NavItem>
           </>
         ) : (
-          <NavItem href={`${API_URL}/login/github`} id="signInBtn">
+          <NavItem href={`${API_URL}/login/github`} id="navbar-link">
             <i className="fab fa-fw fa-github" /> Sign in with Github
           </NavItem>
         )}

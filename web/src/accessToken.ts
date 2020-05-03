@@ -17,9 +17,6 @@ const updateAccessToken = async () => {
 
 export const getAccessToken = async (): Promise<string> => {
   try {
-    if (!accessToken) {
-      return Promise.resolve('')
-    }
     const { exp } = jwtDecode(accessToken)
     if (Date.now() >= exp) {
       return accessToken

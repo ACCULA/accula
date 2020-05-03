@@ -47,12 +47,15 @@ const App = (props: RouteComponentProps) => {
       })
   }, [])
 
+  if (loading) {
+    return <></>
+  }
+  
   return (
     <div className="wrapper">
       <Sidebar {...props} routes={routes} color="black" loggedIn={loggedIn} />
       <div id="main-panel" className="main-panel">
         <AdminNavbar {...props} brandText={brand} loggedIn={loggedIn} />
-        {loading && <h2>Loading...</h2>}
         <Switch>
           <Route
             path="/oauth2/redirect"
