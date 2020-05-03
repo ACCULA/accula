@@ -3,9 +3,11 @@ package org.accula.api.auth.jwt;
 import lombok.RequiredArgsConstructor;
 import org.accula.api.auth.jwt.crypto.Jwt;
 import org.accula.api.auth.util.RefreshTokenCookies;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import java.net.URI;
 import java.time.Duration;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -28,6 +30,16 @@ public final class JwtAccessTokenResponseProducer {
     public Mono<Void> formResponse(final ServerWebExchange exchange, final Long userId, final String refreshToken) {
         final var response = exchange.getResponse();
 
+        if (true) {
+            return Mono.fromRunnable(() -> {
+                final var accessTokenDetails = jwt.generate(userId.toString(), accessExpiresIn);
+                final var location = URI.create("http://localhost:3000/oauth/redirect?accessToken=" + accessTokenDetails.getToken());
+                response.getHeaders().setLocation(location);
+                response.setStatusCode(HttpStatus.MOVED_TEMPORARILY);
+                RefreshTokenCookies.set(response.getCookies(), refreshToken, refreshExpiresIn);
+            });
+        }
+        
         return response.writeWith(Mono.fromSupplier(() -> {
             final var accessTokenDetails = jwt.generate(userId.toString(), accessExpiresIn);
             final var respBody = String.format(

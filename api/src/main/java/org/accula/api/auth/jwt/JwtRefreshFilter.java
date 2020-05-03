@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.accula.api.auth.jwt.crypto.Jwt;
 import org.accula.api.auth.util.RefreshTokenCookies;
 import org.accula.api.db.RefreshTokenRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatcher;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
@@ -51,6 +52,8 @@ public final class JwtRefreshFilter implements WebFilter {
                             .replaceRefreshToken(userId, refreshToken, newRefreshToken, newRefreshTokenExpirationDate)
                             .then(responseProducer.formResponse(exchange, userId, newRefreshToken));
                 })
-                .onErrorResume(e -> Mono.empty());
+                .onErrorResume(e -> Mono.fromRunnable(() -> {
+                    exchange.getResponse().setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR);
+                }));
     }
 }

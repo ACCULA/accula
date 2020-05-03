@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Redirect, Route, RouteComponentProps, Switch } from 'react-router-dom'
 
 import AdminNavbar from 'components/Navbars/Navbar'
@@ -6,6 +6,8 @@ import Footer from 'components/Footer/Footer'
 import Sidebar from 'components/Sidebar/Sidebar'
 
 import routes from 'routes'
+import { getAccessToken } from 'accessToken'
+import OAuth2RedirectHandler from 'OAuth2RedirectHandler'
 
 const App = (props: RouteComponentProps) => {
   const { history, location } = props
@@ -27,14 +29,36 @@ const App = (props: RouteComponentProps) => {
   const brand: string =
     routes.filter(route => location.pathname.indexOf(route.path) >= 0)[0]?.name || 'ACCULA'
 
-  const loggedIn = false
+  const [loading, setLoading] = useState(true)
+  const [loggedIn, setLoggedIn] = useState(false)
+
+  useEffect(() => {
+    getAccessToken()
+      .then(accessToken => {
+        if (accessToken && accessToken !== '') {
+          setLoggedIn(true)
+        } else {
+          setLoggedIn(false)
+        }
+        setLoading(false)
+      })
+      .catch(() => {
+        setLoading(false)
+      })
+  }, [])
 
   return (
     <div className="wrapper">
       <Sidebar {...props} routes={routes} color="black" loggedIn={loggedIn} />
       <div id="main-panel" className="main-panel">
         <AdminNavbar {...props} brandText={brand} loggedIn={loggedIn} />
+        {loading && <h2>Loading...</h2>}
         <Switch>
+          <Route
+            path="/oauth2/redirect"
+            component={OAuth2RedirectHandler}
+            exact
+          />
           {routes.map(route => (
             <Route
               key={route.path}

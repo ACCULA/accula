@@ -3,6 +3,11 @@ spring:
     include:
       - secrets
 
+  flyway:
+    url: jdbc:postgresql://${db.host}/${db.database}
+    user: ${db.user}
+    password: ${db.password}
+
   security:
     oauth2:
       client:

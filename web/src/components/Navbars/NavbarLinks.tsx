@@ -1,6 +1,7 @@
 import React from 'react'
 import { MenuItem, Nav, NavDropdown, NavItem } from 'react-bootstrap'
 import { Link } from 'react-router-dom'
+import { API_URL } from 'utils'
 
 const NavDropdownHack: any = NavDropdown
 
@@ -52,9 +53,12 @@ const NavbarLinks = ({ loggedIn }: NavbarLinksProps) => {
             </NavItemHack>
           </>
         ) : (
-          <NavItemHack componentClass={Link} to="/login" href="/login">
+          // <NavItemHack componentClass={Link} to={`${API_URL}/login`} href={`${API_URL}/login`}>
+          //   <i className="fab fa-fw fa-github" /> Sign in with Github
+          // </NavItemHack>
+          <a href={`${API_URL}/login/github`}>
             <i className="fab fa-fw fa-github" /> Sign in with Github
-          </NavItemHack>
+          </a>
         )}
       </Nav>
     </div>
