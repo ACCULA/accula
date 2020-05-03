@@ -76,7 +76,7 @@ public final class OAuth2LoginSuccessHandler implements ServerAuthenticationSucc
                         final var userId = userIdAndRefreshToken.getT1();
                         final var refreshToken = userIdAndRefreshToken.getT2();
 
-                        return responseProducer.formResponse(exchange.getExchange(), userId, refreshToken.getToken());
+                        return responseProducer.formRedirect(exchange.getExchange(), userId, refreshToken.getToken());
                     });
         });
     }

@@ -27,18 +27,19 @@ public final class JwtAccessTokenResponseProducer {
     private final Duration accessExpiresIn;
     private final Duration refreshExpiresIn;
 
+    public Mono<Void> formRedirect(final ServerWebExchange exchange, final Long userId, final String refreshToken) {
+        final var response = exchange.getResponse();
+        return Mono.fromRunnable(() -> {
+            final var accessTokenDetails = jwt.generate(userId.toString(), accessExpiresIn);
+            final var location = URI.create("http://localhost:3000/oauth2/redirect?accessToken=" + accessTokenDetails.getToken());
+            response.getHeaders().setLocation(location);
+            response.setStatusCode(HttpStatus.FOUND);
+            RefreshTokenCookies.set(response.getCookies(), refreshToken, refreshExpiresIn);
+        });
+    } 
+    
     public Mono<Void> formResponse(final ServerWebExchange exchange, final Long userId, final String refreshToken) {
         final var response = exchange.getResponse();
-
-        if (true) {
-            return Mono.fromRunnable(() -> {
-                final var accessTokenDetails = jwt.generate(userId.toString(), accessExpiresIn);
-                final var location = URI.create("http://localhost:3000/oauth/redirect?accessToken=" + accessTokenDetails.getToken());
-                response.getHeaders().setLocation(location);
-                response.setStatusCode(HttpStatus.MOVED_TEMPORARILY);
-                RefreshTokenCookies.set(response.getCookies(), refreshToken, refreshExpiresIn);
-            });
-        }
         
         return response.writeWith(Mono.fromSupplier(() -> {
             final var accessTokenDetails = jwt.generate(userId.toString(), accessExpiresIn);
