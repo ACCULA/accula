@@ -1,6 +1,5 @@
 package org.accula.api.routers;
 
-import org.jetbrains.annotations.NotNull;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.RouterFunction;
@@ -14,11 +13,10 @@ public final class StatusRouter {
     private static final String STATUS = "{\"status\":\"ONLINE\"}";
 
     @Bean
-    @NotNull
     public RouterFunction<ServerResponse> statusRoute() {
         return RouterFunctions
                 .route()
-                .GET("/status", __ ->
+                .GET("/status", request ->
                         ServerResponse
                                 .ok()
                                 .contentType(APPLICATION_JSON)
