@@ -1,0 +1,50 @@
+spring:
+  profiles:
+    include:
+      - secrets
+
+  security:
+    oauth2:
+      client:
+        registration:
+          github:
+            client-id: ${github-app.client-id}
+            client-secret: ${github-app.client-secret}
+            scope: read:user,public_repo
+            redirect-uri: "{baseUrl}/login/github/callback"
+
+#management:
+#  endpoints:
+#    web:
+#      exposure:
+#        include: "*"
+
+logging:
+  level:
+    org:
+      springframework:
+        data:
+          r2dbc=DEBUG:
+    ROOT: DEBUG
+
+accula:
+  jwt:
+    signature:
+      publicKey: "accula.public.der"
+      privateKey: "accula.private.der"
+    issuer: ${jwt.issuer}
+    expiresIn:
+      access: ${jwt.expiresIn.access}
+      refresh: ${jwt.expiresIn.refresh}
+
+  db:
+    host: ${db.host}
+    port: ${db.port}
+    user: ${db.user}
+    password: ${db.password}
+    database: ${db.database}
+
+    pool:
+      maxIdleTime: 5s
+      minSize: 2
+      maxSize: 20

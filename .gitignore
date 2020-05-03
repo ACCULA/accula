@@ -3,3 +3,6 @@
 *.iml
 **/out
 /.gradle
+*.der
+*.pem
+application-secrets.yml
