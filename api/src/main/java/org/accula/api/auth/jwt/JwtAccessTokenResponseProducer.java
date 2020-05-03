@@ -18,6 +18,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
  * body JSON (see {@code RESPONSE_BODY_FORMAT}), and refresh token included in cookies.
  *
  * @author Anton Lamtev
+ * @author Vadim Dyachkov
  */
 @RequiredArgsConstructor
 public final class JwtAccessTokenResponseProducer {
@@ -28,8 +29,8 @@ public final class JwtAccessTokenResponseProducer {
     private final Duration refreshExpiresIn;
 
     public Mono<Void> formRedirect(final ServerWebExchange exchange, final Long userId, final String refreshToken) {
-        final var response = exchange.getResponse();
         return Mono.fromRunnable(() -> {
+            final var response = exchange.getResponse();
             final var accessTokenDetails = jwt.generate(userId.toString(), accessExpiresIn);
             final var location = URI.create("http://localhost:3000/oauth2/redirect?accessToken=" + accessTokenDetails.getToken());
             response.getHeaders().setLocation(location);
@@ -40,7 +41,7 @@ public final class JwtAccessTokenResponseProducer {
     
     public Mono<Void> formResponse(final ServerWebExchange exchange, final Long userId, final String refreshToken) {
         final var response = exchange.getResponse();
-        
+
         return response.writeWith(Mono.fromSupplier(() -> {
             final var accessTokenDetails = jwt.generate(userId.toString(), accessExpiresIn);
             final var respBody = String.format(

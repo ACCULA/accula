@@ -20,6 +20,7 @@ import java.time.Duration;
  * <p>Response is constructed using {@link JwtAccessTokenResponseProducer}.
  *
  * @author Anton Lamtev
+ * @author Vadim Dyachkov
  */
 @RequiredArgsConstructor
 public final class JwtRefreshFilter implements WebFilter {
@@ -52,8 +53,8 @@ public final class JwtRefreshFilter implements WebFilter {
                             .replaceRefreshToken(userId, refreshToken, newRefreshToken, newRefreshTokenExpirationDate)
                             .then(responseProducer.formResponse(exchange, userId, newRefreshToken));
                 })
-                .onErrorResume(e -> Mono.fromRunnable(() -> {
-                    exchange.getResponse().setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR);
+                .switchIfEmpty(Mono.fromRunnable(() -> {
+                    exchange.getResponse().setStatusCode(HttpStatus.BAD_REQUEST);
                 }));
     }
 }

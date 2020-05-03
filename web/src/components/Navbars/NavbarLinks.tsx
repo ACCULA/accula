@@ -53,12 +53,9 @@ const NavbarLinks = ({ loggedIn }: NavbarLinksProps) => {
             </NavItemHack>
           </>
         ) : (
-          // <NavItemHack componentClass={Link} to={`${API_URL}/login`} href={`${API_URL}/login`}>
-          //   <i className="fab fa-fw fa-github" /> Sign in with Github
-          // </NavItemHack>
-          <a href={`${API_URL}/login/github`}>
+          <NavItem href={`${API_URL}/login/github`} id="signInBtn">
             <i className="fab fa-fw fa-github" /> Sign in with Github
-          </a>
+          </NavItem>
         )}
       </Nav>
     </div>

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Redirect, Route, RouteComponentProps, Switch } from 'react-router-dom'
 
-import AdminNavbar from 'components/Navbars/Navbar'
+import AdminNavbar from 'components/Navbars'
 import Footer from 'components/Footer/Footer'
 import Sidebar from 'components/Sidebar/Sidebar'
 

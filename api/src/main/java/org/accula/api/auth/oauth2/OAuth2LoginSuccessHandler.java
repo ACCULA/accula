@@ -33,6 +33,7 @@ import static java.util.Objects.requireNonNull;
  * which is then saved in DB ({@link RefreshTokenRepository}) and included in response http-only cookie.
  *
  * @author Anton Lamtev
+ * @author Vadim Dyachkov
  */
 @RequiredArgsConstructor
 public final class OAuth2LoginSuccessHandler implements ServerAuthenticationSuccessHandler {

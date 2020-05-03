@@ -1,0 +1,9 @@
+@import "../../styles/variables";
+
+#signInBtn {
+  color: $dark-gray;
+  
+  &:hover {
+    color: $matisse;
+  }
+}

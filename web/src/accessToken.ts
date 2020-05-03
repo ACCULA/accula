@@ -8,17 +8,18 @@ interface Token {
 let accessToken = ''
 
 const updateAccessToken = async () => {
-  const updatedToken = await refreshToken().catch(() => {
+  const token: Token = await refreshToken().catch(() => {
     throw Error('Refresh token failed')
   })
-
-  const token: Token = updatedToken
   accessToken = token.accessToken
   return accessToken
 }
 
 export const getAccessToken = async (): Promise<string> => {
   try {
+    if (!accessToken) {
+      return Promise.resolve('')
+    }
     const { exp } = jwtDecode(accessToken)
     if (Date.now() >= exp) {
       return accessToken

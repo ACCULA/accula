@@ -6,7 +6,6 @@ import io.r2dbc.spi.ConnectionFactories;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.ConnectionFactoryOptions;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.autoconfigure.flyway.FlywayDataSource;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,7 +27,6 @@ import static io.r2dbc.spi.ConnectionFactoryOptions.USER;
  */
 @Configuration
 @EnableR2dbcRepositories
-@FlywayDataSource
 @EnableConfigurationProperties(DbProperties.class)
 @RequiredArgsConstructor
 public class DbConfig extends AbstractR2dbcConfiguration {
