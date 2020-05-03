@@ -1,6 +1,7 @@
 package org.accula.api.auth.jwt.crypto;
 
 import com.auth0.jwt.JWT;
+import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import lombok.Value;
 
@@ -15,12 +16,12 @@ import java.util.Date;
  */
 public final class Jwt {
     private final Algorithm algorithm;
+    private final JWTVerifier verifier;
     private final String issuer;
 
-    public Jwt(final ECPrivateKey privateEcKey,
-               final ECPublicKey publicEcKey,
-               final String issuer) {
+    public Jwt(final ECPrivateKey privateEcKey, final ECPublicKey publicEcKey, final String issuer) {
         this.algorithm = Algorithm.ECDSA256(publicEcKey, privateEcKey);
+        this.verifier = JWT.require(algorithm).withIssuer(issuer).build();
         this.issuer = issuer;
     }
 
@@ -37,12 +38,7 @@ public final class Jwt {
     }
 
     public String verify(final String jwt) {
-        return JWT
-                .require(algorithm)
-                .withIssuer(issuer)
-                .build()
-                .verify(jwt)
-                .getSubject();
+        return verifier.verify(jwt).getSubject();
     }
 
     @Value

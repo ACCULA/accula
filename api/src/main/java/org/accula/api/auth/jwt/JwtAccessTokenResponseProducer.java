@@ -19,7 +19,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
  */
 @RequiredArgsConstructor
 public final class JwtAccessTokenResponseProducer {
-    private static final String RESPONSE_BODY_FORMAT = "{\"accessToken\":\"%s\",\"expirationDate\":\"%s\"}";
+    private static final String RESPONSE_BODY_FORMAT = "{\"accessToken\":\"%s\",\"expirationDateMillis\":\"%d\"}";
 
     private final Jwt jwt;
     private final Duration accessExpiresIn;
@@ -33,7 +33,7 @@ public final class JwtAccessTokenResponseProducer {
             final var respBody = String.format(
                     RESPONSE_BODY_FORMAT,
                     accessTokenDetails.getToken(),
-                    accessTokenDetails.getExpirationDate().toString()
+                    accessTokenDetails.getExpirationDate().toEpochMilli()
             ).getBytes(UTF_8);
 
             response.getHeaders().setContentType(APPLICATION_JSON);
