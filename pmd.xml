@@ -44,6 +44,12 @@
         </properties>
     </rule>
 
+    <rule ref="category/java/design.xml/TooManyMethods">
+        <properties>
+            <property name="maxmethods" value="15"/>
+        </properties>
+    </rule>
+
     <rule ref="category/java/codestyle.xml/ClassNamingConventions">
         <properties>
             <property name="utilityClassPattern" value="[A-Z][a-zA-Z0-9]+(Utils?|Helper|Constants|s|or)"/>
