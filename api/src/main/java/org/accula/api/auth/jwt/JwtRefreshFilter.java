@@ -4,8 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.accula.api.auth.jwt.crypto.Jwt;
 import org.accula.api.auth.util.CookieRefreshTokenHelper;
 import org.accula.api.db.RefreshTokenRepository;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatcher;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.server.ServerWebExchange;
@@ -41,15 +39,14 @@ public final class JwtRefreshFilter implements WebFilter {
 
     @Override
     public Mono<Void> filter(final ServerWebExchange exchange, final WebFilterChain chain) {
-        final var response = exchange.getResponse();
         return endpointMatcher
                 .matches(exchange)
                 .filter(ServerWebExchangeMatcher.MatchResult::isMatch)
                 .switchIfEmpty(chain.filter(exchange).then(Mono.empty()))
                 .flatMap(match -> {
-                    response.getHeaders().setAccessControlAllowOrigin("http://localhost:3000");
-                    response.getHeaders().setAccessControlAllowHeaders(List.of("Access-Control-Allow-Origin"));
-                    response.getHeaders().setAccessControlAllowCredentials(true);
+                    exchange.getResponse().getHeaders().setAccessControlAllowOrigin("http://localhost:3000");
+                    exchange.getResponse().getHeaders().setAccessControlAllowHeaders(List.of("Access-Control-Allow-Origin"));
+                    exchange.getResponse().getHeaders().setAccessControlAllowCredentials(true);
                     return doRefreshToken(exchange);
                 });
     }
