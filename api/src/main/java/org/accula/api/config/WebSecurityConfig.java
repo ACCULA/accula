@@ -4,9 +4,9 @@ import lombok.RequiredArgsConstructor;
 import org.accula.api.auth.jwt.JwtAccessTokenResponseProducer;
 import org.accula.api.auth.jwt.JwtAuthFilter;
 import org.accula.api.auth.jwt.JwtAuthenticationConverter;
-import org.accula.api.auth.jwt.JwtRefreshFilter;
 import org.accula.api.auth.jwt.crypto.EcKeys;
 import org.accula.api.auth.jwt.crypto.Jwt;
+import org.accula.api.auth.jwt.refresh.JwtRefreshFilter;
 import org.accula.api.auth.oauth2.OAuth2LoginFailureHandler;
 import org.accula.api.auth.oauth2.OAuth2LoginSuccessHandler;
 import org.accula.api.auth.util.CookieRefreshTokenHelper;
@@ -49,6 +49,8 @@ import static org.springframework.security.web.server.util.matcher.ServerWebExch
 public class WebSecurityConfig {
     private final ReactiveClientRegistrationRepository clientRegistrations;
     private final JwtProperties jwtProperties;
+    @Value("${accula.cluster.webUrl}")
+    private String webUrl;
 
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(final ServerHttpSecurity http,
@@ -120,8 +122,7 @@ public class WebSecurityConfig {
     @Bean
     public JwtAccessTokenResponseProducer accessTokenResponseProducer(
             final Jwt jwt,
-            final CookieRefreshTokenHelper cookieRefreshTokenHelper,
-            @Value("${accula.cluster.webUrl}") final String webUrl) {
+            final CookieRefreshTokenHelper cookieRefreshTokenHelper) {
         return new JwtAccessTokenResponseProducer(
                 jwt,
                 jwtProperties.getExpiresIn().getAccess(),
@@ -174,7 +175,8 @@ public class WebSecurityConfig {
                 jwtAccessTokenResponseProducer,
                 jwt,
                 jwtProperties.getExpiresIn().getRefresh(),
-                refreshTokens
+                refreshTokens,
+                webUrl
         );
     }
 }

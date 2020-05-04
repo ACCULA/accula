@@ -7,7 +7,7 @@ plugins:
       squid:S1068:
         enabled: false # Unused fields. Since we use lombok, the check results so many false positives
       squid:S00112:
-        enabled: false # Use of generic exceptions method declaration.
+        enabled: false # Use of generic exceptions in method declaration.
 
   pmd:
     enabled: true
@@ -30,6 +30,9 @@ plugins:
         enabled: false
       DefaultPackage:
         enabled: false # Lombok-associated issue
+      CallSuperInConstructor:
+        enabled: false
+
     config:
       file: pmd.xml
 

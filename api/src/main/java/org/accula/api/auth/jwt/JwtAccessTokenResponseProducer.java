@@ -22,7 +22,8 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
  */
 @RequiredArgsConstructor
 public final class JwtAccessTokenResponseProducer {
-    private static final String RESPONSE_BODY_FORMAT = "{\"accessToken\":\"%s\",\"expirationDateMillis\":%d}";
+    private static final String RESPONSE_BODY_FORMAT = "{\"accessToken\":\"%s\"}";
+    private static final byte[] FAILURE_BODY = String.format(RESPONSE_BODY_FORMAT, "").getBytes(UTF_8);
 
     private final Jwt jwt;
     private final Duration accessExpiresIn;
@@ -46,27 +47,37 @@ public final class JwtAccessTokenResponseProducer {
     }
 
     /**
-     * Produces a response with the access token and its expiration date as a part of
-     * body JSON (see {@code RESPONSE_BODY_FORMAT}), and refresh token included in cookies
+     * Produces a response with the access token as a part of body JSON
+     * (see {@code RESPONSE_BODY_FORMAT}), and refresh token included in cookies
      */
-    public Mono<Void> formResponse(final ServerWebExchange exchange, final Long userId, final String refreshToken) {
+    public Mono<Void> formResponseWithBody(final ServerWebExchange exchange, final Long userId, final String refreshToken) {
         final var response = exchange.getResponse();
 
         return response.writeWith(Mono.fromSupplier(() -> {
             final var accessTokenDetails = jwt.generate(userId.toString(), accessExpiresIn);
-            final var respBody = String.format(
-                    RESPONSE_BODY_FORMAT,
-                    accessTokenDetails.getToken(),
-                    accessTokenDetails.getExpirationDate().toEpochMilli()
-            ).getBytes(UTF_8);
+            final var respBody = String.format(RESPONSE_BODY_FORMAT, accessTokenDetails.getToken()).getBytes(UTF_8);
 
             response.setStatusCode(OK);
             response.getHeaders().setContentType(APPLICATION_JSON);
             response.getHeaders().setContentLength(respBody.length);
-
             cookieRefreshTokenHelper.set(response.getCookies(), refreshToken, refreshExpiresIn);
 
             return response.bufferFactory().wrap(respBody);
+        }));
+    }
+
+    /**
+     * Produces a response with an empty access token
+     */
+    public Mono<Void> formFailureResponse(final ServerWebExchange exchange) {
+        final var response = exchange.getResponse();
+
+        return response.writeWith(Mono.fromSupplier(() -> {
+            response.setStatusCode(OK);
+            response.getHeaders().setContentType(APPLICATION_JSON);
+            response.getHeaders().setContentLength(FAILURE_BODY.length);
+
+            return response.bufferFactory().wrap(FAILURE_BODY);
         }));
     }
 }

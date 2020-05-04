@@ -28,10 +28,10 @@ import static java.util.Objects.requireNonNull;
  * <p>2. If DB ({@link UserRepository}) doesn't contain a user with obtained Github id,
  * then new user with provided Github id is created.
  * <p>3. We generate our own access token (JWT with user id sub and short lifetime) which is then included
- * in response body json using ({@link JwtAccessTokenResponseProducer}). We suppose client will store it in memory.
+ * in response Location header URI using {@link JwtAccessTokenResponseProducer#formRedirect}.
+ * We suppose client will store it in memory.
  * <p>4. We generate our own refresh token (also JWT with user id sub but longer lifetime)
  * which is then saved in DB ({@link RefreshTokenRepository}) and included in response http-only cookie.
- * <p>5. We redirect to the static web-server using ({@link JwtAccessTokenResponseProducer#formRedirect}).
  *
  * @author Anton Lamtev
  * @author Vadim Dyachkov
