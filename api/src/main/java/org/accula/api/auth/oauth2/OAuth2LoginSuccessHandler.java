@@ -31,7 +31,7 @@ import static java.util.Objects.requireNonNull;
  * in response body json using ({@link JwtAccessTokenResponseProducer}). We suppose client will store it in memory.
  * <p>4. We generate our own refresh token (also JWT with user id sub but longer lifetime)
  * which is then saved in DB ({@link RefreshTokenRepository}) and included in response http-only cookie.
- * <p>5. We form redirect to static web-server using the following pattern:
+ * <p>5. We form redirect (i.e. HttpStatus == 302) to the static web-server using the following pattern:
  * {@code ${webUrl}/oauth2/redirect?accessToken=${accessToken}}.
  *
  * @author Anton Lamtev
