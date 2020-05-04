@@ -35,7 +35,7 @@ import static org.springframework.http.HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN;
 public final class JwtRefreshFilter implements WebFilter {
     private final static RefreshTokenException MISSING_TOKEN_EXCEPTION = new RefreshTokenException(MISSING_TOKEN);
     private final static RefreshTokenException TOKEN_VERIFICATION_EXCEPTION = new RefreshTokenException(TOKEN_VERIFICATION_FAILED);
-    private final static RefreshTokenException UNABLE_TO_REPLACE_IN_DB_EXCEPTION = new RefreshTokenException(UNABLE_TO_REPLACE_IN_DB);
+    private final static RefreshTokenException UNABLE_REPLACE_IN_DB_EXCEPTION = new RefreshTokenException(UNABLE_TO_REPLACE_IN_DB);
 
     private final ServerWebExchangeMatcher endpointMatcher;
     private final CookieRefreshTokenHelper cookieRefreshTokenHelper;
@@ -72,7 +72,7 @@ public final class JwtRefreshFilter implements WebFilter {
 
                     return refreshTokens
                             .replaceRefreshToken(userId, refreshToken, newRefreshToken, newRefreshTokenExpirationDate)
-                            .onErrorMap(e -> UNABLE_TO_REPLACE_IN_DB_EXCEPTION)
+                            .onErrorMap(e -> UNABLE_REPLACE_IN_DB_EXCEPTION)
                             .then(responseProducer.formResponseWithBody(exchange, userId, newRefreshToken));
                 })
                 .onErrorMap(not(RefreshTokenException::isInstanceOf), e -> TOKEN_VERIFICATION_EXCEPTION)
