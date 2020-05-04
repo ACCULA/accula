@@ -36,7 +36,6 @@ public final class JwtAccessTokenResponseProducer {
             final var accessTokenDetails = jwt.generate(userId.toString(), accessExpiresIn);
             final var location = URI.create("http://localhost:3000/oauth2/redirect?accessToken=" + accessTokenDetails.getToken());
             response.getHeaders().setLocation(location);
-            response.getHeaders().setAccessControlMaxAge(Duration.ofDays(365));
             response.setStatusCode(FOUND);
             cookieRefreshTokenHelper.set(response.getCookies(), refreshToken, refreshExpiresIn);
         });
@@ -56,7 +55,6 @@ public final class JwtAccessTokenResponseProducer {
             response.setStatusCode(OK);
             response.getHeaders().setContentType(APPLICATION_JSON);
             response.getHeaders().setContentLength(respBody.length);
-            response.getHeaders().setAccessControlMaxAge(Duration.ofDays(365));
 
             cookieRefreshTokenHelper.set(response.getCookies(), refreshToken, refreshExpiresIn);
 

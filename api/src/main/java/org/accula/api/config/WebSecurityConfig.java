@@ -14,7 +14,6 @@ import org.accula.api.db.RefreshTokenRepository;
 import org.accula.api.db.UserRepository;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
-import org.springframework.http.HttpHeaders;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.oauth2.client.ReactiveOAuth2AuthorizedClientService;
@@ -26,9 +25,6 @@ import org.springframework.security.web.server.authentication.ServerAuthenticati
 import org.springframework.security.web.server.authorization.HttpStatusServerAccessDeniedHandler;
 import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository;
 import org.springframework.security.web.server.savedrequest.NoOpServerRequestCache;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.reactive.CorsWebFilter;
-import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 import org.springframework.web.server.WebFilter;
 
 import java.net.URISyntaxException;
@@ -169,7 +165,7 @@ public class WebSecurityConfig {
                                       final RefreshTokenRepository refreshTokens,
                                       final CookieRefreshTokenHelper cookieRefreshTokenHelper) {
         return new JwtRefreshFilter(
-                pathMatchers(GET, refreshTokenEndpointPath),
+                pathMatchers(refreshTokenEndpointPath),
                 cookieRefreshTokenHelper,
                 jwtAccessTokenResponseProducer,
                 jwt,
@@ -177,17 +173,4 @@ public class WebSecurityConfig {
                 refreshTokens
         );
     }
-
-//    @Bean
-//    public CorsWebFilter corsWebFilter() {
-//        final var corsConfiguration = new CorsConfiguration();
-//        corsConfiguration.setAllowCredentials(true);
-//        corsConfiguration.addAllowedHeader("*");
-//        corsConfiguration.addAllowedMethod("*");
-//        corsConfiguration.addAllowedOrigin("*");
-//        corsConfiguration.addExposedHeader(HttpHeaders.SET_COOKIE);
-//        final var corsConfigurationSource = new UrlBasedCorsConfigurationSource();
-//        corsConfigurationSource.registerCorsConfiguration("/**", corsConfiguration);
-//        return new CorsWebFilter(corsConfigurationSource);
-//    }
 }

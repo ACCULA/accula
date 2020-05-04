@@ -5,6 +5,7 @@ import org.accula.api.auth.jwt.crypto.Jwt;
 import org.accula.api.auth.util.CookieRefreshTokenHelper;
 import org.accula.api.db.RefreshTokenRepository;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatcher;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.server.ServerWebExchange;
@@ -13,6 +14,7 @@ import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
+import java.util.List;
 
 import static java.util.function.Predicate.not;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
@@ -39,17 +41,22 @@ public final class JwtRefreshFilter implements WebFilter {
 
     @Override
     public Mono<Void> filter(final ServerWebExchange exchange, final WebFilterChain chain) {
+        final var response = exchange.getResponse();
         return endpointMatcher
                 .matches(exchange)
                 .filter(ServerWebExchangeMatcher.MatchResult::isMatch)
                 .switchIfEmpty(chain.filter(exchange).then(Mono.empty()))
-                .flatMap(match -> doRefreshToken(exchange));
+                .flatMap(match -> {
+                    response.getHeaders().setAccessControlAllowOrigin("http://localhost:3000");
+                    response.getHeaders().setAccessControlAllowHeaders(List.of("Access-Control-Allow-Origin"));
+                    response.getHeaders().setAccessControlAllowCredentials(true);
+                    return doRefreshToken(exchange);
+                });
     }
 
     private Mono<Void> doRefreshToken(final ServerWebExchange exchange) {
         return Mono
                 .justOrEmpty(cookieRefreshTokenHelper.get(exchange.getRequest().getCookies()))
-                .switchIfEmpty(Mono.error(BAD_REQUEST_EXCEPTION))
                 .flatMap(refreshToken -> {
                     final var userIdString = jwt.verify(refreshToken);
                     final var userId = Long.valueOf(userIdString);

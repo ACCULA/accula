@@ -18,6 +18,11 @@ spring:
             scope: read:user,public_repo
             redirect-uri: "{baseUrl}/login/github/callback"
 
+server:
+  error:
+    whitelabel:
+      enabled: false
+
 #management:
 #  endpoints:
 #    web:
