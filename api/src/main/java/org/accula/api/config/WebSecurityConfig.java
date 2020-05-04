@@ -9,8 +9,10 @@ import org.accula.api.auth.jwt.crypto.EcKeys;
 import org.accula.api.auth.jwt.crypto.Jwt;
 import org.accula.api.auth.oauth2.OAuth2LoginFailureHandler;
 import org.accula.api.auth.oauth2.OAuth2LoginSuccessHandler;
+import org.accula.api.auth.util.CookieRefreshTokenHelper;
 import org.accula.api.db.RefreshTokenRepository;
 import org.accula.api.db.UserRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
@@ -106,24 +108,39 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    public JwtAccessTokenResponseProducer jwtAccessTokenResponseProducer(final Jwt jwt) {
+    public String refreshTokenEndpointPath() {
+        return "/refreshToken";
+    }
+
+    @Bean
+    public CookieRefreshTokenHelper cookieRefreshTokenHelper(final String refreshTokenEndpointPath) {
+        return new CookieRefreshTokenHelper(refreshTokenEndpointPath);
+    }
+
+    @Bean
+    public JwtAccessTokenResponseProducer accessTokenResponseProducer(
+            final Jwt jwt,
+            final CookieRefreshTokenHelper cookieRefreshTokenHelper,
+            @Value("${accula.cluster.webUrl}") final String webUrl) {
         return new JwtAccessTokenResponseProducer(
                 jwt,
                 jwtProperties.getExpiresIn().getAccess(),
-                jwtProperties.getExpiresIn().getRefresh()
+                jwtProperties.getExpiresIn().getRefresh(),
+                cookieRefreshTokenHelper,
+                webUrl
         );
     }
 
     @Bean
     public OAuth2LoginSuccessHandler oauth2LoginSuccessHandler(
-            final JwtAccessTokenResponseProducer jwtAccessTokenResponseProducer,
+            final JwtAccessTokenResponseProducer accessTokenResponseProducer,
             final Jwt jwt,
             final ReactiveOAuth2AuthorizedClientService authorizedClientService,
             final UserRepository users,
             final RefreshTokenRepository refreshTokens) {
 
         return new OAuth2LoginSuccessHandler(
-                jwtAccessTokenResponseProducer,
+                accessTokenResponseProducer,
                 jwt,
                 jwtProperties.getExpiresIn().getRefresh(),
                 authorizedClientService,
@@ -146,11 +163,14 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    public WebFilter jwtRefreshFilter(final JwtAccessTokenResponseProducer jwtAccessTokenResponseProducer,
+    public WebFilter jwtRefreshFilter(final String refreshTokenEndpointPath,
+                                      final JwtAccessTokenResponseProducer jwtAccessTokenResponseProducer,
                                       final Jwt jwt,
-                                      final RefreshTokenRepository refreshTokens) {
+                                      final RefreshTokenRepository refreshTokens,
+                                      final CookieRefreshTokenHelper cookieRefreshTokenHelper) {
         return new JwtRefreshFilter(
-                pathMatchers(GET, "/refreshToken"),
+                pathMatchers(refreshTokenEndpointPath),
+                cookieRefreshTokenHelper,
                 jwtAccessTokenResponseProducer,
                 jwt,
                 jwtProperties.getExpiresIn().getRefresh(),

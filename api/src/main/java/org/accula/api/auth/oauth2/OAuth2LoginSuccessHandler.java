@@ -31,8 +31,10 @@ import static java.util.Objects.requireNonNull;
  * in response body json using ({@link JwtAccessTokenResponseProducer}). We suppose client will store it in memory.
  * <p>4. We generate our own refresh token (also JWT with user id sub but longer lifetime)
  * which is then saved in DB ({@link RefreshTokenRepository}) and included in response http-only cookie.
+ * <p>5. We redirect to the static web-server using ({@link JwtAccessTokenResponseProducer#formRedirect}).
  *
  * @author Anton Lamtev
+ * @author Vadim Dyachkov
  */
 @RequiredArgsConstructor
 public final class OAuth2LoginSuccessHandler implements ServerAuthenticationSuccessHandler {
@@ -76,7 +78,7 @@ public final class OAuth2LoginSuccessHandler implements ServerAuthenticationSucc
                         final var userId = userIdAndRefreshToken.getT1();
                         final var refreshToken = userIdAndRefreshToken.getT2();
 
-                        return responseProducer.formResponse(exchange.getExchange(), userId, refreshToken.getToken());
+                        return responseProducer.formRedirect(exchange.getExchange(), userId, refreshToken.getToken());
                     });
         });
     }
