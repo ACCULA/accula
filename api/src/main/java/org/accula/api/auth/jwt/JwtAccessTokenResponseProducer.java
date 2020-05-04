@@ -67,7 +67,7 @@ public final class JwtAccessTokenResponseProducer {
     }
 
     /**
-     * Produces a response with a token refresh failure reason in JSON format (see {@code FAILURE_BODY_FORMAT})
+     * Produces a response with an empty access token
      */
     public Mono<Void> formFailureResponse(final ServerWebExchange exchange) {
         final var response = exchange.getResponse();
