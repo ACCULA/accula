@@ -47,6 +47,9 @@ accula:
       access: ${jwt.expiresIn.access}
       refresh: ${jwt.expiresIn.refresh}
 
+  cluster:
+    webUrl: "http://localhost:3000"
+
   db:
     host: ${db.host}
     port: ${db.port}

@@ -29,12 +29,13 @@ public final class JwtAccessTokenResponseProducer {
     private final Duration accessExpiresIn;
     private final Duration refreshExpiresIn;
     private final CookieRefreshTokenHelper cookieRefreshTokenHelper;
+    private final String webUrl;
 
     public Mono<Void> formRedirect(final ServerWebExchange exchange, final Long userId, final String refreshToken) {
         return Mono.fromRunnable(() -> {
             final var response = exchange.getResponse();
             final var accessTokenDetails = jwt.generate(userId.toString(), accessExpiresIn);
-            final var location = URI.create("http://localhost:3000/oauth2/redirect?accessToken=" + accessTokenDetails.getToken());
+            final var location = URI.create(webUrl + "/oauth2/redirect?accessToken=" + accessTokenDetails.getToken());
             response.getHeaders().setLocation(location);
             response.setStatusCode(FOUND);
             cookieRefreshTokenHelper.set(response.getCookies(), refreshToken, refreshExpiresIn);

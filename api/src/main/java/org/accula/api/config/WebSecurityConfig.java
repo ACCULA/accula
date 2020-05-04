@@ -12,6 +12,7 @@ import org.accula.api.auth.oauth2.OAuth2LoginSuccessHandler;
 import org.accula.api.auth.util.CookieRefreshTokenHelper;
 import org.accula.api.db.RefreshTokenRepository;
 import org.accula.api.db.UserRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
@@ -117,13 +118,16 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    public JwtAccessTokenResponseProducer accessTokenResponseProducer(final Jwt jwt,
-                                                                      final CookieRefreshTokenHelper cookieRefreshTokenHelper) {
+    public JwtAccessTokenResponseProducer accessTokenResponseProducer(
+            final Jwt jwt,
+            final CookieRefreshTokenHelper cookieRefreshTokenHelper,
+            @Value("${accula.cluster.webUrl}") final String webUrl) {
         return new JwtAccessTokenResponseProducer(
                 jwt,
                 jwtProperties.getExpiresIn().getAccess(),
                 jwtProperties.getExpiresIn().getRefresh(),
-                cookieRefreshTokenHelper
+                cookieRefreshTokenHelper,
+                webUrl
         );
     }
 
