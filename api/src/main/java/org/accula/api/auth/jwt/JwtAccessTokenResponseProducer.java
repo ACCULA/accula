@@ -15,8 +15,7 @@ import static org.springframework.http.HttpStatus.OK;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 /**
- * Produces a response with the access token and its expiration date as a part of
- * body JSON (see {@code RESPONSE_BODY_FORMAT}), and refresh token included in cookies.
+ * Produces a response in the form of HTTP-redirect or body in JSON format.
  *
  * @author Anton Lamtev
  * @author Vadim Dyachkov
@@ -31,6 +30,10 @@ public final class JwtAccessTokenResponseProducer {
     private final CookieRefreshTokenHelper cookieRefreshTokenHelper;
     private final String webUrl;
 
+    /**
+     * Produces a response with redirect (i.e. HttpStatus == 302) to the static web-server using the following pattern:
+     * {@code ${webUrl}/oauth2/redirect?accessToken=${accessToken}}.
+     */
     public Mono<Void> formRedirect(final ServerWebExchange exchange, final Long userId, final String refreshToken) {
         return Mono.fromRunnable(() -> {
             final var response = exchange.getResponse();
@@ -42,6 +45,10 @@ public final class JwtAccessTokenResponseProducer {
         });
     }
 
+    /**
+     * Produces a response with the access token and its expiration date as a part of
+     * body JSON (see {@code RESPONSE_BODY_FORMAT}), and refresh token included in cookies
+     */
     public Mono<Void> formResponse(final ServerWebExchange exchange, final Long userId, final String refreshToken) {
         final var response = exchange.getResponse();
 
