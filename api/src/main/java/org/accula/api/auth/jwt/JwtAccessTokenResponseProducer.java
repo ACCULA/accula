@@ -2,6 +2,7 @@ package org.accula.api.auth.jwt;
 
 import lombok.RequiredArgsConstructor;
 import org.accula.api.auth.jwt.crypto.Jwt;
+import org.accula.api.auth.util.CookieRefreshTokenHelper;
 import org.accula.api.auth.util.RefreshTokenCookies;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ServerWebExchange;
@@ -11,7 +12,7 @@ import java.net.URI;
 import java.time.Duration;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.springframework.http.HttpStatus.FOUND;
+import static org.springframework.http.HttpStatus.*;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 /**
@@ -28,6 +29,7 @@ public final class JwtAccessTokenResponseProducer {
     private final Jwt jwt;
     private final Duration accessExpiresIn;
     private final Duration refreshExpiresIn;
+    private final CookieRefreshTokenHelper cookieRefreshTokenHelper;
 
     public Mono<Void> formRedirect(final ServerWebExchange exchange, final Long userId, final String refreshToken) {
         return Mono.fromRunnable(() -> {
@@ -52,11 +54,12 @@ public final class JwtAccessTokenResponseProducer {
                     accessTokenDetails.getExpirationDate().toEpochMilli()
             ).getBytes(UTF_8);
 
+            response.setStatusCode(OK);
             response.getHeaders().setContentType(APPLICATION_JSON);
             response.getHeaders().setContentLength(respBody.length);
             response.getHeaders().setAccessControlMaxAge(Duration.ofDays(365));
 
-            RefreshTokenCookies.set(response.getCookies(), refreshToken, refreshExpiresIn);
+            cookieRefreshTokenHelper.set(response.getCookies(), refreshToken, refreshExpiresIn);
 
             return response.bufferFactory().wrap(respBody);
         }));

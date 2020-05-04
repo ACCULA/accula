@@ -1,5 +1,6 @@
 package org.accula.api.auth.util;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpCookie;
 import org.springframework.http.ResponseCookie;
 import org.springframework.util.MultiValueMap;
@@ -10,24 +11,22 @@ import java.util.Optional;
 /**
  * @author Anton Lamtev
  */
-public final class RefreshTokenCookies {
+@RequiredArgsConstructor
+public final class CookieRefreshTokenHelper {
     private static final String REFRESH_TOKEN_COOKIE_NAME = "refresh_token";
 
-    private RefreshTokenCookies() {
-    }
+    private final String refreshTokenEndpointPath;
 
-    public static void set(final MultiValueMap<String, ResponseCookie> cookies,
-                           final String refreshToken,
-                           final Duration expiresIn) {
+    public void set(final MultiValueMap<String, ResponseCookie> cookies, final String refreshToken, final Duration expiresIn) {
         cookies.set(REFRESH_TOKEN_COOKIE_NAME, ResponseCookie
                 .from(REFRESH_TOKEN_COOKIE_NAME, refreshToken)
                 .maxAge(expiresIn)
-                .path("/")
+                .path(refreshTokenEndpointPath)
                 .httpOnly(true)
                 .build());
     }
 
-    public static Optional<String> get(final MultiValueMap<String, HttpCookie> cookies) {
+    public Optional<String> get(final MultiValueMap<String, HttpCookie> cookies) {
         return Optional.ofNullable(cookies.getFirst(REFRESH_TOKEN_COOKIE_NAME))
                 .map(HttpCookie::getValue);
     }
