@@ -3,8 +3,6 @@ package org.accula.api.auth.jwt;
 import lombok.RequiredArgsConstructor;
 import org.accula.api.auth.jwt.crypto.Jwt;
 import org.accula.api.auth.util.CookieRefreshTokenHelper;
-import org.accula.api.auth.util.RefreshTokenCookies;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
@@ -12,7 +10,8 @@ import java.net.URI;
 import java.time.Duration;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.springframework.http.HttpStatus.*;
+import static org.springframework.http.HttpStatus.FOUND;
+import static org.springframework.http.HttpStatus.OK;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 /**
@@ -39,7 +38,7 @@ public final class JwtAccessTokenResponseProducer {
             response.getHeaders().setLocation(location);
             response.getHeaders().setAccessControlMaxAge(Duration.ofDays(365));
             response.setStatusCode(FOUND);
-            RefreshTokenCookies.set(response.getCookies(), refreshToken, refreshExpiresIn);
+            cookieRefreshTokenHelper.set(response.getCookies(), refreshToken, refreshExpiresIn);
         });
     }
 
