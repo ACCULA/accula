@@ -14,10 +14,15 @@ import java.time.Instant;
  */
 @Repository
 public interface RefreshTokenRepository extends ReactiveCrudRepository<RefreshToken, Long> {
+    //@formatter:off
+
     @Modifying
-    @Query("UPDATE refresh_token SET token = :newToken WHERE user_id = :userId AND token = :oldToken")
+    @Query("UPDATE refresh_token " +
+           "SET token = :newToken, expiration_date = :newExpirationDate " +
+           "WHERE user_id = :userId AND token = :oldToken")
     Mono<Void> replaceRefreshToken(final Long userId,
                                    final String oldToken,
                                    final String newToken,
                                    final Instant newExpirationDate);
+    //@formatter:on
 }

@@ -1,11 +1,12 @@
-package org.accula.api.auth.jwt;
+package org.accula.api.auth.jwt.refresh;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.accula.api.auth.jwt.JwtAccessTokenResponseProducer;
 import org.accula.api.auth.jwt.crypto.Jwt;
 import org.accula.api.auth.util.CookieRefreshTokenHelper;
 import org.accula.api.db.RefreshTokenRepository;
 import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatcher;
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
@@ -15,7 +16,10 @@ import java.time.Duration;
 import java.util.List;
 
 import static java.util.function.Predicate.not;
-import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.accula.api.auth.jwt.refresh.RefreshTokenException.Reason.MISSING_TOKEN;
+import static org.accula.api.auth.jwt.refresh.RefreshTokenException.Reason.TOKEN_VERIFICATION_FAILED;
+import static org.accula.api.auth.jwt.refresh.RefreshTokenException.Reason.UNABLE_TO_REPLACE_IN_DB;
+import static org.springframework.http.HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN;
 
 /**
  * Web filter that refreshes an access token using refresh token provided in cookies.
@@ -26,9 +30,12 @@ import static org.springframework.http.HttpStatus.BAD_REQUEST;
  * @author Anton Lamtev
  * @author Vadim Dyachkov
  */
+@Slf4j
 @RequiredArgsConstructor
 public final class JwtRefreshFilter implements WebFilter {
-    private final static ResponseStatusException BAD_REQUEST_EXCEPTION = new ResponseStatusException(BAD_REQUEST);
+    private final static RefreshTokenException MISSING_TOKEN_EXCEPTION = new RefreshTokenException(MISSING_TOKEN);
+    private final static RefreshTokenException TOKEN_VERIFICATION_EXCEPTION = new RefreshTokenException(TOKEN_VERIFICATION_FAILED);
+    private final static RefreshTokenException UNABLE_TO_REPLACE_IN_DB_EXCEPTION = new RefreshTokenException(UNABLE_TO_REPLACE_IN_DB);
 
     private final ServerWebExchangeMatcher endpointMatcher;
     private final CookieRefreshTokenHelper cookieRefreshTokenHelper;
@@ -36,6 +43,7 @@ public final class JwtRefreshFilter implements WebFilter {
     private final Jwt jwt;
     private final Duration refreshExpiresIn;
     private final RefreshTokenRepository refreshTokens;
+    private final String webUrl;
 
     @Override
     public Mono<Void> filter(final ServerWebExchange exchange, final WebFilterChain chain) {
@@ -44,8 +52,8 @@ public final class JwtRefreshFilter implements WebFilter {
                 .filter(ServerWebExchangeMatcher.MatchResult::isMatch)
                 .switchIfEmpty(chain.filter(exchange).then(Mono.empty()))
                 .flatMap(match -> {
-                    exchange.getResponse().getHeaders().setAccessControlAllowOrigin("http://localhost:3000");
-                    exchange.getResponse().getHeaders().setAccessControlAllowHeaders(List.of("Access-Control-Allow-Origin"));
+                    exchange.getResponse().getHeaders().setAccessControlAllowOrigin(webUrl);
+                    exchange.getResponse().getHeaders().setAccessControlAllowHeaders(List.of(ACCESS_CONTROL_ALLOW_ORIGIN));
                     exchange.getResponse().getHeaders().setAccessControlAllowCredentials(true);
                     return doRefreshToken(exchange);
                 });
@@ -54,6 +62,7 @@ public final class JwtRefreshFilter implements WebFilter {
     private Mono<Void> doRefreshToken(final ServerWebExchange exchange) {
         return Mono
                 .justOrEmpty(cookieRefreshTokenHelper.get(exchange.getRequest().getCookies()))
+                .switchIfEmpty(Mono.error(MISSING_TOKEN_EXCEPTION))
                 .flatMap(refreshToken -> {
                     final var userIdString = jwt.verify(refreshToken);
                     final var userId = Long.valueOf(userIdString);
@@ -63,8 +72,15 @@ public final class JwtRefreshFilter implements WebFilter {
 
                     return refreshTokens
                             .replaceRefreshToken(userId, refreshToken, newRefreshToken, newRefreshTokenExpirationDate)
-                            .then(responseProducer.formResponse(exchange, userId, newRefreshToken));
+                            .onErrorMap(e -> UNABLE_TO_REPLACE_IN_DB_EXCEPTION)
+                            .then(responseProducer.formResponseWithBody(exchange, userId, newRefreshToken));
                 })
-                .onErrorMap(not(BAD_REQUEST_EXCEPTION::equals), e -> BAD_REQUEST_EXCEPTION);
+                .onErrorMap(not(RefreshTokenException::isInstanceOf), e -> TOKEN_VERIFICATION_EXCEPTION)
+                .onErrorResume(RefreshTokenException.class, e -> handleRefreshTokenFailure(e, exchange));
+    }
+
+    private Mono<Void> handleRefreshTokenFailure(final RefreshTokenException failure, final ServerWebExchange exchange) {
+        log.info("Failed to refresh token with reason: {}", failure.getReason());
+        return responseProducer.formFailureResponse(exchange);
     }
 }
