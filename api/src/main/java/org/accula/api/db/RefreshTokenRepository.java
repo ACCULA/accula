@@ -15,7 +15,6 @@ import java.time.Instant;
 @Repository
 public interface RefreshTokenRepository extends ReactiveCrudRepository<RefreshToken, Long> {
     //@formatter:off
-
     @Modifying
     @Query("UPDATE refresh_token " +
            "SET token = :newToken, expiration_date = :newExpirationDate " +
