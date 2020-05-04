@@ -4,7 +4,7 @@ export interface RouteInfo {
   path: string
   exact?: boolean
   name: string
-  icon: string
+  icon?: string
   component: ComponentType<any>
   hidden?: boolean
 }

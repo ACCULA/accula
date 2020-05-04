@@ -1,10 +1,17 @@
+import axios from 'axios'
 import { API_URL } from 'utils'
-import { get } from './shareService'
 
 type AuthEndpoint = 'refreshToken' | 'logout'
 
 const updateRefreshToken = (endpoint: AuthEndpoint) => {
-  return get(`${API_URL}/${endpoint}`)
+  return axios
+    .get(`${API_URL}/${endpoint}`, {
+      headers: {
+        Accept: 'application/json'
+      },
+      withCredentials: true
+    })
+    .then(resp => resp.data)
 }
 
 export const refreshToken = () => updateRefreshToken('refreshToken')

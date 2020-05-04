@@ -1,7 +1,9 @@
+import { RouteInfo } from 'types'
+
 import UserProfile from 'views/UserProfile'
 import Projects from 'views/Projects'
-import { RouteInfo } from 'types'
 import Settings from 'views/Settings'
+import OAuth2RedirectHandler from 'views/OAuth2RedirectHandler'
 
 const routes: RouteInfo[] = [
   {
@@ -21,6 +23,13 @@ const routes: RouteInfo[] = [
     name: 'Settings',
     icon: 'cog',
     component: Settings
+  },
+  {
+    path: '/oauth2/redirect',
+    name: 'Settings',
+    component: OAuth2RedirectHandler,
+    hidden: true,
+    exact: true
   }
 ]
 

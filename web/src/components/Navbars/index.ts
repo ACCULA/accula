@@ -1,3 +1,3 @@
 import './styles.scss'
 
-export { default } from 'components/Navbars/Navbar'
+export { default } from './Navbar'

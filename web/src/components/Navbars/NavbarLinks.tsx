@@ -45,8 +45,12 @@ const NavbarLinks = ({ loggedIn }: NavbarLinksProps) => {
               <MenuItem divider />
               <MenuItem eventKey={2.5}>Separated link</MenuItem>
             </NavDropdown>
-            <NavItem href={`${API_URL}/logout`} className="navbar-link">
-              <i className="fab fa-fw fa-sign-out-alt" /> Log out
+            <NavItem 
+              // TODO: href={`${API_URL}/logout`} 
+              href="#"
+              className="navbar-link"
+            >
+              <i className="fas fa-fw fa-sign-out-alt" /> Log out
             </NavItem>
           </>
         ) : (

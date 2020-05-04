@@ -12,8 +12,7 @@ interface SidebarProps extends RouteComponentProps {
   loggedIn: boolean
 }
 
-const Sidebar = (props: SidebarProps) => {
-  const { routes, color, location, loggedIn } = props
+const Sidebar = ({ routes, color, location, loggedIn }: SidebarProps) => {
   const { width } = useWindowSize()
 
   return (
@@ -24,17 +23,16 @@ const Sidebar = (props: SidebarProps) => {
       </Link>
       <div className="sidebar-wrapper">
         <ul className="nav">
-          {routes.map(
-            route =>
-              !route.hidden && (
-                <li className={location.pathname === route.path ? 'active' : ''} key={route.path}>
-                  <NavLink to={route.path} className="nav-link" activeClassName="active">
-                    <i className={`fas fa-${route.icon}`} />
-                    <p>{route.name}</p>
-                  </NavLink>
-                </li>
-              )
-          )}
+          {routes
+            .filter(route => !route.hidden)
+            .map(route => (
+              <li className={location.pathname === route.path ? 'active' : ''} key={route.path}>
+                <NavLink to={route.path} className="nav-link" activeClassName="active">
+                  <i className={`fas fa-${route.icon}`} />
+                  <p>{route.name}</p>
+                </NavLink>
+              </li>
+            ))}
           {width <= 991 ? <NavbarLinks loggedIn={loggedIn} /> : null}
         </ul>
       </div>

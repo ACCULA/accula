@@ -1,33 +1,23 @@
 import React, { useEffect, useState } from 'react'
 import { Redirect, Route, RouteComponentProps, Switch } from 'react-router-dom'
 
-import AdminNavbar from 'components/Navbars'
-import Footer from 'components/Footer/Footer'
-import Sidebar from 'components/Sidebar/Sidebar'
+import Navbar from 'components/Navbars'
+import Sidebar from 'components/Sidebar'
+import Footer from 'components/Footer'
 
 import routes from 'routes'
 import { getAccessToken } from 'accessToken'
-import OAuth2RedirectHandler from 'OAuth2RedirectHandler'
 
 const App = (props: RouteComponentProps) => {
   const { history, location } = props
 
   useEffect(() => {
-    if (
-      window.innerWidth < 993 &&
-      history.location.pathname !== location.pathname &&
-      document.documentElement.className.indexOf('nav-open') !== -1
-    ) {
-      document.documentElement.classList.toggle('nav-open')
-    }
     if (history.action === 'PUSH') {
       document.documentElement.scrollTop = 0
       document.scrollingElement.scrollTop = 0
+      document.documentElement.classList.toggle('nav-open')
     }
   })
-
-  const brand: string =
-    routes.filter(route => location.pathname.indexOf(route.path) >= 0)[0]?.name || 'ACCULA'
 
   const [loading, setLoading] = useState(true)
   const [loggedIn, setLoggedIn] = useState(false)
@@ -35,33 +25,26 @@ const App = (props: RouteComponentProps) => {
   useEffect(() => {
     getAccessToken()
       .then(accessToken => {
-        if (accessToken && accessToken !== '') {
-          setLoggedIn(true)
-        } else {
-          setLoggedIn(false)
-        }
+        setLoggedIn(accessToken && accessToken !== '')
+      })
+      .finally(() => {
         setLoading(false)
       })
-      .catch(() => {
-        setLoading(false)
-      })
-  }, [])
+  })
 
   if (loading) {
     return <></>
   }
-  
+
+  const brand: string =
+    routes.filter(route => location.pathname.indexOf(route.path) >= 0)[0]?.name || 'ACCULA'
+
   return (
     <div className="wrapper">
       <Sidebar {...props} routes={routes} color="black" loggedIn={loggedIn} />
       <div id="main-panel" className="main-panel">
-        <AdminNavbar {...props} brandText={brand} loggedIn={loggedIn} />
+        <Navbar {...props} brandText={brand} loggedIn={loggedIn} />
         <Switch>
-          <Route
-            path="/oauth2/redirect"
-            component={OAuth2RedirectHandler}
-            exact
-          />
           {routes.map(route => (
             <Route
               key={route.path}
@@ -70,7 +53,7 @@ const App = (props: RouteComponentProps) => {
               exact={route.exact}
             />
           ))}
-          <Redirect to="/projects" path="/" exact/>
+          <Redirect to="/projects" path="/" exact />
         </Switch>
         <Footer />
       </div>
