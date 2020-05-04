@@ -2,15 +2,19 @@ package org.accula.api.auth.jwt;
 
 import lombok.RequiredArgsConstructor;
 import org.accula.api.auth.jwt.crypto.Jwt;
-import org.accula.api.auth.util.RefreshTokenCookies;
+import org.accula.api.auth.util.CookieRefreshTokenHelper;
 import org.accula.api.db.RefreshTokenRepository;
 import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatcher;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
+
+import static java.util.function.Predicate.not;
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
 
 /**
  * Web filter that refreshes an access token using refresh token provided in cookies.
@@ -22,7 +26,10 @@ import java.time.Duration;
  */
 @RequiredArgsConstructor
 public final class JwtRefreshFilter implements WebFilter {
+    private final static ResponseStatusException BAD_REQUEST_EXCEPTION = new ResponseStatusException(BAD_REQUEST);
+
     private final ServerWebExchangeMatcher endpointMatcher;
+    private final CookieRefreshTokenHelper cookieRefreshTokenHelper;
     private final JwtAccessTokenResponseProducer responseProducer;
     private final Jwt jwt;
     private final Duration refreshExpiresIn;
@@ -33,13 +40,14 @@ public final class JwtRefreshFilter implements WebFilter {
         return endpointMatcher
                 .matches(exchange)
                 .filter(ServerWebExchangeMatcher.MatchResult::isMatch)
-                .flatMap(match -> doRefreshToken(exchange))
-                .switchIfEmpty(chain.filter(exchange).then(Mono.empty()));
+                .switchIfEmpty(chain.filter(exchange).then(Mono.empty()))
+                .flatMap(match -> doRefreshToken(exchange));
     }
 
     private Mono<Void> doRefreshToken(final ServerWebExchange exchange) {
         return Mono
-                .justOrEmpty(RefreshTokenCookies.get(exchange.getRequest().getCookies()))
+                .justOrEmpty(cookieRefreshTokenHelper.get(exchange.getRequest().getCookies()))
+                .switchIfEmpty(Mono.error(BAD_REQUEST_EXCEPTION))
                 .flatMap(refreshToken -> {
                     final var userIdString = jwt.verify(refreshToken);
                     final var userId = Long.valueOf(userIdString);
@@ -51,6 +59,6 @@ public final class JwtRefreshFilter implements WebFilter {
                             .replaceRefreshToken(userId, refreshToken, newRefreshToken, newRefreshTokenExpirationDate)
                             .then(responseProducer.formResponse(exchange, userId, newRefreshToken));
                 })
-                .onErrorResume(e -> Mono.empty());
+                .onErrorMap(not(BAD_REQUEST_EXCEPTION::equals), e -> BAD_REQUEST_EXCEPTION);
     }
 }
