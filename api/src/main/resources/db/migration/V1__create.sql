@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS users
 (
     id                  BIGSERIAL PRIMARY KEY,
-    name                VARCHAR(64)        NOT NULL,
+    name                VARCHAR(255)       NOT NULL,
 
     github_id           BIGINT UNIQUE      NOT NULL,
     github_login        VARCHAR(39) UNIQUE NOT NULL,
