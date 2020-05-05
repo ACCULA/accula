@@ -1,9 +1,14 @@
 import axios from 'axios'
+
 import { API_URL } from 'utils'
 
 type AuthEndpoint = 'refreshToken' | 'logout'
 
-const updateRefreshToken = (endpoint: AuthEndpoint) => {
+interface Token {
+  accessToken: string
+}
+
+const updateRefreshToken = (endpoint: AuthEndpoint): Promise<Token> => {
   return axios
     .get(`${API_URL}/${endpoint}`, {
       headers: {
@@ -11,7 +16,7 @@ const updateRefreshToken = (endpoint: AuthEndpoint) => {
       },
       withCredentials: true
     })
-    .then(resp => resp.data)
+    .then(resp => resp.data as Token)
 }
 
 export const refreshToken = () => updateRefreshToken('refreshToken')

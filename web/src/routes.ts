@@ -5,7 +5,7 @@ import Projects from 'views/Projects'
 import Settings from 'views/Settings'
 import OAuth2RedirectHandler from 'views/OAuth2RedirectHandler'
 
-const routes: RouteInfo[] = [
+export const routes: RouteInfo[] = [
   {
     path: '/projects',
     name: 'Projects',
@@ -32,5 +32,3 @@ const routes: RouteInfo[] = [
     exact: true
   }
 ]
-
-export default routes

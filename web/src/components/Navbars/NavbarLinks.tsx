@@ -1,14 +1,18 @@
 import React from 'react'
 import { MenuItem, Nav, NavDropdown, NavItem } from 'react-bootstrap'
+import { useHistory } from 'react-router-dom'
+
 import { API_URL } from 'utils'
+import { User } from 'types'
 
 const NavDropdownHack: any = NavDropdown
 
 interface NavbarLinksProps {
-  loggedIn: boolean
+  user?: User
 }
 
-const NavbarLinks = ({ loggedIn }: NavbarLinksProps) => {
+const NavbarLinks = ({ user }: NavbarLinksProps) => {
+  const history = useHistory()
   const notification = (
     <div>
       <i className="fa fa-globe" />
@@ -34,25 +38,16 @@ const NavbarLinks = ({ loggedIn }: NavbarLinksProps) => {
       </Nav>
 
       <Nav pullRight>
-        {loggedIn ? (
-          <>
-            <NavDropdown eventKey={2} title="Dropdown" id="basic-nav-dropdown-right">
-              <MenuItem eventKey={2.1}>Action</MenuItem>
-              <MenuItem eventKey={2.2}>Another action</MenuItem>
-              <MenuItem eventKey={2.3}>Something</MenuItem>
-              <MenuItem eventKey={2.4}>Another action</MenuItem>
-              <MenuItem eventKey={2.5}>Something</MenuItem>
-              <MenuItem divider />
-              <MenuItem eventKey={2.5}>Separated link</MenuItem>
-            </NavDropdown>
-            <NavItem 
-              // TODO: href={`${API_URL}/logout`} 
-              href="#"
-              className="navbar-link"
-            >
-              <i className="fas fa-fw fa-sign-out-alt" /> Log out
-            </NavItem>
-          </>
+        {user ? (
+          <NavDropdown
+            id="basic-nav-dropdown-right"
+            className="navbar-links"
+            title={`@${user.login}`}
+          >
+            <MenuItem onClick={() => history.push('/profile')}>Profile</MenuItem>
+            <MenuItem onClick={() => history.push('/settings')}>Settings</MenuItem>
+            <MenuItem href="#">Log out</MenuItem>
+          </NavDropdown>
         ) : (
           <NavItem href={`${API_URL}/login/github`} id="navbar-link">
             <i className="fab fa-fw fa-github" /> Sign in with Github

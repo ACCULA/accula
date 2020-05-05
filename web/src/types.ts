@@ -1,5 +1,11 @@
 import { ComponentType } from 'react'
 
+export interface User {
+  id: number
+  login: string
+  name: string
+}
+
 export interface RouteInfo {
   path: string
   exact?: boolean

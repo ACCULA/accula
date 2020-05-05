@@ -1,18 +1,18 @@
 import React from 'react'
 import { Link, NavLink, RouteComponentProps } from 'react-router-dom'
-
-import { RouteInfo } from 'types'
 import { useWindowSize } from 'react-use'
+
+import { RouteInfo, User } from 'types'
 import logo from 'images/fin_tango.svg'
 import NavbarLinks from 'components/Navbars/NavbarLinks'
 
 interface SidebarProps extends RouteComponentProps {
   routes: RouteInfo[]
   color: string
-  loggedIn: boolean
+  user?: User
 }
 
-const Sidebar = ({ routes, color, location, loggedIn }: SidebarProps) => {
+const Sidebar = ({ routes, color, location, user }: SidebarProps) => {
   const { width } = useWindowSize()
 
   return (
@@ -33,7 +33,7 @@ const Sidebar = ({ routes, color, location, loggedIn }: SidebarProps) => {
                 </NavLink>
               </li>
             ))}
-          {width <= 991 ? <NavbarLinks loggedIn={loggedIn} /> : null}
+          {width <= 991 ? <NavbarLinks user={user} /> : null}
         </ul>
       </div>
     </div>
