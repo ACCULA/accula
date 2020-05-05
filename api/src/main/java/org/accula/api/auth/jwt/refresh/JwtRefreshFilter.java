@@ -73,7 +73,7 @@ public final class JwtRefreshFilter implements WebFilter {
                     return refreshTokens
                             .replaceRefreshToken(userId, refreshToken, newRefreshToken, newRefreshTokenExpirationDate)
                             .onErrorMap(e -> UNABLE_REPLACE_IN_DB_EXCEPTION)
-                            .then(responseProducer.formResponseWithBody(exchange, userId, newRefreshToken));
+                            .then(responseProducer.formSuccessBody(exchange, userId, newRefreshToken));
                 })
                 .onErrorMap(not(RefreshTokenException::isInstanceOf), e -> TOKEN_VERIFICATION_EXCEPTION)
                 .onErrorResume(RefreshTokenException.class, e -> handleRefreshTokenFailure(e, exchange));
@@ -81,6 +81,6 @@ public final class JwtRefreshFilter implements WebFilter {
 
     private Mono<Void> handleRefreshTokenFailure(final RefreshTokenException failure, final ServerWebExchange exchange) {
         log.info("Failed to refresh token with reason: {}", failure.getReason());
-        return responseProducer.formFailureResponse(exchange);
+        return responseProducer.formFailureBody(exchange);
     }
 }

@@ -35,7 +35,7 @@ public final class JwtAccessTokenResponseProducer {
      * Produces a response with redirect (i.e. HttpStatus == 302) to the static web-server using the following pattern:
      * {@code ${webUrl}/oauth2/redirect?accessToken=${accessToken}}.
      */
-    public Mono<Void> formRedirect(final ServerWebExchange exchange, final Long userId, final String refreshToken) {
+    public Mono<Void> formSuccessRedirect(final ServerWebExchange exchange, final Long userId, final String refreshToken) {
         return Mono.fromRunnable(() -> {
             final var response = exchange.getResponse();
             final var accessTokenDetails = jwt.generate(userId.toString(), accessExpiresIn);
@@ -50,7 +50,7 @@ public final class JwtAccessTokenResponseProducer {
      * Produces a response with the access token as a part of body JSON
      * (see {@code RESPONSE_BODY_FORMAT}), and refresh token included in cookies
      */
-    public Mono<Void> formResponseWithBody(final ServerWebExchange exchange, final Long userId, final String refreshToken) {
+    public Mono<Void> formSuccessBody(final ServerWebExchange exchange, final Long userId, final String refreshToken) {
         final var response = exchange.getResponse();
 
         return response.writeWith(Mono.fromSupplier(() -> {
@@ -69,7 +69,7 @@ public final class JwtAccessTokenResponseProducer {
     /**
      * Produces a response with an empty access token
      */
-    public Mono<Void> formFailureResponse(final ServerWebExchange exchange) {
+    public Mono<Void> formFailureBody(final ServerWebExchange exchange) {
         final var response = exchange.getResponse();
 
         return response.writeWith(Mono.fromSupplier(() -> {

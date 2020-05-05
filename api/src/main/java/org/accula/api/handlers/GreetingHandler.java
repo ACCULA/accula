@@ -16,7 +16,7 @@ public final class GreetingHandler {
     private static final String ERROR = "Missing required query param \"name\"";
 
     @NotNull
-    public Mono<ServerResponse> greet(@NotNull final ServerRequest request) {
+    public Mono<ServerResponse> greet(final ServerRequest request) {
         return Mono
                 .justOrEmpty(request.queryParam("name"))
                 .filter(not(String::isBlank))
