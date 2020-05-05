@@ -25,8 +25,8 @@ import reactor.core.publisher.Mono;
 @Import({UsersRouter.class, UsersHandler.class, UserRepository.class})
 public class UsersRouterTest {
     private static final User STUB_DTO_USER = new User(1L, "name", 123L, "login", null);
-    private static final ResponseUser RESPONSE_USER
-            = new ResponseUser(STUB_DTO_USER.getId(), STUB_DTO_USER.getGithubLogin(), STUB_DTO_USER.getName());
+    private static final ResponseUser RESPONSE_USER =
+            new ResponseUser(STUB_DTO_USER.getId(), STUB_DTO_USER.getGithubLogin(), STUB_DTO_USER.getName());
 
     @MockBean
     private UserRepository repository;
