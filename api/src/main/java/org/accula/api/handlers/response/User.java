@@ -4,6 +4,9 @@ import lombok.Value;
 
 import static java.util.Objects.requireNonNull;
 
+/**
+ * @author Anton Lamtev
+ */
 @Value
 public class User implements ResponseBody {
     Long id;

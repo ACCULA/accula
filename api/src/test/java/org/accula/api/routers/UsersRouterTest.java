@@ -8,28 +8,28 @@ import org.accula.api.db.dto.User;
 import org.accula.api.handlers.UsersHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
-@ExtendWith(SpringExtension.class)
-@WebFluxTest(controllers = UsersRouter.class)
-@Import({UsersHandler.class, UserRepository.class})
+/**
+ * @author Anton Lamtev
+ */
+@WebFluxTest
+@Import({UsersRouter.class, UsersHandler.class, UserRepository.class})
 public class UsersRouterTest {
     private static final User STUB_DTO_USER = new User(1L, "name", 123L, "login", null);
     private static final ResponseUser RESPONSE_USER
             = new ResponseUser(STUB_DTO_USER.getId(), STUB_DTO_USER.getGithubLogin(), STUB_DTO_USER.getName());
 
     @MockBean
-    UserRepository repository;
+    private UserRepository repository;
     @Autowired
     private RouterFunction<ServerResponse> usersRoute;
     private WebTestClient client;
