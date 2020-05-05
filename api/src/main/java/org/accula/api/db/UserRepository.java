@@ -12,11 +12,19 @@ import reactor.core.publisher.Mono;
  */
 @Repository
 public interface UserRepository extends ReactiveCrudRepository<User, Long> {
+    Mono<User> findById(final Long id);
+
     Mono<User> findByGithubId(final Long githubId);
 
     <S extends User> Mono<S> save(final S user);
 
+    //@formatter:off
     @Modifying
-    @Query("UPDATE users SET github_access_token = :githubAccessToken WHERE github_id = :githubId")
-    Mono<Void> setNewAccessToken(final Long githubId, final String githubAccessToken);
+    @Query("UPDATE users " +
+           "SET github_login = :githubLogin, github_access_token = :githubAccessToken " +
+           "WHERE github_id = :githubId")
+    Mono<Void> updateGithubLoginAndAccessToken(final Long githubId,
+                                               final String githubLogin,
+                                               final String githubAccessToken);
+    //@formatter:on
 }

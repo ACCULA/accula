@@ -1,10 +1,10 @@
 CREATE TABLE IF NOT EXISTS users
 (
     id                  BIGSERIAL PRIMARY KEY,
-    first_name          VARCHAR(32),
-    last_name           VARCHAR(32),
+    name                VARCHAR(256)       NOT NULL,
 
-    github_id           BIGINT UNIQUE NOT NULL,
+    github_id           BIGINT UNIQUE      NOT NULL,
+    github_login        VARCHAR(39) UNIQUE NOT NULL,
     github_access_token VARCHAR(256)
 );
 

@@ -6,6 +6,8 @@ import org.jetbrains.annotations.Nullable;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 
+import java.util.Objects;
+
 /**
  * @author Anton Lamtev
  */
@@ -16,18 +18,17 @@ public class User {
     @Id
     @Nullable
     private Long id;
-    @Nullable
-    private String firstName;
-    @Nullable
-    private String lastName;
+    private String name;
     private Long githubId;
+    private String githubLogin;
+    @Nullable
     private String githubAccessToken;
 
-    public static User of(final Long githubId, final String githubAccessToken) {
-        return new User(null, null, null, githubId, githubAccessToken);
+    public boolean shouldUpdateLoginOrAccessToken(final String login, final String accessToken) {
+        return !githubLogin.equals(login) || !Objects.equals(githubAccessToken, accessToken);
     }
 
-    public static User of(final Long id, final Long githubId, final String githubAccessToken) {
-        return new User(id, null, null, githubId, githubAccessToken);
+    public static User of(final String name, final Long githubId, final String githubLogin, final String githubAccessToken) {
+        return new User(null, name, githubId, githubLogin, githubAccessToken);
     }
 }
