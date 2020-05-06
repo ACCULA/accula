@@ -1,15 +1,32 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
+import { bindActionCreators } from 'redux'
+import { connect, ConnectedProps } from 'react-redux'
 import { Redirect, Route, RouteComponentProps, Switch } from 'react-router-dom'
+import jwtDecode from 'jwt-decode'
 
 import Navbar from 'components/Navbars'
 import Sidebar from 'components/Sidebar'
 import Footer from 'components/Footer'
 
-import routes from 'routes'
+import { routes } from 'routes'
+import { AppDispatch, AppState } from 'store'
+import { getUserAction } from 'store/users/actions'
 import { getAccessToken } from 'accessToken'
 
-const App = (props: RouteComponentProps) => {
-  const { history, location } = props
+const mapStateToProps = (state: AppState) => ({
+  users: state.users
+})
+
+const mapDispatchToProps = (dispatch: AppDispatch) => ({
+  getUser: bindActionCreators(getUserAction, dispatch)
+})
+
+const connector = connect(mapStateToProps, mapDispatchToProps)
+type PropsFromRedux = ConnectedProps<typeof connector>
+type AppProps = PropsFromRedux & RouteComponentProps
+
+const App = ({ history, location, getUser, users }: AppProps) => {
+  const { user, isFetching } = users
 
   useEffect(() => {
     if (history.action === 'PUSH') {
@@ -19,20 +36,16 @@ const App = (props: RouteComponentProps) => {
     }
   })
 
-  const [loading, setLoading] = useState(true)
-  const [loggedIn, setLoggedIn] = useState(false)
-
   useEffect(() => {
-    getAccessToken()
-      .then(accessToken => {
-        setLoggedIn(accessToken && accessToken !== '')
-      })
-      .finally(() => {
-        setLoading(false)
-      })
-  })
+    getAccessToken().then(accessToken => {
+      if (accessToken && accessToken !== '') {
+        const { sub } = jwtDecode(accessToken)
+        getUser(parseInt(sub, 10))
+      }
+    })
+  }, [getUser])
 
-  if (loading) {
+  if (isFetching) {
     return <></>
   }
 
@@ -41,9 +54,9 @@ const App = (props: RouteComponentProps) => {
 
   return (
     <div className="wrapper">
-      <Sidebar {...props} routes={routes} color="black" loggedIn={loggedIn} />
+      <Sidebar user={user} routes={routes} />
       <div id="main-panel" className="main-panel">
-        <Navbar {...props} brandText={brand} loggedIn={loggedIn} />
+        <Navbar user={user} brandText={brand} />
         <Switch>
           {routes.map(route => (
             <Route
@@ -61,4 +74,4 @@ const App = (props: RouteComponentProps) => {
   )
 }
 
-export default App
+export default connector(App)

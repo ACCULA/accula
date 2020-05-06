@@ -1,15 +1,14 @@
 import jwtDecode from 'jwt-decode'
 import { refreshToken } from 'services/authService'
 
-interface Token {
-  accessToken: string
-}
-
 let accessToken = ''
 
 const updateAccessToken = async () => {
-  const token: Token = await refreshToken().catch(() => {
-    throw Error('Refresh token failed')
+  const token = await refreshToken().catch(() => {
+    console.error('Refresh token failed')
+    return {
+      accessToken: ''
+    }
   })
   accessToken = token.accessToken
   return accessToken
@@ -17,13 +16,15 @@ const updateAccessToken = async () => {
 
 export const getAccessToken = async (): Promise<string> => {
   try {
-    const now = new Date().getTime() / 1000
-    const { exp } = jwtDecode(accessToken)
-    if (now <= exp) {
-      return accessToken
+    if (accessToken) {
+      const now = new Date().getTime() / 1000
+      const { exp } = jwtDecode(accessToken)
+      if (now <= exp) {
+        return accessToken
+      }
     }
     return updateAccessToken()
-  } catch (Error) {
+  } catch (e) {
     return updateAccessToken()
   }
 }

@@ -1,5 +1,15 @@
 import { ComponentType } from 'react'
 
+export interface Token {
+  accessToken: string
+}
+
+export interface User {
+  id: number
+  login: string
+  name: string
+}
+
 export interface RouteInfo {
   path: string
   exact?: boolean

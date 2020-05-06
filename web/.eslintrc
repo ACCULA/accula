@@ -24,7 +24,8 @@
     // Disable for aliases
     "import/extensions": "off",
     "import/no-unresolved": "off",
-    "no-plusplus": "off"
+    "no-plusplus": "off",
+    "no-console": "off"
   },
   "settings": {
     "import/resolver": {
