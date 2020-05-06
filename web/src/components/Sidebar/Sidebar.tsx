@@ -1,22 +1,22 @@
 import React from 'react'
-import { Link, NavLink, RouteComponentProps } from 'react-router-dom'
+import { Link, NavLink, useLocation } from 'react-router-dom'
 import { useWindowSize } from 'react-use'
 
 import { RouteInfo, User } from 'types'
 import logo from 'images/fin_tango.svg'
 import NavbarLinks from 'components/Navbars/NavbarLinks'
 
-interface SidebarProps extends RouteComponentProps {
+interface SidebarProps {
   routes: RouteInfo[]
-  color: string
   user?: User
 }
 
-const Sidebar = ({ routes, color, location, user }: SidebarProps) => {
+const Sidebar = ({ routes, user }: SidebarProps) => {
   const { width } = useWindowSize()
+  const location = useLocation()
 
   return (
-    <div id="sidebar" className="sidebar" data-color={color}>
+    <div id="sidebar" className="sidebar">
       <Link to="/" className="logo">
         <img src={logo} alt="A" />
         <span>CCULA</span>

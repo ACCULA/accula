@@ -1,5 +1,9 @@
 import { ComponentType } from 'react'
 
+export interface Token {
+  accessToken: string
+}
+
 export interface User {
   id: number
   login: string

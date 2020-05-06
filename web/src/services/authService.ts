@@ -1,12 +1,9 @@
 import axios from 'axios'
 
 import { API_URL } from 'utils'
+import { Token } from 'types'
 
 type AuthEndpoint = 'refreshToken' | 'logout'
-
-interface Token {
-  accessToken: string
-}
 
 const updateRefreshToken = (endpoint: AuthEndpoint): Promise<Token> => {
   return axios

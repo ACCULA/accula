@@ -8,10 +8,10 @@ import Navbar from 'components/Navbars'
 import Sidebar from 'components/Sidebar'
 import Footer from 'components/Footer'
 
-import { getAccessToken } from 'accessToken'
 import { routes } from 'routes'
 import { AppDispatch, AppState } from 'store'
 import { getUserAction } from 'store/users/actions'
+import { getAccessToken } from 'accessToken'
 
 const mapStateToProps = (state: AppState) => ({
   users: state.users
@@ -25,8 +25,8 @@ const connector = connect(mapStateToProps, mapDispatchToProps)
 type PropsFromRedux = ConnectedProps<typeof connector>
 type AppProps = PropsFromRedux & RouteComponentProps
 
-const App = (props: AppProps) => {
-  const { history, location, getUser, users } = props
+const App = ({ history, location, getUser, users }: AppProps) => {
+  const { user, isFetching } = users
 
   useEffect(() => {
     if (history.action === 'PUSH') {
@@ -45,7 +45,7 @@ const App = (props: AppProps) => {
     })
   }, [getUser])
 
-  if (users.isFetching) {
+  if (isFetching) {
     return <></>
   }
 
@@ -54,9 +54,9 @@ const App = (props: AppProps) => {
 
   return (
     <div className="wrapper">
-      <Sidebar {...props} user={users.user} routes={routes} color="black" />
+      <Sidebar user={user} routes={routes} />
       <div id="main-panel" className="main-panel">
-        <Navbar {...props} user={users.user} brandText={brand} />
+        <Navbar user={user} brandText={brand} />
         <Switch>
           {routes.map(route => (
             <Route

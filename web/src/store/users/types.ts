@@ -1,5 +1,6 @@
 import { User } from 'types'
 
+export const GET_ACCESS_TOKEN = 'GET_ACCESS_TOKEN'
 export const GET_USER = 'GET_USER'
 export const FETCHING_USER = 'FETCHING_USER'
 
@@ -15,6 +16,7 @@ export interface GetUser {
 
 export interface FetchingUser {
   type: typeof FETCHING_USER
+  isFetching: boolean
 }
 
 export type UsersActionTypes = GetUser | FetchingUser

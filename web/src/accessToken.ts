@@ -16,7 +16,7 @@ const updateAccessToken = async () => {
 
 export const getAccessToken = async (): Promise<string> => {
   try {
-    if (accessToken && accessToken !== '') {
+    if (accessToken) {
       const now = new Date().getTime() / 1000
       const { exp } = jwtDecode(accessToken)
       if (now <= exp) {
