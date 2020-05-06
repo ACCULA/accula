@@ -15,7 +15,7 @@ public final class StatusRouter {
     public RouterFunction<ServerResponse> statusRoute() {
         return RouterFunctions
                 .route()
-                .GET("/status", __ ->
+                .GET("/status", request ->
                         ServerResponse
                                 .ok()
                                 .contentType(APPLICATION_JSON)

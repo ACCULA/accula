@@ -1,0 +1,47 @@
+@import "../../styles/variables";
+
+.panel-project {
+  .panel-heading {
+    height: 60px;
+    .avatar {
+      float: left;
+      img {
+        margin-top: -5px;
+        margin-left: -10px;
+        margin-right: 10px;
+        width: 50px;
+        border-radius: 50%;
+        border: 2px solid $light-gray;
+      }
+    }
+    .title {
+      .owner {
+        margin-top: -3px;
+        margin-bottom: -5px;
+        color: $dark-gray;
+        font-size: $font-size-h6;
+      }
+      .name {
+        font-size: $font-size-h4;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+  }
+  
+  .panel-body {
+    height: 55px;
+    p {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+  
+  .panel-footer {
+    i {
+      margin-left: 5px
+    }
+  }
+}

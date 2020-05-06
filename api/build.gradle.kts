@@ -1,24 +1,37 @@
 plugins {
-    id("org.springframework.boot") version "2.2.6.RELEASE"
+    id("org.springframework.boot") version "2.3.0.RC1"
     id("io.spring.dependency-management") version "1.0.9.RELEASE"
 }
 
 version = "1.0-SNAPSHOT"
 
+repositories {
+    maven(url = "https://repo.spring.io/milestone")
+}
+
 dependencies {
-    implementation("org.springframework.boot:spring-boot-starter-webflux:2.2.6.RELEASE")
-    implementation("org.springframework.boot:spring-boot-starter-security:2.2.6.RELEASE")
-    implementation("org.jetbrains:annotations:19.0.0")
-
-    val lombok = "org.projectlombok:lombok:1.18.12"
-    compileOnly(lombok)
-    annotationProcessor(lombok)
-
-    testImplementation("org.springframework.boot:spring-boot-starter-test:2.2.6.RELEASE") {
+    implementation("org.springframework.boot:spring-boot-starter-webflux")
+    testImplementation("org.springframework.boot:spring-boot-starter-test") {
         exclude(group = "org.junit.vintage", module = "junit-vintage-engine")
     }
-    testImplementation("org.springframework.security:spring-security-test:5.3.0.RELEASE")
+    implementation("org.springframework.boot:spring-boot-starter-security")
+    testImplementation("org.springframework.security:spring-security-test")
 
-    testCompileOnly(lombok)
-    testAnnotationProcessor(lombok)
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+
+    implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
+    implementation("org.springframework.security:spring-security-oauth2-client")
+
+    implementation("com.auth0:java-jwt:3.10.2")
+
+    implementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
+    implementation("io.r2dbc:r2dbc-postgresql:0.8.2.RELEASE")
+    implementation("io.r2dbc:r2dbc-pool:0.8.2.RELEASE")
+    implementation("io.r2dbc:r2dbc-spi:0.8.1.RELEASE")
+
+    implementation("org.postgresql:postgresql")
+    implementation("org.springframework:spring-jdbc")
+    implementation("org.flywaydb:flyway-core")
+
+    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 }

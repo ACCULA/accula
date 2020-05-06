@@ -23,6 +23,16 @@ configure(subprojects.filterNot(project(":web")::equals)) {
         jcenter()
     }
 
+    dependencies {
+        implementation("org.jetbrains:annotations:19.0.0")
+
+        val lombok = "org.projectlombok:lombok:1.18.12"
+        compileOnly(lombok)
+        annotationProcessor(lombok)
+        testCompileOnly(lombok)
+        testAnnotationProcessor(lombok)
+    }
+
     configure<JavaPluginConvention> {
         sourceCompatibility = JavaVersion.VERSION_14
     }
