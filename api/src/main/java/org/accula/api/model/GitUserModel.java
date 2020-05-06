@@ -8,11 +8,6 @@ public class GitUserModel {
         super();
     }
 
-    public GitUserModel(String login, String html_url) {
-        this.login = login;
-        this.html_url = html_url;
-    }
-
     // only for debug
     public String getAll(){
         return "login: " + login + "\n" +

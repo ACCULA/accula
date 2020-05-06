@@ -7,9 +7,5 @@ public class WebHookModel {
         super();
     }
 
-    public WebHookModel(GitPullRequest pull_request) {
-        this.pull_request = pull_request;
-    }
-
     public GitPullRequest getPull_request() { return pull_request; }
 }
