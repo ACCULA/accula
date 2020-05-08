@@ -2,6 +2,7 @@ import React, { useEffect } from 'react'
 import { bindActionCreators } from 'redux'
 import { connect, ConnectedProps } from 'react-redux'
 import { Redirect, Route, RouteComponentProps, Switch } from 'react-router-dom'
+import { useWindowSize } from 'react-use'
 import jwtDecode from 'jwt-decode'
 
 import Navbar from 'components/Navbars'
@@ -27,14 +28,20 @@ type AppProps = PropsFromRedux & RouteComponentProps
 
 const App = ({ history, location, getUser, users }: AppProps) => {
   const { user, isFetching } = users
+  const { width } = useWindowSize()
+
+  useEffect(() => {
+    if (width < 993 && document.documentElement.className.indexOf('nav-open') !== -1) {
+      document.documentElement.classList.toggle('nav-open')
+    }
+  }, [width, location])
 
   useEffect(() => {
     if (history.action === 'PUSH') {
       document.documentElement.scrollTop = 0
       document.scrollingElement.scrollTop = 0
-      document.documentElement.classList.toggle('nav-open')
     }
-  })
+  }, [history, location])
 
   useEffect(() => {
     getAccessToken().then(accessToken => {

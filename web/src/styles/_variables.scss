@@ -31,7 +31,7 @@ $default-states-color: #777777 !default;
 
 $primary-color: $tango !default;
 $primary-bg: $tango !default;
-$primary-states-color: lighten($primary-color, 10%) !default;
+$primary-states-color: darken($primary-color, 5%) !default;
 
 $success-color: #87CB16 !default;
 $success-bg: #87CB16 !default;

@@ -47,4 +47,20 @@
       margin-left: 5px
     }
   }
+
+  .project-pull {
+    .id {
+      text-align: center;
+    }
+
+    .avatar {
+      img {
+        margin-right: 10px;
+        width: 30px;
+        border-radius: 50%;
+        border: 2px solid $light-gray;
+      }
+    }
+  }
 }
+

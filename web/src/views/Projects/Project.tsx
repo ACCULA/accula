@@ -1,10 +1,12 @@
 import React from 'react'
 import { Link, Route, Switch, useRouteMatch } from 'react-router-dom'
-import { Grid, Panel, Row, Table } from 'react-bootstrap'
+import { Grid, Panel, Table } from 'react-bootstrap'
 
 import { projects, pulls } from 'data'
 import { Project as Proj } from 'types'
 import PullRequest from 'views/PullRequest'
+import Breadcrumbs from 'components/Breadcrumbs'
+import ProjectPanelHeading from './ProjectPanelHeading'
 
 interface RouteParams {
   projectId: string
@@ -21,53 +23,40 @@ const Project = () => {
         <PullRequest />
       </Route>
       <Route path="/projects/:projectId" exact>
-        <Grid fluid className="project panel-project">
-          <Row>
-            <Panel>
-              <Panel.Heading className="project-name">
-                <div className="avatar">
-                  <img className="avatar border-gray" src={project.avatar} alt={project.owner} />
-                </div>
-                <div className="title">
-                  <div className="owner">{project.owner}/</div>
-                  <div className="name">
-                    <a href={project.url} target="_blank" rel="noopener noreferrer">
-                      {project.name}
-                    </a>
-                  </div>
-                </div>
-              </Panel.Heading>
-              <Table striped bordered hover responsive>
-                <thead>
-                  <tr className="project-pull">
-                    <th className="id">#</th>
-                    <th>Pull Request</th>
-                    <th>Author</th>
+        <Grid fluid className="tight">
+          <Breadcrumbs
+            breadcrumbs={[{ text: 'Projects', to: '/projects' }, { text: project.name }]}
+          />
+          <Panel className="project panel-project">
+            <ProjectPanelHeading {...project} />
+            <Table striped bordered hover responsive>
+              <thead>
+                <tr className="project-pull">
+                  <th className="id">#</th>
+                  <th>Pull Request</th>
+                  <th>Author</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pulls.map(pull => (
+                  <tr key={pull.id} className="project-pull">
+                    <td className="id">{pull.id}</td>
+                    <td>
+                      <Link to={`/projects/${projectId}/${pull.id}`}>{pull.title}</Link>
+                    </td>
+                    <td className="avatar">
+                      <img
+                        className="border-gray"
+                        src={pull.author.avatar}
+                        alt={pull.author.login}
+                      />
+                      {pull.author.login}
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {pulls.map(pull => {
-                    return (
-                      <tr key={pull.id} className="project-pull">
-                        <td className="id">{pull.id}</td>
-                        <td>
-                          <Link to={`/projects/${projectId}/${pull.id}`}>{pull.title}</Link>
-                        </td>
-                        <td className="avatar">
-                          <img
-                            className="border-gray"
-                            src={pull.author.avatar}
-                            alt={pull.author.login}
-                          />
-                          {pull.author.login}
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </Table>
-            </Panel>
-          </Row>
+                ))}
+              </tbody>
+            </Table>
+          </Panel>
         </Grid>
       </Route>
     </Switch>

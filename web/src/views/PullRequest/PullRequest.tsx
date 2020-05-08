@@ -2,6 +2,8 @@ import React from 'react'
 import { useRouteMatch } from 'react-router-dom'
 import { Project as Proj, PullRequest as Pull } from 'types'
 import { projects, pulls } from 'data'
+import { Panel } from 'react-bootstrap'
+import Breadcrumbs from 'components/Breadcrumbs'
 
 interface RouteParams {
   projectId: string
@@ -15,8 +17,17 @@ const PullRequest = () => {
   const pull: Pull = pulls.find(p => p.id.toString() === pullRequestId)
   return (
     <>
-      {project.name}
-      {pull.author.login}
+      <Breadcrumbs
+        breadcrumbs={[
+          { text: 'Projects', to: '/projects' },
+          { text: project.name, to: `/projects/${project.id}` },
+          { text: `${pull.title} (@${pull.author.login})` }
+        ]}
+      />
+      <Panel>
+        <Panel.Heading>{pull.author.login}</Panel.Heading>
+        <Panel.Body>Body</Panel.Body>
+      </Panel>
     </>
   )
 }

@@ -26,7 +26,10 @@ const Sidebar = ({ routes, user }: SidebarProps) => {
           {routes
             .filter(route => !route.hidden)
             .map(route => (
-              <li className={location.pathname === route.path ? 'active' : ''} key={route.path}>
+              <li
+                className={location.pathname.indexOf(route.path) >= 0 ? 'active' : ''}
+                key={route.path}
+              >
                 <NavLink to={route.path} className="nav-link" activeClassName="active">
                   <i className={`fas fa-${route.icon}`} />
                   <p>{route.name}</p>

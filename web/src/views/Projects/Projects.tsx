@@ -1,9 +1,9 @@
 import React from 'react'
+import { Route, Switch } from 'react-router-dom'
 import { Col, Grid, Row } from 'react-bootstrap'
-import ProjectCard from 'components/ProjectCard'
 
 import { projects } from 'data'
-import { Route, Switch } from 'react-router-dom'
+import ProjectPanel from './ProjectPanel'
 import Project from './Project'
 
 const Projects = () => {
@@ -14,11 +14,11 @@ const Projects = () => {
           <Project />
         </Route>
         <Route path="/projects" exact>
-          <Grid fluid>
+          <Grid fluid className="tight">
             <Row>
               {projects.map(project => (
                 <Col key={project.id} xs={12} sm={6} md={6} lg={4}>
-                  <ProjectCard {...project} />
+                  <ProjectPanel {...project} />
                 </Col>
               ))}
             </Row>
