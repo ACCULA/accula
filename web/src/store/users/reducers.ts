@@ -18,7 +18,7 @@ export function usersReducer(
     case FETCHING_USER:
       return {
         ...state,
-        isFetching: true
+        isFetching: action.isFetching
       }
     default:
       return state
