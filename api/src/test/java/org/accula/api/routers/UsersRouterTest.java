@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.accula.api.db.UserRepository;
-import org.accula.api.db.dto.User;
+import org.accula.api.db.model.User;
 import org.accula.api.handlers.UsersHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

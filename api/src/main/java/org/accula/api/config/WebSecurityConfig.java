@@ -62,6 +62,7 @@ public class WebSecurityConfig {
                 .formLogin().disable()
                 .logout().disable()
                 .headers().disable()
+                .csrf().disable()
 
                 //https://github.com/spring-projects/spring-security/issues/6552#issuecomment-515571416
                 .requestCache(cache -> cache
@@ -75,6 +76,7 @@ public class WebSecurityConfig {
 
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers("/greet").authenticated()
+                        .pathMatchers("/projects").authenticated()
                         .anyExchange().permitAll())
 
                 .addFilterBefore(jwtRefreshFilter, AUTHENTICATION)

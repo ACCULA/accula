@@ -1,6 +1,6 @@
 package org.accula.api.db;
 
-import org.accula.api.db.dto.RefreshToken;
+import org.accula.api.db.model.RefreshToken;
 import org.springframework.data.r2dbc.repository.Modifying;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
