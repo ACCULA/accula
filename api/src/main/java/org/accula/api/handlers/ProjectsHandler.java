@@ -16,6 +16,7 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuples;
 
 import java.net.URI;
 
@@ -28,37 +29,72 @@ public class ProjectsHandler {
 
     private final WebClient githubApiWebClient;
     private final UserRepository userRepository;
-    private final String reposPath = "/repos/";
-    private final String contributorsPath = "/contributors";
+    private final String REPOS_PATH = "/repos/";
+    private final String CONTRIBUTORS_PATH = "/contributors";
+
+    private Mono<ArrayNode> getGithubRepositoryContributorsByPath(final String path) {
+        return githubApiWebClient
+                .get()
+                .uri(REPOS_PATH + path + CONTRIBUTORS_PATH)
+                .retrieve()
+                .bodyToMono(ArrayNode.class);
+    }
+
+    private Mono<JsonNode> getGithubRepositoryInfoByPath(final String path) {
+        return githubApiWebClient
+                .get()
+                .uri(REPOS_PATH + path)
+                .retrieve()
+                .bodyToMono(JsonNode.class);
+    }
 
     public Mono<ServerResponse> addProject(final ServerRequest request) {
-        return Mono
+
+        Mono<String> userRepoPath = Mono
                 .justOrEmpty(request.bodyToMono(JsonNode.class))
                 .flatMap(__ -> __)
                 .map(node -> URI
                         .create(node
                                 .get("url")
                                 .asText())
-                        .getPath())
-                .flatMap(userRepoPath -> githubApiWebClient
-                        .get()
-                        .uri(reposPath + userRepoPath + contributorsPath)
-                        .retrieve()
-                        .bodyToMono(ArrayNode.class))
-                .map(arrayNode -> arrayNode.findValuesAsText("login"))
-                .flatMapMany(Flux::fromIterable)
-                .zipWith(userRepository
-                        .findById(ReactiveSecurityContextHolder
-                                .getContext()
-                                .map(SecurityContext::getAuthentication)
-                                .cast(JwtAuthentication.class)
-                                .map(JwtAuthentication::getPrincipal)
-                                .map(AuthorizedUser::getId))
-                        .map(User::getGithubLogin), String::equals)
-                .any(bool -> bool.equals(Boolean.TRUE))
-                .flatMap(jsonNodes -> ok()
+                        .getPath());
+
+        return userRepoPath
+                .map(path -> Tuples.of(path, getGithubRepositoryContributorsByPath(path)))
+                .map(tuple2 -> tuple2
+                        .mapT2(arrayNodeMono -> arrayNodeMono
+                                .map(arrayNode -> arrayNode
+                                        .findValuesAsText("login"))))
+                .map(tuple2 -> tuple2
+                        .mapT2(listMono -> listMono
+                                .flatMapMany(Flux::fromIterable)))
+                .map(tuple2 -> tuple2
+                        .mapT2(stringFlux -> stringFlux
+                                .zipWith(userRepository
+                                        .findById(ReactiveSecurityContextHolder
+                                                .getContext()
+                                                .map(SecurityContext::getAuthentication)
+                                                .cast(JwtAuthentication.class)
+                                                .map(JwtAuthentication::getPrincipal)
+                                                .map(AuthorizedUser::getId))
+                                        .map(User::getGithubLogin), String::equals)))
+                .map(tuple2 -> tuple2
+                        .mapT2(booleanFlux -> booleanFlux
+                                .any(bool -> bool
+                                        .equals(Boolean.TRUE))))
+                .map(tuple2 -> tuple2
+                        .getT2()
+                                .zipWith(Mono.just(tuple2.getT1()), (isContributor, path) -> {
+                                    if (isContributor)
+                                        return getGithubRepositoryInfoByPath(path);
+                                    else
+                                        return Mono.empty();
+                                }))
+                .flatMap(__ -> __)
+                .flatMap(__ -> __)
+                .flatMap(result -> ok()
                         .contentType(MediaType.APPLICATION_JSON)
-                        .bodyValue(jsonNodes))
+                        .bodyValue(result))
                 .switchIfEmpty(badRequest().build());
 
     }
