@@ -123,7 +123,6 @@ $font-size-base: 14px !default;
 $font-size-small: 12px !default;
 $font-size-medium: 16px !default;
 $font-size-large: 18px !default;
-$font-size-large-navbar: 20px !default;
 
 $font-size-h1: 52px !default;
 $font-size-h2: 36px !default;
@@ -145,6 +144,9 @@ $font-weight-bold: 600 !default;
 $line-height-general: 1.5 !default;
 $line-height: 20px !default;
 $line-height-lg: 54px !default;
+
+$font-family-roboto: "Roboto", "Helvetica Neue", "Arial", sans-serif;
+$font-family-righteous: "Righteous", "Helvetica", "Arial", cursive;
 
 // Components
 $sidebar-width: calc(100% - 260px) !default;
@@ -180,9 +182,10 @@ $navbar-margin-a-btn-round: 16px 3px;
 $navbar-padding-a-icons: 6px 15px;
 $navbar-margin-a-icons: 6px 3px;
 $navbar-padding-brand: 15px 15px;
-$navbar-margin-brand: 5px 0;
+$navbar-margin-brand: 5px -5px;
 $navbar-margin-brand-icons: 12px auto;
 $navbar-margin-btn: 15px 3px;
+$navbar-font-size: $font-size-h3;
 
 $height-icon: 64px !default;
 $width-icon: 64px !default;

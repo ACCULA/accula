@@ -14,9 +14,10 @@
 
   .navbar-brand {
     font-weight: $font-weight-normal;
-    margin: $navbar-margin-brand;
+    margin: $navbar-margin-brand !important;
     padding: $navbar-padding-brand;
-    font-size: $font-size-large-navbar;
+    font-size: $navbar-font-size;
+    font-family: $font-family-righteous;
   }
 
   .navbar-nav {
@@ -268,4 +269,13 @@
 
 .navbar-links {
   margin-right: 10px;
+}
+
+.navbar-logo {
+  margin: 0;
+  padding: 15px 0;
+  height: 60px;
+  width: 45px;
+  float: left;
+  overflow: hidden;
 }

@@ -28,22 +28,6 @@
     }
   }
 
-  .social-area > a:not(.btn) {
-    color: $dark-gray;
-    display: inline-block;
-    vertical-align: top;
-    padding: $padding-social-a;
-    font-size: $font-size-large-navbar;
-    font-weight: normal;
-    line-height: $line-height;
-    text-align: center;
-
-    &:hover,
-    &:focus {
-      color: $default-states-color;
-    }
-  }
-
   .copyright {
     color: $default-states-color;
     padding: 10px 15px;
