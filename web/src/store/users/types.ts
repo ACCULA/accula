@@ -1,16 +1,22 @@
-import { User } from 'types'
+import { Token, User } from 'types'
 
-export const GET_ACCESS_TOKEN = 'GET_ACCESS_TOKEN'
-export const GET_USER = 'GET_USER'
+export const SET_ACCESS_TOKEN = 'SET_ACCESS_TOKEN'
+export const SET_USER = 'GET_USER'
 export const FETCHING_USER = 'FETCHING_USER'
 
 export interface UsersState {
-  user: User
+  user?: User
+  token?: Token
   isFetching: boolean
 }
 
-export interface GetUser {
-  type: typeof GET_USER
+export interface SetAccessToken {
+  type: typeof SET_ACCESS_TOKEN
+  token: Token
+}
+
+export interface SetUser {
+  type: typeof SET_USER
   user: User
 }
 
@@ -19,4 +25,7 @@ export interface FetchingUser {
   isFetching: boolean
 }
 
-export type UsersActionTypes = GetUser | FetchingUser
+export type UsersActionTypes =
+  | SetAccessToken //
+  | SetUser
+  | FetchingUser

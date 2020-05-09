@@ -18,6 +18,10 @@
     padding: $navbar-padding-brand;
     font-size: $navbar-font-size;
     font-family: $font-family-righteous;
+    color: $matisse;
+    &:hover {
+      color: $matisse;
+    }
   }
 
   .navbar-nav {

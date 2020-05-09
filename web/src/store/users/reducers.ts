@@ -1,4 +1,10 @@
-import { FETCHING_USER, GET_USER, UsersActionTypes, UsersState } from 'store/users/types'
+import {
+  FETCHING_USER,
+  SET_USER,
+  SET_ACCESS_TOKEN,
+  UsersActionTypes,
+  UsersState
+} from 'store/users/types'
 
 const initialState: UsersState = {
   user: null,
@@ -10,7 +16,13 @@ export function usersReducer(
   action: UsersActionTypes
 ): UsersState {
   switch (action.type) {
-    case GET_USER:
+    case SET_ACCESS_TOKEN: {
+      return {
+        ...state,
+        token: action.token
+      }
+    }
+    case SET_USER:
       return {
         ...state,
         user: action.user

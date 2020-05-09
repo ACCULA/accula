@@ -3,7 +3,12 @@ import axios from 'axios'
 import { API_URL } from 'utils'
 import { Token } from 'types'
 
-type AuthEndpoint = 'refreshToken' | 'logout'
+const REFRESH_TOKEN = 'refreshToken'
+const LOGOUT = 'logout'
+
+type AuthEndpoint =
+  | typeof REFRESH_TOKEN //
+  | typeof LOGOUT
 
 const updateRefreshToken = (endpoint: AuthEndpoint): Promise<Token> => {
   return axios
@@ -16,5 +21,5 @@ const updateRefreshToken = (endpoint: AuthEndpoint): Promise<Token> => {
     .then(resp => resp.data as Token)
 }
 
-export const refreshToken = () => updateRefreshToken('refreshToken')
-export const logout = () => updateRefreshToken('logout')
+export const refreshToken = () => updateRefreshToken(REFRESH_TOKEN)
+export const logout = () => updateRefreshToken(LOGOUT)
