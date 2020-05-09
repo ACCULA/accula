@@ -22,26 +22,32 @@ export interface RouteInfo {
 export interface Project {
   id: number
   url: string
-  owner: string
+  creator: number
+  admins?: number[]
+  repoOwner: string
   name: string
   description?: string
   avatar: string
-  openPullRequestCount: number
+  openPullCount: number
 }
 
 export interface ProjectSettings {}
 
 export interface PullRequest {
   id: number
-  url: string
-  title: string
-  body: string
-  open: boolean
-  createdAt: string
-  updatedAt: string
-  author: {
+  projectId: number
+  pullUrl: string
+  fork: {
     url: string
+    branch: string
+    sha: string
+  }
+  author: {
     login: string
     avatar: string
   }
+  title: string
+  open: boolean
+  createdAt: string
+  updatedAt: string
 }

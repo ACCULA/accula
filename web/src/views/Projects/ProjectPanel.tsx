@@ -15,7 +15,7 @@ const ProjectPanel = (project: Project) => {
       <Panel.Footer className="clearfix">
         <div className="pull-right">
           <Link to={`/projects/${project.id}`}>
-            View {project.openPullRequestCount} opened pull requests
+            View {project.openPullCount} opened pull requests
             <i className="fa fa-fw fa-chevron-circle-right" />
           </Link>
         </div>

@@ -7,10 +7,10 @@ const ProjectPanelHeading = (project: Project) => {
   return (
     <Panel.Heading>
       <div className="avatar">
-        <img className="border-gray" src={project.avatar} alt={project.owner} />
+        <img className="border-gray" src={project.avatar} alt={project.repoOwner} />
       </div>
       <div className="title">
-        <div className="owner">{project.owner}/</div>
+        <div className="owner">{project.repoOwner}/</div>
         <div className="name">
           <a href={project.url} target="_blank" rel="noopener noreferrer">
             {project.name}
