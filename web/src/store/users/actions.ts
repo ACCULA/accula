@@ -10,7 +10,7 @@ import {
   SetUser
 } from 'store/users/types'
 import { refreshToken } from 'services/authService'
-import { getUserById } from 'services/userService'
+import { getUserById } from 'services/usersService'
 import { Token, User } from 'types'
 
 export const setAccessTokenAction = (token: Token): SetAccessToken => ({

@@ -4,9 +4,11 @@ import thunk from 'redux-thunk'
 import logger from 'redux-logger'
 
 import { usersReducer } from './users/reducers'
+import { projectsReducer } from './projects/reducers'
 
 const rootReducer = combineReducers({
-  users: usersReducer
+  users: usersReducer,
+  projects: projectsReducer
 })
 
 export const store = createStore(

@@ -155,11 +155,13 @@ $border-radius-top: 10px 10px 0 0 !default;
 $border-radius-bottom: 0 0 10px 10px !default;
 
 $dropdown-shadow: 1px 2px 3px rgba(0, 0, 0, 0.125);
+$dropdown-coordinates: 29px -50px !default;
+$dropdown-padding-base-vertical: 8px;
+$dropdown-padding-base-horizontal: 16px;
 
 $general-transition-time: 300ms !default;
 
 $slow-transition-time: 370ms !default;
-$dropdown-coordinates: 29px -50px !default;
 
 $fast-transition-time: 150ms !default;
 

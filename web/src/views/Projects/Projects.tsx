@@ -1,21 +1,50 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
+import { bindActionCreators } from 'redux'
+import { connect, ConnectedProps } from 'react-redux'
 import { Route, Switch } from 'react-router-dom'
 import { Button, Clearfix, Col, Grid, Row } from 'react-bootstrap'
 
-import { projects } from 'data'
 import Breadcrumbs from 'components/Breadcrumbs'
-import ProjectPanel from './ProjectPanel'
-import Project from './Project'
+import { AppDispatch, AppState } from 'store'
+import { createProjectAction, getProjectsAction } from 'store/projects/actions'
 import CreateProjectModal from './CreateProjectModal'
+import Project from './Project'
+import ProjectPanel from './ProjectPanel'
 
-const Projects = () => {
+const mapStateToProps = (state: AppState) => ({
+  projects: state.projects.projects,
+  isFetching: state.projects.isFetching
+})
+
+const mapDispatchToProps = (dispatch: AppDispatch) =>
+  bindActionCreators(
+    {
+      getProjects: getProjectsAction,
+      createProject: createProjectAction
+    },
+    dispatch
+  )
+
+const connector = connect(mapStateToProps, mapDispatchToProps)
+type ProjectsProps = ConnectedProps<typeof connector>
+
+const Projects = ({ isFetching, projects, getProjects, createProject }: ProjectsProps) => {
   const [isShowModal, setShowModal] = useState(false)
+
+  useEffect(() => {
+    if (!projects) {
+      getProjects()
+    }
+  }, [getProjects, projects])
+
+  if (isFetching || !projects) {
+    return <></>
+  }
+
   return (
     <div className="content">
       <Switch>
-        <Route path="/projects/:projectId">
-          <Project />
-        </Route>
+        <Route path="/projects/:projectId" component={Project} />
         <Route path="/projects" exact>
           <Grid fluid className="tight">
             <Clearfix>
@@ -29,7 +58,7 @@ const Projects = () => {
             <Row>
               {projects.map(project => (
                 <Col key={project.id} xs={12} sm={6} md={6} lg={4}>
-                  <ProjectPanel {...project} />
+                  <ProjectPanel project={project} />
                 </Col>
               ))}
             </Row>
@@ -37,7 +66,10 @@ const Projects = () => {
           <CreateProjectModal
             show={isShowModal}
             onClose={() => setShowModal(false)}
-            onCreate={() => setShowModal(false)}
+            onSubmit={url => {
+              createProject(url)
+              setShowModal(false)
+            }}
           />
         </Route>
       </Switch>
@@ -45,4 +77,4 @@ const Projects = () => {
   )
 }
 
-export default Projects
+export default connector(Projects)

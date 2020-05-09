@@ -1,21 +1,45 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Link, Route, Switch, useRouteMatch } from 'react-router-dom'
+import { bindActionCreators } from 'redux'
+import { connect, ConnectedProps } from 'react-redux'
 import { Grid, Panel, Table } from 'react-bootstrap'
 
-import { projects, pulls } from 'data'
-import { Project as Proj } from 'types'
+import { pulls } from 'data'
 import PullRequest from 'views/PullRequest'
 import Breadcrumbs from 'components/Breadcrumbs'
+import { AppDispatch, AppState } from 'store'
+import { getProjectAction } from 'store/projects/actions'
 import ProjectPanelHeading from './ProjectPanelHeading'
 
 interface RouteParams {
   projectId: string
 }
 
-const Project = () => {
+const mapStateToProps = (state: AppState) => ({
+  projects: state.projects.projects,
+  project: state.projects.project,
+  isFetching: state.projects.isFetching
+})
+
+const mapDispatchToProps = (dispatch: AppDispatch) => ({
+  getProject: bindActionCreators(getProjectAction, dispatch)
+})
+
+const connector = connect(mapStateToProps, mapDispatchToProps)
+type ProjectProps = ConnectedProps<typeof connector>
+
+const Project = ({ isFetching, projects, project, getProject }: ProjectProps) => {
   const match = useRouteMatch<RouteParams>()
   const { projectId } = match.params
-  const project: Proj = projects.find(p => p.id.toString() === projectId)
+  const id = parseInt(projectId, 10)
+
+  useEffect(() => {
+    getProject(id)
+  }, [getProject, id, projects])
+
+  if (isFetching || !project || (project && project.id !== id)) {
+    return <></>
+  }
 
   return (
     <Switch>
@@ -63,4 +87,4 @@ const Project = () => {
   )
 }
 
-export default Project
+export default connector(Project)

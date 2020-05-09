@@ -11,10 +11,10 @@ const validateRepoUrl = (url: string) => {
 interface CreateProjectModalProps {
   show: boolean
   onClose: () => void
-  onCreate: () => void
+  onSubmit: (string) => void
 }
 
-const CreateProjectModal = ({ show, onClose, onCreate }: CreateProjectModalProps) => {
+const CreateProjectModal = ({ show, onClose, onSubmit }: CreateProjectModalProps) => {
   const [url, setUrl] = useState('')
   const validUrl = validateRepoUrl(url)
   return (
@@ -41,7 +41,7 @@ const CreateProjectModal = ({ show, onClose, onCreate }: CreateProjectModalProps
           bsStyle="info"
           className="btn-fill"
           disabled={validUrl !== 'success'}
-          onClick={onCreate}
+          onClick={() => onSubmit(url)}
         >
           Create
         </Button>
