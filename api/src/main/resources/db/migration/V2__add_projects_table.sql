@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS projects
     description      VARCHAR(2048)           NOT NULL,
     avatar           VARCHAR(256)            NOT NULL,
     user_id          BIGINT                  NOT NULL,
-    open_pull_count  BIGINT                  NOT NULL,
+    open_pull_count  INT                     NOT NULL,
 
     FOREIGN KEY (user_id) REFERENCES users (id)
 );

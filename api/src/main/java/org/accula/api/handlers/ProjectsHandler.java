@@ -7,6 +7,8 @@ import org.accula.api.auth.jwt.AuthorizedUser;
 import org.accula.api.auth.jwt.JwtAuthentication;
 import org.accula.api.db.UserRepository;
 import org.accula.api.db.model.User;
+import org.accula.api.dto.ProjectDto;
+import org.accula.api.handlers.util.ProjectInfoJsonDeserializer;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
@@ -16,6 +18,7 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
 import java.net.URI;
@@ -48,6 +51,15 @@ public class ProjectsHandler {
                 .bodyToMono(JsonNode.class);
     }
 
+    private Mono<Integer> getGithubRepositoryOpenPullCountByPath(final String path) {
+        return githubApiWebClient
+                .get()
+                .uri(REPOS_PATH + path + "pulls?open")
+                .retrieve()
+                .bodyToMono(ArrayNode.class)
+                .map(ArrayNode::size);
+    }
+
     public Mono<ServerResponse> addProject(final ServerRequest request) {
 
         final Mono<String> userRepoPath = Mono
@@ -68,29 +80,56 @@ public class ProjectsHandler {
                 .map(tuple2 -> tuple2
                         .mapT2(listMono -> listMono
                                 .flatMapMany(Flux::fromIterable)))
-                .map(tuple2 -> tuple2
+                .map(tuple2 -> Tuples
+                        .of(
+                                tuple2.getT1(),
+                                tuple2.getT2(),
+                                ReactiveSecurityContextHolder
+                                        .getContext()
+                                        .map(SecurityContext::getAuthentication)
+                                        .cast(JwtAuthentication.class)
+                                        .map(JwtAuthentication::getPrincipal)
+                                        .map(AuthorizedUser::getId)))
+                .map(tuple3 -> tuple3
                         .mapT2(stringFlux -> stringFlux
                                 .zipWith(userRepository
-                                        .findById(ReactiveSecurityContextHolder
-                                                .getContext()
-                                                .map(SecurityContext::getAuthentication)
-                                                .cast(JwtAuthentication.class)
-                                                .map(JwtAuthentication::getPrincipal)
-                                                .map(AuthorizedUser::getId))
+                                        .findById(tuple3.getT3())
                                         .map(User::getGithubLogin), String::equals)))
-                .map(tuple2 -> tuple2
+                .map(tuple3 -> tuple3
                         .mapT2(booleanFlux -> booleanFlux
                                 .any(bool -> bool
                                         .equals(Boolean.TRUE))))
-                .flatMap(tuple2 -> tuple2
+                .flatMap(tuple3 -> tuple3
                         .getT2()
-                                .zipWith(Mono.just(tuple2.getT1()), (isContributor, path) -> {
-                                    if (isContributor)
-                                        return getGithubRepositoryInfoByPath(path);
-                                    else
-                                        return Mono.empty();
+                                .zipWith(Mono.just(tuple3.getT1()), (isContributor, path) -> {
+                                    //if (isContributor)
+                                        return (Flux<Tuple2<String, Object>>)ProjectInfoJsonDeserializer
+                                                .deserialize(getGithubRepositoryInfoByPath(path))
+                                                .mergeWith(Mono.just(Tuples.of("creatorId",     tuple3.getT3())))
+                                                .mergeWith(Mono.just(Tuples.of("openPullCount", getGithubRepositoryOpenPullCountByPath(path))));
+                                    //else
+                                       // return Flux.empty(); //Todo: uncomment
                                 }))
-                .flatMap(mono -> mono)
+                //.switchIfEmpty(Mono.error(new Exception())) //Todo: add correct Flux.empty handling from above commented else-statement
+                .flatMap(Flux::collectList)
+                .map(list -> {
+                    ProjectDto projectDto = new ProjectDto();
+                    for (var tuple2 : list ) {
+                        switch (tuple2.getT1()) {
+                            case "url" -> projectDto.setUrl((String) tuple2.getT2());
+                            case "owner" -> projectDto.setRepositoryOwner((String) tuple2.getT2());
+                            case "repoName" -> projectDto.setName((String) tuple2.getT2());
+                        }
+                    }
+                    return projectDto;
+                })
+//                        .doOnEach(paramsTuple2 -> {
+//                            Tuple2<String, Object> paramsTuple2WithTypes = (Tuple2<String, Object>) paramsTuple2;
+//                            switch (paramsTuple2WithTypes.getT1()) {
+//                                case "url" -> tuple2.getT1().setUrl((String) paramsTuple2WithTypes.getT2());
+//                            }
+//                        }))
+                //.flatMap(mono -> mono)
                 .flatMap(result -> ok()
                         .contentType(MediaType.APPLICATION_JSON)
                         .bodyValue(result))
