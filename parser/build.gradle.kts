@@ -10,12 +10,6 @@ dependencies {
     implementation("io.projectreactor:reactor-core:3.3.5.RELEASE")
     implementation("org.slf4j:slf4j-log4j12:1.7.30")
 
-    val lombok = "org.projectlombok:lombok:1.18.12"
-    compileOnly(lombok)
-    annotationProcessor(lombok)
-    testCompileOnly(lombok)
-    testAnnotationProcessor(lombok)
-
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.6.2")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.6.2")
     testImplementation("io.projectreactor:reactor-test:3.3.5.RELEASE")

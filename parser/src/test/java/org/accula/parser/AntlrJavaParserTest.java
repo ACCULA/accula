@@ -8,6 +8,7 @@ import java.io.ByteArrayInputStream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+@DisplayName("ANTLR parser tests")
 class AntlrJavaParserTest {
     @Test
     @DisplayName("Test with empty input")
@@ -15,6 +16,7 @@ class AntlrJavaParserTest {
         var tokenizer = new AntlrJavaParser();
         StepVerifier.create(
                 tokenizer.getTokens(new ByteArrayInputStream("".getBytes(UTF_8))))
+                .expectNextCount(1)
                 .verifyComplete();
 
     }
@@ -26,7 +28,7 @@ class AntlrJavaParserTest {
         StepVerifier.create(
                 tokenizer.getTokens(
                         new ByteArrayInputStream("package org.accula.parser;".getBytes(UTF_8))))
-                .expectNextCount(7)
+                .expectNextCount(8)
                 .verifyComplete();
     }
 }
