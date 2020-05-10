@@ -10,7 +10,7 @@ class CloneDetectorTest {
     @Test
     @DisplayName("Test with empty data")
     void analyzeTestEmptyInputData() {
-        var detector = new CloneDetector();
+        final var detector = new CloneDetector();
         StepVerifier.create(
                 detector.analyze(Flux.empty(), 1.0f, 10))
                 .verifyComplete();

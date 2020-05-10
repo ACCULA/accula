@@ -6,5 +6,5 @@ import java.io.InputStream;
 
 @FunctionalInterface
 public interface Parser<T> {
-    Flux<? extends T> getTokens(final InputStream file);
+    Flux<T> getTokens(final InputStream file);
 }

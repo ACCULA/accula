@@ -1,6 +1,6 @@
 package org.accula.analyzer.checkers;
 
-import org.accula.analyzer.checkers.utils.ClonePair;
+import org.accula.analyzer.checkers.util.ClonePair;
 import org.antlr.v4.runtime.Token;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;

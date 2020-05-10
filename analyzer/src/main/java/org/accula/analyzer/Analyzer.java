@@ -4,5 +4,5 @@ import reactor.core.publisher.Flux;
 
 @FunctionalInterface
 public interface Analyzer <T, U> {
-    Flux<? extends U> analyze(final Flux<T> data, final float threshold, final int minLength);
+    Flux<U> analyze(final Flux<T> data, final float threshold, final int minLength);
 }

@@ -15,8 +15,8 @@ public class AntlrJavaParser implements Parser<Token> {
     public Flux<Token> getTokens(final InputStream file) {
         return Mono
                 .fromCallable(() -> {
-                    var lexer = new Java9Lexer(CharStreams.fromStream(file));
-                    var tokens = new CommonTokenStream(lexer);
+                    final var lexer = new Java9Lexer(CharStreams.fromStream(file));
+                    final var tokens = new CommonTokenStream(lexer);
                     tokens.fill();
                     return tokens.getTokens();
                 })

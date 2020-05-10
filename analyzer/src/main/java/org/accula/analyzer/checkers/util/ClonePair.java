@@ -1,4 +1,4 @@
-package org.accula.analyzer.checkers.utils;
+package org.accula.analyzer.checkers.util;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -16,6 +16,6 @@ public class ClonePair {
     }
 
     public float getNormalizedMetric() {
-        return counter != 0 ? metric / counter : metric;
+        return counter == 0 ? metric : metric / counter;
     }
 }

@@ -1,4 +1,4 @@
-package org.accula.analyzer.checkers.utils;
+package org.accula.analyzer.checkers.util;
 
 import org.accula.analyzer.File;
 
@@ -8,7 +8,9 @@ import java.util.function.Function;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-public class DataTransformer {
+public final class DataTransformerUtils {
+    private DataTransformerUtils() {}
+
     public static <T> File<T> convertString(final File<String> file,
                                             final Function<InputStream, T> transformer) {
         return new File<T>(

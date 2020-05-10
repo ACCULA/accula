@@ -1,7 +1,7 @@
 package org.accula.analyzer;
 
 import lombok.extern.slf4j.Slf4j;
-import org.accula.analyzer.checkers.utils.ClonePair;
+import org.accula.analyzer.checkers.util.ClonePair;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -16,14 +16,16 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Slf4j
-public class LocalRunner {
-    public static void main(String[] args) {
-        var dir = args[0];
-        var fileExtension = args[1];
-        var threshold = Float.parseFloat(args[2]);
-        var minCloneLength = Integer.parseInt(args[3]);
-        var data = getFiles(dir, fileExtension).take(82);
-        var cloneDetector = new CloneDetector();
+public final class LocalRunner {
+    private LocalRunner() {}
+
+    public static void main(final String[] args) {
+        final var dir = args[0];
+        final var fileExtension = args[1];
+        final var threshold = Float.parseFloat(args[2]);
+        final var minCloneLength = Integer.parseInt(args[3]);
+        final var data = getFiles(dir, fileExtension).take(82);
+        final var cloneDetector = new CloneDetector();
         cloneDetector
                 .analyze(data, threshold, minCloneLength)
                 .subscribe(LocalRunner::printClonePair);
@@ -34,14 +36,18 @@ public class LocalRunner {
         return Mono
                 .fromCallable(() -> Files.walkFileTree(Path.of(dir), new SimpleFileVisitor<>() {
                     @Override
-                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) throws IOException {
                         if (file.getFileName().toString().endsWith(fileExtension)) {
+                            final String fileContent;
+                            try(final var fileStream = Files.lines(file)) {
+                                fileContent = fileStream.collect(Collectors.joining("\n"));
+                            }
                             files.add(new File<>(
                                     file.getFileName().toString(),
                                     file.toAbsolutePath().toString(),
                                     file.getParent().getFileName().toString(),
                                     file.getParent().getFileName().toString(),
-                                    Files.lines(file).collect(Collectors.joining("\n"))
+                                    fileContent
                             ));
                         }
                         return FileVisitResult.CONTINUE;
@@ -52,9 +58,9 @@ public class LocalRunner {
     }
 
     private static void printClonePair(final ClonePair clonePair) {
-        var first = clonePair.getFirst();
-        var second = clonePair.getSecond();
-        var str = first.getOwner() + "," + first.getFileName() + "," +
+        final var first = clonePair.getFirst();
+        final var second = clonePair.getSecond();
+        final var str = first.getOwner() + "," + first.getFileName() + "," +
                 first.getFromLine() + "," + first.getToLine() + "," +
                 second.getOwner() + "," + second.getFileName() + "," +
                 second.getFromLine() + "," + second.getToLine();

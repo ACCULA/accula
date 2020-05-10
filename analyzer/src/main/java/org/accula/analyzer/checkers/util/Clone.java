@@ -1,4 +1,4 @@
-package org.accula.analyzer.checkers.utils;
+package org.accula.analyzer.checkers.util;
 
 import lombok.Value;
 
