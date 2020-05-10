@@ -38,8 +38,8 @@ public final class LocalRunner {
                     @Override
                     public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) throws IOException {
                         if (file.getFileName().toString().endsWith(fileExtension)) {
-                            final String fileContent;
-                            try(final var fileStream = Files.lines(file)) {
+                            String fileContent;
+                            try(var fileStream = Files.lines(file)) {
                                 fileContent = fileStream.collect(Collectors.joining("\n"));
                             }
                             files.add(new File<>(

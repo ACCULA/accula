@@ -2,11 +2,13 @@ package org.accula.analyzer;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.accula.analyzer.checkers.CloneChecker;
 import org.accula.analyzer.checkers.SuffixTreeCloneChecker;
 import org.accula.analyzer.checkers.util.Clone;
 import org.accula.analyzer.checkers.util.ClonePair;
 import org.accula.analyzer.checkers.util.DataTransformerUtils;
 import org.accula.parser.AntlrJavaParser;
+import org.accula.parser.Parser;
 import org.antlr.v4.runtime.Token;
 import reactor.core.publisher.Flux;
 
@@ -16,13 +18,14 @@ import java.util.List;
 @Slf4j
 @AllArgsConstructor
 public class CloneDetector implements Analyzer<File<String>, ClonePair> {
+    private final Parser<Token> parser = new AntlrJavaParser();
+    private final CloneChecker<Flux<Token>, ClonePair> checker = new SuffixTreeCloneChecker();
     private final List<File<Flux<Token>>> processedFiles = new ArrayList<>();
 
     @Override
     public Flux<ClonePair> analyze(final Flux<File<String>> data,
                                    final float threshold,
                                    final int minLength) {
-        final var parser = new AntlrJavaParser();
         return data
                 .map(file -> DataTransformerUtils.convertString(file, parser::getTokens))
                 .flatMap(this::processFile)
@@ -31,7 +34,6 @@ public class CloneDetector implements Analyzer<File<String>, ClonePair> {
     }
 
     private Flux<ClonePair> processFile(final File<Flux<Token>> file2) {
-        final var checker = new SuffixTreeCloneChecker();
         return Flux
                 .fromIterable(processedFiles)
                 .filter(f -> !f.getOwner().equals(file2.getOwner()))

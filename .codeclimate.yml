@@ -83,3 +83,4 @@ checks:
 exclude_patterns:
   - "/web/**"
   - "/src/test/**"
+  - "**/LocalRunner.java"
