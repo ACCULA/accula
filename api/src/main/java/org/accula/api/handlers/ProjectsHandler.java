@@ -5,7 +5,9 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import lombok.RequiredArgsConstructor;
 import org.accula.api.auth.jwt.AuthorizedUser;
 import org.accula.api.auth.jwt.JwtAuthentication;
+import org.accula.api.db.ProjectsRepository;
 import org.accula.api.db.UserRepository;
+import org.accula.api.db.model.Project;
 import org.accula.api.db.model.User;
 import org.accula.api.dto.ProjectDto;
 import org.accula.api.handlers.util.ProjectInfoJsonDeserializer;
@@ -30,6 +32,7 @@ import static org.springframework.web.reactive.function.server.ServerResponse.ok
 @RequiredArgsConstructor
 public class ProjectsHandler {
 
+    private final ProjectsRepository projectsRepository;
     private final WebClient githubApiWebClient;
     private final UserRepository userRepository;
     private static final String REPOS_PATH = "/repos/";
@@ -54,7 +57,7 @@ public class ProjectsHandler {
     private Mono<Integer> getGithubRepositoryOpenPullCountByPath(final String path) {
         return githubApiWebClient
                 .get()
-                .uri(REPOS_PATH + path + "pulls?open")
+                .uri(REPOS_PATH + path + "/pulls?open")
                 .retrieve()
                 .bodyToMono(ArrayNode.class)
                 .map(ArrayNode::size);
@@ -105,23 +108,29 @@ public class ProjectsHandler {
                                     //if (isContributor)
                                         return (Flux<Tuple2<String, Object>>)ProjectInfoJsonDeserializer
                                                 .deserialize(getGithubRepositoryInfoByPath(path))
-                                                .mergeWith(Mono.just(Tuples.of("creatorId",     tuple3.getT3())))
-                                                .mergeWith(Mono.just(Tuples.of("openPullCount", getGithubRepositoryOpenPullCountByPath(path))));
+                                                .mergeWith(tuple3.getT3()
+                                                        .map(creatorId -> Tuples.of("creatorId", creatorId)))
+                                                .mergeWith(getGithubRepositoryOpenPullCountByPath(path)
+                                                        .map(openPullCount -> Tuples.of("openPullCount", openPullCount)));
                                     //else
                                        // return Flux.empty(); //Todo: uncomment
                                 }))
                 //.switchIfEmpty(Mono.error(new Exception())) //Todo: add correct Flux.empty handling from above commented else-statement
                 .flatMap(Flux::collectList)
-                .map(list -> {
+                .flatMap(list -> {
                     ProjectDto projectDto = new ProjectDto();
                     for (var tuple2 : list ) {
                         switch (tuple2.getT1()) {
-                            case "url" -> projectDto.setUrl((String) tuple2.getT2());
-                            case "owner" -> projectDto.setRepositoryOwner((String) tuple2.getT2());
-                            case "repoName" -> projectDto.setName((String) tuple2.getT2());
+                            case "url"           -> projectDto.setUrl((String) tuple2.getT2());
+                            case "owner"         -> projectDto.setRepositoryOwner((String) tuple2.getT2());
+                            case "repoName"      -> projectDto.setName((String) tuple2.getT2());
+                            case "description"   -> projectDto.setDescription((String) tuple2.getT2());
+                            case "avatar"        -> projectDto.setAvatar((String) (tuple2.getT2()));
+                            case "creatorId"     -> projectDto.setCreatorId((Long) tuple2.getT2());
+                            case "openPullCount" -> projectDto.setOpenPullCount((Integer) tuple2.getT2());
                         }
                     }
-                    return projectDto;
+                    return projectsRepository.save(Project.of(projectDto));
                 })
 //                        .doOnEach(paramsTuple2 -> {
 //                            Tuple2<String, Object> paramsTuple2WithTypes = (Tuple2<String, Object>) paramsTuple2;

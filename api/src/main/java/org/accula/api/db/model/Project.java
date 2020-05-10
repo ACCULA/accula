@@ -3,6 +3,8 @@ package org.accula.api.db.model;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import org.accula.api.dto.ProjectDto;
+import org.accula.api.handlers.response.ResponseBody;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
@@ -12,7 +14,7 @@ import org.springframework.data.relational.core.mapping.Table;
 @Data
 @Builder
 @AllArgsConstructor
-public class Project {
+public class Project implements ResponseBody {
 
     @Id
     @Nullable
@@ -27,5 +29,18 @@ public class Project {
     private Long creatorId;
     //private List<User> adminId;
     private int openPullCount;
+
+    public static Project of(ProjectDto projectDto) {
+        return Project.builder()
+                .id(null)
+                .url(projectDto.getUrl())
+                .repositoryOwner(projectDto.getRepositoryOwner())
+                .name(projectDto.getName())
+                .description(projectDto.getDescription())
+                .avatar(projectDto.getAvatar())
+                .creatorId(projectDto.getCreatorId())
+                .openPullCount(projectDto.getOpenPullCount())
+        .build();
+    }
 
 }

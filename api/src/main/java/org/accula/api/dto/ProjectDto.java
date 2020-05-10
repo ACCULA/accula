@@ -1,9 +1,11 @@
 package org.accula.api.dto;
 
+import lombok.Getter;
 import lombok.Setter;
 import org.accula.api.handlers.response.ResponseBody;
 
 @Setter
+@Getter
 public class ProjectDto implements ResponseBody {
 
     private String url;
