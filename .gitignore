@@ -3,4 +3,7 @@
 *.iml
 **/out
 /.gradle
+*.der
+*.pem
+application-secrets.yml
 /parser/src/main/java/generated/org/accula/parser/

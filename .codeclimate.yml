@@ -3,6 +3,11 @@ plugins:
     enabled: true
     config:
       sonar.java.source: "14"
+    checks:
+      squid:S1068:
+        enabled: false # Unused fields. Since we use lombok, the check results so many false positives
+      squid:S00112:
+        enabled: false # Use of generic exceptions in method declaration.
 
   pmd:
     enabled: true
@@ -15,23 +20,33 @@ plugins:
         enabled: false # Spring Boot tests use the underlying statements inside its own
       BeanMembersShouldSerialize:
         enabled: false # Most of the declared beans in our app should not be serialized
-      FormalParameterNamingConventions:
-        enabled: false # We think that lambda parameter named as double-underscore is not a crime :)
+      UseProperClassLoader:
+        enabled: false
+      CommentDefaultAccessModifier:
+        enabled: false
+      SignatureDeclareThrowsException:
+        enabled: false
+      ExcessiveImports:
+        enabled: false
+      DefaultPackage:
+        enabled: false # Lombok-associated issue
+      CallSuperInConstructor:
+        enabled: false
+
     config:
-      rules:
-        - "category/java/bestpractices.xml"
-        - "category/java/codestyle.xml"
-        - "category/java/design.xml"
-        - "category/java/errorprone.xml"
-        - "category/java/multithreading.xml"
-        - "category/java/performance.xml"
-        - "category/java/security.xml"
+      file: pmd.xml
 
   checkstyle:
     enabled: true
+    config:
+      file: checkstyle.xml
     checks:
       com.puppycrawl.tools.checkstyle.checks.imports.CustomImportOrderCheck:
         enabled: false # We separate static imports from usual ones but this check does not expect that and thus warns
+      com.puppycrawl.tools.checkstyle.checks.javadoc.JavadocParagraphCheck:
+        enabled: false
+      com.puppycrawl.tools.checkstyle.checks.javadoc.SummaryJavadocCheck:
+        enabled: false
 
 checks:
   argument-count:
@@ -67,3 +82,4 @@ checks:
 
 exclude_patterns:
   - "/web/**"
+  - "/src/test/**"
