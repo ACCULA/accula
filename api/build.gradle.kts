@@ -6,7 +6,6 @@ plugins {
 version = "1.0-SNAPSHOT"
 
 dependencies {
-    implementation(project(":core"))
     implementation("org.springframework.boot:spring-boot-starter-webflux:2.2.6.RELEASE")
     implementation("org.springframework.boot:spring-boot-starter-security:2.2.6.RELEASE")
     implementation("org.jetbrains:annotations:19.0.0")

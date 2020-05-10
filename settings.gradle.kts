@@ -1,1 +1,6 @@
-include("core", "api", "web")
+include(
+        "api",
+        "web",
+        "parser",
+        "analyzer"
+)

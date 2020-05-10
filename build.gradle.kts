@@ -27,10 +27,6 @@ configure(subprojects.filterNot(project(":web")::equals)) {
 
     tasks {
 
-        withType(JavaCompile::class) {
-            options.compilerArgs.add("--enable-preview")
-        }
-
         jacocoTestReport {
             executionData(fileTree(project.rootDir.absolutePath).include("**/build/jacoco/*.exec"))
 
@@ -53,7 +49,6 @@ configure(subprojects.filterNot(project(":web")::equals)) {
 
         test {
             useJUnitPlatform()
-            jvmArgs("--enable-preview")
 
             testLogging {
                 events(PASSED, SKIPPED, FAILED)
