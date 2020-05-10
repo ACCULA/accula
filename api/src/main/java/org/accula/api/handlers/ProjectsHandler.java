@@ -50,7 +50,7 @@ public class ProjectsHandler {
 
     public Mono<ServerResponse> addProject(final ServerRequest request) {
 
-        Mono<String> userRepoPath = Mono
+        final Mono<String> userRepoPath = Mono
                 .justOrEmpty(request.bodyToMono(JsonNode.class))
                 .flatMap(jsonNodeMono ->  jsonNodeMono)
                 .map(node -> URI
