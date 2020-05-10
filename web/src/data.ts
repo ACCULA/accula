@@ -38,17 +38,23 @@ export const pulls: PullRequest[] = [
     id: 3,
     projectId: 1,
     title: 'Stage 1',
-    pullUrl: 'https://api.github.com/repos/polis-mail-ru/2019-highload-dht/pulls/3',
+    pullUrl: 'https://github.com/polis-mail-ru/2019-highload-dht/pull/3',
+    base: {
+      url: 'https://github.com/polis-mail-ru/2019-highload-dht',
+      label: 'polis-mail-ru:master',
+      sha: 'd6357dccc16c7d5c001fd2a2203298c36fe96b63'
+    },
     fork: {
-      url: '',
-      branch: '',
-      sha: ''
+      url: 'https://github.com/vaddya/2019-highload-dht',
+      label: 'vaddya:master',
+      sha: 'a1c28a1b500701819cf9919246f15f3f900bb609'
     },
     author: {
       login: 'kilinochi',
+      name: 'Arman Shamenov',
       avatar: 'https://avatars2.githubusercontent.com/u/34065879?v=4'
     },
-    open: true,
+    open: false,
     createdAt: '2019-09-30T06:09:57Z',
     updatedAt: '2019-10-06T09:00:40Z'
   },
@@ -56,14 +62,20 @@ export const pulls: PullRequest[] = [
     id: 5,
     projectId: 1,
     title: 'Single Node | Vadim Dyachkov',
-    pullUrl: 'https://api.github.com/repos/polis-mail-ru/2019-highload-dht/pulls/5',
+    pullUrl: 'https://github.com/polis-mail-ru/2019-highload-dht/pull/5',
+    base: {
+      url: 'https://github.com/polis-mail-ru/2019-highload-dht',
+      label: 'polis-mail-ru:master',
+      sha: 'd6357dccc16c7d5c001fd2a2203298c36fe96b63'
+    },
     fork: {
-      url: '',
-      branch: '',
-      sha: ''
+      url: 'https://github.com/kilinochi/2019-highload-dht',
+      label: 'kilinochi:master',
+      sha: '00b4287b3028bbdc7c913c3bf498c8bc572fadd3'
     },
     author: {
       login: 'vaddya',
+      name: 'Vadim Dyachkov',
       avatar: 'https://avatars3.githubusercontent.com/u/15687094?v=4'
     },
     open: true,
@@ -71,3 +83,62 @@ export const pulls: PullRequest[] = [
     updatedAt: '2019-10-06T13:02:18Z'
   }
 ]
+
+const oldCode = `
+package org.accula.api.db;
+
+import org.accula.api.db.dto.RefreshToken;
+import org.springframework.data.r2dbc.repository.Modifying;
+import org.springframework.data.r2dbc.repository.Query;
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+import org.springframework.stereotype.Repository;
+import reactor.core.publisher.Mono;
+
+/**
+ * @author Anton Lamtev
+ */
+@Repository
+public interface RefreshTokenRepository extends ReactiveCrudRepository<RefreshToken, Long> {
+    //@formatter:off
+    @Modifying
+    @Query("UPDATE refresh_token " +
+           "SET token = :newToken, expiration_date = :newExpirationDate " +
+           "WHERE user_id = :userId AND token = :oldToken")
+    Mono<Void> replaceRefreshToken(final Long userId,
+                                   final String oldToken,
+                                   final String newToken,
+                                   final Instant newExpirationDate);
+    //@formatter:on
+}
+`
+
+const newCode = `
+package org.accula.api.db;
+
+import org.accula.api.db.dto.RefreshToken;
+import org.springframework.data.r2dbc.repository.Modifying;
+import org.springframework.data.r2dbc.repository.Query;
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+import org.springframework.stereotype.Repository;
+import reactor.core.publisher.Mono;
+
+import java.time.Instant;
+
+/**
+ * @author Anton Lamtev
+ * @author Vadim Dyachkov
+ */
+@Repository
+public interface RefreshTokenRepository extends ReactiveCrudRepository<RefreshToken, Long> {
+    @Modifying
+    @Query("UPDATE refresh_token " +
+           "SET token = :newToken, expiration_date = :newExpirationDate " +
+           "WHERE token = :oldToken AND user_id = :userId")
+    Mono<Void> replaceRefreshToken(final Long userId,
+                                   final String oldToken,
+                                   final String newToken,
+                                   final Instant newExpirationDate);
+}
+`
+
+export const files = { oldCode, newCode }

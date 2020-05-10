@@ -1,6 +1,6 @@
 import jwtDecode from 'jwt-decode'
 
-import { AppDispatch, AppState } from 'store'
+import { AppDispatch, AppStateSupplier } from 'store'
 import {
   FETCHING_USER,
   FetchingUser,
@@ -30,7 +30,7 @@ const fetchingUser = (isFetching: boolean): FetchingUser => ({
 
 export const getAccessTokenAction = () => async (
   dispatch: AppDispatch, //
-  getState: () => AppState
+  getState: AppStateSupplier
 ) => {
   const { users } = getState()
   if (!users.token) {
@@ -48,7 +48,7 @@ export const getAccessTokenAction = () => async (
 
 export const getCurrentUserAction = () => async (
   dispatch: AppDispatch,
-  getState: () => AppState
+  getState: AppStateSupplier
 ) => {
   const { users } = getState()
   if (users.token && users.token.accessToken) {

@@ -23,3 +23,4 @@ export const store = createStore(
 
 export type AppDispatch = typeof store.dispatch
 export type AppState = ReturnType<typeof rootReducer>
+export type AppStateSupplier = () => AppState

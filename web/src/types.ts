@@ -37,13 +37,19 @@ export interface PullRequest {
   id: number
   projectId: number
   pullUrl: string
+  base: {
+    url: string
+    label: string
+    sha: string
+  }
   fork: {
     url: string
-    branch: string
+    label: string
     sha: string
   }
   author: {
     login: string
+    name: string
     avatar: string
   }
   title: string

@@ -1,4 +1,4 @@
-import { AppDispatch, AppState } from 'store'
+import { AppDispatch, AppStateSupplier } from 'store'
 import { Project } from 'types'
 import {
   FETCHING_PROJECTS,
@@ -27,7 +27,7 @@ const fetchingProjects = (isFetching: boolean): FetchingProjects => ({
 
 export const getProjectsAction = () => async (
   dispatch: AppDispatch, //
-  getState: () => AppState
+  getState: AppStateSupplier
 ) => {
   const { projects } = getState()
   if (!projects.projects) {
@@ -46,7 +46,7 @@ export const getProjectsAction = () => async (
 
 export const getProjectAction = (id: number) => async (
   dispatch: AppDispatch, //
-  getState: () => AppState
+  getState: AppStateSupplier
 ) => {
   const { projects } = getState()
   if (projects.projects) {

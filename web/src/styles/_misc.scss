@@ -68,3 +68,18 @@ input:focus {
   padding: 0;
   margin: 0;
 }
+
+.pointer {
+  cursor: pointer;
+}
+
+pre {
+  display: inline;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background-color: transparent;
+  line-height: 20px;
+  font-family: $font-family-mono;
+  font-size: $font-size-small;
+}

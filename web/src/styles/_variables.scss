@@ -77,6 +77,7 @@ $black-color-top: #282828;
 $black-color-bottom: #111;
 
 $link-disabled-color: #666666 !default;
+$main-panel-bg: #F8F8F8;
 
 // Paddings & margins
 $padding-base-vertical: 5px !default;
@@ -147,6 +148,7 @@ $line-height-lg: 54px !default;
 
 $font-family-roboto: "Roboto", "Helvetica Neue", "Arial", sans-serif;
 $font-family-righteous: "Righteous", "Helvetica", "Arial", cursive;
+$font-family-mono: "JetBrains Mono", "Consolas", monospace;
 
 // Components
 $sidebar-width: calc(100% - 260px) !default;

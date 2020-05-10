@@ -3,6 +3,7 @@ import { Link, Route, Switch, useRouteMatch } from 'react-router-dom'
 import { bindActionCreators } from 'redux'
 import { connect, ConnectedProps } from 'react-redux'
 import { Grid, Panel, Table } from 'react-bootstrap'
+import { LinkContainer } from 'react-router-bootstrap'
 
 import { pulls } from 'data'
 import PullRequest from 'views/PullRequest'
@@ -43,9 +44,7 @@ const Project = ({ isFetching, projects, project, getProject }: ProjectProps) =>
 
   return (
     <Switch>
-      <Route path="/projects/:projectId/:pullRequestId">
-        <PullRequest />
-      </Route>
+      <Route path="/projects/:projectId/:pullRequestId" component={PullRequest} />
       <Route path="/projects/:projectId" exact>
         <Grid fluid className="tight">
           <Breadcrumbs
@@ -63,20 +62,22 @@ const Project = ({ isFetching, projects, project, getProject }: ProjectProps) =>
               </thead>
               <tbody>
                 {pulls.map(pull => (
-                  <tr key={pull.id} className="project-pull">
-                    <td className="id">{pull.id}</td>
-                    <td>
-                      <Link to={`/projects/${projectId}/${pull.id}`}>{pull.title}</Link>
-                    </td>
-                    <td className="avatar">
-                      <img
-                        className="border-gray"
-                        src={pull.author.avatar}
-                        alt={pull.author.login}
-                      />
-                      {pull.author.login}
-                    </td>
-                  </tr>
+                  <LinkContainer to={`/projects/${projectId}/${pull.id}`} key={pull.id}>
+                    <tr className="project-pull pointer">
+                      <td className="id">{pull.id}</td>
+                      <td>
+                        <Link to={`/projects/${projectId}/${pull.id}`}>{pull.title}</Link>
+                      </td>
+                      <td className="avatar">
+                        <img
+                          className="border-gray"
+                          src={pull.author.avatar}
+                          alt={pull.author.login}
+                        />
+                        {pull.author.login}
+                      </td>
+                    </tr>
+                  </LinkContainer>
                 ))}
               </tbody>
             </Table>

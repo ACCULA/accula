@@ -61,14 +61,11 @@ const App = ({ getAccessToken, getCurrentUser, token, user, isFetching }: AppPro
     return <></>
   }
 
-  const brand: string =
-    routes.filter(route => location.pathname.indexOf(route.path) >= 0)[0]?.name || 'ACCULA'
-
   return (
     <div className="wrapper">
       <Sidebar user={user} routes={routes} />
       <div id="main-panel" className="main-panel">
-        <Navbar user={user} brandText={brand} />
+        <Navbar user={user} />
         <Switch>
           {routes.map(route => (
             <Route
