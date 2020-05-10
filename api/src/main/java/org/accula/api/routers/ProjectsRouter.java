@@ -19,7 +19,7 @@ public class ProjectsRouter {
         return RouterFunctions
                 .route()
                 .POST("/projects", projectsHandler::addProject)
-                .GET("/projects", __ -> projectsHandler.getAllProjects())
+                .GET("/projects", request -> projectsHandler.getAllProjects())
                 .GET("/projects/{id}", projectsHandler::getProjectById)
                 .PUT("/projects/{id}", projectsHandler::updateProjectById)
                 .DELETE("/projects/{id}", projectsHandler::deleteProjectById)

@@ -29,8 +29,8 @@ public class ProjectsHandler {
 
     private final WebClient githubApiWebClient;
     private final UserRepository userRepository;
-    private final String REPOS_PATH = "/repos/";
-    private final String CONTRIBUTORS_PATH = "/contributors";
+    private static final String REPOS_PATH = "/repos/";
+    private static final String CONTRIBUTORS_PATH = "/contributors";
 
     private Mono<ArrayNode> getGithubRepositoryContributorsByPath(final String path) {
         return githubApiWebClient
@@ -52,7 +52,7 @@ public class ProjectsHandler {
 
         Mono<String> userRepoPath = Mono
                 .justOrEmpty(request.bodyToMono(JsonNode.class))
-                .flatMap(__ -> __)
+                .flatMap(jsonNodeMono ->  jsonNodeMono)
                 .map(node -> URI
                         .create(node
                                 .get("url")
@@ -82,7 +82,7 @@ public class ProjectsHandler {
                         .mapT2(booleanFlux -> booleanFlux
                                 .any(bool -> bool
                                         .equals(Boolean.TRUE))))
-                .map(tuple2 -> tuple2
+                .flatMap(tuple2 -> tuple2
                         .getT2()
                                 .zipWith(Mono.just(tuple2.getT1()), (isContributor, path) -> {
                                     if (isContributor)
@@ -90,8 +90,7 @@ public class ProjectsHandler {
                                     else
                                         return Mono.empty();
                                 }))
-                .flatMap(__ -> __)
-                .flatMap(__ -> __)
+                .flatMap(mono -> mono)
                 .flatMap(result -> ok()
                         .contentType(MediaType.APPLICATION_JSON)
                         .bodyValue(result))
