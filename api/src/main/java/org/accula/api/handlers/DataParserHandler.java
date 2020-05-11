@@ -1,5 +1,6 @@
 package org.accula.api.handlers;
 
+import lombok.extern.slf4j.Slf4j;
 import org.accula.api.model.FileModel;
 import org.accula.api.model.GitPullRequest;
 import org.accula.api.model.GitUserModel;
@@ -29,6 +30,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+@Slf4j
 @Component
 public class DataParserHandler {
 
@@ -38,7 +40,7 @@ public class DataParserHandler {
      final File localPath = new File("/accula/github/" + repoName.replace("/","_"));
      Git git = null;
      final String remoteUrl = "https://github.com/" + repoName;
-     final String prRef = (prNumber > 0) ? "refs/pull/"+ prNumber+ "/head":"refs/pull/*/head";
+     final String prRef = prNumber > 0 ? "refs/pull/"+ prNumber+ "/head":"refs/pull/*/head";
      Flux<FileModel> files = Flux.empty();
      try {
          git = Git.cloneRepository()
@@ -51,7 +53,7 @@ public class DataParserHandler {
                  .call();
          final Repository repo = git.getRepository();
          final Map<String, Ref> refs = repo.getAllRefs();
-         for (Map.Entry<String, Ref> entry : refs.entrySet()) {
+         for (final Map.Entry<String, Ref> entry : refs.entrySet()) {
              if(entry.getKey().contains("/pull/")){
                  final String prUrl = remoteUrl + entry.getKey().replaceFirst("refs","");
                  files = getFiles(entry.getValue().getObjectId(),repo,prUrl,excludeFiles,excludeAuthor)
@@ -59,19 +61,15 @@ public class DataParserHandler {
              }
          }
      }
-     catch (InvalidRemoteException e) {
-         e.printStackTrace();
-     } catch (TransportException e) {
-         e.printStackTrace();
-     } catch (GitAPIException e) {
-         e.printStackTrace();
+     catch (GitAPIException e) {
+         log.error("Git error", e);
      } finally {
          if (git != null) {
              git.close();
              try {
                  FileUtils.delete(localPath, FileUtils.RECURSIVE);
              } catch (IOException e) {
-                 e.printStackTrace();
+                 log.error("Git error", e);
              }
          }
      }
@@ -81,7 +79,7 @@ public class DataParserHandler {
     public Flux<FileModel> getFiles (final ObjectId id, final Repository repository, final String prUrl,
                                      final List<String> excludeFiles, final String excludeAuthor)
     {
-        List<FileModel> files = new ArrayList<>();
+        final List<FileModel> files = new ArrayList<>();
         try (RevWalk revWalk = new RevWalk(repository)) {
             final RevCommit commit = revWalk.parseCommit(id);
             final String authorName = commit.getAuthorIdent().getName();
@@ -104,22 +102,21 @@ public class DataParserHandler {
             }
             revWalk.dispose();
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Git error", e);
         }
-        return Flux.fromIterable(files).filter(f -> (!excludeFiles.contains(f.getFilename())));
+        return Flux.fromIterable(files).filter(f -> !excludeFiles.contains(f.getFilename()));
     }
 
-    public Flux<FileModel> getStudentFiles(final GitPullRequest pr, final ArrayList<String> excludeFiles)
+    public Flux<FileModel> getStudentFiles(final GitPullRequest pr, final List<String> excludeFiles)
     {
-        final String apiPrefix = "https://api.github.com/repos/";
         final String[] splitedUrl = pr.getUrl()
-                            .replace(apiPrefix,"").split("/");
+                            .replace("https://api.github.com/repos/","").split("/");
         final String repo = splitedUrl[0] + "/" + splitedUrl[1];
         return getRepo(repo,excludeFiles,"",pr.getNumber());
     }
 
     public Flux<FileModel> getOtherFiles(final GitPullRequest pr,
-                                         final ArrayList<String> excludeFiles, final String repo)
+                                         final List<String> excludeFiles, final String repo)
     {
         String userName;
         if (pr.getUser().getName().isEmpty()) {
@@ -131,9 +128,9 @@ public class DataParserHandler {
     }
 
     public Mono<ServerResponse> getWebHookInformation(final ServerRequest request) {
-     Mono<GitPullRequest> pullRequestInfo = request.bodyToMono(WebHookModel.class).flatMap(studentPR -> {
-         final String userUrl = studentPR.getPull_request().getUser().getUrl();
-         return WebClient.create(userUrl)
+        final Mono<GitPullRequest> pullRequestInfo = request.bodyToMono(WebHookModel.class).flatMap(studentPR -> {
+            final String userUrl = studentPR.getPull_request().getUser().getUrl();
+            return WebClient.create(userUrl)
                  .get()
                  .retrieve()
                  .bodyToMono(GitUserModel.class)
@@ -142,22 +139,21 @@ public class DataParserHandler {
                      pr.setUser(st);
                      return Mono.just(pr);
                  });
-     });
+        });
      //TODO: get files from db;
-        ArrayList<String> excludeFiles = new ArrayList<>();
+        final ArrayList<String> excludeFiles = new ArrayList<>();
         excludeFiles.add("TestBase.java");
         excludeFiles.add("StartStopTest.java");
      //TODO: get repos from db
-        ArrayList<String> repos = new ArrayList<>();
+        final ArrayList<String> repos = new ArrayList<>();
         repos.add("polis-mail-ru/2017-highload-kv");
         repos.add("ACCULA/accula");
 
         pullRequestInfo.subscribe(pr -> {
-            Flux<FileModel> studentFiles = getStudentFiles(pr,excludeFiles);
-            Flux<FileModel> otherFiles = Flux.fromIterable(repos)
+            final Flux<FileModel> studentFiles = getStudentFiles(pr,excludeFiles);
+            final Flux<FileModel> otherFiles = Flux.fromIterable(repos)
                     .flatMap(repo -> getOtherFiles(pr,excludeFiles,repo));
             //TODO: start clone analyzing
-            //detectClones(studentFiles,otherFiles);
         });
 
         return ok().build();

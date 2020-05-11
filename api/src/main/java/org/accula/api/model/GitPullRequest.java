@@ -1,5 +1,4 @@
 package org.accula.api.model;
-import org.springframework.lang.Nullable;
 
 public class GitPullRequest {
     private Integer number;
@@ -10,7 +9,7 @@ public class GitPullRequest {
         super();
     }
 
-    public void setUser(GitUserModel user){
+    public void setUser(final GitUserModel user){
         this.user = user;
     }
 
