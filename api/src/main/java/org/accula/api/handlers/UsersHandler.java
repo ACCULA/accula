@@ -31,11 +31,10 @@ public final class UsersHandler {
                 .map(Long::parseLong)
                 .onErrorMap(NumberFormatException.class, e -> USER_NOT_FOUND_EXCEPTION)
                 .flatMap(users::findById)
-                .map(User::from)
                 .flatMap(user -> ServerResponse
                         .ok()
                         .contentType(APPLICATION_JSON)
-                        .bodyValue(user))
+                        .bodyValue(User.from(user)))
                 .switchIfEmpty(Mono.error(USER_NOT_FOUND_EXCEPTION))
                 .onErrorResume(USER_NOT_FOUND_EXCEPTION::equals, e -> ServerResponse.notFound().build())
                 .onErrorResume(e -> {

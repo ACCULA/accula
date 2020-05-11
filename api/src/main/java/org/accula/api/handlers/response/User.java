@@ -13,7 +13,7 @@ public class User implements ResponseBody {
     String login;
     String name;
 
-    public static User from(final org.accula.api.db.dto.User user) {
+    public static User from(final org.accula.api.db.model.User user) {
         return new User(requireNonNull(user.getId()), user.getGithubLogin(), user.getName());
     }
 }
