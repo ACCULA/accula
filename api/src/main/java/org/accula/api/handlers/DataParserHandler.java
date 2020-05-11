@@ -2,7 +2,20 @@ package org.accula.api.handlers;
 
 import org.accula.api.model.FileModel;
 import org.accula.api.model.GitPullRequest;
+import org.accula.api.model.GitUserModel;
 import org.accula.api.model.WebHookModel;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.InvalidRemoteException;
+import org.eclipse.jgit.api.errors.TransportException;
+import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevTree;
+import org.eclipse.jgit.revwalk.RevWalk;
+import org.eclipse.jgit.transport.RefSpec;
+import org.eclipse.jgit.treewalk.TreeWalk;
+import org.eclipse.jgit.treewalk.filter.PathSuffixFilter;
+import org.eclipse.jgit.util.FileUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
@@ -12,101 +25,141 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.List;
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
 
 @Component
 public class DataParserHandler {
 
-    public Flux<GitPullRequest> getAllPR(final String repo, final Integer page){
-        final String api = "https://api.github.com";
-        final String nextPage = "rel=\"next\"";
-        //TODO add authorization to get 5000 requests per hour (now is only 60)
-        return WebClient.create(api).get()
-                .uri("/repos/" + repo + "/pulls?state=all&per_page=100&page=" + page)
-                .exchange()
-                .flatMapMany(rs -> {
-                    List<String> headerLink = rs.headers().header("link");
-                    //if repository contains more than 100 pull requests, request next page
-                    if (!headerLink.isEmpty()) {
-                        if (headerLink.get(0).contains(nextPage)) {
-                            return rs.bodyToFlux(GitPullRequest.class)
-                                    .concatWith(getAllPR(repo, page + 1));
-                        }
-                    }
-                    return rs.bodyToFlux(GitPullRequest.class);
-                })
-                .onErrorResume(e -> Flux.empty());
+    public Flux<FileModel> getRepo(final String repoName, final List<String> excludeFiles,
+                                   final String excludeAuthor, final Integer prNumber)
+ {
+     final File localPath = new File("/accula/github/" + repoName.replace("/","_"));
+     Git git = null;
+     final String remoteUrl = "https://github.com/" + repoName;
+     final String prRef = (prNumber > 0) ? "refs/pull/"+ prNumber+ "/head":"refs/pull/*/head";
+     Flux<FileModel> files = Flux.empty();
+     try {
+         git = Git.cloneRepository()
+                 .setURI(remoteUrl)
+                 .setDirectory(localPath)
+                 .call();
+         git.fetch()
+                 .setRemote(remoteUrl)
+                 .setRefSpecs(new RefSpec(prRef+":"+prRef))
+                 .call();
+         final Repository repo = git.getRepository();
+         final Map<String, Ref> refs = repo.getAllRefs();
+         for (Map.Entry<String, Ref> entry : refs.entrySet()) {
+             if(entry.getKey().contains("/pull/")){
+                 final String prUrl = remoteUrl + entry.getKey().replaceFirst("refs","");
+                 files = getFiles(entry.getValue().getObjectId(),repo,prUrl,excludeFiles,excludeAuthor)
+                         .concatWith(files);
+             }
+         }
+     }
+     catch (InvalidRemoteException e) {
+         e.printStackTrace();
+     } catch (TransportException e) {
+         e.printStackTrace();
+     } catch (GitAPIException e) {
+         e.printStackTrace();
+     } finally {
+         if (git != null) {
+             git.close();
+             try {
+                 FileUtils.delete(localPath, FileUtils.RECURSIVE);
+             } catch (IOException e) {
+                 e.printStackTrace();
+             }
+         }
+     }
+     return files;
+ }
+
+    public Flux<FileModel> getFiles (final ObjectId id, final Repository repository, final String prUrl,
+                                     final List<String> excludeFiles, final String excludeAuthor)
+    {
+        List<FileModel> files = new ArrayList<>();
+        try (RevWalk revWalk = new RevWalk(repository)) {
+            final RevCommit commit = revWalk.parseCommit(id);
+            final String authorName = commit.getAuthorIdent().getName();
+            if(authorName.equals(excludeAuthor))
+            {
+                return Flux.fromIterable(files);
+            }
+            final Date changedAt = commit.getAuthorIdent().getWhen();
+            final RevTree tree = commit.getTree();
+            try (TreeWalk treeWalk = new TreeWalk(repository)) {
+                treeWalk.addTree(tree);
+                treeWalk.setRecursive(true);
+                treeWalk.setFilter(PathSuffixFilter.create(".java"));
+                while (treeWalk.next()) {
+                    final ObjectLoader loader = repository.open(treeWalk.getObjectId(0));
+                    final String content = new String(loader.getBytes());
+                    files.add(new FileModel(treeWalk.getNameString(),treeWalk.getPathString(), prUrl,
+                            authorName,changedAt,content));
+                }
+            }
+            revWalk.dispose();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return Flux.fromIterable(files).filter(f -> (!excludeFiles.contains(f.getFilename())));
     }
 
-    public Flux<FileModel> getChangedFiles(final String repo, final Integer page){
-        final String nextPage = "rel=\"next\"";
-        //TODO add authorization to get 5000 requests per hour (now is only 60)
-        return WebClient.create(repo).get()
-                .uri("/files?per_page=100&page=" + page)
-                .exchange()
-                .flatMapMany(rs -> {
-                    //if pull request contains more than 100 changed files, request next page
-                    List<String> headerLink = rs.headers().header("link");
-                    if (!headerLink.isEmpty()){
-                        if (headerLink.get(0).contains(nextPage)) {
-                            return rs.bodyToFlux(FileModel.class)
-                                    .concatWith(getChangedFiles(repo, page + 1));
-                        }
-                    }
-                    return rs.bodyToFlux(FileModel.class);
-                })
-                .onErrorResume(e -> Flux.empty());
+    public Flux<FileModel> getStudentFiles(final GitPullRequest pr, final ArrayList<String> excludeFiles)
+    {
+        final String apiPrefix = "https://api.github.com/repos/";
+        final String[] splitedUrl = pr.getUrl()
+                            .replace(apiPrefix,"").split("/");
+        final String repo = splitedUrl[0] + "/" + splitedUrl[1];
+        return getRepo(repo,excludeFiles,"",pr.getNumber());
     }
 
-    public Flux<FileModel> getFilesContent(Flux<FileModel> files, GitPullRequest pr){
-        final String fileType = ".java";
-        //TODO: add getting files to filer from database
-        final String[] filesToFilter = {};
-        //final String[] filesToFilter = getFilesFromDB();
-        return files
-                .filter(f -> (!Arrays.asList(filesToFilter).contains(f.getFilename()))&&
-                        (f.getFilename().endsWith(fileType)))
-                .flatMap(file -> WebClient.create(file.getContents_url()).get()
-                        .retrieve()
-                        //TODO: add error filtering
-                        .bodyToMono(FileModel.class)
-                        .flatMap(fl -> Mono.just(new FileModel(file.getFilename(),
-                                file.getStatus(),
-                                file.getBlob_url(),file.getContents_url(),
-                                pr.getUser(), pr.getCreated_at(),
-                                new String(Base64.getMimeDecoder().decode(fl.getContent()))))
-                        )
-                )
-                .onErrorResume(e -> Flux.empty());
-    }
-
-    public Flux<FileModel> getProject(final String repo, final String studentName){
-        //get pull requests for this repository
-        return getAllPR(repo,1)
-                //TODO: think about filtering by date
-                .filter(pr -> !pr.getUser().getLogin().equals(studentName))
-                .flatMap(pr -> getFilesContent(getChangedFiles(pr.getUrl(), 1), pr))
-                .onErrorResume(e -> Flux.empty());
+    public Flux<FileModel> getOtherFiles(final GitPullRequest pr,
+                                         final ArrayList<String> excludeFiles, final String repo)
+    {
+        String userName;
+        if (pr.getUser().getName().isEmpty()) {
+            userName = pr.getUser().getLogin();
+        } else {
+            userName = pr.getUser().getName();
+        }
+        return getRepo(repo, excludeFiles, userName, 0);
     }
 
     public Mono<ServerResponse> getWebHookInformation(final ServerRequest request) {
-        request.bodyToFlux(WebHookModel.class).subscribe(studentPR -> {
-            Flux<FileModel> studentFiles = getFilesContent(
-                    getChangedFiles(studentPR.getPull_request().getUrl(), 1),
-                    studentPR.getPull_request());
-            //TODO: getting repos from db
-            final String[] repos = {"ACCULA/accula"};
-            //final String[] repos = getReposFromBD();
-            Flux<FileModel> filesToCompare = Flux.fromArray(repos)
-                    .filter(r -> !r.isEmpty())
-                    .flatMap(repo -> getProject(repo, studentPR.getPull_request().getUser().getLogin()));
+     Mono<GitPullRequest> pullRequestInfo = request.bodyToMono(WebHookModel.class).flatMap(studentPR -> {
+         final String userUrl = studentPR.getPull_request().getUser().getUrl();
+         return WebClient.create(userUrl)
+                 .get()
+                 .retrieve()
+                 .bodyToMono(GitUserModel.class)
+                 .flatMap(st -> {
+                     GitPullRequest pr = studentPR.getPull_request();
+                     pr.setUser(st);
+                     return Mono.just(pr);
+                 });
+     });
+     //TODO: get files from db;
+        ArrayList<String> excludeFiles = new ArrayList<>();
+        excludeFiles.add("TestBase.java");
+        excludeFiles.add("StartStopTest.java");
+     //TODO: get repos from db
+        ArrayList<String> repos = new ArrayList<>();
+        repos.add("polis-mail-ru/2017-highload-kv");
+        repos.add("ACCULA/accula");
+
+        pullRequestInfo.subscribe(pr -> {
+            Flux<FileModel> studentFiles = getStudentFiles(pr,excludeFiles);
+            Flux<FileModel> otherFiles = Flux.fromIterable(repos)
+                    .flatMap(repo -> getOtherFiles(pr,excludeFiles,repo));
             //TODO: start clone analyzing
-            //analyze(studentFiles, filesToCompare);
+            //detectClones(studentFiles,otherFiles);
         });
-        // I think we will always have timeout for response, if we'll start analyzing in this method, but where
-        // should we call analyzer?
+
         return ok().build();
     }
 }

@@ -58,14 +58,17 @@ public class WebSecurityConfig {
                                                          final WebFilter jwtRefreshFilter,
                                                          final OAuth2LoginSuccessHandler oauth2LoginSuccessHandler) {
         return http
+                .csrf().disable()
                 .httpBasic().disable()
                 .formLogin().disable()
                 .logout().disable()
                 .headers().disable()
 
                 //https://github.com/spring-projects/spring-security/issues/6552#issuecomment-515571416
-                .requestCache(cache -> cache
+             /*   .requestCache(cache -> cache
                         .requestCache(NoOpServerRequestCache.getInstance()))
+
+              */
 
                 .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
 

@@ -1,20 +1,28 @@
 package org.accula.api.model;
 
+import org.springframework.lang.Nullable;
+
 public class GitUserModel {
     private String login;
-    private String html_url;
+    private String url;
+    @Nullable
+    private String name;
+
 
     public GitUserModel(){
         super();
     }
 
-    // only for debug
-    public String getAll(){
-        return "login: " + login + "\n" +
-                "html_url: " + html_url + "\n";
+    public String getLogin() {
+        return login;
     }
 
-    public String getLogin() { return login; }
+    @Nullable
+    public String getName() {
+        return name;
+    }
 
-    public String getHtml_url() { return html_url; }
+    public String getUrl() {
+        return url;
+    }
 }

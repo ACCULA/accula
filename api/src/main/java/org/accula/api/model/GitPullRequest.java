@@ -1,29 +1,29 @@
 package org.accula.api.model;
-
-import java.util.Date;
+import org.springframework.lang.Nullable;
 
 public class GitPullRequest {
+    private Integer number;
     private String url;
     private GitUserModel user;
-    private Date created_at;
-    private String title;
 
     public GitPullRequest(){
         super();
     }
 
-    public String getAll() {
-        return "title: " + title + "\n" +
-                "url: " + url + "\n" +
-                "created_at: " + created_at + "\n" +
-                "user: {\n" + user.getAll() + "}\n";
+    public void setUser(GitUserModel user){
+        this.user = user;
     }
 
-    public GitUserModel getUser() { return user; }
+    public GitUserModel getUser() {
+        return user;
+    }
 
-    public String getUrl() { return url; }
+    public String getUrl() {
+        return url;
+    }
 
-    public Date getCreated_at() { return created_at; }
+    public Integer getNumber(){
+        return number;
+    }
 
-    public String getTitle() { return title; }
 }
