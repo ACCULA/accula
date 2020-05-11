@@ -45,11 +45,12 @@ export const pulls: PullRequest[] = [
       sha: 'd6357dccc16c7d5c001fd2a2203298c36fe96b63'
     },
     fork: {
-      url: 'https://github.com/vaddya/2019-highload-dht',
-      label: 'vaddya:master',
+      url: 'https://github.com/kilinochi/2019-highload-dht',
+      label: 'kilinochi:master',
       sha: 'a1c28a1b500701819cf9919246f15f3f900bb609'
     },
     author: {
+      url: 'https://github.com/kilinochi',
       login: 'kilinochi',
       name: 'Arman Shamenov',
       avatar: 'https://avatars2.githubusercontent.com/u/34065879?v=4'
@@ -69,18 +70,19 @@ export const pulls: PullRequest[] = [
       sha: 'd6357dccc16c7d5c001fd2a2203298c36fe96b63'
     },
     fork: {
-      url: 'https://github.com/kilinochi/2019-highload-dht',
-      label: 'kilinochi:master',
+      url: 'https://github.com/vaddya/2019-highload-dht',
+      label: 'vaddya:master',
       sha: '00b4287b3028bbdc7c913c3bf498c8bc572fadd3'
     },
     author: {
+      url: 'https://github.com/vaddya',
       login: 'vaddya',
       name: 'Vadim Dyachkov',
       avatar: 'https://avatars3.githubusercontent.com/u/15687094?v=4'
     },
     open: true,
-    createdAt: '2019-10-01T12:52:48Z',
-    updatedAt: '2019-10-06T13:02:18Z'
+    createdAt: '2020-05-06T13:02:18Z',
+    updatedAt: '2020-05-11T04:02:18Z'
   }
 ]
 

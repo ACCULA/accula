@@ -12,6 +12,14 @@ a {
     color: $info-states-color;
     text-decoration: none;
   }
+  
+  &.black {
+    color: $black-color;
+
+    &:hover {
+      color: $black-bg;
+    }
+  }
 }
 
 a:focus, a:active,
@@ -82,4 +90,10 @@ pre {
   line-height: 20px;
   font-family: $font-family-mono;
   font-size: $font-size-small;
+}
+
+code {
+  color: $info-color;
+  background: lighten($info-color, 55);
+  font-family: $font-family-mono;
 }

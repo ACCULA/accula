@@ -48,6 +48,7 @@ export interface PullRequest {
     sha: string
   }
   author: {
+    url: string
     login: string
     name: string
     avatar: string
