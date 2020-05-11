@@ -7,8 +7,6 @@ import org.accula.api.model.GitUserModel;
 import org.accula.api.model.WebHookModel;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.api.errors.InvalidRemoteException;
-import org.eclipse.jgit.api.errors.TransportException;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevTree;
@@ -69,7 +67,7 @@ public class DataParserHandler {
              try {
                  FileUtils.delete(localPath, FileUtils.RECURSIVE);
              } catch (IOException e) {
-                 log.error("Git error", e);
+                 log.error("Can not delete repository", e);
              }
          }
      }
@@ -102,7 +100,7 @@ public class DataParserHandler {
             }
             revWalk.dispose();
         } catch (IOException e) {
-            log.error("Git error", e);
+            log.error("Parsing PR error", e);
         }
         return Flux.fromIterable(files).filter(f -> !excludeFiles.contains(f.getFilename()));
     }
