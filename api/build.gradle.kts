@@ -33,7 +33,7 @@ dependencies {
     implementation("org.springframework:spring-jdbc")
     implementation("org.flywaydb:flyway-core")
 
-    implementation("org.eclipse.jgit:org.eclipse.jgit:4.6.0.201612231935-r")
+    implementation("org.eclipse.jgit:org.eclipse.jgit:5.3.7.202002110540-r")
 
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 }

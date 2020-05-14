@@ -1,7 +1,10 @@
 package org.accula.api.model;
 
+import lombok.Data;
+
 import java.util.Date;
 
+@Data
 public class FileModel {
     private String filename;
     private String filePath;
@@ -10,11 +13,7 @@ public class FileModel {
     private Date changedAt;
     private String content;
 
-    public FileModel(){
-        super();
-    }
-
-    public FileModel(final String filename,final String filePath, final String prUrl,
+    public FileModel(final String filename, final String filePath, final String prUrl,
                      final String userName, final Date changedAt,
                      final String content) {
         this.filename = filename;
@@ -23,29 +22,5 @@ public class FileModel {
         this.userName = userName;
         this.changedAt = changedAt;
         this.content = content;
-    }
-
-    public String getFilename() {
-        return filename;
-    }
-
-    public String getFilePath() {
-        return filePath;
-    }
-
-    public String getPrUrl() {
-        return prUrl;
-    }
-
-    public String getUserName() {
-        return userName;
-    }
-
-    public Date getChangedAt() {
-        return changedAt;
-    }
-
-    public String getContent() {
-        return content;
     }
 }

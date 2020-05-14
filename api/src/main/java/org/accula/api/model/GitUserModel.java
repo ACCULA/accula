@@ -1,28 +1,12 @@
 package org.accula.api.model;
 
+import lombok.Data;
 import org.springframework.lang.Nullable;
 
+@Data
 public class GitUserModel {
     private String login;
     private String url;
     @Nullable
     private String name;
-
-
-    public GitUserModel(){
-        super();
-    }
-
-    public String getLogin() {
-        return login;
-    }
-
-    @Nullable
-    public String getName() {
-        return name;
-    }
-
-    public String getUrl() {
-        return url;
-    }
 }

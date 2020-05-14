@@ -1,14 +1,10 @@
 package org.accula.api.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Data;
+
+@Data
 public class WebHookModel {
-    private GitPullRequest pull_request;
-
-    public WebHookModel(){
-        super();
-    }
-
-    public GitPullRequest getPull_request() {
-        return pull_request;
-    }
-
+    @JsonProperty("pull_request")
+    private GitPullRequest pullRequest;
 }
