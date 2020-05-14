@@ -1,4 +1,4 @@
-package org.accula.api.db.dto;
+package org.accula.api.db.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

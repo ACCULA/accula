@@ -82,4 +82,4 @@ checks:
 
 exclude_patterns:
   - "/web/**"
-  - "/src/test/**"
+  - "/api/src/test/**"
