@@ -25,7 +25,7 @@ const PullRequest = () => {
       <Breadcrumbs
         breadcrumbs={[
           { text: 'Projects', to: '/projects' },
-          { text: project.name, to: `/projects/${project.id}` },
+          { text: project.repoName, to: `/projects/${project.id}` },
           { text: pull.title }
         ]}
       />

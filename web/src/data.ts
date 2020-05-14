@@ -4,32 +4,32 @@ export const projects: Project[] = [
   {
     id: 1,
     url: 'https://github.com/polis-mail-ru/2019-highload-dht',
-    creator: 1,
+    creatorId: 1,
     repoOwner: 'polis-mail-ru',
-    name: '2019-highload-dht',
-    description: 'Курсовой проект 2019 года курса "Highload системы"',
-    avatar: 'https://avatars2.githubusercontent.com/u/31819365?s=200&v=4',
-    openPullCount: 10
+    repoName: '2019-highload-dht',
+    repoDescription: 'Курсовой проект 2019 года курса "Highload системы"',
+    repoOwnerAvatar: 'https://avatars2.githubusercontent.com/u/31819365?s=200&v=4',
+    repoOpenPullCount: 10
   },
   {
     id: 2,
     url: 'https://github.com/ACCULA/accula',
-    creator: 1,
+    creatorId: 1,
     repoOwner: 'ACCULA',
-    name: 'accula',
-    description: 'Advanced Code Clones UniversaL Analyzer',
-    avatar: 'https://avatars0.githubusercontent.com/u/61988411?s=200&v=4',
-    openPullCount: 0
+    repoName: 'accula',
+    repoDescription: 'Advanced Code Clones UniversaL Analyzer',
+    repoOwnerAvatar: 'https://avatars0.githubusercontent.com/u/61988411?s=200&v=4',
+    repoOpenPullCount: 0
   },
   {
     id: 3,
     url: 'https://github.com/polis-mail-ru/2020-db-lsm',
-    creator: 1,
+    creatorId: 1,
     repoOwner: 'polis-mail-ru',
-    name: '2020-db-lsm',
-    description: 'NoSQL course project',
-    avatar: 'https://avatars2.githubusercontent.com/u/31819365?s=200&v=4',
-    openPullCount: 19
+    repoName: '2020-db-lsm',
+    repoDescription: 'NoSQL course project',
+    repoOwnerAvatar: 'https://avatars2.githubusercontent.com/u/31819365?s=200&v=4',
+    repoOpenPullCount: 19
   }
 ]
 

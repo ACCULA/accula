@@ -48,7 +48,7 @@ const Project = ({ isFetching, projects, project, getProject }: ProjectProps) =>
       <Route path="/projects/:projectId" exact>
         <Grid fluid className="tight">
           <Breadcrumbs
-            breadcrumbs={[{ text: 'Projects', to: '/projects' }, { text: project.name }]}
+            breadcrumbs={[{ text: 'Projects', to: '/projects' }, { text: project.repoName }]}
           />
           <Panel className="project panel-project">
             <ProjectPanelHeading {...project} />

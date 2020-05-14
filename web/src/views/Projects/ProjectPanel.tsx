@@ -14,12 +14,12 @@ const ProjectPanel = ({ project }: ProjectPanelProps) => {
     <Panel className="panel-project">
       <ProjectPanelHeading {...project} />
       <Panel.Body>
-        <p>{project.description}</p>
+        <p>{project.repoDescription}</p>
       </Panel.Body>
       <Panel.Footer className="clearfix">
         <div className="pull-right">
           <Link to={`/projects/${project.id}`}>
-            View {project.openPullCount} opened pull requests
+            View {project.repoOpenPullCount} opened pull requests
             <i className="fa fa-fw fa-chevron-circle-right" />
           </Link>
         </div>

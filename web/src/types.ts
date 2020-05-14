@@ -22,13 +22,13 @@ export interface RouteInfo {
 export interface Project {
   id: number
   url: string
-  creator: number
+  creatorId: number
   admins?: number[]
   repoOwner: string
-  name: string
-  description?: string
-  avatar: string
-  openPullCount: number
+  repoName: string
+  repoDescription?: string
+  repoOwnerAvatar: string
+  repoOpenPullCount: number
 }
 
 export interface ProjectSettings {}
