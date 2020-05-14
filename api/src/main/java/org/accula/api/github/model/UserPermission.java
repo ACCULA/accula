@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Locale;
+
 /**
  * @author Anton Lamtev
  */
@@ -20,7 +22,7 @@ public final class UserPermission {
 
         @JsonValue
         public String value() {
-            return name().toLowerCase();
+            return name().toLowerCase(Locale.US);
         }
     }
 }
