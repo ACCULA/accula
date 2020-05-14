@@ -29,6 +29,9 @@ import java.util.regex.Pattern;
 
 @Slf4j
 public class Files {
+    private Files(){
+    }
+
     public static Flux<FileModel> getRepo(final String repoName, final Set<String> excludeFiles,
                                           final String excludeAuthor, final Integer prNumber) {
         final File localPath = new File("/accula/github/" + repoName.replace("/", "_"));
@@ -47,7 +50,7 @@ public class Files {
                     .setRefSpecs(new RefSpec(prRef + ":" + prRef))
                     .call();
             final Repository repo = git.getRepository();
-            List<Ref> refs = repo.getRefDatabase().getRefsByPrefix("refs/pull/");
+            final List<Ref> refs = repo.getRefDatabase().getRefsByPrefix("refs/pull/");
             for (final Ref ref : refs) {
                 final String prUrl = remoteUrl + ref.getName().replaceFirst("refs", "");
                 files = getFiles(ref.getObjectId(), repo, prUrl, excludeFiles, excludeAuthor)
@@ -99,8 +102,8 @@ public class Files {
 
     public static Flux<FileModel> getStudentFiles(final GitPullRequest pr, final Set<String> excludeFiles) {
         // get repository in format "owner/repo" from pull request url
-        Pattern pattern = Pattern.compile("api.github.com/repos/(.*?)/pulls/");
-        Matcher matcher = pattern.matcher(pr.getUrl());
+        final Pattern pattern = Pattern.compile("api.github.com/repos/(.*?)/pulls/");
+        final Matcher matcher = pattern.matcher(pr.getUrl());
         return matcher.find() ?
                 getRepo(matcher.group(1), excludeFiles, "", pr.getNumber()) : Flux.empty();
     }
