@@ -34,7 +34,6 @@
 
     <rule ref="category/java/codestyle.xml/LinguisticNaming">
         <properties>
-            <property name="ignoredAnnotations" value="java.lang.Override"/>
             <property name="checkSetters" value="false"/>
             <property name="checkBooleanMethod" value="false"/>
         </properties>
