@@ -11,6 +11,9 @@ import reactor.core.publisher.Mono;
  * @author Anton Lamtev
  */
 public final class CurrentAuthorizedUserProvider {
+    private CurrentAuthorizedUserProvider() {
+    }
+
     public static Mono<AuthorizedUser> get() {
         return ReactiveSecurityContextHolder
                 .getContext()

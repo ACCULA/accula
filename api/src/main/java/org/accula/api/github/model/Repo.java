@@ -1,5 +1,6 @@
 package org.accula.api.github.model;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.Nullable;
@@ -9,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
  */
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 public final class Repo {
     private String url;
     private String name;

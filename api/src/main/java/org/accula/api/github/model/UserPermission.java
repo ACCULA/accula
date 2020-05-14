@@ -9,10 +9,10 @@ import lombok.NoArgsConstructor;
  */
 @Data
 @NoArgsConstructor
-public final class Permission {
-    private PermissionEnum permission;
+public final class UserPermission {
+    private Permission permission;
 
-    public enum PermissionEnum {
+    public enum Permission {
         READ,
         WRITE,
         ADMIN,

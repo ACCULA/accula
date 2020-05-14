@@ -2,14 +2,21 @@ package org.accula.api.handlers.request;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
-import org.jetbrains.annotations.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
-@Data
-@RequiredArgsConstructor(onConstructor = @__(@JsonCreator))
+/**
+ * @author Anto Lamtev
+ */
+@Getter
+@EqualsAndHashCode
+@ToString
+@NoArgsConstructor
+@AllArgsConstructor(onConstructor = @__(@JsonCreator))
 public final class CreateProjectRequestBody implements RequestBody {
-    @NotNull
     @JsonProperty(required = true)
-    private final String githubRepoUrl;
+    private String githubRepoUrl;
 }

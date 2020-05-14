@@ -2,7 +2,7 @@ package org.accula.api.config;
 
 import lombok.RequiredArgsConstructor;
 import org.accula.api.db.CurrentUserRepository;
-import org.accula.api.github.api.GithubClient;
+import org.accula.api.github.api.GithubClientImpl;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.reactive.config.CorsRegistry;
@@ -34,14 +34,14 @@ public class WebConfig implements WebFluxConfigurer {
     }
 
     @Bean
-    public GithubClient.AccessTokenProvider githubAccessTokenProvider() {
+    public GithubClientImpl.AccessTokenProvider githubAccessTokenProvider() {
         return () -> currentUserRepository
                 .get()
                 .flatMap(user -> Mono.justOrEmpty(user.getGithubAccessToken()));
     }
 
     @Bean
-    public GithubClient.LoginProvider githubLoginProvider() {
+    public GithubClientImpl.LoginProvider githubLoginProvider() {
         return () -> currentUserRepository
                 .get()
                 .flatMap(user -> Mono.just(user.getGithubLogin()));

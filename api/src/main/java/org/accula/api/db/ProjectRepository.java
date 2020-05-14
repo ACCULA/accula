@@ -13,8 +13,8 @@ public interface ProjectRepository extends ReactiveCrudRepository<Project, Long>
 
     <S extends Project> Mono<S> save(final S project);
 
-    @Query("SELECT exists(SELECT 0 FROM project WHERE repo_owner = :repoOwner AND repo_name = :repoName)")
-    Mono<Boolean> existsByRepoOwnerAndRepoName(final String repoOwner, final String repoName);
+    @Query("SELECT NOT exists(SELECT 0 FROM project WHERE repo_owner = :repoOwner AND repo_name = :repoName)")
+    Mono<Boolean> notExistsByRepoOwnerAndRepoName(final String repoOwner, final String repoName);
 
     Mono<Boolean> deleteByIdAndCreatorId(final Long id, final Long creatorId);
 

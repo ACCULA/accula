@@ -31,11 +31,4 @@ public class User {
     public static User of(final String name, final Long githubId, final String githubLogin, final String githubAccessToken) {
         return new User(null, name, githubId, githubLogin, githubAccessToken);
     }
-
-    public interface GithubOnly {
-        Long getGithubId();
-        String getGithubLogin();
-        @Nullable
-        String getGithubAccessToken();
-    }
 }

@@ -1,6 +1,7 @@
 package org.accula.api.db.model;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.Nullable;
@@ -9,6 +10,7 @@ import org.springframework.data.annotation.Id;
 /**
  * @author Anton Lamtev
  */
+@Builder
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -25,7 +27,8 @@ public class Project {
     private Integer repoOpenPullCount;
     private String repoOwner;
     private String repoOwnerAvatar;
-    private Long[] admins;
+    @Builder.Default
+    private Long[] admins = ADMINS_EMPTY;
 
     public static Project of(final Long creatorId, final String repoUrl, final String repoName, final String repoDescription,
                              final Integer repoOpenPullCount, final String repoOwner, final String repoOwnerAvatar) {

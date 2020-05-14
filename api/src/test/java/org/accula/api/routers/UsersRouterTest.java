@@ -5,14 +5,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.accula.api.db.UserRepository;
 import org.accula.api.db.model.User;
-import org.accula.api.handlers.UsersHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Import;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.ServerResponse;
@@ -21,8 +19,7 @@ import reactor.core.publisher.Mono;
 /**
  * @author Anton Lamtev
  */
-@WebFluxTest
-@Import({UsersRouter.class, UsersHandler.class, UserRepository.class})
+@SpringBootTest
 public class UsersRouterTest {
     private static final User STUB_USER = new User(1L, "name", 123L, "login", null);
     private static final ResponseUser RESPONSE_USER =

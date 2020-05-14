@@ -1,7 +1,6 @@
 package org.accula.api.handlers;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.accula.api.db.CurrentUserRepository;
 import org.accula.api.db.ProjectRepository;
 import org.accula.api.db.model.Project;
@@ -34,7 +33,6 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
  * @author Anton Lamtev
  */
 @Component
-@Slf4j
 @RequiredArgsConstructor
 public final class ProjectsHandler {
     private static final Exception PROJECT_NOT_FOUND_EXCEPTION = new Exception();
@@ -71,7 +69,8 @@ public final class ProjectsHandler {
                 .bodyToMono(CreateProjectRequestBody.class)
                 .onErrorResume(e -> Mono.error(CreateProjectException.BAD_FORMAT))
                 .map(ProjectsHandler::extractOwnerAndRepo)
-                .filterWhen(this::notAlreadyExists)
+                .filterWhen(ownerAndRepo -> projects
+                        .notExistsByRepoOwnerAndRepoName(ownerAndRepo.getT1().toLowerCase(), ownerAndRepo.getT2().toLowerCase()))
                 .switchIfEmpty(Mono.error(CreateProjectException.ALREADY_EXISTS))
                 .flatMap(this::retrieveGithubInfoForProjectCreation)
                 .onErrorMap(e -> e instanceof GithubClientException, e -> CreateProjectException.WRONG_URL)
@@ -99,6 +98,7 @@ public final class ProjectsHandler {
                 .map(Long::parseLong)
                 .onErrorMap(e -> e instanceof NumberFormatException, e -> PROJECT_NOT_FOUND_EXCEPTION)
                 .zipWith(request.bodyToMono(Project.class))
+                .switchIfEmpty(Mono.error(PROJECT_NOT_FOUND_EXCEPTION))
                 .flatMap(projectAndCurrentUser -> {
                     final var projectId = projectAndCurrentUser.getT1();
                     final var project = projectAndCurrentUser.getT2();
@@ -109,7 +109,8 @@ public final class ProjectsHandler {
                             .flatMap(currentUser -> projects.
                                     setAdmins(projectId, admins, requireNonNull(currentUser.getId())));
                 })
-                .then(ServerResponse.ok().build());
+                .flatMap(nil -> ServerResponse.ok().build())
+                .onErrorResume(PROJECT_NOT_FOUND_EXCEPTION::equals, e -> ServerResponse.notFound().build());
     }
 
     public Mono<ServerResponse> delete(final ServerRequest request) {
@@ -124,13 +125,8 @@ public final class ProjectsHandler {
 
                     return projects.deleteByIdAndCreatorId(projectId, userId);
                 })
-                .flatMap(success -> ServerResponse.ok().build());
-    }
-
-    private Mono<Boolean> notAlreadyExists(final Tuple2<String, String> ownerAndRepo) {
-        return projects
-                .existsByRepoOwnerAndRepoName(ownerAndRepo.getT1(), ownerAndRepo.getT2())
-                .map(exists -> !exists);
+                .flatMap(success -> ServerResponse.ok().build())
+                .onErrorResume(PROJECT_NOT_FOUND_EXCEPTION::equals, e -> ServerResponse.notFound().build());
     }
 
     private Mono<Tuple4<Boolean, Repo, Pull[], User>> retrieveGithubInfoForProjectCreation(final Tuple2<String, String> ownerAndRepo) {
@@ -165,8 +161,15 @@ public final class ProjectsHandler {
         final var repoOwnerObj = repo.getOwner();
         final var repoOwner = repoOwnerObj.getLogin();
         final var repoOwnerAvatar = repoOwnerObj.getAvatarUrl();
-
-        return Project.of(creatorId, repoUrl, repoName, repoDescription, repoOpenPullCount, repoOwner, repoOwnerAvatar);
+        return Project.builder()
+                .creatorId(creatorId)
+                .repoUrl(repoUrl)
+                .repoName(repoName.toLowerCase())
+                .repoDescription(repoDescription)
+                .repoOpenPullCount(repoOpenPullCount)
+                .repoOwner(repoOwner.toLowerCase())
+                .repoOwnerAvatar(repoOwnerAvatar)
+                .build();
     }
 
     private static Tuple2<String, String> extractOwnerAndRepo(final CreateProjectRequestBody requestBody) {

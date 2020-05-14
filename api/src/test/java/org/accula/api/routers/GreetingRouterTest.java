@@ -1,17 +1,14 @@
 package org.accula.api.routers;
 
-import org.accula.api.handlers.GreetingHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
-import org.springframework.context.annotation.Import;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
-@WebFluxTest
-@Import({GreetingRouter.class, GreetingHandler.class})
+@SpringBootTest
 public final class GreetingRouterTest {
     private static final String GREETING = "ACCULA is greeting you, Alice";
     private static final String ERROR = "Missing required query param \"name\"";
