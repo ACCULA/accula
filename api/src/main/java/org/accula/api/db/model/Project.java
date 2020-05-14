@@ -29,9 +29,4 @@ public class Project {
     private String repoOwnerAvatar;
     @Builder.Default
     private Long[] admins = ADMINS_EMPTY;
-
-    public static Project of(final Long creatorId, final String repoUrl, final String repoName, final String repoDescription,
-                             final Integer repoOpenPullCount, final String repoOwner, final String repoOwnerAvatar) {
-        return new Project(null, creatorId, repoUrl, repoName, repoDescription, repoOpenPullCount, repoOwner, repoOwnerAvatar, ADMINS_EMPTY);
-    }
 }
