@@ -33,5 +33,7 @@ dependencies {
     implementation("org.springframework:spring-jdbc")
     implementation("org.flywaydb:flyway-core")
 
+    testImplementation("io.zonky.test:embedded-database-spring-test:1.5.3")
+
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 }

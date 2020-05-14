@@ -10,14 +10,16 @@ import org.accula.api.github.api.GithubClientException;
 import org.accula.api.github.model.Owner;
 import org.accula.api.github.model.Pull;
 import org.accula.api.github.model.Repo;
+import org.accula.api.handlers.ProjectsHandler;
 import org.accula.api.handlers.request.CreateProjectRequestBody;
 import org.accula.api.handlers.request.RequestBody;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.ServerResponse;
@@ -29,7 +31,8 @@ import static java.lang.Boolean.TRUE;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
-@SpringBootTest
+@WebFluxTest
+@ContextConfiguration(classes = {ProjectsHandler.class, ProjectsRouter.class})
 public class ProjectsRouterTest {
     private static final String REPO_URL = "https://github.com/accula/accula";
     private static final String REPO_NAME = "accula";
