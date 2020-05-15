@@ -1,9 +1,9 @@
 FROM node:14 as build
 WORKDIR /app
 COPY package.json /app/
-RUN npm install
+RUN yarn install
 COPY ./ /app/
-RUN npm run build
+RUN yarn run build
 
 FROM nginx:1.17
 COPY --from=build /app/build/ /usr/share/nginx/html
