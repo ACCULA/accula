@@ -48,7 +48,7 @@ accula:
       refresh: ${jwt.expiresIn.refresh}
 
   cluster:
-    webUrl: "http://localhost:3000"
+    webUrl: "http://localhost"
 
   db:
     host: ${db.host}
