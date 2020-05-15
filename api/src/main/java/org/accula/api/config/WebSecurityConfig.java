@@ -107,6 +107,11 @@ public class WebSecurityConfig {
     }
 
     @Bean
+    public Jwt jwt(final ECPrivateKey privateEcKey, final ECPublicKey publicEcKey) {
+        return new Jwt(privateEcKey, publicEcKey, jwtProperties.getIssuer());
+    }
+
+    @Bean
     public String refreshTokenEndpointPath() {
         return "/api/refreshToken";
     }
