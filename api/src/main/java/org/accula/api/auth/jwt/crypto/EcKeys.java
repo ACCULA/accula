@@ -2,8 +2,6 @@ package org.accula.api.auth.jwt.crypto;
 
 import lombok.SneakyThrows;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.security.Key;
 import java.security.KeyFactory;
 import java.security.interfaces.ECPrivateKey;
