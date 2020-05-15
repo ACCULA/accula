@@ -29,7 +29,7 @@ public final class GreetingRouterTest {
 
     @Test
     public void testGreetingRouteOk() {
-        client.get().uri("/greet?name=Alice")
+        client.get().uri("/api/greet?name=Alice")
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(String.class).isEqualTo(GREETING);
@@ -37,7 +37,7 @@ public final class GreetingRouterTest {
 
     @Test
     public void testGreetingRouteBadRequest() {
-        client.get().uri("/greet?name=")
+        client.get().uri("/api/greet?name=")
                 .exchange()
                 .expectStatus().isBadRequest()
                 .expectBody(String.class).isEqualTo(ERROR);

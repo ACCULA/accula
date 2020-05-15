@@ -21,7 +21,7 @@ public class StatusRouterTest {
         WebTestClient
                 .bindToRouterFunction(statusRoute)
                 .build()
-                .get().uri("/status")
+                .get().uri("/api/status")
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(String.class).isEqualTo(STATUS);
