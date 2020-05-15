@@ -20,7 +20,7 @@ public final class UsersRouter {
     public RouterFunction<ServerResponse> usersRoute() {
         return RouterFunctions
                 .route()
-                .GET("/users/{id}", usersHandler::getById)
+                .GET("/api/users/{id}", usersHandler::getById)
                 .build();
     }
 }

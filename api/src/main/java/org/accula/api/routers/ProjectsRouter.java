@@ -23,7 +23,7 @@ public final class ProjectsRouter {
     public RouterFunction<ServerResponse> projectsRoute() {
         return RouterFunctions
                 .route()
-                .path("/projects", b1 -> b1
+                .path("/api/projects", b1 -> b1
                         .GET("", projectsHandler::getAll)
                         .GET("/{id}", projectsHandler::get)
                         .nest(accept(APPLICATION_JSON), b2 -> b2
