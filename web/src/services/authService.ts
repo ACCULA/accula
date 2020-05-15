@@ -12,7 +12,7 @@ type AuthEndpoint =
 
 const updateRefreshToken = (endpoint: AuthEndpoint): Promise<Token> => {
   return axios
-    .get(`${API_URL}/${endpoint}`, {
+    .get(`${API_URL}/api/${endpoint}`, {
       headers: {
         Accept: 'application/json'
       },

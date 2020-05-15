@@ -21,7 +21,7 @@ export interface RouteInfo {
 
 export interface Project {
   id: number
-  url: string
+  repoUrl: string
   creatorId: number
   admins?: number[]
   repoOwner: string

@@ -1,4 +1,4 @@
-import { AppDispatch, AppState, AppStateSupplier } from 'store'
+import { AppDispatch, AppStateSupplier } from 'store'
 import { Project } from 'types'
 import {
   FETCHING_PROJECTS,
@@ -61,10 +61,11 @@ export const createProjectAction = (url: string) => async (
   dispatch: AppDispatch, //
   getState: AppStateSupplier
 ) => {
-  const { users } = getState()
+  const { users, projects } = getState()
   if (users.token) {
-    // TODO
     const project = await createProject(url, users.token.accessToken)
-    console.log(project)
+    if (project) {
+      dispatch(setProjects([...projects.projects, project]))
+    }
   }
 }

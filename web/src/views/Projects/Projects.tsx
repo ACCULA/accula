@@ -12,6 +12,7 @@ import Project from './Project'
 import ProjectPanel from './ProjectPanel'
 
 const mapStateToProps = (state: AppState) => ({
+  project: state.projects.project,
   projects: state.projects.projects,
   isFetching: state.projects.isFetching
 })
@@ -56,9 +57,9 @@ const Projects = ({ isFetching, projects, getProjects, createProject }: Projects
               <Breadcrumbs breadcrumbs={[{ text: 'Projects' }]} />
             </Clearfix>
             <Row>
-              {projects.map(project => (
-                <Col key={project.id} xs={12} sm={6} md={6} lg={4}>
-                  <ProjectPanel project={project} />
+              {projects.map(proj => (
+                <Col key={proj.id} xs={12} sm={6} md={6} lg={4}>
+                  <ProjectPanel project={proj} />
                 </Col>
               ))}
             </Row>

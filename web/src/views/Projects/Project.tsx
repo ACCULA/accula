@@ -44,7 +44,7 @@ const Project = ({ isFetching, projects, project, getProject }: ProjectProps) =>
 
   return (
     <Switch>
-      <Route path="/projects/:projectId/:pullRequestId" component={PullRequest} />
+      <Route path="/projects/:projectId/pulls/:pullRequestId" component={PullRequest} />
       <Route path="/projects/:projectId" exact>
         <Grid fluid className="tight">
           <Breadcrumbs
@@ -62,7 +62,7 @@ const Project = ({ isFetching, projects, project, getProject }: ProjectProps) =>
               </thead>
               <tbody>
                 {pulls.map(pull => (
-                  <LinkContainer to={`/projects/${projectId}/${pull.id}`} key={pull.id}>
+                  <LinkContainer to={`/projects/${projectId}/pulls/${pull.id}`} key={pull.id}>
                     <tr className="project-pull pointer">
                       <td className="id">{pull.id}</td>
                       <td>

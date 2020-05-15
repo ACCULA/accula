@@ -1,5 +1,11 @@
 version: '3'
 services:
+  web:
+    build: web
+    expose:
+      - 80
+    ports:
+      - "80:80"
   postgres:
     image: postgres:11
     ports:

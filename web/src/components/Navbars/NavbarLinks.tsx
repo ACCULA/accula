@@ -47,7 +47,7 @@ const NavbarLinks = ({ user }: NavbarLinksProps) => {
             >
               <MenuItem onClick={() => history.push('/profile')}>Profile</MenuItem>
               <MenuItem onClick={() => history.push('/settings')}>Settings</MenuItem>
-              <MenuItem href="#">Log out</MenuItem>
+              {/*<MenuItem onClick={() => {}}>Log out</MenuItem>*/}
             </NavDropdown>
           </>
         ) : (

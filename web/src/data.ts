@@ -3,7 +3,7 @@ import { Project, PullRequest } from 'types'
 export const projects: Project[] = [
   {
     id: 1,
-    url: 'https://github.com/polis-mail-ru/2019-highload-dht',
+    repoUrl: 'https://github.com/polis-mail-ru/2019-highload-dht',
     creatorId: 1,
     repoOwner: 'polis-mail-ru',
     repoName: '2019-highload-dht',
@@ -13,7 +13,7 @@ export const projects: Project[] = [
   },
   {
     id: 2,
-    url: 'https://github.com/ACCULA/accula',
+    repoUrl: 'https://github.com/ACCULA/accula',
     creatorId: 1,
     repoOwner: 'ACCULA',
     repoName: 'accula',
@@ -23,7 +23,7 @@ export const projects: Project[] = [
   },
   {
     id: 3,
-    url: 'https://github.com/polis-mail-ru/2020-db-lsm',
+    repoUrl: 'https://github.com/polis-mail-ru/2020-db-lsm',
     creatorId: 1,
     repoOwner: 'polis-mail-ru',
     repoName: '2020-db-lsm',

@@ -5,7 +5,7 @@ import { User } from 'types'
 
 export const getUserById = async (id: number): Promise<User> => {
   return axios
-    .get(`${API_URL}/users/${id}`, {
+    .get(`${API_URL}/api/users/${id}`, {
       headers: {
         Accept: 'application/json'
       },

@@ -7,12 +7,11 @@ import { projects } from 'data'
 const debug = false
 
 export const getProjects = async (): Promise<Project[]> => {
-  // TODO: temp
   if (debug) {
     return Promise.resolve(projects)
   }
   return axios
-    .get(`${API_URL}/projects`, {
+    .get(`${API_URL}/api/projects`, {
       headers: {
         Accept: 'application/json'
       },
@@ -22,13 +21,12 @@ export const getProjects = async (): Promise<Project[]> => {
 }
 
 export const createProject = async (url: string, token: String): Promise<Project> => {
-  // TODO: temp
   if (debug) {
     return Promise.resolve(projects[0])
   }
   return axios
     .post(
-      `${API_URL}/projects`,
+      `${API_URL}/api/projects`,
       {
         githubRepoUrl: url
       },
@@ -40,9 +38,5 @@ export const createProject = async (url: string, token: String): Promise<Project
         withCredentials: true
       }
     )
-    .then(resp => {
-      console.log('resp', resp)
-      return resp
-    })
     .then(resp => resp.data as Project)
 }
