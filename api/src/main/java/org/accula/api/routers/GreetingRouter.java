@@ -17,7 +17,7 @@ public final class GreetingRouter {
     public RouterFunction<ServerResponse> greetingRoute() {
         return RouterFunctions
                 .route()
-                .GET("/greet", handler::greet)
+                .GET("/api/greet", handler::greet)
                 .build();
     }
 }

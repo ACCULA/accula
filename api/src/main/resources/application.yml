@@ -16,7 +16,7 @@ spring:
             client-id: ${github-app.client-id}
             client-secret: ${github-app.client-secret}
             scope: read:user,public_repo
-            redirect-uri: "{baseUrl}/login/github/callback"
+            redirect-uri: "{baseUrl}/api/login/github/callback"
 
 server:
   error:
@@ -61,3 +61,4 @@ accula:
       maxIdleTime: 5s
       minSize: 2
       maxSize: 20
+

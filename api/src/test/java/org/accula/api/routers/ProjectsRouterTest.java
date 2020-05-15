@@ -87,7 +87,7 @@ public class ProjectsRouterTest {
         Mockito.when(githubClient.getRepositoryOpenPulls(GH_REPO.getOwner().getLogin(), GH_REPO.getName()))
                 .thenReturn(Mono.just(OPEN_PULLS));
 
-        client.post().uri("/projects")
+        client.post().uri("/api/projects")
                 .contentType(APPLICATION_JSON)
                 .bodyValue(REQUEST_BODY)
                 .exchange()
@@ -98,7 +98,7 @@ public class ProjectsRouterTest {
 
     @Test
     public void testCreateProjectFailureInvalidUrl() {
-        client.post().uri("/projects")
+        client.post().uri("/api/projects")
                 .contentType(APPLICATION_JSON)
                 .bodyValue(REQUEST_BODY_INVALID_URL)
                 .exchange()
@@ -124,7 +124,7 @@ public class ProjectsRouterTest {
         Mockito.when(githubClient.getRepositoryOpenPulls(GH_REPO.getOwner().getLogin(), GH_REPO.getName()))
                 .thenReturn(Mono.error(GH_EXCEPTION));
 
-        client.post().uri("/projects")
+        client.post().uri("/api/projects")
                 .contentType(APPLICATION_JSON)
                 .bodyValue(REQUEST_BODY)
                 .exchange()
@@ -153,7 +153,7 @@ public class ProjectsRouterTest {
         Mockito.when(githubClient.getRepositoryOpenPulls(GH_REPO.getOwner().getLogin(), GH_REPO.getName()))
                 .thenReturn(Mono.just(OPEN_PULLS));
 
-        client.post().uri("/projects")
+        client.post().uri("/api/projects")
                 .contentType(APPLICATION_JSON)
                 .bodyValue(REQUEST_BODY)
                 .exchange()
@@ -183,7 +183,7 @@ public class ProjectsRouterTest {
         Mockito.when(githubClient.getRepositoryOpenPulls(GH_REPO.getOwner().getLogin(), GH_REPO.getName()))
                 .thenReturn(Mono.just(OPEN_PULLS));
 
-        client.post().uri("/projects")
+        client.post().uri("/api/projects")
                 .contentType(APPLICATION_JSON)
                 .bodyValue(REQUEST_BODY)
                 .exchange()
@@ -197,7 +197,7 @@ public class ProjectsRouterTest {
         Mockito.when(repository.findById(PROJECT.getId()))
                 .thenReturn(Mono.just(PROJECT));
 
-        client.get().uri("/projects/{id}", PROJECT.getId())
+        client.get().uri("/api/projects/{id}", PROJECT.getId())
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(Project.class).isEqualTo(PROJECT);
@@ -208,7 +208,7 @@ public class ProjectsRouterTest {
         Mockito.when(repository.findById(0L))
                 .thenReturn(Mono.empty());
 
-        client.get().uri("/projects/{id}", 0L)
+        client.get().uri("/api/projects/{id}", 0L)
                 .exchange()
                 .expectStatus().isNotFound();
     }
@@ -218,7 +218,7 @@ public class ProjectsRouterTest {
         Mockito.when(repository.findAll())
                 .thenReturn(Flux.fromArray(new Project[]{PROJECT, PROJECT, PROJECT}));
 
-        client.get().uri("/projects?count={count}", 2L)
+        client.get().uri("/api/projects?count={count}", 2L)
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(Project[].class).isEqualTo(new Project[]{PROJECT, PROJECT});
@@ -232,7 +232,7 @@ public class ProjectsRouterTest {
         Mockito.when(repository.deleteByIdAndCreatorId(PROJECT.getId(), PROJECT.getCreatorId()))
                 .thenReturn(Mono.just(TRUE));
 
-        client.delete().uri("/projects/{id}", PROJECT.getId())
+        client.delete().uri("/api/projects/{id}", PROJECT.getId())
                 .exchange()
                 .expectStatus().isOk();
     }
@@ -254,7 +254,7 @@ public class ProjectsRouterTest {
         adminsUpdate.setAdmins(admins);
         adminsUpdate.setId(PROJECT.getId());
 
-        client.put().uri("/projects/{id}", PROJECT.getId())
+        client.put().uri("/api/projects/{id}", PROJECT.getId())
                 .bodyValue(adminsUpdate)
                 .exchange()
                 .expectStatus().isOk();

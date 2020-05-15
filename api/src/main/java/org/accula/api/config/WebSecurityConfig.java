@@ -75,18 +75,18 @@ public class WebSecurityConfig {
                         .accessDeniedHandler(new HttpStatusServerAccessDeniedHandler(FORBIDDEN)))
 
                 .authorizeExchange(exchanges -> exchanges
-                        .pathMatchers("/greet").authenticated()
-                        .pathMatchers(GET, "/projects/*").permitAll()
-                        .pathMatchers("/projects/*").authenticated()
+                        .pathMatchers("/api/greet").authenticated()
+                        .pathMatchers(GET, "/api/projects/*").permitAll()
+                        .pathMatchers("/api/projects/*").authenticated()
                         .anyExchange().permitAll())
 
                 .addFilterBefore(jwtRefreshFilter, AUTHENTICATION)
                 .addFilterAt(authenticationFilter, AUTHENTICATION)
 
                 .oauth2Login(oauth2 -> oauth2
-                        .authenticationMatcher(pathMatchers(GET, "/login/{registrationId}/callback"))
+                        .authenticationMatcher(pathMatchers(GET, "/api/login/{registrationId}/callback"))
                         .authorizationRequestResolver(new DefaultServerOAuth2AuthorizationRequestResolver(
-                                clientRegistrations, pathMatchers(GET, "/login/{registrationId}")))
+                                clientRegistrations, pathMatchers(GET, "/api/login/{registrationId}")))
                         .authenticationSuccessHandler(oauth2LoginSuccessHandler)
                         .authenticationFailureHandler(new OAuth2LoginFailureHandler())
                 )
@@ -114,7 +114,7 @@ public class WebSecurityConfig {
 
     @Bean
     public String refreshTokenEndpointPath() {
-        return "/refreshToken";
+        return "/api/refreshToken";
     }
 
     @Bean

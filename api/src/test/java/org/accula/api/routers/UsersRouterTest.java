@@ -46,7 +46,7 @@ public class UsersRouterTest {
         Mockito.when(repository.findById(RESPONSE_USER.id))
                 .thenReturn(Mono.just(STUB_USER));
 
-        client.get().uri("/users/{id}", RESPONSE_USER.id)
+        client.get().uri("/api/users/{id}", RESPONSE_USER.id)
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(ResponseUser.class).isEqualTo(RESPONSE_USER);
@@ -57,14 +57,14 @@ public class UsersRouterTest {
         Mockito.when(repository.findById(RESPONSE_USER.id))
                 .thenReturn(Mono.empty());
 
-        client.get().uri("/users/{id}", RESPONSE_USER.id)
+        client.get().uri("/api/users/{id}", RESPONSE_USER.id)
                 .exchange()
                 .expectStatus().isNotFound();
     }
 
     @Test
     public void testGetUserByIdNotFoundWrongId() {
-        client.get().uri("/users/notANumber")
+        client.get().uri("/api/users/notANumber")
                 .exchange()
                 .expectStatus().isNotFound();
     }
