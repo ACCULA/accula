@@ -1,6 +1,7 @@
 version: '3'
 services:
   web:
+#    image: docker.pkg.github.com/accula/accula/accula_web:latest
     build: web
     expose:
       - 80
@@ -11,6 +12,7 @@ services:
     environment:
       - REACT_APP_API_URL=http://64.225.96.225
   api:
+#    image: docker.pkg.github.com/accula/accula/accula_api:latest
     build:
       context: ./
       dockerfile: ./api/Dockerfile
