@@ -8,8 +8,9 @@ services:
       - api
     ports:
       - "80:80"
+    environment:
+      - REACT_APP_API_URL=http://64.225.96.225
   api:
-#    build: api
     build:
       context: ./
       dockerfile: ./api/Dockerfile
@@ -19,6 +20,15 @@ services:
       - "8080:8080"
     depends_on:
       - postgres
+    environment:
+      - PORT=8080
+      - API_URL=http://64.225.96.225
+      - WEB_URL=http://64.225.96.225
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASS=postgres
+      - DB_NAME=accula
   postgres:
     image: postgres:11
     ports:
