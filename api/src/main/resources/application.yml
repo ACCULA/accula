@@ -1,0 +1,64 @@
+spring:
+  profiles:
+    include:
+      - secrets
+
+  flyway:
+    url: jdbc:postgresql://${DB_HOST}/${DB_NAME}
+    user: ${DB_USER}
+    password: ${DB_PASS}
+
+  security:
+    oauth2:
+      client:
+        registration:
+          github:
+            client-id: ${GITHUB_CLIENT_ID}
+            client-secret: ${GITHUB_CLIENT_SECRET}
+            scope: read:user,public_repo
+            redirect-uri: ${API_URL}/api/login/github/callback
+
+server:
+  error:
+    whitelabel:
+      enabled: false
+  port: ${PORT}
+
+#management:
+#  endpoints:
+#    web:
+#      exposure:
+#        include: "*"
+
+logging:
+  level:
+    org:
+      springframework:
+        data:
+          r2dbc=DEBUG:
+    ROOT: DEBUG
+
+accula:
+  jwt:
+    signature:
+      publicKey: accula.public.der
+      privateKey: accula.private.der
+    issuer: accula
+    expiresIn:
+      access: 1m
+      refresh: 90d
+
+  cluster:
+    webUrl: ${WEB_URL}
+
+  db:
+    host: ${DB_HOST}
+    port: ${DB_PORT}
+    user: ${DB_USER}
+    password: ${DB_PASS}
+    database: ${DB_NAME}
+
+    pool:
+      maxIdleTime: 5s
+      minSize: 2
+      maxSize: 20

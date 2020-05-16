@@ -1,0 +1,39 @@
+{
+  "root": true,
+  "parser": "@typescript-eslint/parser",
+  "plugins": [
+    "@typescript-eslint"
+  ],
+  "extends": [
+    "plugin:prettier/recommended",
+    "airbnb-typescript",
+    "prettier",
+    "prettier/@typescript-eslint",
+    "prettier/react"
+  ],
+  "rules": {
+    // Make prettier code formatting suggestions more verbose.
+    "prettier/prettier": [
+      "warn"
+    ],
+    // Disable <Fragment> => <> replacement. Feel free to change
+    "react/jsx-fragments": "off",
+    // Disable prefer default export
+    "import/prefer-default-export": "off",
+    "react/jsx-props-no-spreading": "off",
+    // Disable for aliases
+    "import/extensions": "off",
+    "import/no-unresolved": "off",
+    "no-plusplus": "off",
+    "no-console": "off"
+  },
+  "settings": {
+    "import/resolver": {
+      "node": {
+        "paths": [
+          "./src"
+        ]
+      }
+    }
+  }
+}
