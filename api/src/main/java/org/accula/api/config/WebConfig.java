@@ -20,11 +20,11 @@ public class WebConfig implements WebFluxConfigurer {
     private final CurrentUserRepository currentUserRepository;
 
     @Override
-    public void addCorsMappings(final CorsRegistry corsRegistry) {
-        corsRegistry.addMapping("/**")
-                .allowedOrigins("http://localhost:3000")
-                .allowedMethods("*")
-                .exposedHeaders("Access-Control-Allow-Origin")
+    public void addCorsMappings(final CorsRegistry registry) {
+        registry.addMapping("/**")
+                .allowedOrigins("*")
+                .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
+                .allowedHeaders("*")
                 .allowCredentials(true);
     }
 
