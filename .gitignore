@@ -5,4 +5,3 @@
 /.gradle
 *.der
 *.pem
-application-secrets.*
