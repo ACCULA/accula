@@ -51,7 +51,7 @@ const NavbarLinks = ({ user }: NavbarLinksProps) => {
             </NavDropdown>
           </>
         ) : (
-          <NavItem href={`${API_URL}/login/github`} id="navbar-link">
+          <NavItem href={`${API_URL}/api/login/github`} id="navbar-link">
             <i className="fab fa-fw fa-github" /> Sign in with Github
           </NavItem>
         )}
