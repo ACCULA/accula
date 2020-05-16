@@ -1,17 +1,19 @@
 import React from 'react'
-import { Grid } from 'react-bootstrap'
-import Button from 'components/CustomButton'
+import { Grid, Panel, Row } from 'react-bootstrap'
 
-import Card from 'components/Card'
-
-const Settings = () => (
-  <div className="content">
-    <Grid fluid>
-      <Card title="Settings">
-        <Button bsStyle="info">Save</Button>
-      </Card>
-    </Grid>
-  </div>
-)
+const Settings = () => {
+  return (
+    <div className="content">
+      <Grid fluid>
+        <Row>
+          <Panel>
+            <Panel.Heading>Settings</Panel.Heading>
+            <Panel.Body>TODO</Panel.Body>
+          </Panel>
+        </Row>
+      </Grid>
+    </div>
+  )
+}
 
 export default Settings

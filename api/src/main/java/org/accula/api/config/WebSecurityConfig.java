@@ -15,6 +15,7 @@ import org.accula.api.db.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.oauth2.client.ReactiveOAuth2AuthorizedClientService;
@@ -28,12 +29,10 @@ import org.springframework.security.web.server.context.NoOpServerSecurityContext
 import org.springframework.security.web.server.savedrequest.NoOpServerRequestCache;
 import org.springframework.web.server.WebFilter;
 
-import java.net.URISyntaxException;
-import java.nio.file.Path;
+import java.io.IOException;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
 
-import static java.util.Objects.requireNonNull;
 import static org.springframework.http.HttpMethod.GET;
 import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
@@ -94,17 +93,17 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    public ECPublicKey publicKey() throws URISyntaxException {
-        final var resource = requireNonNull(getClass().getClassLoader().getResource(jwtProperties.getSignature().getPublicKey()));
-
-        return EcKeys.publicKey(Path.of(resource.toURI()));
+    public ECPublicKey publicKey() throws IOException {
+        final var resource = new ClassPathResource(jwtProperties.getSignature().getPublicKey());
+        final var bytes = resource.getInputStream().readAllBytes();
+        return EcKeys.publicKey(bytes);
     }
 
     @Bean
-    public ECPrivateKey privateKey() throws URISyntaxException {
-        final var resource = requireNonNull(getClass().getClassLoader().getResource(jwtProperties.getSignature().getPrivateKey()));
-
-        return EcKeys.privateKey(Path.of(resource.toURI()));
+    public ECPrivateKey privateKey() throws IOException {
+        final var resource = new ClassPathResource(jwtProperties.getSignature().getPrivateKey());
+        final var bytes = resource.getInputStream().readAllBytes();
+        return EcKeys.privateKey(bytes);
     }
 
     @Bean

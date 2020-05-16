@@ -12,6 +12,14 @@ a {
     color: $info-states-color;
     text-decoration: none;
   }
+  
+  &.black {
+    color: $black-color;
+
+    &:hover {
+      color: $black-bg;
+    }
+  }
 }
 
 a:focus, a:active,
@@ -62,4 +70,30 @@ input:focus {
   position: relative;
   top: 0;
   height: 100vh;
+}
+
+.tight {
+  padding: 0;
+  margin: 0;
+}
+
+.pointer {
+  cursor: pointer;
+}
+
+pre {
+  display: inline;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background-color: transparent;
+  line-height: 20px;
+  font-family: $font-family-mono;
+  font-size: $font-size-small;
+}
+
+code {
+  color: $info-color;
+  background: lighten($info-color, 55);
+  font-family: $font-family-mono;
 }

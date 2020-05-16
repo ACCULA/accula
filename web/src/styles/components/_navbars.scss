@@ -14,9 +14,14 @@
 
   .navbar-brand {
     font-weight: $font-weight-normal;
-    margin: $navbar-margin-brand;
+    margin: $navbar-margin-brand !important;
     padding: $navbar-padding-brand;
-    font-size: $font-size-large-navbar;
+    font-size: $navbar-font-size;
+    font-family: $font-family-righteous;
+    color: $matisse;
+    &:hover {
+      color: $matisse;
+    }
   }
 
   .navbar-nav {
@@ -239,8 +244,8 @@
 }
 
 .navbar-toggle {
-  margin-top: 19px;
-  margin-bottom: 19px;
+  margin-top: 14px;
+  margin-bottom: 14px;
   border: $none;
 
   .icon-bar {
@@ -268,4 +273,13 @@
 
 .navbar-links {
   margin-right: 10px;
+}
+
+.navbar-logo {
+  margin: 0;
+  padding: 15px 0;
+  height: 60px;
+  width: 45px;
+  float: left;
+  overflow: hidden;
 }

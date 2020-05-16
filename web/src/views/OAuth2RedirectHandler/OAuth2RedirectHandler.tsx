@@ -1,14 +1,26 @@
 import React from 'react'
 import { Redirect, useLocation } from 'react-router-dom'
-import { setAccessToken } from 'accessToken'
+import { connect, ConnectedProps } from 'react-redux'
 
-const OAuth2RedirectHandler = () => {
+import { setAccessTokenAction } from 'store/users/actions'
+import { Token } from 'types'
+
+const mapDispatchToProps = dispatch => ({
+  setAccessToken: (token: Token) => dispatch(setAccessTokenAction(token))
+})
+
+const connector = connect(null, mapDispatchToProps)
+type OAuth2RedirectHandlerProps = ConnectedProps<typeof connector>
+
+const OAuth2RedirectHandler = ({ setAccessToken }: OAuth2RedirectHandlerProps) => {
   const location = useLocation()
-  const accessToken = new URLSearchParams(location.search).get('accessToken')
+  const accessToken: string = new URLSearchParams(location.search).get('accessToken')
   const error = new URLSearchParams(location.search).get('error')
 
   if (accessToken) {
-    setAccessToken(accessToken)
+    setAccessToken({
+      accessToken
+    })
     return (
       <Redirect
         to={{
@@ -32,4 +44,4 @@ const OAuth2RedirectHandler = () => {
   )
 }
 
-export default OAuth2RedirectHandler
+export default connector(OAuth2RedirectHandler)

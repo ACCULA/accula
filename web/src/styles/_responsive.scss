@@ -463,3 +463,9 @@
     -webkit-overflow-scrolling: touch;
   }
 }
+
+@media (min-width: 991px) {
+  .navbar-logo {
+    display: none;
+  }
+}

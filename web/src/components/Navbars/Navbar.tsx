@@ -1,27 +1,36 @@
 import React from 'react'
 import { Navbar as BSNavbar } from 'react-bootstrap'
+import { useLocation } from 'react-use'
 
+import logo from 'images/fin_matisse.svg'
+import { routes } from 'routes'
 import { User } from 'types'
 import NavbarLinks from './NavbarLinks'
 
-interface AdminNavbarProps {
-  brandText: string
+interface NavbarProps {
   user?: User
 }
 
-const Navbar = ({ brandText, user }: AdminNavbarProps) => (
-  <BSNavbar fluid>
-    <BSNavbar.Brand>{brandText}</BSNavbar.Brand>
-    <BSNavbar.Toggle
-      onClick={(e: React.MouseEvent<any>) => {
-        e.preventDefault()
-        document.documentElement.classList.toggle('nav-open')
-      }}
-    />
-    <BSNavbar.Collapse>
-      <NavbarLinks user={user} />
-    </BSNavbar.Collapse>
-  </BSNavbar>
-)
+const Navbar = ({ user }: NavbarProps) => {
+  const location = useLocation()
+  const brand: string =
+    routes.filter(route => location.pathname.indexOf(route.path) >= 0)[0]?.name || 'ACCULA'
+
+  return (
+    <BSNavbar fluid>
+      <img src={logo} alt="Accula" className="navbar-logo" />
+      <BSNavbar.Brand>{brand}</BSNavbar.Brand>
+      <BSNavbar.Toggle
+        onClick={(e: React.MouseEvent<any>) => {
+          e.preventDefault()
+          document.documentElement.classList.toggle('nav-open')
+        }}
+      />
+      <BSNavbar.Collapse>
+        <NavbarLinks user={user} />
+      </BSNavbar.Collapse>
+    </BSNavbar>
+  )
+}
 
 export default Navbar

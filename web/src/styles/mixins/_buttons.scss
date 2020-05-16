@@ -1,6 +1,6 @@
 // Mixin for generating new styles
 @mixin btn-styles($btn-color, $btn-states-color) {
-  border-color: $btn-color;
+  border-color: darken($btn-color, 5%);
   color: $btn-color;
 
   &:hover,
@@ -8,7 +8,7 @@
   &.active {
     background-color: $btn-color !important;
     color: $white-color !important;
-    border-color: $btn-states-color !important;
+    border-color: darken($btn-color, 10) !important;
   }
 
   &:hover,
@@ -46,7 +46,7 @@
     &.active {
       background-color: $btn-states-color !important;
       color: $white-color !important;
-      border-color: $btn-states-color !important;
+      border-color: darken($btn-color, 10) !important;
     }
 
     &:hover,

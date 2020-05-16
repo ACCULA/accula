@@ -21,27 +21,40 @@ export interface RouteInfo {
 
 export interface Project {
   id: number
-  url: string
-  owner: string
-  name: string
-  description?: string
-  avatar: string
-  openPullRequestCount: number
+  repoUrl: string
+  creatorId: number
+  admins?: number[]
+  repoOwner: string
+  repoName: string
+  repoDescription?: string
+  repoOwnerAvatar: string
+  repoOpenPullCount: number
 }
 
 export interface ProjectSettings {}
 
 export interface PullRequest {
   id: number
-  url: string
-  title: string
-  body: string
-  open: boolean
-  createdAt: string
-  updatedAt: string
+  projectId: number
+  pullUrl: string
+  base: {
+    url: string
+    label: string
+    sha: string
+  }
+  fork: {
+    url: string
+    label: string
+    sha: string
+  }
   author: {
     url: string
     login: string
+    name: string
     avatar: string
   }
+  title: string
+  open: boolean
+  createdAt: string
+  updatedAt: string
 }

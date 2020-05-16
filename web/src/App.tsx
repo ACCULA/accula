@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react'
 import { bindActionCreators } from 'redux'
 import { connect, ConnectedProps } from 'react-redux'
-import { Redirect, Route, RouteComponentProps, Switch } from 'react-router-dom'
-import jwtDecode from 'jwt-decode'
+import { Redirect, Route, Switch, useHistory } from 'react-router-dom'
+import { useLocation, useWindowSize } from 'react-use'
 
 import Navbar from 'components/Navbars'
 import Sidebar from 'components/Sidebar'
@@ -10,53 +10,62 @@ import Footer from 'components/Footer'
 
 import { routes } from 'routes'
 import { AppDispatch, AppState } from 'store'
-import { getUserAction } from 'store/users/actions'
-import { getAccessToken } from 'accessToken'
+import { getAccessTokenAction, getCurrentUserAction, getUserAction } from 'store/users/actions'
 
 const mapStateToProps = (state: AppState) => ({
-  users: state.users
+  token: state.users.token,
+  user: state.users.user,
+  isFetching: state.users.isFetching
 })
 
-const mapDispatchToProps = (dispatch: AppDispatch) => ({
-  getUser: bindActionCreators(getUserAction, dispatch)
-})
+const mapDispatchToProps = (dispatch: AppDispatch) =>
+  bindActionCreators(
+    {
+      getAccessToken: getAccessTokenAction,
+      getUser: getUserAction,
+      getCurrentUser: getCurrentUserAction
+    },
+    dispatch
+  )
 
 const connector = connect(mapStateToProps, mapDispatchToProps)
-type PropsFromRedux = ConnectedProps<typeof connector>
-type AppProps = PropsFromRedux & RouteComponentProps
+type AppProps = ConnectedProps<typeof connector>
 
-const App = ({ history, location, getUser, users }: AppProps) => {
-  const { user, isFetching } = users
+const App = ({ getAccessToken, getCurrentUser, token, user, isFetching }: AppProps) => {
+  const location = useLocation()
+  const history = useHistory()
+  const { width } = useWindowSize()
+
+  useEffect(() => {
+    if (width < 991 && document.documentElement.className.indexOf('nav-open') !== -1) {
+      document.documentElement.classList.toggle('nav-open')
+    }
+  }, [width, location])
 
   useEffect(() => {
     if (history.action === 'PUSH') {
       document.documentElement.scrollTop = 0
       document.scrollingElement.scrollTop = 0
-      document.documentElement.classList.toggle('nav-open')
     }
-  })
+  }, [history, location])
 
   useEffect(() => {
-    getAccessToken().then(accessToken => {
-      if (accessToken && accessToken !== '') {
-        const { sub } = jwtDecode(accessToken)
-        getUser(parseInt(sub, 10))
-      }
-    })
-  }, [getUser])
+    getCurrentUser()
+  }, [getCurrentUser, token])
+
+  useEffect(() => {
+    getAccessToken()
+  }, [getAccessToken])
 
   if (isFetching) {
     return <></>
   }
 
-  const brand: string =
-    routes.filter(route => location.pathname.indexOf(route.path) >= 0)[0]?.name || 'ACCULA'
-
   return (
     <div className="wrapper">
       <Sidebar user={user} routes={routes} />
       <div id="main-panel" className="main-panel">
-        <Navbar user={user} brandText={brand} />
+        <Navbar user={user} />
         <Switch>
           {routes.map(route => (
             <Route

@@ -52,23 +52,8 @@
     span {
       display: inline-block;
       color: $white-color;
-      font-family: Righteous, Helvetica, cursive;
+      font-family: $font-family-righteous;
       font-size: $font-size-logo;
-    }
-  }
-
-  .logo-tim {
-    border-radius: 50%;
-    border: 1px solid #333;
-    display: block;
-    height: 61px;
-    width: 61px;
-    float: left;
-    overflow: hidden;
-
-    img {
-      width: 60px;
-      height: 60px;
     }
   }
 
@@ -128,15 +113,6 @@ body > .navbar-collapse {
   .logo {
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 
-    p {
-      float: left;
-      font-size: 20px;
-      margin: 10px 10px;
-      color: $white-color;
-      line-height: 20px;
-      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-    }
-
     .simple-text {
       text-transform: uppercase;
       padding: $padding-small-vertical $padding-zero;
@@ -145,21 +121,6 @@ body > .navbar-collapse {
       color: $white-color;
       font-weight: $font-weight-normal;
       line-height: 30px;
-    }
-  }
-
-  .logo-tim {
-    border-radius: 50%;
-    border: 1px solid #333;
-    display: block;
-    height: 61px;
-    width: 61px;
-    float: left;
-    overflow: hidden;
-
-    img {
-      width: 60px;
-      height: 60px;
     }
   }
 
@@ -193,13 +154,13 @@ body > .navbar-collapse {
 }
 
 .main-panel {
-  background: rgba(203, 203, 210, .15);
+  background: $main-panel-bg;
   position: relative;
   float: right;
   width: $sidebar-width;
 
   > .content {
-    padding: 30px 15px;
+    padding: 20px 20px;
     min-height: calc(100% - 123px);
   }
 
