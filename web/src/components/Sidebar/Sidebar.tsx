@@ -2,13 +2,13 @@ import React from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { useWindowSize } from 'react-use'
 
-import { RouteInfo, User } from 'types'
+import { IRouteInfo, IUser } from 'types'
 import logo from 'images/fin_tango.svg'
 import NavbarLinks from 'components/Navbars/NavbarLinks'
 
 interface SidebarProps {
-  routes: RouteInfo[]
-  user?: User
+  routes: IRouteInfo[]
+  user?: IUser
 }
 
 const Sidebar = ({ routes, user }: SidebarProps) => {

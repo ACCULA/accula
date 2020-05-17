@@ -1,5 +1,5 @@
 import React from 'react'
 
-export const CloneDetectionTab = () => {
+export const PullClonesTab = () => {
   return <>Clone detections</>
 }

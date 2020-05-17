@@ -1,6 +1,6 @@
-import { Project, PullRequest } from 'types'
+import { IProject, IPull } from 'types'
 
-export const projects: Project[] = [
+export const projects: IProject[] = [
   {
     id: 1,
     repoUrl: 'https://github.com/polis-mail-ru/2019-highload-dht',
@@ -33,21 +33,19 @@ export const projects: Project[] = [
   }
 ]
 
-export const pulls: PullRequest[] = [
+export const pulls: IPull[] = [
   {
     id: 3,
     projectId: 1,
     title: 'Stage 1',
-    pullUrl: 'https://github.com/polis-mail-ru/2019-highload-dht/pull/3',
-    base: {
+    url: 'https://github.com/polis-mail-ru/2019-highload-dht/pull/3',
+    target: {
       url: 'https://github.com/polis-mail-ru/2019-highload-dht',
-      label: 'polis-mail-ru:master',
-      sha: 'd6357dccc16c7d5c001fd2a2203298c36fe96b63'
+      label: 'polis-mail-ru:master'
     },
-    fork: {
+    source: {
       url: 'https://github.com/kilinochi/2019-highload-dht',
-      label: 'kilinochi:master',
-      sha: 'a1c28a1b500701819cf9919246f15f3f900bb609'
+      label: 'kilinochi:master'
     },
     author: {
       url: 'https://github.com/kilinochi',
@@ -57,22 +55,23 @@ export const pulls: PullRequest[] = [
     },
     open: false,
     createdAt: '2019-09-30T06:09:57Z',
-    updatedAt: '2019-10-06T09:00:40Z'
+    updatedAt: '2019-10-06T09:00:40Z',
+    status: 'Read',
+    cloneCount: 100,
+    previousPulls: []
   },
   {
     id: 5,
     projectId: 1,
     title: 'Single Node | Vadim Dyachkov',
-    pullUrl: 'https://github.com/polis-mail-ru/2019-highload-dht/pull/5',
-    base: {
+    url: 'https://github.com/polis-mail-ru/2019-highload-dht/pull/5',
+    target: {
       url: 'https://github.com/polis-mail-ru/2019-highload-dht',
-      label: 'polis-mail-ru:master',
-      sha: 'd6357dccc16c7d5c001fd2a2203298c36fe96b63'
+      label: 'polis-mail-ru:master'
     },
-    fork: {
+    source: {
       url: 'https://github.com/vaddya/2019-highload-dht',
-      label: 'vaddya:master',
-      sha: '00b4287b3028bbdc7c913c3bf498c8bc572fadd3'
+      label: 'vaddya:master'
     },
     author: {
       url: 'https://github.com/vaddya',
@@ -82,7 +81,18 @@ export const pulls: PullRequest[] = [
     },
     open: true,
     createdAt: '2020-05-06T13:02:18Z',
-    updatedAt: '2020-05-11T04:02:18Z'
+    updatedAt: '2020-05-11T04:02:18Z',
+    status: 'Processing',
+    cloneCount: 0,
+    previousPulls: [
+      {
+        id: 3,
+        projectId: 1,
+        title: 'Stage 1',
+        open: false,
+        cloneCount: 3
+      }
+    ]
   }
 ]
 

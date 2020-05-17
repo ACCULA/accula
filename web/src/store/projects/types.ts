@@ -1,23 +1,23 @@
-import { Project } from 'types'
+import { IProject } from 'types'
 
 export const SET_PROJECTS = 'SET_PROJECTS'
 export const SET_PROJECT = 'SET_PROJECT'
 export const FETCHING_PROJECTS = 'FETCHING_PROJECTS'
 
 export interface ProjectsState {
-  projects?: Project[]
-  project?: Project
+  projects?: IProject[]
+  project?: IProject
   isFetching: boolean
 }
 
 export interface SetProjects {
   type: typeof SET_PROJECTS
-  projects: Project[]
+  projects: IProject[]
 }
 
 export interface SetProject {
   type: typeof SET_PROJECT
-  project: Project
+  project: IProject
 }
 
 export interface FetchingProjects {

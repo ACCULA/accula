@@ -4,11 +4,11 @@ import { useLocation } from 'react-use'
 
 import logo from 'images/fin_matisse.svg'
 import { routes } from 'routes'
-import { User } from 'types'
+import { IUser } from 'types'
 import NavbarLinks from './NavbarLinks'
 
 interface NavbarProps {
-  user?: User
+  user?: IUser
 }
 
 const Navbar = ({ user }: NavbarProps) => {

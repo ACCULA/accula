@@ -1,9 +1,9 @@
 import axios from 'axios'
 
 import { API_URL } from 'utils'
-import { User } from 'types'
+import { IUser } from 'types'
 
-export const getUserById = async (id: number): Promise<User> => {
+export const getUserById = async (id: number): Promise<IUser> => {
   return axios
     .get(`${API_URL}/api/users/${id}`, {
       headers: {
@@ -11,5 +11,5 @@ export const getUserById = async (id: number): Promise<User> => {
       },
       withCredentials: true
     })
-    .then(resp => resp.data as User)
+    .then(resp => resp.data as IUser)
 }

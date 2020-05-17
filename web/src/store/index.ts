@@ -5,10 +5,12 @@ import logger from 'redux-logger'
 
 import { usersReducer } from './users/reducers'
 import { projectsReducer } from './projects/reducers'
+import { pullsReducer } from './pulls/reducers'
 
 const rootReducer = combineReducers({
   users: usersReducer,
-  projects: projectsReducer
+  projects: projectsReducer,
+  pulls: pullsReducer
 })
 
 export const store = createStore(

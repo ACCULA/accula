@@ -14,7 +14,7 @@ interface CreateProjectModalProps {
   onSubmit: (string) => void
 }
 
-const CreateProjectModal = ({ show, onClose, onSubmit }: CreateProjectModalProps) => {
+export const CreateProjectModal = ({ show, onClose, onSubmit }: CreateProjectModalProps) => {
   const [url, setUrl] = useState('')
   const validUrl = validateRepoUrl(url)
   return (
@@ -49,5 +49,3 @@ const CreateProjectModal = ({ show, onClose, onSubmit }: CreateProjectModalProps
     </Modal>
   )
 }
-
-export default CreateProjectModal

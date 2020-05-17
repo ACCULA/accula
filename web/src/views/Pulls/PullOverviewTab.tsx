@@ -2,12 +2,12 @@ import React from 'react'
 import { Badge, Col, Grid, ListGroup, ListGroupItem, Panel, Row } from 'react-bootstrap'
 import { format, formatDistanceToNow } from 'date-fns'
 
-import { PullRequest as Pull } from 'types'
+import { IPull } from 'types'
 import { GitHubLink, Link } from 'components/Link'
 
 const DATE_TITLE_FORMAT = "d MMMM yyyy 'at' HH:mm"
 
-export const PullOverviewTab = (pull: Pull) => {
+export const PullOverviewTab = (pull: IPull) => {
   const previous = pull.id % 3 === 0 ? [] : [pull, pull]
   return (
     <>
@@ -17,18 +17,18 @@ export const PullOverviewTab = (pull: Pull) => {
             <Panel className="pull-overview">
               <Panel.Heading>
                 <Panel.Title>
-                  <GitHubLink to={pull.pullUrl} /> {pull.title}
+                  <GitHubLink to={pull.url} /> {pull.title}
                 </Panel.Title>
               </Panel.Heading>
               <ListGroup>
                 <ListGroupItem>
                   <i className="fas fa-fw fa-code-branch" /> Pull request into{' '}
-                  <Link to={pull.base.url}>
-                    <code>{pull.base.label}</code>
+                  <Link to={pull.target.url}>
+                    <code>{pull.target.label}</code>
                   </Link>{' '}
                   from{' '}
-                  <Link to={pull.fork.url}>
-                    <code>{pull.fork.label}</code>
+                  <Link to={pull.source.url}>
+                    <code>{pull.source.label}</code>
                   </Link>
                 </ListGroupItem>
                 <ListGroupItem>
@@ -96,7 +96,7 @@ export const PullOverviewTab = (pull: Pull) => {
                 {previous.length > 0 ? (
                   previous.map((prevPull, i) => (
                     <ListGroupItem key={prevPull.id + /* TODO: temp */ i}>
-                      <Link to={`/projects/${prevPull.projectId}/${prevPull.id}`}>
+                      <Link to={`/projects/${prevPull.projectId}/pulls/${prevPull.id}`}>
                         {prevPull.title}
                       </Link>
                       {prevPull.open ? (

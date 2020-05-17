@@ -1,23 +1,23 @@
-import { Token, User } from 'types'
+import { IToken, IUser } from 'types'
 
 export const SET_ACCESS_TOKEN = 'SET_ACCESS_TOKEN'
 export const SET_USER = 'GET_USER'
 export const FETCHING_USER = 'FETCHING_USER'
 
 export interface UsersState {
-  user?: User
-  token?: Token
+  user?: IUser
+  token?: IToken
   isFetching: boolean
 }
 
 export interface SetAccessToken {
   type: typeof SET_ACCESS_TOKEN
-  token: Token
+  token: IToken
 }
 
 export interface SetUser {
   type: typeof SET_USER
-  user: User
+  user: IUser
 }
 
 export interface FetchingUser {

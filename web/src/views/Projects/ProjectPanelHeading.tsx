@@ -1,9 +1,9 @@
 import React from 'react'
 import { Panel } from 'react-bootstrap'
 
-import { Project } from 'types'
+import { IProject } from 'types'
 
-const ProjectPanelHeading = (project: Project) => {
+export const ProjectPanelHeading = (project: IProject) => {
   const urlHack = project.repoUrl.replace('api.', '').replace('repos/', '')
   return (
     <Panel.Heading>
@@ -21,5 +21,3 @@ const ProjectPanelHeading = (project: Project) => {
     </Panel.Heading>
   )
 }
-
-export default ProjectPanelHeading

@@ -3,10 +3,10 @@ import { Redirect, useLocation } from 'react-router-dom'
 import { connect, ConnectedProps } from 'react-redux'
 
 import { setAccessTokenAction } from 'store/users/actions'
-import { Token } from 'types'
+import { IToken } from 'types'
 
 const mapDispatchToProps = dispatch => ({
-  setAccessToken: (token: Token) => dispatch(setAccessTokenAction(token))
+  setAccessToken: (token: IToken) => dispatch(setAccessTokenAction(token))
 })
 
 const connector = connect(null, mapDispatchToProps)

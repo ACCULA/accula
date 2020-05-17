@@ -1,12 +1,12 @@
 import axios from 'axios'
 
 import { API_URL } from 'utils'
-import { Project } from 'types'
+import { IProject } from 'types'
 import { projects } from 'data'
 
 const debug = false
 
-export const getProjects = async (): Promise<Project[]> => {
+export const getProjects = async (): Promise<IProject[]> => {
   if (debug) {
     return Promise.resolve(projects)
   }
@@ -17,10 +17,24 @@ export const getProjects = async (): Promise<Project[]> => {
       },
       withCredentials: true
     })
-    .then(resp => resp.data as Project[])
+    .then(resp => resp.data as IProject[])
 }
 
-export const createProject = async (url: string, token: String): Promise<Project> => {
+export const getProject = async (id: number): Promise<IProject> => {
+  if (debug) {
+    return Promise.resolve(projects[0])
+  }
+  return axios
+    .get(`${API_URL}/api/projects/${id}`, {
+      headers: {
+        Accept: 'application/json'
+      },
+      withCredentials: true
+    })
+    .then(resp => resp.data as IProject)
+}
+
+export const createProject = async (url: string, token: String): Promise<IProject> => {
   if (debug) {
     return Promise.resolve(projects[0])
   }
@@ -38,5 +52,5 @@ export const createProject = async (url: string, token: String): Promise<Project
         withCredentials: true
       }
     )
-    .then(resp => resp.data as Project)
+    .then(resp => resp.data as IProject)
 }

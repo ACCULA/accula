@@ -2,14 +2,14 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import { Panel } from 'react-bootstrap'
 
-import { Project } from 'types'
-import ProjectPanelHeading from './ProjectPanelHeading'
+import { IProject } from 'types'
+import { ProjectPanelHeading } from './ProjectPanelHeading'
 
 interface ProjectPanelProps {
-  project: Project
+  project: IProject
 }
 
-const ProjectPanel = ({ project }: ProjectPanelProps) => {
+export const ProjectPanel = ({ project }: ProjectPanelProps) => {
   return (
     <Panel className="panel-project">
       <ProjectPanelHeading {...project} />
@@ -27,5 +27,3 @@ const ProjectPanel = ({ project }: ProjectPanelProps) => {
     </Panel>
   )
 }
-
-export default ProjectPanel

@@ -10,7 +10,7 @@ interface BreadcrumbsProps {
   breadcrumbs: Breadcrumb[]
 }
 
-const Breadcrumbs = ({ breadcrumbs }: BreadcrumbsProps) => (
+export const Breadcrumbs = ({ breadcrumbs }: BreadcrumbsProps) => (
   <ol className="breadcrumb">
     {breadcrumbs.map(({ text, to }) => (
       <li key={text} className={to ? '' : 'active'}>
@@ -19,5 +19,3 @@ const Breadcrumbs = ({ breadcrumbs }: BreadcrumbsProps) => (
     ))}
   </ol>
 )
-
-export default Breadcrumbs

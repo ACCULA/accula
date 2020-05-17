@@ -11,14 +11,14 @@ import {
 } from 'store/users/types'
 import { refreshToken } from 'services/authService'
 import { getUserById } from 'services/usersService'
-import { Token, User } from 'types'
+import { IToken, IUser } from 'types'
 
-export const setAccessTokenAction = (token: Token): SetAccessToken => ({
+export const setAccessTokenAction = (token: IToken): SetAccessToken => ({
   type: SET_ACCESS_TOKEN,
   token
 })
 
-const setUser = (user: User): SetUser => ({
+const setUser = (user: IUser): SetUser => ({
   type: SET_USER,
   user
 })
