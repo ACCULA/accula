@@ -5,11 +5,7 @@ import { Panel } from 'react-bootstrap'
 import { IProject } from 'types'
 import { ProjectPanelHeading } from './ProjectPanelHeading'
 
-interface ProjectPanelProps {
-  project: IProject
-}
-
-export const ProjectPanel = ({ project }: ProjectPanelProps) => {
+export const ProjectPanel = (project: IProject) => {
   return (
     <Panel className="panel-project">
       <ProjectPanelHeading {...project} />

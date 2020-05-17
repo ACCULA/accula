@@ -1,22 +1,17 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import { bindActionCreators } from 'redux'
 import { connect, ConnectedProps } from 'react-redux'
-import { useHistory, useRouteMatch } from 'react-router-dom'
+import { useHistory, useParams } from 'react-router-dom'
 import { Badge, Tab, Tabs } from 'react-bootstrap'
+import { Helmet } from 'react-helmet'
 
 import { Breadcrumbs } from 'components/Breadcrumbs'
 import { AppDispatch, AppState } from 'store'
 import { getPullAction } from 'store/pulls/actions'
 import { getProjectAction } from 'store/projects/actions'
 import { PullClonesTab } from './PullClonesTab'
-import { PullFileChangesTab } from './PullFileChangesTab'
+import { PullChangesTab } from './PullChangesTab'
 import { PullOverviewTab } from './PullOverviewTab'
-
-interface RouteParams {
-  projectId: string
-  pullId: string
-  tabName: string
-}
 
 const mapStateToProps = (state: AppState) => ({
   isFetching:
@@ -38,30 +33,26 @@ type PullsProps = ConnectedProps<typeof connector>
 
 const Pull = ({ isFetching, project, getProject, pull, getPull }: PullsProps) => {
   const history = useHistory()
-  const match = useRouteMatch<RouteParams>()
-  const { projectId, pullId, tabName } = match.params
-  const prId = parseInt(projectId, 10)
-  const plId = parseInt(pullId, 10)
+  const { prId, plId, tab } = useParams()
+  const projectId = parseInt(prId, 10)
+  const pullId = parseInt(plId, 10)
 
   useEffect(() => {
-    getProject(prId)
-  }, [getProject, prId])
+    getProject(projectId)
+  }, [getProject, projectId])
 
   useEffect(() => {
-    getPull(prId, plId)
-  }, [getPull, prId, plId])
-
-  const [tab, setTab] = useState(tabName || 'overview')
-  useEffect(() => {
-    const tabPath = tab === 'overview' ? '' : `/${tab}`
-    history.push(`/projects/${projectId}/pulls/${pullId}${tabPath}`)
-  }, [tab, tabName, history, pullId, projectId])
+    getPull(projectId, pullId)
+  }, [getPull, projectId, pullId])
 
   if (isFetching) {
     return <></>
   }
   return (
     <div className="content">
+      <Helmet>
+        <title>{`${pull.title} - ${project.repoName} - ACCULA`}</title>
+      </Helmet>
       <Breadcrumbs
         breadcrumbs={[
           { text: 'Projects', to: '/projects' },
@@ -70,8 +61,11 @@ const Pull = ({ isFetching, project, getProject, pull, getPull }: PullsProps) =>
         ]}
       />
       <Tabs
-        activeKey={tab} //
-        onSelect={key => setTab(key)}
+        activeKey={tab || 'overview'} //
+        onSelect={key => {
+          const tabPath = key === 'overview' ? '' : `/${key}`
+          history.push(`/projects/${projectId}/pulls/${pullId}${tabPath}`)
+        }}
         id="pull-tabs"
       >
         <Tab
@@ -92,7 +86,7 @@ const Pull = ({ isFetching, project, getProject, pull, getPull }: PullsProps) =>
             </>
           }
         >
-          <PullFileChangesTab />
+          <PullChangesTab />
         </Tab>
         <Tab
           eventKey="clones"

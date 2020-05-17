@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { bindActionCreators } from 'redux'
 import { connect, ConnectedProps } from 'react-redux'
 import { Button, Clearfix, Col, Grid, Row } from 'react-bootstrap'
+import { Helmet } from 'react-helmet'
 
 import { Breadcrumbs } from 'components/Breadcrumbs'
 import { AppDispatch, AppState } from 'store'
@@ -34,13 +35,16 @@ const Projects = ({
 
   useEffect(() => {
     getProjects()
-  }, [getProjects, projects])
+  }, [getProjects])
 
   if (isFetching || !projects) {
     return <></>
   }
   return (
     <div className="content">
+      <Helmet>
+        <title>Projects - ACCULA</title>
+      </Helmet>
       <Grid fluid className="tight">
         <Clearfix>
           <div className="pull-right">
@@ -53,9 +57,9 @@ const Projects = ({
           <Breadcrumbs breadcrumbs={[{ text: 'Projects' }]} />
         </Clearfix>
         <Row>
-          {projects.map(proj => (
-            <Col key={proj.id} xs={12} sm={6} md={6} lg={4}>
-              <ProjectPanel project={proj} />
+          {projects.map(project => (
+            <Col key={project.id} xs={12} sm={6} md={6} lg={4}>
+              <ProjectPanel {...project} />
             </Col>
           ))}
         </Row>

@@ -33,16 +33,21 @@ export const getAccessTokenAction = () => async (
   getState: AppStateSupplier
 ) => {
   const { users } = getState()
-  if (!users.token) {
-    try {
-      dispatch(fetchingUser(true))
-      const token = await refreshToken()
-      dispatch(setAccessTokenAction(token))
-    } catch (e) {
-      console.log(e)
-    } finally {
-      dispatch(fetchingUser(false))
+  if (users.token) {
+    const { exp } = jwtDecode(users.token.accessToken)
+    const now = new Date().getTime() / 1000
+    if (now <= exp) {
+      return // token is valid
     }
+  }
+  try {
+    dispatch(fetchingUser(true))
+    const token = await refreshToken()
+    dispatch(setAccessTokenAction(token))
+  } catch (e) {
+    console.log(e)
+  } finally {
+    dispatch(fetchingUser(false))
   }
 }
 
@@ -50,22 +55,18 @@ export const getCurrentUserAction = () => async (
   dispatch: AppDispatch,
   getState: AppStateSupplier
 ) => {
+  await dispatch(getAccessTokenAction() as any)
   const { users } = getState()
   if (users.token && users.token.accessToken) {
-    const { sub, exp } = jwtDecode(users.token.accessToken)
-    const now = new Date().getTime() / 1000
-    if (now <= exp) {
-      try {
-        dispatch(fetchingUser(true))
-        const user = await getUserById(parseInt(sub, 10))
-        dispatch(setUser(user))
-      } catch (e) {
-        console.log(e)
-      } finally {
-        dispatch(fetchingUser(false))
-      }
-    } else {
-      dispatch(setAccessTokenAction(null))
+    const { sub } = jwtDecode(users.token.accessToken)
+    try {
+      dispatch(fetchingUser(true))
+      const user = await getUserById(parseInt(sub, 10))
+      dispatch(setUser(user))
+    } catch (e) {
+      console.log(e)
+    } finally {
+      dispatch(fetchingUser(false))
     }
   }
 }

@@ -1,13 +1,11 @@
 import axios from 'axios'
 
-import { API_URL } from 'utils'
+import { API_URL, DEBUG } from 'utils'
 import { IProject } from 'types'
 import { projects } from 'data'
 
-const debug = false
-
 export const getProjects = async (): Promise<IProject[]> => {
-  if (debug) {
+  if (DEBUG) {
     return Promise.resolve(projects)
   }
   return axios
@@ -21,8 +19,8 @@ export const getProjects = async (): Promise<IProject[]> => {
 }
 
 export const getProject = async (id: number): Promise<IProject> => {
-  if (debug) {
-    return Promise.resolve(projects[0])
+  if (DEBUG) {
+    return Promise.resolve(projects.find(p => p.id === id))
   }
   return axios
     .get(`${API_URL}/api/projects/${id}`, {
@@ -35,7 +33,7 @@ export const getProject = async (id: number): Promise<IProject> => {
 }
 
 export const createProject = async (url: string, token: String): Promise<IProject> => {
-  if (debug) {
+  if (DEBUG) {
     return Promise.resolve(projects[0])
   }
   return axios

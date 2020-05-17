@@ -1,13 +1,11 @@
 import axios from 'axios'
 
-import { API_URL } from 'utils'
+import { API_URL, DEBUG } from 'utils'
 import { IPull } from 'types'
 import { pulls } from 'data'
 
-const debug = true
-
 export const getPulls = async (projectId: number): Promise<IPull[]> => {
-  if (debug) {
+  if (DEBUG) {
     return Promise.resolve(pulls)
   }
   return axios
@@ -21,7 +19,7 @@ export const getPulls = async (projectId: number): Promise<IPull[]> => {
 }
 
 export const getPull = async (projectId: number, id: number): Promise<IPull> => {
-  if (debug) {
+  if (DEBUG) {
     return Promise.resolve(pulls.find(p => p.id === id))
   }
   return axios

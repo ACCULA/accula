@@ -1,9 +1,10 @@
 import React, { useEffect } from 'react'
-import { useRouteMatch } from 'react-router-dom'
-import { bindActionCreators } from 'redux'
 import { connect, ConnectedProps } from 'react-redux'
 import { Grid, Panel, Table } from 'react-bootstrap'
+import { useParams } from 'react-router-dom'
 import { LinkContainer } from 'react-router-bootstrap'
+import { Helmet } from 'react-helmet'
+import { bindActionCreators } from 'redux'
 
 import { Breadcrumbs } from 'components/Breadcrumbs'
 import { AppDispatch, AppState } from 'store'
@@ -11,19 +12,13 @@ import { getProjectAction } from 'store/projects/actions'
 import { getPullsAction } from 'store/pulls/actions'
 import { ProjectPanelHeading } from './ProjectPanelHeading'
 
-interface RouteParams {
-  projectId: string
-}
-
 const mapStateToProps = (state: AppState) => ({
   isFetching:
     state.projects.isFetching ||
     !state.projects.project ||
     state.pulls.isFetching ||
     !state.pulls.pulls,
-  projectsFetching: state.projects.isFetching,
   project: state.projects.project,
-  pullsFetching: state.pulls.isFetching,
   pulls: state.pulls.pulls
 })
 
@@ -36,31 +31,32 @@ const connector = connect(mapStateToProps, mapDispatchToProps)
 type ProjectProps = ConnectedProps<typeof connector>
 
 const Project = ({
-  projectsFetching,
+  isFetching, //
   project,
-  pullsFetching,
-  pulls,
   getProject,
+  pulls,
   getPulls
 }: ProjectProps) => {
-  const match = useRouteMatch<RouteParams>()
-  const { projectId } = match.params
-  const id = parseInt(projectId, 10)
+  const { prId } = useParams()
+  const projectId = parseInt(prId, 10)
 
   useEffect(() => {
-    getProject(id)
-  }, [getProject, id, project])
+    getProject(projectId)
+  }, [getProject, projectId])
 
   useEffect(() => {
-    getPulls(id)
-  }, [getPulls, id, pulls])
+    getPulls(projectId)
+  }, [getPulls, projectId])
 
-  if (projectsFetching || !project || (project && project.id !== id) || pullsFetching || !pulls) {
+  if (isFetching || (project && project.id !== projectId)) {
     return <></>
   }
 
   return (
     <div className="content">
+      <Helmet>
+        <title>{`${project.repoName} - ACCULA`}</title>
+      </Helmet>
       <Grid fluid className="tight">
         <Breadcrumbs
           breadcrumbs={[{ text: 'Projects', to: '/projects' }, { text: project.repoName }]}

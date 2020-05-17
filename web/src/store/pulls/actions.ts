@@ -1,6 +1,13 @@
 import { AppDispatch, AppStateSupplier } from 'store'
 import { IPull } from 'types'
-import { FETCHING_PULLS, FetchingPulls, SET_PULL, SET_PULLS, SetPull, SetPulls } from 'store/pulls/types'
+import {
+  FETCHING_PULLS,
+  FetchingPulls,
+  SET_PULL,
+  SET_PULLS,
+  SetPull,
+  SetPulls
+} from 'store/pulls/types'
 import { getPull, getPulls } from 'services/pullsService'
 
 const setPulls = (pulls: IPull[]): SetPulls => ({
@@ -42,7 +49,7 @@ export const getPullAction = (projectId: number, id: number) => async (
   getState: AppStateSupplier
 ) => {
   const { pulls } = getState()
-  if (!pulls.pulls) {
+  if (!pulls.pull || pulls.pull.projectId !== projectId || pulls.pull.id !== id) {
     try {
       dispatch(fetchingPulls(true))
       const pull = await getPull(projectId, id)

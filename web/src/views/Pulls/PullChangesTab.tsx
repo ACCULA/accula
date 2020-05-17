@@ -4,7 +4,7 @@ import { Button } from 'react-bootstrap'
 import { files } from 'data'
 import FileDiffPanel from './FileDiffPanel'
 
-export const PullFileChangesTab = () => {
+export const PullChangesTab = () => {
   const [splitView, setSplitView] = useState(false)
   return (
     <>
