@@ -67,3 +67,7 @@ export interface IPull {
   cloneCount: number
   previousPulls: IPullShort[]
 }
+
+interface IClone {
+  
+}
