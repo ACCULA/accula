@@ -1,14 +1,14 @@
 import { AppDispatch, AppStateSupplier } from 'store'
 import { IPull } from 'types'
 import {
-  FETCHING_PULLS,
+  FETCHING_PULLS, //
   FetchingPulls,
   SET_PULL,
   SET_PULLS,
   SetPull,
   SetPulls
-} from 'store/pulls/types'
-import { getPull, getPulls } from 'services/pullsService'
+} from './types'
+import { getPull, getPulls } from './services'
 
 const setPulls = (pulls: IPull[]): SetPulls => ({
   type: SET_PULLS,

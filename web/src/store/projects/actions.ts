@@ -7,8 +7,8 @@ import {
   SET_PROJECTS,
   SetProject,
   SetProjects
-} from 'store/projects/types'
-import { createProject, getProject, getProjects } from 'services/projectsService'
+} from './types'
+import { createProject, getProject, getProjects } from './services'
 
 const setProjects = (projects: IProject[]): SetProjects => ({
   type: SET_PROJECTS,

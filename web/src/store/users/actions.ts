@@ -1,6 +1,7 @@
 import jwtDecode from 'jwt-decode'
 
 import { AppDispatch, AppStateSupplier } from 'store'
+import { IToken, IUser } from 'types'
 import {
   FETCHING_USER,
   FetchingUser,
@@ -8,10 +9,8 @@ import {
   SET_USER,
   SetAccessToken,
   SetUser
-} from 'store/users/types'
-import { refreshToken } from 'services/authService'
-import { getUserById } from 'services/usersService'
-import { IToken, IUser } from 'types'
+} from './types'
+import { refreshToken, getUserById } from './services'
 
 export const setAccessTokenAction = (token: IToken): SetAccessToken => ({
   type: SET_ACCESS_TOKEN,
