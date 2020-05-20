@@ -22,17 +22,10 @@ export interface CodeDiffProps {
   ) => JSX.Element
   onLineNumberClick?: (lineId: string, event: React.MouseEvent<HTMLTableCellElement>) => void
   highlightLines?: string[]
-  useDarkTheme?: boolean
   leftTitle?: string | JSX.Element
   rightTitle?: string | JSX.Element
   leftOffset?: number
   rightOffset?: number
-}
-
-export interface CodeDiffState {
-  // Array holding the expanded code folding.
-  expandedBlocks?: number[]
-  isShow?: boolean
 }
 
 export enum DiffType {
