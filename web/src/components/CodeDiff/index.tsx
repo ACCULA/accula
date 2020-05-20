@@ -13,8 +13,6 @@ import {
   LineNumberPrefix
 } from './types'
 
-import './styles.scss'
-
 const CodeDiff = ({
   oldValue = '',
   newValue = '',
@@ -33,6 +31,10 @@ const CodeDiff = ({
   codeFoldMessageRenderer,
   renderContent
 }: CodeDiffProps) => {
+  if (typeof oldValue !== 'string' || typeof newValue !== 'string') {
+    throw Error('"oldValue" and "newValue" should be strings')
+  }
+
   const [expandedBlocks, setExpandedBlocks] = useState([])
   const [isShow, setShow] = useState(true)
 
@@ -369,22 +371,16 @@ const CodeDiff = ({
     )
   }
 
-  if (typeof oldValue !== 'string' || typeof newValue !== 'string') {
-    throw Error('"oldValue" and "newValue" should be strings')
-  }
-
   const nodes = renderDiff()
-
   return (
     <Panel expanded={isShow} onToggle={show => setShow(show)} className="code-diff">
       <Panel.Heading>
         <i
           className={`fas ${isShow ? 'fa-chevron-down' : 'fa-chevron-right'} pointer`}
           onClick={() => setShow(!isShow)}
-          style={{ marginRight: 10 }}
+          style={{ marginRight: 10, width: 14, height: 14 }}
           role="button"
         />
-        {rightTitle && <div className="pull-right">{rightTitle}</div>}
         {leftTitle}
       </Panel.Heading>
       <Panel.Collapse>

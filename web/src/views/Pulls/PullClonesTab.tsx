@@ -1,7 +1,8 @@
-import React from 'react'
+import React, { useState } from 'react'
 import Prism from 'prismjs'
 import 'prismjs/themes/prism.css'
 import { CodeDiff, DiffMethod } from 'components/CodeDiff'
+import { Button } from 'react-bootstrap'
 
 const oldCode = `
 @Modifying
@@ -26,15 +27,26 @@ Mono<Void> replaceRefreshToken(final Long userId,
 `
 
 export const PullClonesTab = () => {
+  const [splitView, setSplitView] = useState(false)
   return (
     <>
-      Clone detections
+      <div className="pull-right">
+        <Button bsStyle="info" onClick={() => setSplitView(!splitView)} style={{ marginTop: -7 }}>
+          {splitView ? 'Unified view' : 'Split view'}
+        </Button>
+      </div>
+      <h5>1 clone found</h5>
       <CodeDiff
-        leftTitle={<pre>@lamtev: /src/main/Test.java</pre>}
-        rightTitle={<code>@vaddya: /src/main/Test.java</code>}
+        leftTitle={
+          <>
+            Code cloned from{' '}
+            <span className="left-title left-title-colored">highload-2017/#11/src/main/Test.java</span> into{' '}
+            <span className="right-title right-title-colored">src/main/Test.java</span>
+          </>
+        }
         oldValue={oldCode}
         newValue={newCode}
-        splitView={false}
+        splitView={splitView}
         showDiffOnly
         leftOffset={10}
         rightOffset={20}

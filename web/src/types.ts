@@ -68,6 +68,14 @@ export interface IPull {
   previousPulls: IPullShort[]
 }
 
-interface IClone {
-  
+type Base64 = string
+
+export interface IClone {
+  id: number
+  fromRepo: string
+  fromPull: number
+  fromFile: string
+  intoFile: string
+  source: Base64
+  clone: Base64
 }

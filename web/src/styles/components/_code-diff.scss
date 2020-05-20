@@ -41,7 +41,7 @@ $diffViewerTitleBorderColor: #eee;
     pre {
       margin: 0;
       white-space: pre-wrap;
-      line-height: 25px;
+      line-height: 22px;
     }
 
     border-collapse: collapse;
@@ -86,9 +86,10 @@ $diffViewerTitleBorderColor: #eee;
   }
 
   .word-diff {
-    padding: 0;
+    padding: 0px 2px;
+    margin: 2px;
     display: inline-flex;
-    border-radius: 1px;
+    border-radius: 5px;
   }
 
 
@@ -135,7 +136,6 @@ $diffViewerTitleBorderColor: #eee;
         color: $addedColor
       }
     }
-  ;
 
     .diff-removed {
       pre {
@@ -154,10 +154,15 @@ $diffViewerTitleBorderColor: #eee;
 
   .gutter {
     user-select: none;
-    min-width: 50px;
+    min-width: 40px;
     padding: 0 10px;
     text-align: center;
     background: $gutterBackground;
+    
+    pre {
+      font-size: 11px;
+      white-space: nowrap;
+    }
 
     &:hover {
       cursor: pointer;
@@ -198,5 +203,22 @@ $diffViewerTitleBorderColor: #eee;
 
   .line {
     vertical-align: baseline;
+  }
+
+  .left-title, .right-title {
+    font-family: $font-family-mono;
+    padding: 2px 4px;
+    font-size: 90%;
+    border-radius: 5px;
+  }
+
+  .left-title-colored {
+    color: $removedColor;
+    background: $removedGutterBackground;
+  }
+
+  .right-title-colored {
+    color: $addedColor;
+    background: $addedGutterBackground;
   }
 }
