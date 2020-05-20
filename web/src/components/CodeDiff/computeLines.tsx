@@ -10,8 +10,6 @@ import {
   LineInformation
 } from './types'
 
-const jsDiff: { [key: string]: any } = diff
-
 /**
  * Splits diff text by new line and computes final list of diff lines based on
  * conditions.
@@ -48,7 +46,7 @@ const computeDiff = (
   newValue: string,
   compareMethod: string = DiffMethod.CHARS
 ): ComputedDiffInformation => {
-  const diffArray: JsDiffChangeObject[] = jsDiff[compareMethod](oldValue, newValue)
+  const diffArray: JsDiffChangeObject[] = diff[compareMethod](oldValue, newValue)
   const computedDiff: ComputedDiffInformation = {
     left: [],
     right: []

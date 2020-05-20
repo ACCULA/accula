@@ -1,12 +1,11 @@
 import React from 'react'
-import { ReactDiffViewerStylesOverride } from 'components/CodeDiff/styles'
 
 export enum LineNumberPrefix {
   LEFT = 'L',
   RIGHT = 'R'
 }
 
-export interface ReactDiffViewerProps {
+export interface CodeDiffProps {
   oldValue: string
   newValue: string
   splitView?: boolean
@@ -23,7 +22,6 @@ export interface ReactDiffViewerProps {
   ) => JSX.Element
   onLineNumberClick?: (lineId: string, event: React.MouseEvent<HTMLTableCellElement>) => void
   highlightLines?: string[]
-  styles?: ReactDiffViewerStylesOverride
   useDarkTheme?: boolean
   leftTitle?: string | JSX.Element
   rightTitle?: string | JSX.Element
@@ -31,7 +29,7 @@ export interface ReactDiffViewerProps {
   rightOffset?: number
 }
 
-export interface ReactDiffViewerState {
+export interface CodeDiffState {
   // Array holding the expanded code folding.
   expandedBlocks?: number[]
   isShow?: boolean

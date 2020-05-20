@@ -38,19 +38,6 @@ export const PullClonesTab = () => {
         showDiffOnly
         leftOffset={10}
         rightOffset={20}
-        styles={{
-          gutter: {
-            minWidth: 40,
-            textAlign: 'center'
-          },
-          diffContainer: {
-            lineHeight: '20px',
-            padding: 0
-          },
-          wordDiff: {
-            padding: 0
-          }
-        }}
         compareMethod={DiffMethod.WORDS}
         // disableWordDiff
         renderContent={str => {

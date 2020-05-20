@@ -21,6 +21,7 @@
     ],
     // Disable <Fragment> => <> replacement. Feel free to change
     "react/jsx-fragments": "off",
+    "react/no-array-index-key": "off",
     // Disable prefer default export
     "import/prefer-default-export": "off",
     "react/jsx-props-no-spreading": "off",

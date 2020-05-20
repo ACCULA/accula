@@ -24,12 +24,6 @@ export const PullChangesTab = () => {
           splitView={splitView} //
           oldValue={files.oldCode}
           newValue={files.newCode}
-          styles={{
-            gutter: {
-              minWidth: 40,
-              textAlign: 'center'
-            }
-          }}
           compareMethod={DiffMethod.LINES}
           disableWordDiff
           renderContent={str => {
