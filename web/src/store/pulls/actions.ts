@@ -1,14 +1,16 @@
 import { AppDispatch, AppStateSupplier } from 'store'
-import { IPull } from 'types'
+import { IClone, IPull } from 'types'
 import {
-  FETCHING_PULLS, //
+  FETCHING_PULLS,
   FetchingPulls,
+  SET_CLONES,
   SET_PULL,
   SET_PULLS,
+  SetClones,
   SetPull,
   SetPulls
 } from './types'
-import { getPull, getPulls } from './services'
+import { getClones, getPull, getPulls } from './services'
 
 const setPulls = (pulls: IPull[]): SetPulls => ({
   type: SET_PULLS,
@@ -18,6 +20,11 @@ const setPulls = (pulls: IPull[]): SetPulls => ({
 const setPull = (pull: IPull): SetPull => ({
   type: SET_PULL,
   pull
+})
+
+const setClones = (clones: IClone[]): SetClones => ({
+  type: SET_CLONES,
+  clones
 })
 
 const fetchingPulls = (isFetching: boolean): FetchingPulls => ({
@@ -44,19 +51,42 @@ export const getPullsAction = (projectId: number) => async (
   }
 }
 
-export const getPullAction = (projectId: number, id: number) => async (
+export const getPullAction = (projectId: number, pullId: number) => async (
   dispatch: AppDispatch, //
   getState: AppStateSupplier
 ) => {
   const { pulls } = getState()
-  if (!pulls.pull || pulls.pull.projectId !== projectId || pulls.pull.id !== id) {
+  if (!pulls.pull || pulls.pull.projectId !== projectId || pulls.pull.id !== pullId) {
     try {
       dispatch(fetchingPulls(true))
-      const pull = await getPull(projectId, id)
+      const pull = await getPull(projectId, pullId)
       dispatch(setPull(pull))
     } catch (e) {
       console.log(e)
       dispatch(setPull(null))
+    } finally {
+      dispatch(fetchingPulls(false))
+    }
+  }
+}
+
+export const getClonesAction = (projectId: number, pullId: number) => async (
+  dispatch: AppDispatch, //
+  getState: AppStateSupplier
+) => {
+  const { pulls } = getState()
+  if (
+    !pulls.clones ||
+    (pulls.clones.length > 0 &&
+      (pulls.clones[0].to.projectId !== projectId || pulls.clones[0].to.pullId !== pullId))
+  ) {
+    try {
+      dispatch(fetchingPulls(true))
+      const result = await getClones(projectId, pullId)
+      dispatch(setClones(result))
+    } catch (e) {
+      console.log(e)
+      dispatch(setPulls([]))
     } finally {
       dispatch(fetchingPulls(false))
     }

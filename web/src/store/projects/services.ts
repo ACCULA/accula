@@ -2,7 +2,7 @@ import axios from 'axios'
 
 import { API_URL, DEBUG } from 'utils'
 import { IProject } from 'types'
-import { projects } from 'data'
+import { projects } from 'stubs'
 
 export const getProjects = async (): Promise<IProject[]> => {
   if (DEBUG) {

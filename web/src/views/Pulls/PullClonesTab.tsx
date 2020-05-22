@@ -1,32 +1,14 @@
 import React, { useState } from 'react'
-import Prism from 'prismjs'
-import 'prismjs/themes/prism.css'
-import { CodeDiff, DiffMethod } from 'components/CodeDiff'
 import { Button } from 'react-bootstrap'
 
-const oldCode = `
-@Modifying
-@Query("UPDATE refresh_token " +
-       "SET token = :newToken, expiration_date = :newExpirationDate " +
-       "WHERE user_id = :userId AND token = :oldToken")
-Mono<Void> replaceRefreshToken(final Long userId,
-                               final String oldToken,
-                               final String newToken,
-                               final Instant newExpirationDate);
-`
+import { CodeDiff, DiffMethod } from 'components/CodeDiff'
+import { IClone } from 'types'
 
-const newCode = `
-@Modifying
-@Query("UPDATE refresh_token " +
-       "SET token = :newToken, expiration_date = :newExpirationDate " +
-       "WHERE token = :oldToken AND user_id = :userId")
-Mono<Void> replaceRefreshToken(final Long userId,
-                               final String oldToken,
-                               final String newToken,
-                               final Instant newExpirationDate);
-`
+interface PullClonesTabProps {
+  clones: IClone[]
+}
 
-export const PullClonesTab = () => {
+export const PullClonesTab = ({ clones }: PullClonesTabProps) => {
   const [splitView, setSplitView] = useState(false)
   return (
     <>
@@ -35,38 +17,33 @@ export const PullClonesTab = () => {
           {splitView ? 'Unified view' : 'Split view'}
         </Button>
       </div>
-      <h5>1 clone found</h5>
-      <CodeDiff
-        leftTitle={
-          <>
-            Code cloned from{' '}
-            <span className="left-title left-title-colored">highload-2017/#11/src/main/Test.java</span> into{' '}
-            <span className="right-title right-title-colored">src/main/Test.java</span>
-          </>
-        }
-        oldValue={oldCode}
-        newValue={newCode}
-        splitView={splitView}
-        showDiffOnly
-        leftOffset={10}
-        rightOffset={20}
-        compareMethod={DiffMethod.WORDS}
-        // disableWordDiff
-        renderContent={str => {
-          if (str === undefined) {
-            return <>{str}</>
-          }
-          return (
-            <pre
-              style={{ display: 'inline' }}
-              /* eslint-disable-next-line react/no-danger */
-              dangerouslySetInnerHTML={{
-                __html: Prism.highlight(str, Prism.languages.java, 'java')
-              }}
-            />
-          )
-        }}
-      />
+      <h5>{clones?.length || 0} clones found</h5>
+      {clones &&
+        clones.map(clone => (
+          <CodeDiff
+            key={clone.id}
+            leftTitle={
+              <>
+                Code cloned from{' '}
+                <span className="left-title left-title-colored">
+                  {`#${clone.from.pullId}@${clone.from.repo}:${clone.from.file}`}
+                </span>{' '}
+                into{' '}
+                <span className="right-title right-title-colored">
+                  {clone.to.file}
+                </span>
+              </>
+            }
+            oldValue={atob(clone.from.code)}
+            newValue={atob(clone.to.code)}
+            splitView={splitView}
+            showDiffOnly
+            leftOffset={10}
+            rightOffset={20}
+            compareMethod={DiffMethod.WORDS_WITH_SPACE}
+            // disableWordDiff
+          />
+        ))}
     </>
   )
 }

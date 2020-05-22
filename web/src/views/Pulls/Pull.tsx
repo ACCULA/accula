@@ -7,7 +7,7 @@ import { Helmet } from 'react-helmet'
 
 import { Breadcrumbs } from 'components/Breadcrumbs'
 import { AppDispatch, AppState } from 'store'
-import { getPullAction } from 'store/pulls/actions'
+import { getClonesAction, getPullAction } from 'store/pulls/actions'
 import { getProjectAction } from 'store/projects/actions'
 import { PullClonesTab } from './PullClonesTab'
 import { PullChangesTab } from './PullChangesTab'
@@ -20,18 +20,28 @@ const mapStateToProps = (state: AppState) => ({
     !state.pulls.pull ||
     !state.projects.project,
   project: state.projects.project,
-  pull: state.pulls.pull
+  pull: state.pulls.pull,
+  clones: state.pulls.clones
 })
 
 const mapDispatchToProps = (dispatch: AppDispatch) => ({
   getProject: bindActionCreators(getProjectAction, dispatch),
-  getPull: bindActionCreators(getPullAction, dispatch)
+  getPull: bindActionCreators(getPullAction, dispatch),
+  getClones: bindActionCreators(getClonesAction, dispatch)
 })
 
 const connector = connect(mapStateToProps, mapDispatchToProps)
 type PullsProps = ConnectedProps<typeof connector>
 
-const Pull = ({ isFetching, project, getProject, pull, getPull }: PullsProps) => {
+const Pull = ({
+  isFetching,
+  project,
+  getProject,
+  pull,
+  getPull,
+  clones,
+  getClones
+}: PullsProps) => {
   const history = useHistory()
   const { prId, plId, tab } = useParams()
   const projectId = parseInt(prId, 10)
@@ -44,6 +54,10 @@ const Pull = ({ isFetching, project, getProject, pull, getPull }: PullsProps) =>
   useEffect(() => {
     getPull(projectId, pullId)
   }, [getPull, projectId, pullId])
+
+  useEffect(() => {
+    getClones(projectId, pullId)
+  }, [getClones, projectId, pullId])
 
   if (isFetching) {
     return <></>
@@ -76,7 +90,7 @@ const Pull = ({ isFetching, project, getProject, pull, getPull }: PullsProps) =>
             </>
           }
         >
-          <PullOverviewTab {...pull} />
+          <PullOverviewTab pull={pull} />
         </Tab>
         <Tab
           eventKey="changes"
@@ -96,7 +110,7 @@ const Pull = ({ isFetching, project, getProject, pull, getPull }: PullsProps) =>
             </>
           }
         >
-          <PullClonesTab />
+          <PullClonesTab clones={clones} />
         </Tab>
       </Tabs>
     </div>

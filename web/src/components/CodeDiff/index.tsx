@@ -1,8 +1,11 @@
 // Fork of https://github.com/praneshr/react-diff-viewer
 import React, { useState } from 'react'
 import cn from 'classnames'
-
 import { Panel } from 'react-bootstrap'
+import Prism from 'prismjs'
+import 'prismjs/components/prism-java'
+import 'prismjs/themes/prism.css'
+
 import { computeLineInformation } from './computeLines'
 import {
   CodeDiffProps,
@@ -25,8 +28,8 @@ const CodeDiff = ({
   showDiffOnly = true,
   leftOffset = 0,
   rightOffset = 0,
+  language = 'java',
   leftTitle,
-  rightTitle,
   onLineNumberClick,
   codeFoldMessageRenderer,
   renderContent
@@ -59,6 +62,28 @@ const CodeDiff = ({
       return (e: any): void => onLineNumberClick(id, e)
     }
     return (): void => {}
+  }
+
+  /**
+   * Highlight code using Prism.js
+   * @param code Code to highlight
+   */
+  const highlight = (code: string): JSX.Element => {
+    if (!language || code === undefined) {
+      return <>{code}</>
+    }
+    if (typeof code === 'undefined') {
+      return <></>
+    }
+    return (
+      <pre
+        style={{ display: 'inline' }}
+        /* eslint-disable-next-line react/no-danger */
+        dangerouslySetInnerHTML={{
+          __html: Prism.highlight(code, Prism.languages[language], language)
+        }}
+      />
+    )
   }
 
   /**
@@ -118,9 +143,9 @@ const CodeDiff = ({
     const removed = type === DiffType.REMOVED
     let content
     if (Array.isArray(value)) {
-      content = renderWordDiff(value, renderContent)
-    } else if (renderContent) {
-      content = renderContent(value)
+      content = renderWordDiff(value, null)
+    } else if (highlight) {
+      content = highlight(value)
     } else {
       content = value
     }

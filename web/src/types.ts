@@ -12,11 +12,12 @@ export interface IUser {
 
 export interface IRouteInfo {
   path: string
-  exact?: boolean
   name: string
-  icon?: string
   component: ComponentType<any>
+  exact?: boolean
+  icon?: string
   hidden?: boolean
+  authRequired?: boolean
 }
 
 export interface IProject {
@@ -70,12 +71,16 @@ export interface IPull {
 
 type Base64 = string
 
+export interface ICodeRef {
+  projectId: number
+  pullId: number
+  repo: string
+  file: string
+  code: Base64
+}
+
 export interface IClone {
   id: number
-  fromRepo: string
-  fromPull: number
-  fromFile: string
-  intoFile: string
-  source: Base64
-  clone: Base64
+  from: ICodeRef
+  to: ICodeRef
 }

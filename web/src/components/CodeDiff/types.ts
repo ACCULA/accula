@@ -26,6 +26,7 @@ export interface CodeDiffProps {
   rightTitle?: string | JSX.Element
   leftOffset?: number
   rightOffset?: number
+  language?: string
 }
 
 export enum DiffType {

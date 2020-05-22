@@ -50,16 +50,18 @@ const App = ({ isFetching, user, getCurrentUser }: AppProps) => {
     return <></>
   }
 
+  const availableRoutes = routes.filter(r => user || !r.authRequired)
+
   return (
     <div className="wrapper">
       <Helmet>
         <title>ACCULA</title>
       </Helmet>
-      <Sidebar user={user} routes={routes} />
+      <Sidebar user={user} routes={availableRoutes} />
       <div id="main-panel" className="main-panel">
         <Navbar user={user} />
         <Switch>
-          {routes.map(route => (
+          {availableRoutes.map(route => (
             <Route
               key={route.path}
               path={route.path}

@@ -1,8 +1,9 @@
-import { PullsActionTypes, PullsState, SET_PULL, SET_PULLS } from 'store/pulls/types'
+import { FETCHING_PULLS, PullsActionTypes, PullsState, SET_CLONES, SET_PULL, SET_PULLS } from 'store/pulls/types'
 
 const initialState: PullsState = {
   pulls: null,
   pull: null,
+  clones: null,
   isFetching: false
 }
 
@@ -21,6 +22,18 @@ export function pullsReducer(
       return {
         ...state,
         pull: action.pull
+      }
+    }
+    case SET_CLONES: {
+      return {
+        ...state,
+        clones: action.clones
+      }
+    }
+    case FETCHING_PULLS: {
+      return {
+        ...state,
+        isFetching: action.isFetching
       }
     }
     default:

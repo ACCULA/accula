@@ -1,4 +1,4 @@
-import { IProject, IPull } from 'types'
+import { IClone, IProject, IPull } from 'types'
 
 export const projects: IProject[] = [
   {
@@ -91,6 +91,13 @@ export const pulls: IPull[] = [
         title: 'Stage 1',
         open: false,
         cloneCount: 3
+      },
+      {
+        id: 3,
+        projectId: 1,
+        title: 'Stage 2',
+        open: false,
+        cloneCount: 3
       }
     ]
   }
@@ -154,3 +161,63 @@ public interface RefreshTokenRepository extends ReactiveCrudRepository<RefreshTo
 `
 
 export const files = { oldCode, newCode }
+
+
+const oldCode2 = `
+@Modifying
+@Query("UPDATE refresh_token " +
+       "SET token = :newToken, expiration_date = :newExpirationDate " +
+       "WHERE user_id = :userId AND token = :oldToken")
+Mono<Void> replaceRefreshToken(final Long userId,
+                               final String oldToken,
+                               final String newToken,
+                               final Instant newExpirationDate);
+`
+
+const newCode2 = `
+@Modifying
+@Query("UPDATE refresh_token " +
+       "SET token = :newToken, expiration_date = :newExpirationDate " +
+       "WHERE token = :oldToken AND user_id = :userId")
+Mono<Void> replaceRefreshToken(final Long userId,
+                               final String oldToken,
+                               final String newToken,
+                               final Instant newExpirationDate);
+`
+
+export const clones: IClone[] = [
+  {
+    id: 1,
+    from: {
+      projectId: 1,
+      pullId: 6,
+      repo: '2018-highload',
+      file: 'src/main/java/ru/mail/polis/Main.java',
+      code: btoa(oldCode2)
+    },
+    to: {
+      projectId: 2,
+      pullId: 4,
+      repo: '2019-highload',
+      file: 'src/main/java/ru/mail/polis/MyMain.java',
+      code: btoa(newCode2)
+    }
+  },
+  {
+    id: 2,
+    from: {
+      projectId: 2,
+      pullId: 1,
+      repo: '2019-highload',
+      file: 'src/main/java/ru/mail/polis/Database.java',
+      code: btoa(oldCode2)
+    },
+    to: {
+      projectId: 2,
+      pullId: 4,
+      repo: '2019-highload',
+      file: 'src/main/java/ru/mail/polis/Database.java',
+      code: btoa(newCode2)
+    }
+  }
+]

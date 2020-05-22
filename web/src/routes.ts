@@ -9,20 +9,22 @@ export const routes: IRouteInfo[] = [
   {
     path: '/projects',
     name: 'Projects',
-    icon: 'list-ul',
-    component: ProjectsRoutes
+    component: ProjectsRoutes,
+    icon: 'list-ul'
   },
   {
     path: '/profile',
     name: 'Profile',
+    component: UserProfile,
     icon: 'user',
-    component: UserProfile
+    authRequired: true
   },
   {
     path: '/settings',
     name: 'Settings',
+    component: Settings,
     icon: 'cog',
-    component: Settings
+    authRequired: true
   },
   {
     path: '/oauth2/redirect',

@@ -7,7 +7,11 @@ import { GitHubLink, Link } from 'components/Link'
 
 const DATE_TITLE_FORMAT = "d MMMM yyyy 'at' HH:mm"
 
-export const PullOverviewTab = (pull: IPull) => {
+interface PullOverviewTabProps {
+  pull: IPull
+}
+
+export const PullOverviewTab = ({ pull }: PullOverviewTabProps) => {
   return (
     <Grid fluid style={{ padding: 0 }}>
       <Row>

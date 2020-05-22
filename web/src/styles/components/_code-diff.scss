@@ -86,10 +86,10 @@ $diffViewerTitleBorderColor: #eee;
   }
 
   .word-diff {
-    padding: 0px 2px;
-    margin: 2px;
+    padding: 0 1px;
+    margin: 1px 0;
     display: inline-flex;
-    border-radius: 5px;
+    border-radius: 3px;
   }
 
 
@@ -164,6 +164,14 @@ $diffViewerTitleBorderColor: #eee;
       white-space: nowrap;
     }
 
+    &.diff-added {
+      background: $addedGutterBackground
+    }
+
+    &.diff-removed {
+      background: $removedGutterBackground
+    }
+
     &:hover {
       cursor: pointer;
       background: $gutterBackgroundDark;
@@ -175,14 +183,6 @@ $diffViewerTitleBorderColor: #eee;
 
     pre {
       opacity: 0.5
-    }
-
-    .diff-added {
-      background: $addedGutterBackground
-    }
-
-    .diff-removed {
-      background: $removedGutterBackground
     }
 
     .highlighted-gutter {

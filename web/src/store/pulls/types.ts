@@ -1,12 +1,14 @@
-import { IPull } from 'types'
+import { IClone, IPull } from 'types'
 
 export const SET_PULLS = 'SET_PULLS'
 export const SET_PULL = 'SET_PULL'
+export const SET_CLONES = 'SET_CLONES'
 export const FETCHING_PULLS = 'FETCHING_PULLS'
 
 export interface PullsState {
   pulls?: IPull[]
   pull?: IPull
+  clones?: IClone[]
   isFetching: boolean
 }
 
@@ -25,7 +27,13 @@ export interface FetchingPulls {
   isFetching: boolean
 }
 
+export interface SetClones {
+  type: typeof SET_CLONES
+  clones: IClone[]
+}
+
 export type PullsActionTypes =
   | SetPulls //
   | SetPull
+  | SetClones
   | FetchingPulls
