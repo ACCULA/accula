@@ -7,8 +7,8 @@ import org.accula.api.db.model.Project;
 import org.accula.api.db.model.User;
 import org.accula.api.github.api.GithubClient;
 import org.accula.api.github.api.GithubClientException;
-import org.accula.api.github.model.Pull;
-import org.accula.api.github.model.Repo;
+import org.accula.api.github.model.GithubPull;
+import org.accula.api.github.model.GithubRepo;
 import org.accula.api.handlers.request.CreateProjectRequestBody;
 import org.accula.api.handlers.response.ErrorBody;
 import org.springframework.stereotype.Component;
@@ -129,7 +129,7 @@ public final class ProjectsHandler {
                 .onErrorResume(PROJECT_NOT_FOUND_EXCEPTION::equals, e -> ServerResponse.notFound().build());
     }
 
-    private Mono<Tuple4<Boolean, Repo, Pull[], User>> retrieveGithubInfoForProjectCreation(final Tuple2<String, String> ownerAndRepo) {
+    private Mono<Tuple4<Boolean, GithubRepo, GithubPull[], User>> retrieveGithubInfoForProjectCreation(final Tuple2<String, String> ownerAndRepo) {
         final var owner = ownerAndRepo.getT1();
         final var repo = ownerAndRepo.getT2();
         final var scheduler = Schedulers.boundedElastic();
@@ -142,7 +142,7 @@ public final class ProjectsHandler {
         //@formatter:on
     }
 
-    private static Project tryBuildProject(final Tuple4<Boolean, Repo, Pull[], User> tuple) {
+    private static Project tryBuildProject(final Tuple4<Boolean, GithubRepo, GithubPull[], User> tuple) {
         final var isAdmin = tuple.getT1();
 
         if (!isAdmin) {
@@ -152,15 +152,15 @@ public final class ProjectsHandler {
         final var repo = tuple.getT2();
         final var openPulls = tuple.getT3();
         final var currentUser = tuple.getT4();
-
         final var creatorId = requireNonNull(currentUser.getId());
-        final var repoUrl = repo.getUrl();
+        final var repoUrl = repo.getHtmlUrl();
         final var repoName = repo.getName();
         final var repoDescription = Optional.ofNullable(repo.getDescription()).orElse("");
         final var repoOpenPullCount = openPulls.length;
         final var repoOwnerObj = repo.getOwner();
         final var repoOwner = repoOwnerObj.getLogin();
         final var repoOwnerAvatar = repoOwnerObj.getAvatarUrl();
+
         return Project.builder()
                 .creatorId(creatorId)
                 .repoUrl(repoUrl)
