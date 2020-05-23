@@ -18,5 +18,5 @@ public final class GithubRepo {
     private String name;
     @Nullable
     private String description;
-    private GithubOwner owner;
+    private GithubUser owner;
 }

@@ -7,7 +7,7 @@ import org.accula.api.db.model.Project;
 import org.accula.api.db.model.User;
 import org.accula.api.github.api.GithubClient;
 import org.accula.api.github.api.GithubClientException;
-import org.accula.api.github.model.GithubOwner;
+import org.accula.api.github.model.GithubUser;
 import org.accula.api.github.model.GithubPull;
 import org.accula.api.github.model.GithubRepo;
 import org.accula.api.handlers.ProjectsHandler;
@@ -42,7 +42,7 @@ public class ProjectsRouterTest {
     private static final Long[] ADMINS = new Long[]{1L, 2L, 3L};
     private static final User CURRENT_USER = new User(0L, "Steve", 123L, "jobs", "secret_token");
     private static final Project PROJECT = new Project(0L, CURRENT_USER.getId(), REPO_URL, REPO_NAME, EMPTY, OPEN_PULLS.length, REPO_OWNER, EMPTY, ADMINS);
-    private static final GithubOwner GH_OWNER = new GithubOwner(REPO_OWNER, EMPTY);
+    private static final GithubUser GH_OWNER = new GithubUser(REPO_OWNER, EMPTY);
     private static final GithubRepo GH_REPO = new GithubRepo(REPO_URL, REPO_NAME, EMPTY, GH_OWNER);
     private static final RequestBody REQUEST_BODY = new CreateProjectRequestBody(REPO_URL);
     private static final String INVALID_REPO_URL = "htps://bad_url";

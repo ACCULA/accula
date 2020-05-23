@@ -11,8 +11,10 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public final class GithubOwner {
+public final class GithubUser {
     private String login;
     @JsonProperty("avatar_url")
     private String avatarUrl;
+    @JsonProperty("html_url")
+    private String htmlUrl;
 }
