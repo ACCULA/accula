@@ -1,6 +1,7 @@
 package org.accula.code;
 
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.log4j.Log4j2;
 import org.eclipse.jgit.api.Git;
@@ -15,15 +16,13 @@ import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.server.ServerRequest;
+import org.springframework.web.reactive.function.server.ServerResponse;
+import reactor.core.publisher.Mono;
 
-import javax.servlet.http.HttpServletRequest;
 import java.io.*;
 import java.util.Arrays;
 import java.util.Map;
@@ -32,12 +31,14 @@ import java.util.StringJoiner;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-@RestController
+import static org.springframework.web.reactive.function.server.ServerResponse.badRequest;
+import static org.springframework.web.reactive.function.server.ServerResponse.ok;
+
 @Log4j2
-public class CodeController {
+@Component
+public class CodeHandler {
     private static final String BASE_PATH = "code_data/";
     private static final String GITHUB_BASE_URL = "https://github.com/";
-    private static final ResponseEntity<byte[]> NOT_FOUND = ResponseEntity.badRequest().build();
 
     private final Map<RepoRef, Repository> cache = new ConcurrentHashMap<>();
 
@@ -58,24 +59,26 @@ public class CodeController {
         }
     }
 
-    @GetMapping(value = "/{owner}/{repo}/{sha}/**", produces = MediaType.TEXT_PLAIN_VALUE)
-    public ResponseEntity<byte[]> getFile(
-            @PathVariable final String owner,
-            @PathVariable final String repo,
-            @PathVariable final String sha,
-            @RequestParam(required = false) final Integer fromLine,
-            @RequestParam(required = false) final Integer toLine,
-            final HttpServletRequest request) throws GitAPIException, IOException {
-        final String file = extractFileName(request);
-        final Repository repository = getRepository(owner, repo);
-        final Optional<byte[]> bytes = getFileContent(repository, sha, file, fromLine, toLine);
-        return bytes.map(ResponseEntity::ok)
-                .orElse(NOT_FOUND);
+    @NotNull
+    @SneakyThrows
+    public Mono<ServerResponse> getFile(final ServerRequest request) {
+        final String owner = request.pathVariable("owner");
+        final String repo = request.pathVariable("repo");
+        final String sha = request.pathVariable("sha");
+        final String file = extractFileName(request.uri().getRawPath());
+        final Optional<Integer> fromLine = request.queryParam("fromLine")
+                .map(Integer::parseInt);
+        final Optional<Integer> toLine = request.queryParam("toLine")
+                .map(Integer::parseInt);
+        return Mono.fromCallable(() -> getRepository(owner, repo))
+                .flatMap(rep -> getFileContent(rep, sha, file, fromLine, toLine))
+                .flatMap(bytes -> ok().body(BodyInserters.fromValue(bytes)))
+                .switchIfEmpty(badRequest().build());
     }
 
     @NotNull
-    private String extractFileName(@NotNull final HttpServletRequest request) {
-        return Arrays.stream(request.getRequestURI().split("/"))
+    private String extractFileName(@NotNull final String request) {
+        return Arrays.stream(request.split("/"))
                 .skip(4)
                 .collect(Collectors.joining("/"));
     }
@@ -113,12 +116,13 @@ public class CodeController {
     }
 
     @NotNull
-    private Optional<byte[]> getFileContent(
+    @SneakyThrows
+    private Mono<byte[]> getFileContent(
             @NotNull final Repository repository,
             @NotNull final String sha,
             @NotNull final String file,
-            @Nullable final Integer fromLine,
-            @Nullable final Integer toLine) throws IOException {
+            @NotNull final Optional<Integer> fromLine,
+            @NotNull final Optional<Integer> toLine) {
         final ObjectReader reader = repository.newObjectReader();
         final RevWalk revWalk = new RevWalk(reader);
         final ObjectId commitId = repository.resolve(sha);
@@ -127,24 +131,24 @@ public class CodeController {
         final TreeWalk treeWalk = TreeWalk.forPath(reader, file, tree);
         if (treeWalk == null) {
             log.error("Cannot find file {} in repo {}, sha={}", file, repository.getDirectory(), sha);
-            return Optional.empty();
+            return Mono.empty();
         }
 
         final ObjectLoader loader = reader.open(treeWalk.getObjectId(0));
-        if (fromLine == null && toLine == null) {
-            return Optional.of(loader.getBytes());
+        if (fromLine.isEmpty() && toLine.isEmpty()) {
+            return Mono.just(loader.getBytes());
         }
-        final int from = fromLine != null ? fromLine : 1;
-        final int to = toLine != null ? toLine : Integer.MAX_VALUE;
+        final int from = fromLine.orElse(1);
+        final int to = toLine.orElse(Integer.MAX_VALUE);
         if (to < from) {
             log.error("Wrong line range: {} - {}", fromLine, toLine);
-            return Optional.empty();
+            return Mono.empty();
         }
         return cutFileContent(loader.openStream(), from, to);
     }
 
     @NotNull
-    private Optional<byte[]> cutFileContent(
+    private Mono<byte[]> cutFileContent(
             @NotNull final InputStream input,
             final int from,
             final int to) throws IOException {
@@ -166,6 +170,6 @@ public class CodeController {
                 }
             }
         }
-        return Optional.of(joiner.toString().getBytes());
+        return Mono.just(joiner.toString().getBytes());
     }
 }

@@ -10,7 +10,7 @@ repositories {
 }
 
 dependencies {
-    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("org.eclipse.jgit:org.eclipse.jgit:5.7.0.202003110725-r")
     implementation("org.eclipse.mylyn.github:org.eclipse.egit.github.core:2.1.5")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
