@@ -32,6 +32,8 @@ plugins:
         enabled: false # Lombok-associated issue
       CallSuperInConstructor:
         enabled: false
+      DataflowAnomalyAnalysis:
+        enabled: fals
 
     config:
       file: pmd.xml

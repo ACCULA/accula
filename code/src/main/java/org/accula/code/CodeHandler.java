@@ -163,8 +163,8 @@ public class CodeHandler {
              BufferedReader br = new BufferedReader(is)) {
             int skip = from - 1;
             int take = to - skip;
-            String line;
-            while ((line = br.readLine()) != null) {
+            String line = br.readLine();
+            while (line != null) {
                 if (skip > 0) {
                     skip--;
                     continue;
@@ -174,6 +174,7 @@ public class CodeHandler {
                 if (take == 0) {
                     break;
                 }
+                line = br.readLine();
             }
         }
         return joiner.toString().getBytes();
