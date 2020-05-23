@@ -15,7 +15,8 @@ pluginManagement {
 
 include(
         "api",
-        "web"
+        "web",
+        "code"
 )
 
 rootProject.name = "accula"
