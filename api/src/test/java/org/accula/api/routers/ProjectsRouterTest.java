@@ -3,7 +3,9 @@ package org.accula.api.routers;
 import lombok.SneakyThrows;
 import org.accula.api.db.CurrentUserRepository;
 import org.accula.api.db.ProjectRepository;
+import org.accula.api.db.PullRepository;
 import org.accula.api.db.model.Project;
+import org.accula.api.db.model.Pull;
 import org.accula.api.db.model.User;
 import org.accula.api.github.api.GithubClient;
 import org.accula.api.github.api.GithubClientException;
@@ -26,6 +28,8 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -38,11 +42,12 @@ public class ProjectsRouterTest {
     private static final String REPO_NAME = "accula";
     private static final String REPO_OWNER = "accula";
     private static final GithubPull[] OPEN_PULLS = new GithubPull[]{new GithubPull(), new GithubPull(), new GithubPull()};
+    private static final List<Pull> PULLS = List.of(new Pull(null, 0L, null), new Pull(null, 0L, null), new Pull(null, 0L, null));
     private static final String EMPTY = "";
     private static final Long[] ADMINS = new Long[]{1L, 2L, 3L};
     private static final User CURRENT_USER = new User(0L, "Steve", 123L, "jobs", "secret_token");
     private static final Project PROJECT = new Project(0L, CURRENT_USER.getId(), REPO_URL, REPO_NAME, EMPTY, OPEN_PULLS.length, REPO_OWNER, EMPTY, ADMINS);
-    private static final GithubUser GH_OWNER = new GithubUser(REPO_OWNER, EMPTY);
+    private static final GithubUser GH_OWNER = new GithubUser(REPO_OWNER, EMPTY, EMPTY);
     private static final GithubRepo GH_REPO = new GithubRepo(REPO_URL, REPO_NAME, EMPTY, GH_OWNER);
     private static final RequestBody REQUEST_BODY = new CreateProjectRequestBody(REPO_URL);
     private static final String INVALID_REPO_URL = "htps://bad_url";
@@ -53,7 +58,9 @@ public class ProjectsRouterTest {
     @MockBean
     private CurrentUserRepository currentUser;
     @MockBean
-    private ProjectRepository repository;
+    private ProjectRepository projectRepository;
+    @MockBean
+    private PullRepository pullRepository;
     @MockBean
     private GithubClient githubClient;
     @Autowired
@@ -72,11 +79,14 @@ public class ProjectsRouterTest {
         Mockito.when(currentUser.get())
                 .thenReturn(Mono.just(CURRENT_USER));
 
-        Mockito.when(repository.save(Mockito.any(Project.class)))
+        Mockito.when(projectRepository.save(Mockito.any(Project.class)))
                 .thenReturn(Mono.just(PROJECT));
 
-        Mockito.when(repository.notExistsByRepoOwnerAndRepoName(REPO_OWNER, REPO_NAME))
+        Mockito.when(projectRepository.notExistsByRepoOwnerAndRepoName(REPO_OWNER, REPO_NAME))
                 .thenReturn(Mono.just(TRUE));
+
+        Mockito.when(pullRepository.saveAll(PULLS))
+                .thenReturn(Flux.fromIterable(PULLS));
 
         Mockito.when(githubClient.hasAdminPermission(PROJECT.getRepoOwner(), PROJECT.getRepoName()))
                 .thenReturn(Mono.just(TRUE));
@@ -111,7 +121,7 @@ public class ProjectsRouterTest {
         Mockito.when(currentUser.get())
                 .thenReturn(Mono.just(CURRENT_USER));
 
-        Mockito.when(repository.notExistsByRepoOwnerAndRepoName(REPO_OWNER, REPO_NAME))
+        Mockito.when(projectRepository.notExistsByRepoOwnerAndRepoName(REPO_OWNER, REPO_NAME))
                 .thenReturn(Mono.just(TRUE));
 
         // simulate github client error that is usually caused by wrong url
@@ -137,11 +147,11 @@ public class ProjectsRouterTest {
         Mockito.when(currentUser.get())
                 .thenReturn(Mono.just(CURRENT_USER));
 
-        Mockito.when(repository.save(Mockito.any(Project.class)))
+        Mockito.when(projectRepository.save(Mockito.any(Project.class)))
                 .thenReturn(Mono.just(PROJECT));
 
         // make repo existing
-        Mockito.when(repository.notExistsByRepoOwnerAndRepoName(REPO_OWNER, REPO_NAME))
+        Mockito.when(projectRepository.notExistsByRepoOwnerAndRepoName(REPO_OWNER, REPO_NAME))
                 .thenReturn(Mono.just(FALSE));
 
         Mockito.when(githubClient.hasAdminPermission(PROJECT.getRepoOwner(), PROJECT.getRepoName()))
@@ -167,10 +177,10 @@ public class ProjectsRouterTest {
         Mockito.when(currentUser.get())
                 .thenReturn(Mono.just(CURRENT_USER));
 
-        Mockito.when(repository.save(Mockito.any(Project.class)))
+        Mockito.when(projectRepository.save(Mockito.any(Project.class)))
                 .thenReturn(Mono.just(PROJECT));
 
-        Mockito.when(repository.notExistsByRepoOwnerAndRepoName(REPO_OWNER, REPO_NAME))
+        Mockito.when(projectRepository.notExistsByRepoOwnerAndRepoName(REPO_OWNER, REPO_NAME))
                 .thenReturn(Mono.just(TRUE));
 
         // disable admin permission
@@ -194,7 +204,7 @@ public class ProjectsRouterTest {
 
     @Test
     public void testGetProjectSuccess() {
-        Mockito.when(repository.findById(PROJECT.getId()))
+        Mockito.when(projectRepository.findById(PROJECT.getId()))
                 .thenReturn(Mono.just(PROJECT));
 
         client.get().uri("/api/projects/{id}", PROJECT.getId())
@@ -205,7 +215,7 @@ public class ProjectsRouterTest {
 
     @Test
     public void testGetProjectFailure() {
-        Mockito.when(repository.findById(0L))
+        Mockito.when(projectRepository.findById(0L))
                 .thenReturn(Mono.empty());
 
         client.get().uri("/api/projects/{id}", 0L)
@@ -215,7 +225,7 @@ public class ProjectsRouterTest {
 
     @Test
     public void testGetAllProjects() {
-        Mockito.when(repository.findAll())
+        Mockito.when(projectRepository.findAll())
                 .thenReturn(Flux.fromArray(new Project[]{PROJECT, PROJECT, PROJECT}));
 
         client.get().uri("/api/projects?count={count}", 2L)
@@ -229,7 +239,7 @@ public class ProjectsRouterTest {
         Mockito.when(currentUser.get())
                 .thenReturn(Mono.just(CURRENT_USER));
 
-        Mockito.when(repository.deleteByIdAndCreatorId(PROJECT.getId(), PROJECT.getCreatorId()))
+        Mockito.when(projectRepository.deleteByIdAndCreatorId(PROJECT.getId(), PROJECT.getCreatorId()))
                 .thenReturn(Mono.just(TRUE));
 
         client.delete().uri("/api/projects/{id}", PROJECT.getId())
@@ -247,7 +257,7 @@ public class ProjectsRouterTest {
         };
         final var admins = new Long[]{1L, 3L, 5L};
 
-        Mockito.when(repository.setAdmins(PROJECT.getId(), admins, PROJECT.getCreatorId()))
+        Mockito.when(projectRepository.setAdmins(PROJECT.getId(), admins, PROJECT.getCreatorId()))
                 .thenReturn(Mono.fromRunnable(() -> adminsHolder.admins = admins));
 
         final var adminsUpdate = new Project();
