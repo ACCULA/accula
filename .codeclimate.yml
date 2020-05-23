@@ -33,7 +33,7 @@ plugins:
       CallSuperInConstructor:
         enabled: false
       DataflowAnomalyAnalysis:
-        enabled: fals
+        enabled: false
 
     config:
       file: pmd.xml
