@@ -32,7 +32,6 @@ const CodeDiff = ({
   leftTitle,
   onLineNumberClick,
   codeFoldMessageRenderer,
-  renderContent
 }: CodeDiffProps) => {
   if (typeof oldValue !== 'string' || typeof newValue !== 'string') {
     throw Error('"oldValue" and "newValue" should be strings')
@@ -144,10 +143,8 @@ const CodeDiff = ({
     let content
     if (Array.isArray(value)) {
       content = renderWordDiff(value, null)
-    } else if (highlight) {
-      content = highlight(value)
     } else {
-      content = value
+      content = highlight(value)
     }
 
     return (
