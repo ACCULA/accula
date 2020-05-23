@@ -33,6 +33,9 @@ import java.util.stream.Collectors;
 import static org.springframework.web.reactive.function.server.ServerResponse.badRequest;
 import static org.springframework.web.reactive.function.server.ServerResponse.ok;
 
+/**
+ * @author Vadim Dyachkov
+ */
 @Log4j2
 @Component
 public class CodeHandler {
