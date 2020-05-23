@@ -36,7 +36,7 @@ import static org.springframework.web.reactive.function.server.ServerResponse.ok
 @Log4j2
 @Component
 public class CodeHandler {
-    private static final String BASE_PATH = "code_data/";
+    private static final String REPOS_BASE_PATH = "code_data/";
     private static final String GITHUB_BASE_URL = "https://github.com/";
 
     private final Map<RepoRef, Repository> cache = new ConcurrentHashMap<>();
@@ -46,7 +46,6 @@ public class CodeHandler {
     private static class RepoRef {
         String owner;
         String repo;
-
 
         public String getUrl() {
             return GITHUB_BASE_URL + toString();
@@ -97,7 +96,9 @@ public class CodeHandler {
                 });
     }
 
-    private Mono<Repository> cloneRepository(RepoRef ref, File directory) {
+    private Mono<Repository> cloneRepository(
+            final RepoRef ref,
+            final File directory) {
         return Mono
                 .fromCallable(() -> Git
                         .cloneRepository()
@@ -107,7 +108,7 @@ public class CodeHandler {
                         .getRepository());
     }
 
-    private Mono<Repository> openRepository(File directory) {
+    private Mono<Repository> openRepository(final File directory) {
         return Mono
                 .just(directory)
                 .filter(File::exists)
@@ -115,12 +116,12 @@ public class CodeHandler {
     }
 
     @SneakyThrows
-    private Repository getFileRepository(File dir) {
+    private Repository getFileRepository(final File dir) {
         return new FileRepository(new File(dir, ".git"));
     }
 
     private File getDirectory(final RepoRef ref) {
-        return new File(new File(BASE_PATH, ref.owner), ref.repo);
+        return new File(new File(REPOS_BASE_PATH, ref.owner), ref.repo);
     }
 
     @SneakyThrows

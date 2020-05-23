@@ -5,6 +5,7 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent.SKIPPED
 plugins {
     java
     jacoco
+    pmd
 }
 
 jacoco {
