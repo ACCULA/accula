@@ -2,6 +2,7 @@ package org.accula.code;
 
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
+import lombok.extern.log4j.Log4j2;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.internal.storage.file.FileRepository;
@@ -15,8 +16,6 @@ import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,11 +33,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @RestController
+@Log4j2
 public class CodeController {
-    private static final Logger log = LoggerFactory.getLogger(CodeController.class);
     private static final String BASE_PATH = "code_data/";
     private static final String GITHUB_BASE_URL = "https://github.com/";
     private static final ResponseEntity<byte[]> NOT_FOUND = ResponseEntity.badRequest().build();
+
+    private final Map<RepoRef, Repository> cache = new ConcurrentHashMap<>();
 
     @Value
     @RequiredArgsConstructor
@@ -56,8 +57,6 @@ public class CodeController {
             return owner + "/" + repo;
         }
     }
-
-    private final Map<RepoRef, Repository> cache = new ConcurrentHashMap<>();
 
     @GetMapping(value = "/{owner}/{repo}/{sha}/**", produces = MediaType.TEXT_PLAIN_VALUE)
     public ResponseEntity<byte[]> getFile(
@@ -118,8 +117,8 @@ public class CodeController {
             @NotNull final Repository repository,
             @NotNull final String sha,
             @NotNull final String file,
-            @Nullable Integer fromLine,
-            @Nullable Integer toLine) throws IOException {
+            @Nullable final Integer fromLine,
+            @Nullable final Integer toLine) throws IOException {
         final ObjectReader reader = repository.newObjectReader();
         final RevWalk revWalk = new RevWalk(reader);
         final ObjectId commitId = repository.resolve(sha);
@@ -135,23 +134,21 @@ public class CodeController {
         if (fromLine == null && toLine == null) {
             return Optional.of(loader.getBytes());
         }
-        return cutFileContent(loader.openStream(), fromLine, toLine);
-    }
-
-    @NotNull
-    private Optional<byte[]> cutFileContent(
-            @NotNull final InputStream input,
-            @Nullable Integer fromLine,
-            @Nullable Integer toLine) throws IOException {
         final int from = fromLine != null ? fromLine : 1;
         final int to = toLine != null ? toLine : Integer.MAX_VALUE;
         if (to < from) {
             log.error("Wrong line range: {} - {}", fromLine, toLine);
             return Optional.empty();
         }
+        return cutFileContent(loader.openStream(), from, to);
+    }
 
+    @NotNull
+    private Optional<byte[]> cutFileContent(
+            @NotNull final InputStream input,
+            final int from,
+            final int to) throws IOException {
         final StringJoiner joiner = new StringJoiner(System.lineSeparator());
-        ;
         try (InputStreamReader in = new InputStreamReader(input);
              BufferedReader br = new BufferedReader(in)) {
             int skip = from - 1;
