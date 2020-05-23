@@ -13,6 +13,7 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.TreeWalk;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.server.ServerRequest;
@@ -73,7 +74,9 @@ public class CodeHandler {
                 .map(Integer::parseInt)
                 .orElse(Integer.MAX_VALUE);
         return getRepository(owner, repo)
-                .flatMap(rep -> getFileContent(rep, sha, file, fromLine, toLine))
+                .flatMap(rep -> Mono.justOrEmpty(getFileInputStream(rep, sha, file)))
+                .map(stream -> cutFileContent(stream, fromLine, toLine))
+                .subscribeOn(Schedulers.boundedElastic())
                 .flatMap(bytes -> ok().body(BodyInserters.fromValue(bytes)))
                 .switchIfEmpty(badRequest().build());
     }
@@ -128,31 +131,21 @@ public class CodeHandler {
     }
 
     @SneakyThrows
-    private Mono<byte[]> getFileContent(
-            final Repository repository,
-            final String sha,
-            final String file,
-            final int fromLine,
-            final int toLine) {
-        final ObjectReader reader = repository.newObjectReader();
-        final RevWalk revWalk = new RevWalk(reader);
-        return Mono
-                .fromCallable(() -> getFileInputStream(repository, sha, file, reader, revWalk))
-                .map(stream -> cutFileContent(stream, fromLine, toLine))
-                .subscribeOn(Schedulers.boundedElastic());
-    }
-
-    @SneakyThrows
+    @Nullable
     private InputStream getFileInputStream(
             final Repository repository,
             final String sha,
-            final String file,
-            final ObjectReader reader,
-            final RevWalk revWalk) {
+            final String file) {
+        final ObjectReader reader = repository.newObjectReader();
+        final RevWalk revWalk = new RevWalk(reader);
         final ObjectId commitId = repository.resolve(sha);
         final RevCommit commit = revWalk.parseCommit(commitId);
         final RevTree tree = commit.getTree();
         final TreeWalk treeWalk = TreeWalk.forPath(reader, file, tree);
+        if (treeWalk == null) {
+            log.error("Cannot find file {} in repo {}, sha={}", file, repository.getWorkTree(), sha);
+            return null;
+        }
         return reader.open(treeWalk.getObjectId(0)).openStream();
     }
 
