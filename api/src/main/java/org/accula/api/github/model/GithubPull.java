@@ -14,8 +14,8 @@ import java.util.Locale;
 public final class GithubPull {
     @JsonProperty("html_url")
     private String htmlUrl;
-    private Attendee head;
-    private Attendee base;
+    private Marker head;
+    private Marker base;
     private GithubUser user;
     private Integer number;
     private String title;
@@ -37,7 +37,7 @@ public final class GithubPull {
     }
 
     @Data
-    public static final class Attendee {
+    public static final class Marker {
         private String label;
         private GithubRepo repo;
     }
