@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 import { API_URL, DEBUG } from 'utils'
-import { IProject } from 'types'
+import { IProject, IToken } from 'types'
 import { projects } from 'stubs'
 
 export const getProjects = async (): Promise<IProject[]> => {
@@ -32,7 +32,7 @@ export const getProject = async (id: number): Promise<IProject> => {
     .then(resp => resp.data as IProject)
 }
 
-export const createProject = async (url: string, token: String): Promise<IProject> => {
+export const createProject = async (url: string, token: IToken): Promise<IProject> => {
   if (DEBUG) {
     return Promise.resolve(projects[0])
   }
@@ -45,7 +45,7 @@ export const createProject = async (url: string, token: String): Promise<IProjec
       {
         headers: {
           Accept: 'application/json',
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token.accessToken}`
         },
         withCredentials: true
       }

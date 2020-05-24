@@ -6,6 +6,7 @@ import { Badge, Tab, Tabs } from 'react-bootstrap'
 import { Helmet } from 'react-helmet'
 
 import { Breadcrumbs } from 'components/Breadcrumbs'
+import { Loader } from 'components/Loader'
 import { AppDispatch, AppState } from 'store'
 import { getClonesAction, getPullAction } from 'store/pulls/actions'
 import { getProjectAction } from 'store/projects/actions'
@@ -59,8 +60,8 @@ const Pull = ({
     getClones(projectId, pullId)
   }, [getClones, projectId, pullId])
 
-  if (isFetching) {
-    return <></>
+  if (isFetching || (pull && pull.number !== pullId)) {
+    return <Loader />
   }
   return (
     <div className="content">

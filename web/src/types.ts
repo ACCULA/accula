@@ -43,7 +43,7 @@ export interface IPullShort {
 }
 
 export interface IPull {
-  id: number
+  number: number
   projectId: number
   url: string
   source: {

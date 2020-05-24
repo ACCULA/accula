@@ -7,6 +7,7 @@ import { Helmet } from 'react-helmet'
 import { bindActionCreators } from 'redux'
 
 import { Breadcrumbs } from 'components/Breadcrumbs'
+import { Loader } from 'components/Loader'
 import { AppDispatch, AppState } from 'store'
 import { getProjectAction } from 'store/projects/actions'
 import { getPullsAction } from 'store/pulls/actions'
@@ -49,7 +50,7 @@ const Project = ({
   }, [getPulls, projectId])
 
   if (isFetching || (project && project.id !== projectId)) {
-    return <></>
+    return <Loader />
   }
 
   return (
@@ -73,9 +74,9 @@ const Project = ({
             </thead>
             <tbody>
               {pulls.map(pull => (
-                <LinkContainer to={`/projects/${projectId}/pulls/${pull.id}`} key={pull.id}>
+                <LinkContainer to={`/projects/${projectId}/pulls/${pull.number}`} key={pull.number}>
                   <tr className="project-pull pointer">
-                    <td className="id">{pull.id}</td>
+                    <td className="id">{pull.number}</td>
                     <td>{pull.title}</td>
                     <td className="avatar">
                       <img

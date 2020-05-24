@@ -5,6 +5,7 @@ import { Button, Clearfix, Col, Grid, Row } from 'react-bootstrap'
 import { Helmet } from 'react-helmet'
 
 import { Breadcrumbs } from 'components/Breadcrumbs'
+import { Loader } from 'components/Loader'
 import { AppDispatch, AppState } from 'store'
 import { createProjectAction, getProjectsAction } from 'store/projects/actions'
 import { CreateProjectModal } from './CreateProjectModal'
@@ -38,7 +39,7 @@ const Projects = ({
   }, [getProjects])
 
   if (isFetching || !projects) {
-    return <></>
+    return <Loader />
   }
   return (
     <div className="content">

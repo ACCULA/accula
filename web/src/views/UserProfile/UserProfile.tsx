@@ -1,6 +1,7 @@
 import React from 'react'
 import { Col, ControlLabel, FormControl, FormGroup, Grid, Panel, Row } from 'react-bootstrap'
 
+import { Loader } from 'components/Loader'
 import Card from 'components/Card'
 import FormInputs from 'components/FormInputs'
 import UserCard from 'components/UserCard'
@@ -17,7 +18,7 @@ type UserProfileProps = ConnectedProps<typeof connector>
 
 const UserProfile = ({ user }: UserProfileProps) => {
   if (!user) {
-    return <></>
+    return <Loader />
   }
   return (
     <div className="content">

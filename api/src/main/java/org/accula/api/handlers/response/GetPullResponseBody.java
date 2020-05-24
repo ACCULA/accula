@@ -14,6 +14,8 @@ import java.time.Instant;
 public final class GetPullResponseBody implements ResponseBody {
     private final Long projectId;
     private final Integer number;
+    private final String url;
+    private final String title;
     private final PullRef source;
     private final PullRef target;
     private final PullAuthor author;

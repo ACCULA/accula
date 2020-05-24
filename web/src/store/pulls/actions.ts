@@ -36,11 +36,14 @@ export const getPullsAction = (projectId: number) => async (
   dispatch: AppDispatch, //
   getState: AppStateSupplier
 ) => {
-  const { pulls } = getState()
+  const { pulls, users } = getState()
+  if (!users.token || pulls.isFetching) {
+    return
+  }
   if (!pulls.pulls || (pulls.pulls.length > 0 && pulls.pulls[0].projectId !== projectId)) {
     try {
       dispatch(fetchingPulls(true))
-      const result = await getPulls(projectId)
+      const result = await getPulls(users.token, projectId)
       dispatch(setPulls(result))
     } catch (e) {
       console.log(e)
@@ -55,11 +58,21 @@ export const getPullAction = (projectId: number, pullId: number) => async (
   dispatch: AppDispatch, //
   getState: AppStateSupplier
 ) => {
-  const { pulls } = getState()
-  if (!pulls.pull || pulls.pull.projectId !== projectId || pulls.pull.id !== pullId) {
+  const { pulls, users } = getState()
+  if (!users.token || pulls.isFetching) {
+    return
+  }
+  if (pulls.pulls) {
+    const pull = pulls.pulls.find(p => p.number === pullId && p.projectId === projectId)
+    if (pull) {
+      dispatch(setPull(pull))
+      return
+    }
+  }
+  if (!pulls.pull || pulls.pull.projectId !== projectId || pulls.pull.number !== pullId) {
     try {
       dispatch(fetchingPulls(true))
-      const pull = await getPull(projectId, pullId)
+      const pull = await getPull(users.token, projectId, pullId)
       dispatch(setPull(pull))
     } catch (e) {
       console.log(e)

@@ -78,7 +78,7 @@ export const createProjectAction = (url: string) => async (
 ) => {
   const { users, projects } = getState()
   if (users.token) {
-    const project = await createProject(url, users.token.accessToken)
+    const project = await createProject(url, users.token)
     if (project) {
       dispatch(setProjects([...projects.projects, project]))
     }
