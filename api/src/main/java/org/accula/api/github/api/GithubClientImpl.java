@@ -1,8 +1,8 @@
 package org.accula.api.github.api;
 
-import org.accula.api.github.model.Pull;
-import org.accula.api.github.model.Repo;
-import org.accula.api.github.model.UserPermission;
+import org.accula.api.github.model.GithubPull;
+import org.accula.api.github.model.GithubRepo;
+import org.accula.api.github.model.GithubUserPermission;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -10,7 +10,7 @@ import reactor.core.publisher.Mono;
 import java.util.function.Function;
 
 import static java.lang.Boolean.FALSE;
-import static org.accula.api.github.model.UserPermission.Permission.ADMIN;
+import static org.accula.api.github.model.GithubUserPermission.Permission.ADMIN;
 import static org.springframework.http.HttpStatus.OK;
 
 /**
@@ -49,31 +49,42 @@ public final class GithubClientImpl implements GithubClient {
                             }
 
                             return response
-                                    .bodyToMono(UserPermission.class)
+                                    .bodyToMono(GithubUserPermission.class)
                                     .map(permission -> permission.getPermission() == ADMIN);
                         })
                         .onErrorResume(e -> Mono.error(new GithubClientException(e))));
     }
 
     @Override
-    public Mono<Repo> getRepo(final String owner, final String repo) {
+    public Mono<GithubRepo> getRepo(final String owner, final String repo) {
         return withAccessToken(accessToken -> githubApiWebClient
                 .get()
                 .uri("/repos/{owner}/{repo}", owner, repo)
                 .headers(h -> h.setBearerAuth(accessToken))
                 .retrieve()
-                .bodyToMono(Repo.class)
+                .bodyToMono(GithubRepo.class)
                 .onErrorResume(e -> Mono.error(new GithubClientException(e))));
     }
 
     @Override
-    public Mono<Pull[]> getRepositoryOpenPulls(final String owner, final String repo) {
+    public Mono<GithubPull[]> getRepositoryOpenPulls(final String owner, final String repo) {
         return withAccessToken(accessToken -> githubApiWebClient
                 .get()
                 .uri("/repos/{owner}/{repo}/pulls?state=open", owner, repo)
                 .headers(h -> h.setBearerAuth(accessToken))
                 .retrieve()
-                .bodyToMono(Pull[].class)
+                .bodyToMono(GithubPull[].class)
+                .onErrorResume(e -> Mono.error(new GithubClientException(e))));
+    }
+
+    @Override
+    public Mono<GithubPull> getRepositoryPull(final String owner, final String repo, final Integer pullNumber) {
+        return withAccessToken(accessToken -> githubApiWebClient
+                .get()
+                .uri("/repos/{owner}/{repo}/pulls/{pullNumber}", owner, repo, pullNumber)
+                .headers(h -> h.setBearerAuth(accessToken))
+                .retrieve()
+                .bodyToMono(GithubPull.class)
                 .onErrorResume(e -> Mono.error(new GithubClientException(e))));
     }
 
