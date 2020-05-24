@@ -133,7 +133,8 @@ public final class ProjectsHandler {
                 .onErrorResume(PROJECT_NOT_FOUND_EXCEPTION::equals, e -> ServerResponse.notFound().build());
     }
 
-    private Mono<Tuple4<Boolean, GithubRepo, GithubPull[], User>> retrieveGithubInfoForProjectCreation(final Tuple2<String, String> ownerAndRepo) {
+    private Mono<Tuple4<Boolean, GithubRepo, GithubPull[], User>> retrieveGithubInfoForProjectCreation(
+            final Tuple2<String, String> ownerAndRepo) {
         final var owner = ownerAndRepo.getT1();
         final var repo = ownerAndRepo.getT2();
         final var scheduler = Schedulers.boundedElastic();

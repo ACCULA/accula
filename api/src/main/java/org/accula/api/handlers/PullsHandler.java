@@ -40,10 +40,10 @@ public final class PullsHandler {
                         .flatMapMany(Flux::fromArray)
                         .flatMap(pull -> Mono.just(fromGithubPull(pull, projectId)))
                         .collectList()
-                        .flatMap(pulls -> ServerResponse
+                        .flatMap(githubPulls -> ServerResponse
                                 .ok()
                                 .contentType(APPLICATION_JSON)
-                                .bodyValue(pulls)))
+                                .bodyValue(githubPulls)))
                 .onErrorResume(e -> e == PULL_NOT_FOUND_EXCEPTION, e -> ServerResponse.notFound().build());
     }
 
@@ -59,10 +59,10 @@ public final class PullsHandler {
                             .flatMap(exists -> projects.findById(projectId))
                             .flatMap(project -> githubClient.getRepositoryPull(project.getRepoOwner(), project.getRepoName(), pullNumber))
                             .switchIfEmpty(Mono.error(PULL_NOT_FOUND_EXCEPTION))
-                            .flatMap(pull -> ServerResponse
+                            .flatMap(githubPull -> ServerResponse
                                     .ok()
                                     .contentType(APPLICATION_JSON)
-                                    .bodyValue(fromGithubPull(pull, projectId)));
+                                    .bodyValue(fromGithubPull(githubPull, projectId)));
                 })
                 .onErrorMap(NumberFormatException.class, e -> PULL_NOT_FOUND_EXCEPTION)
                 .onErrorResume(e -> e == PULL_NOT_FOUND_EXCEPTION, e -> ServerResponse.notFound().build());
