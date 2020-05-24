@@ -9,10 +9,6 @@ import reactor.core.publisher.Mono;
  * @author Anton Lamtev
  */
 public interface ProjectRepository extends ReactiveCrudRepository<Project, Long> {
-    Mono<Project> findById(final Long id);
-
-    <S extends Project> Mono<S> save(final S project);
-
     @Query("SELECT NOT exists(SELECT 0 FROM project WHERE repo_owner = :repoOwner AND repo_name = :repoName)")
     Mono<Boolean> notExistsByRepoOwnerAndRepoName(final String repoOwner, final String repoName);
 
