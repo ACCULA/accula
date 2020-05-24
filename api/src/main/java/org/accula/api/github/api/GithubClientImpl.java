@@ -77,6 +77,17 @@ public final class GithubClientImpl implements GithubClient {
                 .onErrorResume(e -> Mono.error(new GithubClientException(e))));
     }
 
+    @Override
+    public Mono<GithubPull> getRepositoryPull(final String owner, final String repo, final Integer pullNumber) {
+        return withAccessToken(accessToken -> githubApiWebClient
+                .get()
+                .uri("/repos/{owner}/{repo}/pulls/{pullNumber}", owner, repo, pullNumber)
+                .headers(h -> h.setBearerAuth(accessToken))
+                .retrieve()
+                .bodyToMono(GithubPull.class)
+                .onErrorResume(e -> Mono.error(new GithubClientException(e))));
+    }
+
     private <T> Mono<T> withAccessToken(final Function<String, Mono<T>> transform) {
         return accessTokenProvider
                 .accessToken()
