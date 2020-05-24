@@ -3,11 +3,13 @@ import { IProject } from 'types'
 export const SET_PROJECTS = 'SET_PROJECTS'
 export const SET_PROJECT = 'SET_PROJECT'
 export const FETCHING_PROJECTS = 'FETCHING_PROJECTS'
+export const SET_CREATION_STATE = 'SET_CREATION_STATE'
 
 export interface ProjectsState {
   projects?: IProject[]
   project?: IProject
   isFetching: boolean
+  creationState: [boolean, string]
 }
 
 export interface SetProjects {
@@ -25,7 +27,13 @@ export interface FetchingProjects {
   isFetching: boolean
 }
 
+export interface SetCreationState {
+  type: typeof SET_CREATION_STATE
+  creationState: [boolean, string]
+}
+
 export type ProjectsActionTypes =
   | SetProjects //
   | SetProject
   | FetchingProjects
+  | SetCreationState

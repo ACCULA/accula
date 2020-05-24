@@ -1,5 +1,6 @@
 import { AppDispatch, AppStateSupplier } from 'store'
 import { IClone, IPull } from 'types'
+import { requireToken } from 'store/users/actions'
 import {
   FETCHING_PULLS,
   FetchingPulls,
@@ -36,11 +37,12 @@ export const getPullsAction = (projectId: number) => async (
   dispatch: AppDispatch, //
   getState: AppStateSupplier
 ) => {
+  await requireToken(dispatch, getState)
   const { pulls, users } = getState()
   if (!users.token || pulls.isFetching) {
     return
   }
-  if (!pulls.pulls || (pulls.pulls.length > 0 && pulls.pulls[0].projectId !== projectId)) {
+  if (!pulls.pulls || pulls.pulls.length === 0 || pulls.pulls[0].projectId !== projectId) {
     try {
       dispatch(fetchingPulls(true))
       const result = await getPulls(users.token, projectId)
@@ -58,16 +60,17 @@ export const getPullAction = (projectId: number, pullId: number) => async (
   dispatch: AppDispatch, //
   getState: AppStateSupplier
 ) => {
+  await requireToken(dispatch, getState)
   const { pulls, users } = getState()
-  if (!users.token || pulls.isFetching) {
-    return
-  }
   if (pulls.pulls) {
     const pull = pulls.pulls.find(p => p.number === pullId && p.projectId === projectId)
     if (pull) {
       dispatch(setPull(pull))
       return
     }
+  }
+  if (!users.token || pulls.isFetching) {
+    return
   }
   if (!pulls.pull || pulls.pull.projectId !== projectId || pulls.pull.number !== pullId) {
     try {

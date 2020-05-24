@@ -1,2 +1,2 @@
 export const API_URL = process.env.REACT_APP_API_URL
-export const DEBUG = true
+export const DEBUG = false

@@ -17,10 +17,6 @@ export const getPulls = async (token: IToken, projectId: number): Promise<IPull[
       withCredentials: true
     })
     .then(resp => resp.data as IPull[])
-    .then(resp => {
-      console.log(resp)
-      return resp
-    })
 }
 
 export const getPull = async (token: IToken, projectId: number, pullId: number): Promise<IPull> => {

@@ -32,7 +32,7 @@ export const getProject = async (id: number): Promise<IProject> => {
     .then(resp => resp.data as IProject)
 }
 
-export const createProject = async (url: string, token: IToken): Promise<IProject> => {
+export const createProject = async (url: string, token: IToken): Promise<IProject | string> => {
   if (DEBUG) {
     return Promise.resolve(projects[0])
   }
@@ -51,4 +51,5 @@ export const createProject = async (url: string, token: IToken): Promise<IProjec
       }
     )
     .then(resp => resp.data as IProject)
+    .catch(rej => rej.response.data?.error || 'UNKNOWN_ERROR')
 }

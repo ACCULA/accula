@@ -2,15 +2,8 @@ import jwtDecode from 'jwt-decode'
 
 import { AppDispatch, AppStateSupplier } from 'store'
 import { IToken, IUser } from 'types'
-import {
-  FETCHING_USER,
-  FetchingUser,
-  SET_ACCESS_TOKEN,
-  SET_USER,
-  SetAccessToken,
-  SetUser
-} from './types'
-import { refreshToken, getUserById } from './services'
+import { FETCHING_USER, FetchingUser, SET_ACCESS_TOKEN, SET_USER, SetAccessToken, SetUser } from './types'
+import { getUserById, refreshToken } from './services'
 
 export const setAccessTokenAction = (token: IToken): SetAccessToken => ({
   type: SET_ACCESS_TOKEN,
@@ -40,21 +33,25 @@ export const getAccessTokenAction = () => async (
     }
   }
   try {
-    dispatch(fetchingUser(true))
     const token = await refreshToken()
     dispatch(setAccessTokenAction(token))
   } catch (e) {
     console.log(e)
-  } finally {
-    dispatch(fetchingUser(false))
   }
+}
+
+export const requireToken = async (
+  dispatch: AppDispatch, //
+  getState: AppStateSupplier
+) => {
+  await getAccessTokenAction()(dispatch, getState)
 }
 
 export const getCurrentUserAction = () => async (
   dispatch: AppDispatch,
   getState: AppStateSupplier
 ) => {
-  await dispatch(getAccessTokenAction() as any)
+  await requireToken(dispatch, getState)
   const { users } = getState()
   if (users.token && users.token.accessToken) {
     const { sub } = jwtDecode(users.token.accessToken)

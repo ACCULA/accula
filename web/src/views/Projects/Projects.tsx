@@ -7,36 +7,50 @@ import { Helmet } from 'react-helmet'
 import { Breadcrumbs } from 'components/Breadcrumbs'
 import { Loader } from 'components/Loader'
 import { AppDispatch, AppState } from 'store'
-import { createProjectAction, getProjectsAction } from 'store/projects/actions'
+import {
+  createProjectAction,
+  getProjectsAction,
+  resetCreationStateAction
+} from 'store/projects/actions'
 import { CreateProjectModal } from './CreateProjectModal'
 import { ProjectPanel } from './ProjectPanel'
 
 const mapStateToProps = (state: AppState) => ({
+  user: state.users.user,
   isFetching: state.projects.isFetching,
-  authorized: state.users.token,
-  projects: state.projects.projects
+  projects: state.projects.projects,
+  creationState: state.projects.creationState
 })
 
 const mapDispatchToProps = (dispatch: AppDispatch) => ({
   getProjects: bindActionCreators(getProjectsAction, dispatch),
-  createProject: bindActionCreators(createProjectAction, dispatch)
+  createProject: bindActionCreators(createProjectAction, dispatch),
+  resetCreationState: () => dispatch(resetCreationStateAction())
 })
 
 const connector = connect(mapStateToProps, mapDispatchToProps)
 type ProjectsProps = ConnectedProps<typeof connector>
 
 const Projects = ({
-  authorized, //
+  user, //
   isFetching,
   projects,
+  creationState,
   getProjects,
-  createProject
+  createProject,
+  resetCreationState
 }: ProjectsProps) => {
   const [isShowModal, setShowModal] = useState(false)
 
   useEffect(() => {
     getProjects()
   }, [getProjects])
+
+  useEffect(() => {
+    if (!creationState[0] && creationState[1] === null) {
+      setShowModal(false)
+    }
+  }, [creationState, setShowModal])
 
   if (isFetching || !projects) {
     return <Loader />
@@ -49,7 +63,7 @@ const Projects = ({
       <Grid fluid className="tight">
         <Clearfix>
           <div className="pull-right">
-            {authorized && (
+            {user && (
               <Button bsStyle="info" style={{ marginTop: -5 }} onClick={() => setShowModal(true)}>
                 <i className="fa fa-plus" /> Add project
               </Button>
@@ -67,10 +81,16 @@ const Projects = ({
       </Grid>
       <CreateProjectModal
         show={isShowModal}
-        onClose={() => setShowModal(false)}
-        onSubmit={url => {
-          createProject(url)
+        error={creationState[1]}
+        isCreating={creationState[0]}
+        resetError={resetCreationState}
+        onClose={() => {
+          resetCreationState()
           setShowModal(false)
+        }}
+        onSubmit={url => {
+          resetCreationState()
+          createProject(url)
         }}
       />
     </div>
