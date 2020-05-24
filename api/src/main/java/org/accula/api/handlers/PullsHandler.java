@@ -31,7 +31,7 @@ public final class PullsHandler {
     //TODO: handle github errors
     public Mono<ServerResponse> getAll(final ServerRequest request) {
         return Mono
-                .justOrEmpty(Long.parseLong(request.pathVariable("projectId")))
+                .fromSupplier(() -> Long.parseLong(request.pathVariable("projectId")))
                 .onErrorMap(NumberFormatException.class, e -> PULL_NOT_FOUND_EXCEPTION)
                 .flatMap(projectId -> projects
                         .findById(projectId)
