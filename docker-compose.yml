@@ -22,6 +22,7 @@ services:
       - PORT=8080
       - API_URL=http://64.225.96.225
       - WEB_URL=http://64.225.96.225
+      - CODE_URL=http://code:8081
       - DB_HOST=postgres
       - DB_PORT=5432
       - DB_USER=postgres
@@ -37,3 +38,17 @@ services:
       - POSTGRES_DB=accula
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
+  code:
+    build:
+      context: ./
+      dockerfile: ./code/Dockerfile
+    expose:
+      - 8081
+    ports:
+      - "8081:8081"
+    environment:
+      - PORT=8081
+      - REPOS_PATH=/app/repos/
+    volumes:
+      - ./repos:/app/repos
+

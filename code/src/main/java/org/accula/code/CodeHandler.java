@@ -1,8 +1,6 @@
 package org.accula.code;
 
-import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
-import lombok.Value;
 import lombok.extern.log4j.Log4j2;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.internal.storage.file.FileRepository;
@@ -14,6 +12,7 @@ import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.jetbrains.annotations.Nullable;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.server.ServerRequest;
@@ -40,13 +39,14 @@ import static org.springframework.web.reactive.function.server.ServerResponse.ok
 @Log4j2
 @Component
 public class CodeHandler {
-    private static final String REPOS_BASE_PATH = "code_data/";
     private static final String GITHUB_BASE_URL = "https://github.com/";
 
     private final Map<RepoRef, Repository> cache = new ConcurrentHashMap<>();
 
-    @Value
-    @RequiredArgsConstructor
+    @Value("${accula.reposPath}")
+    private String reposPath;
+
+    @lombok.Value
     private static class RepoRef {
         String owner;
         String repo;
@@ -61,7 +61,6 @@ public class CodeHandler {
         }
     }
 
-    @SneakyThrows
     public Mono<ServerResponse> getFile(final ServerRequest request) {
         final String owner = request.pathVariable("owner");
         final String repo = request.pathVariable("repo");
@@ -127,7 +126,7 @@ public class CodeHandler {
     }
 
     private File getDirectory(final RepoRef ref) {
-        return new File(new File(REPOS_BASE_PATH, ref.owner), ref.repo);
+        return new File(new File(reposPath, ref.owner), ref.repo);
     }
 
     @SneakyThrows
