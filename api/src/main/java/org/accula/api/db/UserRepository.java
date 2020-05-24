@@ -12,11 +12,7 @@ import reactor.core.publisher.Mono;
  */
 @Repository
 public interface UserRepository extends ReactiveCrudRepository<User, Long> {
-    Mono<User> findById(final Long id);
-
     Mono<User> findByGithubId(final Long githubId);
-
-    <S extends User> Mono<S> save(final S user);
 
     //@formatter:off
     @Modifying
