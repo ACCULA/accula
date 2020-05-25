@@ -74,9 +74,9 @@ public class WebSecurityConfig {
                         .accessDeniedHandler(new HttpStatusServerAccessDeniedHandler(FORBIDDEN)))
 
                 .authorizeExchange(exchanges -> exchanges
-                        .pathMatchers("/api/greet").authenticated()
-                        .pathMatchers(GET, "/api/projects/*").permitAll()
-                        .pathMatchers("/api/projects/*").authenticated()
+                        .pathMatchers("/api/projects/**/pulls/**").authenticated()
+                        .pathMatchers(GET, "/api/projects/**").permitAll()
+                        .pathMatchers("/api/projects/**").authenticated()
                         .anyExchange().permitAll())
 
                 .addFilterBefore(jwtRefreshFilter, AUTHENTICATION)
