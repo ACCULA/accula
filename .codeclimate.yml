@@ -9,7 +9,7 @@ plugins:
       squid:S00112:
         enabled: false # Use of generic exceptions in method declaration.
       squid:S1214:
-        enabled: false
+        enabled: false # Use constants in interfaces
 
   pmd:
     enabled: true

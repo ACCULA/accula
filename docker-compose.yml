@@ -22,7 +22,6 @@ services:
       - PORT=8080
       - API_URL=http://64.225.96.225
       - WEB_URL=http://64.225.96.225
-      - CODE_URL=http://code:8081
       - DB_HOST=postgres
       - DB_PORT=5432
       - DB_USER=postgres

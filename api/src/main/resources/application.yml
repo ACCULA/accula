@@ -50,7 +50,6 @@ accula:
 
   cluster:
     webUrl: ${WEB_URL}
-    codeUrl: ${CODE_URL}
 
   db:
     host: ${DB_HOST}

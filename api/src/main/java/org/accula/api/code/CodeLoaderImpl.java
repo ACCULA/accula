@@ -26,6 +26,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.StringJoiner;
 
 /**
@@ -34,7 +35,7 @@ import java.util.StringJoiner;
 @Service
 @Log4j2
 @RequiredArgsConstructor
-public class CodeClientImpl implements CodeClient {
+public class CodeLoaderImpl implements CodeLoader {
     public static final Exception REPO_NOT_FOUND = new Exception();
     public static final Exception FILE_NOT_FOUND = new Exception();
     public static final Exception CUT_ERROR = new Exception();
@@ -42,7 +43,7 @@ public class CodeClientImpl implements CodeClient {
 
     private final Scheduler scheduler = Schedulers.boundedElastic();
 
-    private final RepositoryManager repositoryManager;
+    private final RepositoryProvider repositoryProvider;
 
     @Override
     public Flux<FileEntity> getFiles(final CommitMarker marker) {
@@ -50,25 +51,21 @@ public class CodeClientImpl implements CodeClient {
     }
 
     @Override
-    public Flux<FileEntity> getFiles(
-            final CommitMarker marker,
-            final FileFilter filter) {
-        return repositoryManager.getRepository(marker.getOwner(), marker.getRepo())
+    public Flux<FileEntity> getFiles(final CommitMarker marker, final FileFilter filter) {
+        return repositoryProvider.getRepository(marker.getOwner(), marker.getRepo())
                 .switchIfEmpty(Mono.error(REPO_NOT_FOUND))
-                .flatMapMany(rep -> Flux.fromIterable(getObjectLoaders(rep, marker.getSha())))
-                .filter(tuple -> filter.test(tuple.getT1()))
-                .map(tuple -> new FileEntity(tuple.getT1(), getFileContent(tuple.getT2())))
+                .flatMapMany(repo -> Flux.fromIterable(getObjectLoaders(repo, marker.getSha())))
+                .filter(filenameAndLoader -> filter.test(filenameAndLoader.getT1()))
+                .map(filenameAndLoader -> new FileEntity(filenameAndLoader.getT1(), getFileContent(filenameAndLoader.getT2())))
                 .switchIfEmpty(Mono.error(CUT_ERROR))
                 .subscribeOn(scheduler);
     }
 
     @Override
-    public Mono<String> getFile(
-            final CommitMarker marker,
-            final String fileName) {
-        return repositoryManager.getRepository(marker.getOwner(), marker.getRepo())
+    public Mono<String> getFile(final CommitMarker marker, final String filename) {
+        return repositoryProvider.getRepository(marker.getOwner(), marker.getRepo())
                 .switchIfEmpty(Mono.error(REPO_NOT_FOUND))
-                .flatMap(rep -> Mono.justOrEmpty(getObjectLoader(rep, marker.getSha(), fileName)))
+                .flatMap(repo -> Mono.justOrEmpty(getObjectLoader(repo, marker.getSha(), filename)))
                 .switchIfEmpty(Mono.error(FILE_NOT_FOUND))
                 .map(this::getFileContent)
                 .switchIfEmpty(Mono.error(CUT_ERROR))
@@ -76,17 +73,14 @@ public class CodeClientImpl implements CodeClient {
     }
 
     @Override
-    public Mono<String> getFileSnippet(
-            final CommitMarker marker,
-            final String fileName,
-            final int fromLine,
-            final int toLine) {
+    public Mono<String> getFileSnippet(final CommitMarker marker, final String filename,
+                                       final int fromLine, final int toLine) {
         if (fromLine > toLine) {
             return Mono.error(RANGE_ERROR);
         }
-        return repositoryManager.getRepository(marker.getOwner(), marker.getRepo())
+        return repositoryProvider.getRepository(marker.getOwner(), marker.getRepo())
                 .switchIfEmpty(Mono.error(REPO_NOT_FOUND))
-                .flatMap(rep -> Mono.justOrEmpty(getObjectLoader(rep, marker.getSha(), fileName)))
+                .flatMap(repo -> Mono.justOrEmpty(getObjectLoader(repo, marker.getSha(), filename)))
                 .switchIfEmpty(Mono.error(FILE_NOT_FOUND))
                 .map(loader -> cutFileContent(loader, fromLine, toLine))
                 .switchIfEmpty(Mono.error(CUT_ERROR))

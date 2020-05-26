@@ -10,31 +10,31 @@ import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class CodeClientTest {
+class CodeLoaderTest {
     public static final String OWNER = "polis-mail-ru";
     public static final String REPO = "2019-highload-dht";
     public static final String SHA = "720cefb3f361895e9e23524c2b4025f9a949d5d2";
     public static final String README = "README.md";
     public static final CommitMarker MARKER = new CommitMarker(OWNER, REPO, SHA);
 
-    private CodeClient codeClient;
+    private CodeLoader codeLoader;
 
     @BeforeEach
     void setUp(@TempDir final File tempDir) {
-        RepositoryManager repositoryManager = new RepositoryManagerImpl(tempDir);
-        this.codeClient = new CodeClientImpl(repositoryManager);
+        RepositoryProvider repositoryProvider = new RepositoryManager(tempDir);
+        this.codeLoader = new CodeLoaderImpl(repositoryProvider);
     }
 
     @Test
     void testGetSingleFile() {
-        String readme = codeClient.getFile(MARKER, README).block();
+        String readme = codeLoader.getFile(MARKER, README).block();
         assertNotNull(readme);
         assertTrue(readme.startsWith("# 2019-highload-dht"));
     }
 
     @Test
     void testGetMultipleFiles() {
-        Map<String, String> files = codeClient.getFiles(MARKER)
+        Map<String, String> files = codeLoader.getFiles(MARKER)
                 .collectMap(FileEntity::getName, FileEntity::getContent).block();
         assertNotNull(files);
         assertEquals(40, files.size());
@@ -46,7 +46,7 @@ class CodeClientTest {
     void testGetMultipleFilteredFiles() {
         Pattern excludeRegex = Pattern.compile(".*Test.*");
         FileFilter filter = fileName -> fileName.endsWith(".java") && !excludeRegex.matcher(fileName).matches();
-        Map<String, String> files = codeClient.getFiles(MARKER, filter)
+        Map<String, String> files = codeLoader.getFiles(MARKER, filter)
                 .collectMap(FileEntity::getName, FileEntity::getContent).block();
         assertNotNull(files);
         assertEquals(10, files.size());
@@ -58,14 +58,14 @@ class CodeClientTest {
 
     @Test
     void testGetFileSnippetSingleLine() {
-        String snippet = codeClient.getFileSnippet(MARKER, README, 4, 4).block();
+        String snippet = codeLoader.getFileSnippet(MARKER, README, 4, 4).block();
         assertNotNull(snippet);
         assertEquals("## Этап 1. HTTP + storage (deadline 2019-10-05)", snippet);
     }
 
     @Test
     void testGetFileSnippetMultiplyLines() {
-        String snippet = codeClient.getFileSnippet(MARKER, README, 4, 5).block();
+        String snippet = codeLoader.getFileSnippet(MARKER, README, 4, 5).block();
         assertNotNull(snippet);
         assertEquals("## Этап 1. HTTP + storage (deadline 2019-10-05)\n### Fork", snippet);
     }
@@ -73,7 +73,7 @@ class CodeClientTest {
     @Test
     void testGetFileSnippetWrongRange() {
         assertThrows(Exception.class, () -> {
-            codeClient.getFileSnippet(MARKER, README, 5, 4).block();
+            codeLoader.getFileSnippet(MARKER, README, 5, 4).block();
         });
     }
 }
