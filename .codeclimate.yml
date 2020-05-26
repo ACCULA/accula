@@ -8,6 +8,8 @@ plugins:
         enabled: false # Unused fields. Since we use lombok, the check results so many false positives
       squid:S00112:
         enabled: false # Use of generic exceptions in method declaration.
+      squid:S1214:
+        enabled: false # Use constants in interfaces
 
   pmd:
     enabled: true
@@ -31,6 +33,12 @@ plugins:
       DefaultPackage:
         enabled: false # Lombok-associated issue
       CallSuperInConstructor:
+        enabled: false
+      DataflowAnomalyAnalysis:
+        enabled: false
+      OnlyOneReturn:
+        enabled: false
+      ConstantsInInterface:
         enabled: false
 
     config:
