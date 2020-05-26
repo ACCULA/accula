@@ -2,7 +2,7 @@ package org.accula.api.code;
 
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.ObjectReader;
@@ -12,7 +12,7 @@ import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.jetbrains.annotations.Nullable;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
@@ -31,8 +31,8 @@ import java.util.StringJoiner;
 /**
  * @author Vadim Dyachkov
  */
-@Service
-@Log4j2
+@Component
+@Slf4j
 @RequiredArgsConstructor
 public class CodeLoaderImpl implements CodeLoader {
     public static final Exception REPO_NOT_FOUND = new Exception();
