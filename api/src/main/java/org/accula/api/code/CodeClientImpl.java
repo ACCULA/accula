@@ -45,22 +45,17 @@ public class CodeClientImpl implements CodeClient {
     private final RepositoryManager repositoryManager;
 
     @Override
-    public Flux<FileEntity> getFiles(
-            final String owner,
-            final String repoName,
-            final String sha) {
-        return getFiles(owner, repoName, sha, FileFilter.ALL);
+    public Flux<FileEntity> getFiles(final CommitMarker marker) {
+        return getFiles(marker, FileFilter.ALL);
     }
 
     @Override
     public Flux<FileEntity> getFiles(
-            final String owner,
-            final String repoName,
-            final String sha,
+            final CommitMarker marker,
             final FileFilter filter) {
-        return repositoryManager.getRepository(owner, repoName)
+        return repositoryManager.getRepository(marker.getOwner(), marker.getRepo())
                 .switchIfEmpty(Mono.error(REPO_NOT_FOUND))
-                .flatMapMany(rep -> Flux.fromIterable(getObjectLoaders(rep, sha)))
+                .flatMapMany(rep -> Flux.fromIterable(getObjectLoaders(rep, marker.getSha())))
                 .filter(tuple -> filter.test(tuple.getT1()))
                 .map(tuple -> new FileEntity(tuple.getT1(), getFileContent(tuple.getT2())))
                 .switchIfEmpty(Mono.error(CUT_ERROR))
@@ -69,13 +64,11 @@ public class CodeClientImpl implements CodeClient {
 
     @Override
     public Mono<String> getFile(
-            final String owner,
-            final String repoName,
-            final String sha,
+            final CommitMarker marker,
             final String fileName) {
-        return repositoryManager.getRepository(owner, repoName)
+        return repositoryManager.getRepository(marker.getOwner(), marker.getRepo())
                 .switchIfEmpty(Mono.error(REPO_NOT_FOUND))
-                .flatMap(rep -> Mono.justOrEmpty(getObjectLoader(rep, sha, fileName)))
+                .flatMap(rep -> Mono.justOrEmpty(getObjectLoader(rep, marker.getSha(), fileName)))
                 .switchIfEmpty(Mono.error(FILE_NOT_FOUND))
                 .map(this::getFileContent)
                 .switchIfEmpty(Mono.error(CUT_ERROR))
@@ -84,18 +77,16 @@ public class CodeClientImpl implements CodeClient {
 
     @Override
     public Mono<String> getFileSnippet(
-            final String owner,
-            final String repoName,
-            final String sha,
+            final CommitMarker marker,
             final String fileName,
             final int fromLine,
             final int toLine) {
         if (fromLine > toLine) {
             return Mono.error(RANGE_ERROR);
         }
-        return repositoryManager.getRepository(owner, repoName)
+        return repositoryManager.getRepository(marker.getOwner(), marker.getRepo())
                 .switchIfEmpty(Mono.error(REPO_NOT_FOUND))
-                .flatMap(rep -> Mono.justOrEmpty(getObjectLoader(rep, sha, fileName)))
+                .flatMap(rep -> Mono.justOrEmpty(getObjectLoader(rep, marker.getSha(), fileName)))
                 .switchIfEmpty(Mono.error(FILE_NOT_FOUND))
                 .map(loader -> cutFileContent(loader, fromLine, toLine))
                 .switchIfEmpty(Mono.error(CUT_ERROR))

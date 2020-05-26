@@ -15,6 +15,7 @@ class CodeClientTest {
     public static final String REPO = "2019-highload-dht";
     public static final String SHA = "720cefb3f361895e9e23524c2b4025f9a949d5d2";
     public static final String README = "README.md";
+    public static final CommitMarker MARKER = new CommitMarker(OWNER, REPO, SHA);
 
     private CodeClient codeClient;
 
@@ -26,14 +27,14 @@ class CodeClientTest {
 
     @Test
     void testGetSingleFile() {
-        String readme = codeClient.getFile(OWNER, REPO, SHA, README).block();
+        String readme = codeClient.getFile(MARKER, README).block();
         assertNotNull(readme);
         assertTrue(readme.startsWith("# 2019-highload-dht"));
     }
 
     @Test
     void testGetMultipleFiles() {
-        Map<String, String> files = codeClient.getFiles(OWNER, REPO, SHA)
+        Map<String, String> files = codeClient.getFiles(MARKER)
                 .collectMap(FileEntity::getName, FileEntity::getContent).block();
         assertNotNull(files);
         assertEquals(40, files.size());
@@ -45,7 +46,7 @@ class CodeClientTest {
     void testGetMultipleFilteredFiles() {
         Pattern excludeRegex = Pattern.compile(".*Test.*");
         FileFilter filter = fileName -> fileName.endsWith(".java") && !excludeRegex.matcher(fileName).matches();
-        Map<String, String> files = codeClient.getFiles(OWNER, REPO, SHA, filter)
+        Map<String, String> files = codeClient.getFiles(MARKER, filter)
                 .collectMap(FileEntity::getName, FileEntity::getContent).block();
         assertNotNull(files);
         assertEquals(10, files.size());
@@ -57,14 +58,14 @@ class CodeClientTest {
 
     @Test
     void testGetFileSnippetSingleLine() {
-        String snippet = codeClient.getFileSnippet(OWNER, REPO, SHA, README, 4, 4).block();
+        String snippet = codeClient.getFileSnippet(MARKER, README, 4, 4).block();
         assertNotNull(snippet);
         assertEquals("## Этап 1. HTTP + storage (deadline 2019-10-05)", snippet);
     }
 
     @Test
     void testGetFileSnippetMultiplyLines() {
-        String snippet = codeClient.getFileSnippet(OWNER, REPO, SHA, README, 4, 5).block();
+        String snippet = codeClient.getFileSnippet(MARKER, README, 4, 5).block();
         assertNotNull(snippet);
         assertEquals("## Этап 1. HTTP + storage (deadline 2019-10-05)\n### Fork", snippet);
     }
@@ -72,7 +73,7 @@ class CodeClientTest {
     @Test
     void testGetFileSnippetWrongRange() {
         assertThrows(Exception.class, () -> {
-            codeClient.getFileSnippet(OWNER, REPO, SHA, README, 5, 4).block();
+            codeClient.getFileSnippet(MARKER, README, 5, 4).block();
         });
     }
 }

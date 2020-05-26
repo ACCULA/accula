@@ -84,6 +84,18 @@ checks:
     config:
       threshold: 50
 
+engines:
+  pmd:
+    enabled: true
+    checks:
+      UseObjectForClearerAPI:
+        enabled: false
+  sonar-java:
+    enabled: true
+    checks:
+      squid:S1214:
+        enabled: false
+
 exclude_patterns:
   - "/web/**"
   - "/api/src/test/**"
