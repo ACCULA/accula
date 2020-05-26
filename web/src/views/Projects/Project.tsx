@@ -63,7 +63,7 @@ const Project = ({
           breadcrumbs={[{ text: 'Projects', to: '/projects' }, { text: project.repoName }]}
         />
         <Panel className="project panel-project">
-          <ProjectPanelHeading {...project} />
+          <ProjectPanelHeading project={project} />
           <Table striped bordered hover responsive>
             <thead>
               <tr className="project-pull">

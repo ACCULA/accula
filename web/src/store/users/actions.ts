@@ -2,7 +2,14 @@ import jwtDecode from 'jwt-decode'
 
 import { AppDispatch, AppStateSupplier } from 'store'
 import { IToken, IUser } from 'types'
-import { FETCHING_USER, FetchingUser, SET_ACCESS_TOKEN, SET_USER, SetAccessToken, SetUser } from './types'
+import {
+  FETCHING_USER,
+  FetchingUser,
+  SET_ACCESS_TOKEN,
+  SET_USER,
+  SetAccessToken,
+  SetUser
+} from './types'
 import { getUserById, refreshToken } from './services'
 
 export const setAccessTokenAction = (token: IToken): SetAccessToken => ({
@@ -25,7 +32,7 @@ export const getAccessTokenAction = () => async (
   getState: AppStateSupplier
 ) => {
   const { users } = getState()
-  if (users.token) {
+  if (users.token && users.token.accessToken) {
     const { exp } = jwtDecode(users.token.accessToken)
     const now = new Date().getTime() / 1000
     if (now <= exp) {

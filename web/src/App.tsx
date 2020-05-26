@@ -11,8 +11,10 @@ import Footer from 'components/Footer'
 import { routes } from 'routes'
 import { AppDispatch, AppState } from 'store'
 import { getCurrentUserAction } from 'store/users/actions'
+import { PrivateRoute } from 'components/PrivateRoute'
 
 const mapStateToProps = (state: AppState) => ({
+  auth: state.users.user !== null,
   user: state.users.user,
   isFetching: state.users.isFetching
 })
@@ -24,7 +26,7 @@ const mapDispatchToProps = (dispatch: AppDispatch) => ({
 const connector = connect(mapStateToProps, mapDispatchToProps)
 type AppProps = ConnectedProps<typeof connector>
 
-const App = ({ isFetching, user, getCurrentUser }: AppProps) => {
+const App = ({ auth, isFetching, user, getCurrentUser }: AppProps) => {
   const location = useLocation()
   const history = useHistory()
   const { width } = useWindowSize()
@@ -61,14 +63,24 @@ const App = ({ isFetching, user, getCurrentUser }: AppProps) => {
       <div id="main-panel" className="main-panel">
         <Navbar user={user} />
         <Switch>
-          {availableRoutes.map(route => (
-            <Route
-              key={route.path}
-              path={route.path}
-              component={route.component}
-              exact={route.exact}
-            />
-          ))}
+          {routes.map(route =>
+            route.authRequired ? (
+              <PrivateRoute
+                key={route.path}
+                path={route.path}
+                component={route.component}
+                exact={route.exact}
+                auth={auth}
+              />
+            ) : (
+              <Route
+                key={route.path}
+                path={route.path}
+                component={route.component}
+                exact={route.exact}
+              />
+            )
+          )}
           <Redirect to="/projects" path="/" exact />
           <Route>
             <h1 className="text-center">404</h1>

@@ -8,7 +8,7 @@ import { ProjectPanelHeading } from './ProjectPanelHeading'
 export const ProjectPanel = (project: IProject) => {
   return (
     <Panel className="panel-project">
-      <ProjectPanelHeading {...project} />
+      <ProjectPanelHeading project={project} />
       <Panel.Body>
         <p>{project.repoDescription}</p>
       </Panel.Body>
