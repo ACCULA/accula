@@ -28,6 +28,9 @@ services:
       - DB_USER=postgres
       - DB_PASS=postgres
       - DB_NAME=accula
+      - REPOS_PATH=/app/repos/
+    volumes:
+      - ./repos:/app/repos
   postgres:
     image: postgres:11
     ports:
@@ -38,17 +41,3 @@ services:
       - POSTGRES_DB=accula
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
-  code:
-    build:
-      context: ./
-      dockerfile: ./code/Dockerfile
-    expose:
-      - 8081
-    ports:
-      - "8081:8081"
-    environment:
-      - PORT=8081
-      - REPOS_PATH=/app/repos/
-    volumes:
-      - ./repos:/app/repos
-

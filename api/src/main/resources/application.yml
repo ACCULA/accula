@@ -63,3 +63,5 @@ accula:
       maxIdleTime: 5s
       minSize: 2
       maxSize: 20
+
+  reposPath: ${REPOS_PATH}

@@ -1,8 +1,0 @@
-server:
-  error:
-    whitelabel:
-      enabled: false
-  port: ${PORT}
-
-accula:
-  reposPath: ${REPOS_PATH}
