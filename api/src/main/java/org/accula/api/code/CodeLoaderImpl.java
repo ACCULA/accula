@@ -55,7 +55,7 @@ public class CodeLoaderImpl implements CodeLoader {
                 .switchIfEmpty(Mono.error(REPO_NOT_FOUND))
                 .flatMapMany(repo -> Flux.fromIterable(getObjectLoaders(repo, marker.getSha())))
                 .filter(filenameAndLoader -> filter.test(filenameAndLoader.getT1()))
-                .map(filenameAndLoader -> new FileEntity(filenameAndLoader.getT1(), getFileContent(filenameAndLoader.getT2())))
+                .map(filenameAndLoader -> new FileEntity(marker, filenameAndLoader.getT1(), getFileContent(filenameAndLoader.getT2())))
                 .switchIfEmpty(Mono.error(CUT_ERROR))
                 .subscribeOn(scheduler);
     }
