@@ -1,5 +1,32 @@
 version: '3'
 services:
+  web:
+    build: web
+    expose:
+      - 80
+    depends_on:
+      - api
+    ports:
+      - "80:80"
+  api:
+    build:
+      context: ./
+      dockerfile: ./api/Dockerfile
+    expose:
+      - 8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    environment:
+      - PORT=8080
+      - API_URL=http://64.225.96.225
+      - WEB_URL=http://64.225.96.225
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASS=postgres
+      - DB_NAME=accula
   postgres:
     image: postgres:11
     ports:

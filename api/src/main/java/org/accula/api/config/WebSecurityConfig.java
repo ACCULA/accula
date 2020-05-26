@@ -15,6 +15,7 @@ import org.accula.api.db.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.oauth2.client.ReactiveOAuth2AuthorizedClientService;
@@ -28,12 +29,10 @@ import org.springframework.security.web.server.context.NoOpServerSecurityContext
 import org.springframework.security.web.server.savedrequest.NoOpServerRequestCache;
 import org.springframework.web.server.WebFilter;
 
-import java.net.URISyntaxException;
-import java.nio.file.Path;
+import java.io.IOException;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
 
-import static java.util.Objects.requireNonNull;
 import static org.springframework.http.HttpMethod.GET;
 import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
@@ -63,6 +62,7 @@ public class WebSecurityConfig {
                 .formLogin().disable()
                 .logout().disable()
                 .headers().disable()
+                .csrf().disable()
 
                 //https://github.com/spring-projects/spring-security/issues/6552#issuecomment-515571416
              /*   .requestCache(cache -> cache
@@ -77,16 +77,18 @@ public class WebSecurityConfig {
                         .accessDeniedHandler(new HttpStatusServerAccessDeniedHandler(FORBIDDEN)))
 
                 .authorizeExchange(exchanges -> exchanges
-                        .pathMatchers("/greet").authenticated()
+                        .pathMatchers("/api/projects/**/pulls/**").authenticated()
+                        .pathMatchers(GET, "/api/projects/**").permitAll()
+                        .pathMatchers("/api/projects/**").authenticated()
                         .anyExchange().permitAll())
 
                 .addFilterBefore(jwtRefreshFilter, AUTHENTICATION)
                 .addFilterAt(authenticationFilter, AUTHENTICATION)
 
                 .oauth2Login(oauth2 -> oauth2
-                        .authenticationMatcher(pathMatchers(GET, "/login/{registrationId}/callback"))
+                        .authenticationMatcher(pathMatchers(GET, "/api/login/{registrationId}/callback"))
                         .authorizationRequestResolver(new DefaultServerOAuth2AuthorizationRequestResolver(
-                                clientRegistrations, pathMatchers(GET, "/login/{registrationId}")))
+                                clientRegistrations, pathMatchers(GET, "/api/login/{registrationId}")))
                         .authenticationSuccessHandler(oauth2LoginSuccessHandler)
                         .authenticationFailureHandler(new OAuth2LoginFailureHandler())
                 )
@@ -94,17 +96,17 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    public ECPublicKey publicKey() throws URISyntaxException {
-        final var resource = requireNonNull(getClass().getClassLoader().getResource(jwtProperties.getSignature().getPublicKey()));
-
-        return EcKeys.publicKey(Path.of(resource.toURI()));
+    public ECPublicKey publicKey() throws IOException {
+        final var resource = new ClassPathResource(jwtProperties.getSignature().getPublicKey());
+        final var bytes = resource.getInputStream().readAllBytes();
+        return EcKeys.publicKey(bytes);
     }
 
     @Bean
-    public ECPrivateKey privateKey() throws URISyntaxException {
-        final var resource = requireNonNull(getClass().getClassLoader().getResource(jwtProperties.getSignature().getPrivateKey()));
-
-        return EcKeys.privateKey(Path.of(resource.toURI()));
+    public ECPrivateKey privateKey() throws IOException {
+        final var resource = new ClassPathResource(jwtProperties.getSignature().getPrivateKey());
+        final var bytes = resource.getInputStream().readAllBytes();
+        return EcKeys.privateKey(bytes);
     }
 
     @Bean
@@ -114,7 +116,7 @@ public class WebSecurityConfig {
 
     @Bean
     public String refreshTokenEndpointPath() {
-        return "/refreshToken";
+        return "/api/refreshToken";
     }
 
     @Bean

@@ -1,0 +1,10 @@
+.has-feedback label ~ .form-control-feedback {
+  top: 35px;
+}
+
+.modal-header {
+  button {
+    font-size: $font-size-h3;
+    top: 0;
+  }
+}

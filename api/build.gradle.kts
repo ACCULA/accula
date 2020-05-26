@@ -1,13 +1,9 @@
 plugins {
-    id("org.springframework.boot") version "2.3.0.RC1"
+    id("org.springframework.boot") version "2.3.0.RELEASE"
     id("io.spring.dependency-management") version "1.0.9.RELEASE"
 }
 
 version = "1.0-SNAPSHOT"
-
-repositories {
-    maven(url = "https://repo.spring.io/milestone")
-}
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-webflux")

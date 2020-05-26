@@ -1,49 +1,71 @@
-import React, { useEffect, useState } from 'react'
-import { Redirect, Route, RouteComponentProps, Switch } from 'react-router-dom'
+import React, { useEffect } from 'react'
+import { bindActionCreators } from 'redux'
+import { connect, ConnectedProps } from 'react-redux'
+import { Redirect, Route, Switch, useHistory } from 'react-router-dom'
+import { useLocation, useWindowSize } from 'react-use'
 
 import Navbar from 'components/Navbars'
 import Sidebar from 'components/Sidebar'
 import Footer from 'components/Footer'
 
-import routes from 'routes'
-import { getAccessToken } from 'accessToken'
+import { routes } from 'routes'
+import { AppDispatch, AppState } from 'store'
+import { getAccessTokenAction, getCurrentUserAction, getUserAction } from 'store/users/actions'
 
-const App = (props: RouteComponentProps) => {
-  const { history, location } = props
+const mapStateToProps = (state: AppState) => ({
+  token: state.users.token,
+  user: state.users.user,
+  isFetching: state.users.isFetching
+})
+
+const mapDispatchToProps = (dispatch: AppDispatch) =>
+  bindActionCreators(
+    {
+      getAccessToken: getAccessTokenAction,
+      getUser: getUserAction,
+      getCurrentUser: getCurrentUserAction
+    },
+    dispatch
+  )
+
+const connector = connect(mapStateToProps, mapDispatchToProps)
+type AppProps = ConnectedProps<typeof connector>
+
+const App = ({ getAccessToken, getCurrentUser, token, user, isFetching }: AppProps) => {
+  const location = useLocation()
+  const history = useHistory()
+  const { width } = useWindowSize()
+
+  useEffect(() => {
+    if (width < 991 && document.documentElement.className.indexOf('nav-open') !== -1) {
+      document.documentElement.classList.toggle('nav-open')
+    }
+  }, [width, location])
 
   useEffect(() => {
     if (history.action === 'PUSH') {
       document.documentElement.scrollTop = 0
       document.scrollingElement.scrollTop = 0
-      document.documentElement.classList.toggle('nav-open')
     }
-  })
+  }, [history, location])
 
-  const [loading, setLoading] = useState(true)
-  const [loggedIn, setLoggedIn] = useState(false)
+  useEffect(() => {
+    getCurrentUser()
+  }, [getCurrentUser, token])
 
   useEffect(() => {
     getAccessToken()
-      .then(accessToken => {
-        setLoggedIn(accessToken && accessToken !== '')
-      })
-      .finally(() => {
-        setLoading(false)
-      })
-  })
+  }, [getAccessToken])
 
-  if (loading) {
+  if (isFetching) {
     return <></>
   }
 
-  const brand: string =
-    routes.filter(route => location.pathname.indexOf(route.path) >= 0)[0]?.name || 'ACCULA'
-
   return (
     <div className="wrapper">
-      <Sidebar {...props} routes={routes} color="black" loggedIn={loggedIn} />
+      <Sidebar user={user} routes={routes} />
       <div id="main-panel" className="main-panel">
-        <Navbar {...props} brandText={brand} loggedIn={loggedIn} />
+        <Navbar user={user} />
         <Switch>
           {routes.map(route => (
             <Route
@@ -61,4 +83,4 @@ const App = (props: RouteComponentProps) => {
   )
 }
 
-export default App
+export default connector(App)

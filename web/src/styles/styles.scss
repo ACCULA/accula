@@ -1,22 +1,38 @@
+// Variables
 @import "variables";
-@import "mixins";
+
+// Mixins
+@import "mixins/transparency";
+@import "mixins/vendor-prefixes";
+@import "mixins/buttons";
+@import "mixins/badges";
+@import "mixins/inputs";
+@import "mixins/labels";
+@import "mixins/tabs";
+@import "mixins/navbars";
+@import "mixins/icons";
+@import "mixins/cards";
 
 // Core CSS
 @import "typography";
 @import "misc";
-@import "sidebar-and-main-panel";
-@import "buttons";
-@import "inputs";
 
-@import "alerts";
-@import "tables";
+// Components
+@import "components/sidebar-and-main-panel";
+@import "components/buttons";
+@import "components/badges";
+@import "components/inputs";
+@import "components/alerts";
+@import "components/breadcrumb";
+@import "components/tables";
+@import "components/navbars";
+@import "components/footers";
+@import "components/modals";
+@import "components/dropdown";
+@import "components/cards";
+@import "components/panels";
+@import "components/projects";
+@import "components/pulls";
 
-@import "checkbox-radio-switch";
-@import "navbars";
-@import "footers";
-
-// Fancy Stuff
-@import "dropdown";
-@import "cards";
-@import "chartist";
+// Responsiveness
 @import "responsive";

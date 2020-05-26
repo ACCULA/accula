@@ -4,24 +4,25 @@ spring:
       - secrets
 
   flyway:
-    url: jdbc:postgresql://${db.host}/${db.database}
-    user: ${db.user}
-    password: ${db.password}
+    url: jdbc:postgresql://${DB_HOST}/${DB_NAME}
+    user: ${DB_USER}
+    password: ${DB_PASS}
 
   security:
     oauth2:
       client:
         registration:
           github:
-            client-id: ${github-app.client-id}
-            client-secret: ${github-app.client-secret}
+            client-id: ${GITHUB_CLIENT_ID}
+            client-secret: ${GITHUB_CLIENT_SECRET}
             scope: read:user,public_repo
-            redirect-uri: "{baseUrl}/login/github/callback"
+            redirect-uri: ${API_URL}/api/login/github/callback
 
 server:
   error:
     whitelabel:
       enabled: false
+  port: ${PORT}
 
 #management:
 #  endpoints:
@@ -40,22 +41,22 @@ logging:
 accula:
   jwt:
     signature:
-      publicKey: "accula.public.der"
-      privateKey: "accula.private.der"
-    issuer: ${jwt.issuer}
+      publicKey: accula.public.der
+      privateKey: accula.private.der
+    issuer: accula
     expiresIn:
-      access: ${jwt.expiresIn.access}
-      refresh: ${jwt.expiresIn.refresh}
+      access: 1m
+      refresh: 90d
 
   cluster:
-    webUrl: "http://localhost:3000"
+    webUrl: ${WEB_URL}
 
   db:
-    host: ${db.host}
-    port: ${db.port}
-    user: ${db.user}
-    password: ${db.password}
-    database: ${db.database}
+    host: ${DB_HOST}
+    port: ${DB_PORT}
+    user: ${DB_USER}
+    password: ${DB_PASS}
+    database: ${DB_NAME}
 
     pool:
       maxIdleTime: 5s

@@ -1,6 +1,6 @@
 package org.accula.api.db;
 
-import org.accula.api.db.dto.User;
+import org.accula.api.db.model.User;
 import org.springframework.data.r2dbc.repository.Modifying;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
@@ -12,11 +12,7 @@ import reactor.core.publisher.Mono;
  */
 @Repository
 public interface UserRepository extends ReactiveCrudRepository<User, Long> {
-    Mono<User> findById(final Long id);
-
     Mono<User> findByGithubId(final Long githubId);
-
-    <S extends User> Mono<S> save(final S user);
 
     //@formatter:off
     @Modifying
