@@ -1,4 +1,10 @@
-import { FETCHING_USER, SET_ACCESS_TOKEN, SET_USER, UsersActionTypes, UsersState } from 'store/users/types'
+import {
+  FETCHING_USER,
+  SET_ACCESS_TOKEN,
+  SET_USER,
+  UsersActionTypes,
+  UsersState
+} from 'store/users/types'
 
 const initialState: UsersState = {
   user: null,

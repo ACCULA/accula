@@ -58,19 +58,19 @@ export const getCurrentUserAction = () => async (
   dispatch: AppDispatch,
   getState: AppStateSupplier
 ) => {
-  await requireToken(dispatch, getState)
-  const { users } = getState()
-  if (users.token && users.token.accessToken) {
-    const { sub } = jwtDecode(users.token.accessToken)
-    try {
-      dispatch(fetchingUser(true))
+  try {
+    dispatch(fetchingUser(true))
+    await requireToken(dispatch, getState)
+    const { users } = getState()
+    if (users.token && users.token.accessToken) {
+      const { sub } = jwtDecode(users.token.accessToken)
       const user = await getUserById(parseInt(sub, 10))
       dispatch(setUser(user))
-    } catch (e) {
-      console.log(e)
-    } finally {
-      dispatch(fetchingUser(false))
     }
+  } catch (e) {
+    console.log(e)
+  } finally {
+    dispatch(fetchingUser(false))
   }
 }
 

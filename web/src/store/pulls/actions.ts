@@ -69,7 +69,7 @@ export const getPullAction = (projectId: number, pullId: number) => async (
       return
     }
   }
-  if (!users.token || pulls.isFetching) {
+  if (!users.token) {
     return
   }
   if (!pulls.pull || pulls.pull.projectId !== projectId || pulls.pull.number !== pullId) {
