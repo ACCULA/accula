@@ -8,6 +8,8 @@ plugins:
         enabled: false # Unused fields. Since we use lombok, the check results so many false positives
       squid:S00112:
         enabled: false # Use of generic exceptions in method declaration.
+      squid:S1214:
+        enabled: false
 
   pmd:
     enabled: true
@@ -35,6 +37,8 @@ plugins:
       DataflowAnomalyAnalysis:
         enabled: false
       OnlyOneReturn:
+        enabled: false
+      UseObjectForClearerAPI:
         enabled: false
 
     config:
@@ -83,18 +87,6 @@ checks:
   identical-code:
     config:
       threshold: 50
-
-engines:
-  pmd:
-    enabled: true
-    checks:
-      UseObjectForClearerAPI:
-        enabled: false
-  sonar-java:
-    enabled: true
-    checks:
-      squid:S1214:
-        enabled: false
 
 exclude_patterns:
   - "/web/**"
