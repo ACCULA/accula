@@ -1,25 +1,26 @@
 import { ComponentType } from 'react'
 
-export interface Token {
+export interface IToken {
   accessToken: string
 }
 
-export interface User {
+export interface IUser {
   id: number
   login: string
   name: string
 }
 
-export interface RouteInfo {
+export interface IRouteInfo {
   path: string
-  exact?: boolean
   name: string
-  icon?: string
   component: ComponentType<any>
+  exact?: boolean
+  icon?: string
   hidden?: boolean
+  authRequired?: boolean
 }
 
-export interface Project {
+export interface IProject {
   id: number
   repoUrl: string
   creatorId: number
@@ -31,21 +32,27 @@ export interface Project {
   repoOpenPullCount: number
 }
 
-export interface ProjectSettings {}
+export interface IProjectSettings {}
 
-export interface PullRequest {
+export interface IPullShort {
   id: number
   projectId: number
-  pullUrl: string
-  base: {
+  title: string
+  open: boolean
+  cloneCount: number
+}
+
+export interface IPull {
+  number: number
+  projectId: number
+  url: string
+  source: {
     url: string
     label: string
-    sha: string
   }
-  fork: {
+  target: {
     url: string
     label: string
-    sha: string
   }
   author: {
     url: string
@@ -57,4 +64,23 @@ export interface PullRequest {
   open: boolean
   createdAt: string
   updatedAt: string
+  status: string
+  cloneCount: number
+  previousPulls: IPullShort[]
+}
+
+type Base64 = string
+
+export interface ICodeRef {
+  projectId: number
+  pullId: number
+  repo: string
+  file: string
+  code: Base64
+}
+
+export interface IClone {
+  id: number
+  from: ICodeRef
+  to: ICodeRef
 }

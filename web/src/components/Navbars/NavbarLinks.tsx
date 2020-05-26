@@ -3,12 +3,12 @@ import { MenuItem, Nav, NavDropdown, NavItem } from 'react-bootstrap'
 import { useHistory } from 'react-router-dom'
 
 import { API_URL } from 'utils'
-import { User } from 'types'
+import { IUser } from 'types'
 
 const NavDropdownHack: any = NavDropdown
 
 interface NavbarLinksProps {
-  user?: User
+  user?: IUser
 }
 
 const NavbarLinks = ({ user }: NavbarLinksProps) => {

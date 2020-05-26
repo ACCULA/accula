@@ -1,28 +1,30 @@
-import { RouteInfo } from 'types'
+import { IRouteInfo } from 'types'
 
 import UserProfile from 'views/UserProfile'
-import Projects from 'views/Projects'
 import Settings from 'views/Settings'
 import OAuth2RedirectHandler from 'views/OAuth2RedirectHandler'
+import ProjectsRoutes from 'views/Projects/ProjectsRoutes'
 
-export const routes: RouteInfo[] = [
+export const routes: IRouteInfo[] = [
   {
     path: '/projects',
     name: 'Projects',
-    icon: 'list-ul',
-    component: Projects
+    component: ProjectsRoutes,
+    icon: 'list-ul'
   },
   {
     path: '/profile',
     name: 'Profile',
+    component: UserProfile,
     icon: 'user',
-    component: UserProfile
+    authRequired: true
   },
   {
     path: '/settings',
     name: 'Settings',
+    component: Settings,
     icon: 'cog',
-    component: Settings
+    authRequired: true
   },
   {
     path: '/oauth2/redirect',

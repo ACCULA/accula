@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.Data;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Locale;
 
@@ -39,6 +41,11 @@ public final class GithubPull {
     @Data
     public static final class Marker {
         private String label;
+        private String ref;
         private GithubRepo repo;
+
+        public String getTreeUrl() {
+            return String.format("%s/tree/%s", repo.getHtmlUrl(), URLEncoder.encode(ref, StandardCharsets.UTF_8));
+        }
     }
 }

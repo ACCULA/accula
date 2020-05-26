@@ -24,6 +24,10 @@
   &.btn-icon {
     padding: $padding-base-vertical;
   }
+  
+  div {
+    display: inline-block;
+  }
 }
 
 // Apply the mixin to the buttons

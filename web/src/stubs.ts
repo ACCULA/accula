@@ -1,6 +1,6 @@
-import { Project, PullRequest } from 'types'
+import { IClone, IProject, IPull } from 'types'
 
-export const projects: Project[] = [
+export const projects: IProject[] = [
   {
     id: 1,
     repoUrl: 'https://github.com/polis-mail-ru/2019-highload-dht',
@@ -33,21 +33,19 @@ export const projects: Project[] = [
   }
 ]
 
-export const pulls: PullRequest[] = [
+export const pulls: IPull[] = [
   {
-    id: 3,
+    number: 3,
     projectId: 1,
     title: 'Stage 1',
-    pullUrl: 'https://github.com/polis-mail-ru/2019-highload-dht/pull/3',
-    base: {
+    url: 'https://github.com/polis-mail-ru/2019-highload-dht/pull/3',
+    target: {
       url: 'https://github.com/polis-mail-ru/2019-highload-dht',
-      label: 'polis-mail-ru:master',
-      sha: 'd6357dccc16c7d5c001fd2a2203298c36fe96b63'
+      label: 'polis-mail-ru:master'
     },
-    fork: {
+    source: {
       url: 'https://github.com/kilinochi/2019-highload-dht',
-      label: 'kilinochi:master',
-      sha: 'a1c28a1b500701819cf9919246f15f3f900bb609'
+      label: 'kilinochi:master'
     },
     author: {
       url: 'https://github.com/kilinochi',
@@ -57,22 +55,23 @@ export const pulls: PullRequest[] = [
     },
     open: false,
     createdAt: '2019-09-30T06:09:57Z',
-    updatedAt: '2019-10-06T09:00:40Z'
+    updatedAt: '2019-10-06T09:00:40Z',
+    status: 'Read',
+    cloneCount: 100,
+    previousPulls: []
   },
   {
-    id: 5,
+    number: 5,
     projectId: 1,
     title: 'Single Node | Vadim Dyachkov',
-    pullUrl: 'https://github.com/polis-mail-ru/2019-highload-dht/pull/5',
-    base: {
+    url: 'https://github.com/polis-mail-ru/2019-highload-dht/pull/5',
+    target: {
       url: 'https://github.com/polis-mail-ru/2019-highload-dht',
-      label: 'polis-mail-ru:master',
-      sha: 'd6357dccc16c7d5c001fd2a2203298c36fe96b63'
+      label: 'polis-mail-ru:master'
     },
-    fork: {
+    source: {
       url: 'https://github.com/vaddya/2019-highload-dht',
-      label: 'vaddya:master',
-      sha: '00b4287b3028bbdc7c913c3bf498c8bc572fadd3'
+      label: 'vaddya:master'
     },
     author: {
       url: 'https://github.com/vaddya',
@@ -82,7 +81,25 @@ export const pulls: PullRequest[] = [
     },
     open: true,
     createdAt: '2020-05-06T13:02:18Z',
-    updatedAt: '2020-05-11T04:02:18Z'
+    updatedAt: '2020-05-11T04:02:18Z',
+    status: 'Processing',
+    cloneCount: 0,
+    previousPulls: [
+      {
+        id: 3,
+        projectId: 1,
+        title: 'Stage 1',
+        open: false,
+        cloneCount: 3
+      },
+      {
+        id: 3,
+        projectId: 1,
+        title: 'Stage 2',
+        open: false,
+        cloneCount: 3
+      }
+    ]
   }
 ]
 
@@ -144,3 +161,63 @@ public interface RefreshTokenRepository extends ReactiveCrudRepository<RefreshTo
 `
 
 export const files = { oldCode, newCode }
+
+
+const oldCode2 = `
+@Modifying
+@Query("UPDATE refresh_token " +
+       "SET token = :newToken, expiration_date = :newExpirationDate " +
+       "WHERE user_id = :userId AND token = :oldToken")
+Mono<Void> replaceRefreshToken(final Long userId,
+                               final String oldToken,
+                               final String newToken,
+                               final Instant newExpirationDate);
+`
+
+const newCode2 = `
+@Modifying
+@Query("UPDATE refresh_token " +
+       "SET token = :newToken, expiration_date = :newExpirationDate " +
+       "WHERE token = :oldToken AND user_id = :userId")
+Mono<Void> replaceRefreshToken(final Long userId,
+                               final String oldToken,
+                               final String newToken,
+                               final Instant newExpirationDate);
+`
+
+export const clones: IClone[] = [
+  {
+    id: 1,
+    from: {
+      projectId: 1,
+      pullId: 6,
+      repo: '2018-highload',
+      file: 'src/main/java/ru/mail/polis/Main.java',
+      code: btoa(oldCode2)
+    },
+    to: {
+      projectId: 2,
+      pullId: 4,
+      repo: '2019-highload',
+      file: 'src/main/java/ru/mail/polis/MyMain.java',
+      code: btoa(newCode2)
+    }
+  },
+  {
+    id: 2,
+    from: {
+      projectId: 2,
+      pullId: 1,
+      repo: '2019-highload',
+      file: 'src/main/java/ru/mail/polis/Database.java',
+      code: btoa(oldCode2)
+    },
+    to: {
+      projectId: 2,
+      pullId: 4,
+      repo: '2019-highload',
+      file: 'src/main/java/ru/mail/polis/Database.java',
+      code: btoa(newCode2)
+    }
+  }
+]

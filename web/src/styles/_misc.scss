@@ -97,3 +97,7 @@ code {
   background: lighten($info-color, 55);
   font-family: $font-family-mono;
 }
+
+.alert {
+  margin-bottom: 0;
+}

@@ -1,10 +1,10 @@
 import React, { useState } from 'react'
 import { Button } from 'react-bootstrap'
 
-import { files } from 'data'
-import FileDiffPanel from './FileDiffPanel'
+import { files } from 'stubs'
+import { CodeDiff, DiffMethod } from 'components/CodeDiff'
 
-export const FileChangesTab = () => {
+export const PullChangesTab = () => {
   const [splitView, setSplitView] = useState(false)
   return (
     <>
@@ -15,12 +15,14 @@ export const FileChangesTab = () => {
       </div>
       <h5>3 files changed</h5>
       {[1, 2, 3].map(i => (
-        <FileDiffPanel
+        <CodeDiff
           key={i}
-          fileName={`src/app/File${i}.java`}
+          leftTitle={<code>{`src/app/File${i}.java`}</code>}
           splitView={splitView} //
-          oldCode={files.oldCode}
-          newCode={files.newCode}
+          oldValue={files.oldCode}
+          newValue={files.newCode}
+          compareMethod={DiffMethod.LINES}
+          disableWordDiff
         />
       ))}
     </>

@@ -83,11 +83,13 @@ public final class PullsHandler {
         return GetPullResponseBody.builder()
                 .projectId(projectId)
                 .number(githubPull.getNumber())
+                .url(githubPull.getHtmlUrl())
+                .title(githubPull.getTitle())
                 .source(new GetPullResponseBody.PullRef(
-                        githubPull.getHead().getRepo().getHtmlUrl(),
+                        githubPull.getHead().getTreeUrl(),
                         githubPull.getHead().getLabel()))
                 .target(new GetPullResponseBody.PullRef(
-                        githubPull.getBase().getRepo().getHtmlUrl(),
+                        githubPull.getBase().getTreeUrl(),
                         githubPull.getBase().getLabel()))
                 .author(new GetPullResponseBody.PullAuthor(
                         githubPull.getUser().getLogin(),
