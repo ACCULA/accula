@@ -38,8 +38,6 @@ plugins:
         enabled: false
       OnlyOneReturn:
         enabled: false
-      UseObjectForClearerAPI:
-        enabled: false
       ConstantsInInterface:
         enabled: false
 
