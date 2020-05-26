@@ -40,6 +40,8 @@ plugins:
         enabled: false
       UseObjectForClearerAPI:
         enabled: false
+      ConstantsInInterface:
+        enabled: false
 
     config:
       file: pmd.xml

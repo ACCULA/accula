@@ -127,7 +127,7 @@ public class CodeClientImpl implements CodeClient {
         final int treeId = treeWalk.addTree(revTree);
         treeWalk.setRecursive(true);
         while (treeWalk.next()) {
-            ObjectId objectId = treeWalk.getObjectId(treeId);
+            final ObjectId objectId = treeWalk.getObjectId(treeId);
             result.add(Tuples.of(treeWalk.getPathString(), reader.open(objectId)));
         }
         return result;
