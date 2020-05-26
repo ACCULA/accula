@@ -88,10 +88,7 @@ public class CodeLoaderImpl implements CodeLoader {
 
     @SneakyThrows
     @Nullable
-    private ObjectLoader getObjectLoader(
-            final Repository repository,
-            final String sha,
-            final String file) {
+    private ObjectLoader getObjectLoader(final Repository repository, final String sha, final String file) {
         final ObjectReader reader = repository.newObjectReader();
         final RevWalk revWalk = new RevWalk(reader);
         final ObjectId commitId = repository.resolve(sha);
@@ -106,9 +103,7 @@ public class CodeLoaderImpl implements CodeLoader {
     }
 
     @SneakyThrows
-    private List<Tuple2<String, ObjectLoader>> getObjectLoaders(
-            final Repository repository,
-            final String sha) {
+    private List<Tuple2<String, ObjectLoader>> getObjectLoaders(final Repository repository, final String sha) {
         final ObjectReader reader = repository.newObjectReader();
         final RevWalk revWalk = new RevWalk(reader);
         final ObjectId commitId = repository.resolve(sha);

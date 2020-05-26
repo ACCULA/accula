@@ -41,9 +41,7 @@ public class RepositoryManager implements RepositoryProvider {
     }
 
     @Override
-    public Mono<Repository> getRepository(
-            final String owner,
-            final String repo) {
+    public Mono<Repository> getRepository(final String owner, final String repo) {
         final RepoRef ref = new RepoRef(owner, repo);
         final File directory = getDirectory(ref);
         return Mono
@@ -70,9 +68,7 @@ public class RepositoryManager implements RepositoryProvider {
                 .onErrorResume(Exception.class, t -> Mono.empty());
     }
 
-    private Mono<Repository> cloneRepository(
-            final RepoRef ref,
-            final File directory) {
+    private Mono<Repository> cloneRepository(final RepoRef ref, final File directory) {
         return Mono
                 .fromCallable(() -> Git
                         .cloneRepository()
