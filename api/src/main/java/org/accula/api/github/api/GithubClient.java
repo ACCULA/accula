@@ -1,5 +1,6 @@
 package org.accula.api.github.api;
 
+import org.accula.api.github.model.GithubHook;
 import org.accula.api.github.model.GithubPull;
 import org.accula.api.github.model.GithubRepo;
 import reactor.core.publisher.Mono;
@@ -15,6 +16,8 @@ public interface GithubClient {
     Mono<GithubPull[]> getRepositoryOpenPulls(final String owner, final String repo);
 
     Mono<GithubPull> getRepositoryPull(final String owner, final String repo, final Integer pullNumber);
+
+    Mono<Boolean> createHook(final String owner, final String repo, final GithubHook hook);
 
     interface LoginProvider {
         Mono<String> login();

@@ -15,7 +15,7 @@ spring:
           github:
             client-id: ${GITHUB_CLIENT_ID}
             client-secret: ${GITHUB_CLIENT_SECRET}
-            scope: read:user,public_repo
+            scope: read:user,public_repo,write:repo_hook
             redirect-uri: ${API_URL}/api/login/github/callback
 
 server:
@@ -45,7 +45,7 @@ accula:
       privateKey: accula.private.der
     issuer: accula
     expiresIn:
-      access: 1m
+      access: 12m
       refresh: 90d
 
   cluster:

@@ -1,5 +1,6 @@
 package org.accula.api.github.api;
 
+import org.accula.api.github.model.GithubHook;
 import org.accula.api.github.model.GithubPull;
 import org.accula.api.github.model.GithubRepo;
 import org.accula.api.github.model.GithubUserPermission;
@@ -86,6 +87,17 @@ public final class GithubClientImpl implements GithubClient {
                 .retrieve()
                 .bodyToMono(GithubPull.class)
                 .onErrorResume(e -> Mono.error(new GithubClientException(e))));
+    }
+
+    @Override
+    public Mono<Boolean> createHook(final String owner, final String repo, final GithubHook hook) {
+        return withAccessToken(accessToken -> githubApiWebClient
+                .post()
+                .uri("/repos/{owner}/{repo}/hooks", owner, repo)
+                .headers(h -> h.setBearerAuth(accessToken))
+                .bodyValue(hook)
+                .retrieve()
+                .bodyToMono(Boolean.class));
     }
 
     private <T> Mono<T> withAccessToken(final Function<String, Mono<T>> transform) {
