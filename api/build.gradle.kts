@@ -25,6 +25,9 @@ dependencies {
     implementation("io.r2dbc:r2dbc-pool:0.8.2.RELEASE")
     implementation("io.r2dbc:r2dbc-spi:0.8.1.RELEASE")
 
+    implementation("org.slf4j:slf4j-api:2.0.0-alpha1")
+    implementation("org.slf4j:slf4j-log4j12:2.0.0-alpha1")
+
     implementation("org.postgresql:postgresql")
     implementation("org.springframework:spring-jdbc")
     implementation("org.flywaydb:flyway-core")

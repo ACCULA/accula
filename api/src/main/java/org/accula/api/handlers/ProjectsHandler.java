@@ -1,6 +1,7 @@
 package org.accula.api.handlers;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.accula.api.db.CurrentUserRepository;
 import org.accula.api.db.ProjectRepository;
 import org.accula.api.db.PullRepository;
@@ -36,6 +37,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
  * @author Anton Lamtev
  */
 @Component
+@Slf4j
 @RequiredArgsConstructor
 public final class ProjectsHandler {
     private static final Exception PROJECT_NOT_FOUND_EXCEPTION = new Exception();
@@ -51,7 +53,8 @@ public final class ProjectsHandler {
                 .map(Integer::parseInt)
                 .flatMap(count -> ServerResponse
                         .ok()
-                        .body(projects.findAll().take(count), Project.class));
+                        .body(projects.findAll().take(count), Project.class))
+                .doOnSuccess(response -> log.debug("{}: {}", request, response.statusCode()));
     }
 
     public Mono<ServerResponse> get(final ServerRequest request) {
@@ -65,7 +68,8 @@ public final class ProjectsHandler {
                         .ok()
                         .contentType(APPLICATION_JSON)
                         .bodyValue(project))
-                .onErrorResume(PROJECT_NOT_FOUND_EXCEPTION::equals, e -> ServerResponse.notFound().build());
+                .onErrorResume(PROJECT_NOT_FOUND_EXCEPTION::equals, e -> ServerResponse.notFound().build())
+                .doOnSuccess(response -> log.debug("{}: {}", request, response.statusCode()));
     }
 
     public Mono<ServerResponse> create(final ServerRequest request) {
@@ -84,6 +88,8 @@ public final class ProjectsHandler {
                         .ok()
                         .contentType(APPLICATION_JSON)
                         .bodyValue(project))
+                .doOnSuccess(response -> log.debug("{}: {}", request, response.statusCode()))
+                .doOnError(t -> log.error("{}: {}", request, t))
                 .onErrorResume(e -> e instanceof CreateProjectException,
                         e -> switch (CreateProjectException.error(e)) {
                             case BAD_FORMAT, INVALID_URL, WRONG_URL, ALREADY_EXISTS -> ServerResponse

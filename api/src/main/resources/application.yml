@@ -30,14 +30,6 @@ server:
 #      exposure:
 #        include: "*"
 
-logging:
-  level:
-    org:
-      springframework:
-        data:
-          r2dbc=DEBUG:
-    ROOT: DEBUG
-
 accula:
   jwt:
     signature:
