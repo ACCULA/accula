@@ -86,7 +86,7 @@ public final class GithubClientImpl implements GithubClient {
                 .uri("/repos/{owner}/{repo}/pulls?state=all&per_page=100&page={page}", owner, repo, page)
                 .exchange()
                 .flatMapMany(rs -> {
-                    List<String> headerLink = rs.headers().header("link");
+                    final List<String> headerLink = rs.headers().header("link");
                     //if repository contains more than 100 pull requests, request next page
                     if (!headerLink.isEmpty()) {
                         if (headerLink.get(0).contains("rel=\"next\"")) {

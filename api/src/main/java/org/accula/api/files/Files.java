@@ -34,12 +34,10 @@ public final class Files {
     private Files(){
     }
 
-    public static Flux<FileModel> getGitFiles(final String repoName, final Set<String> excludeFiles,
-                                          final String userLogin, final Integer prNumber, final Instant prDate, final String prUrl) {
+    public static Flux<FileModel> getGitFiles(final String repoName, final Set<String> excludeFiles, final GithubPull pr) {
         final File localPath = new File("/accula/github/" + repoName.replace("/", "_"));
-        Git git = null;
+        Git git;
         final String remoteUrl = "https://github.com/" + repoName;
-        final String prRef = "refs/pull/" + prNumber + "/head";
         Flux<FileModel> files = Flux.empty();
         try {
             git = Git.open(localPath);
@@ -56,6 +54,7 @@ public final class Files {
         }
         try {
             final Repository repo = git.getRepository();
+            final String prRef = "refs/pull/" + pr.getNumber() + "/head";
             git.fetch()
                     .setRemote(remoteUrl)
                     .setRefSpecs(new RefSpec(prRef + ":" + prRef))
@@ -77,23 +76,21 @@ public final class Files {
             for (final DiffEntry entry : diff) {
                 treeFilter.add(PathFilter.create(entry.getNewPath()));
             }
-            if (treeFilter.size() > 0) {
-                files = getFiles(repo.resolve(prRef), repo, prUrl, userLogin, prDate, treeFilter)
+            if (!treeFilter.isEmpty()) {
+                files = getFiles(repo.resolve(prRef), repo, pr, treeFilter)
                         .filter(f -> !excludeFiles.contains(f.getFilename()));
             }
         } catch (IOException | GitAPIException e) {
             log.error("Git error", e);
         } finally {
-            if (git != null) {
                 git.close();
-            }
         }
         return files;
     }
 
     @Nullable
     private static AnyObjectId findBaseCommit(final Repository repo, final String prRef, final String masterRef) throws IOException {
-        try (final RevWalk walk = new RevWalk(repo)) {
+        try (RevWalk walk = new RevWalk(repo)) {
             walk.setRevFilter(RevFilter.MERGE_BASE);
             final RevCommit prCommit = walk.parseCommit(repo.resolve(prRef));
             final RevCommit masterCommit = walk.parseCommit(repo.resolve(masterRef));
@@ -110,11 +107,11 @@ public final class Files {
 
     private static AbstractTreeIterator prepareTreeParser(final Repository repository, final AnyObjectId commitId) throws IOException {
         // from the commit we can build the tree which allows us to construct the TreeParser
-        try (final RevWalk walk = new RevWalk(repository)) {
+        try (RevWalk walk = new RevWalk(repository)) {
             final RevCommit commit = walk.parseCommit(commitId);
             final RevTree tree = walk.parseTree(commit.getTree().getId());
             final CanonicalTreeParser treeParser = new CanonicalTreeParser();
-            try (final ObjectReader reader = repository.newObjectReader()) {
+            try (ObjectReader reader = repository.newObjectReader()) {
                 treeParser.reset(reader, tree.getId());
             }
 
@@ -133,8 +130,8 @@ public final class Files {
         }
     }
 
-    private static Flux<FileModel> getFiles(final ObjectId id, final Repository repository, final String prUrl,
-                                           final String userLogin, final Instant prDate, List<TreeFilter> treeFilter) {
+    private static Flux<FileModel> getFiles(final ObjectId id, final Repository repository, final GithubPull pr,
+                                            final List<TreeFilter> treeFilter) {
         final List<FileModel> files = new ArrayList<>();
         try (RevWalk revWalk = new RevWalk(repository)) {
             final RevCommit commit = revWalk.parseCommit(id);
@@ -146,15 +143,14 @@ public final class Files {
             else {
                 filter = AndTreeFilter.create(PathSuffixFilter.create(".java"), treeFilter.get(0));
             }
-            try (final TreeWalk treeWalk = new TreeWalk(repository)) {
+            try (TreeWalk treeWalk = new TreeWalk(repository)) {
                 treeWalk.addTree(tree);
                 treeWalk.setRecursive(true);
                 treeWalk.setFilter(filter);
                 while (treeWalk.next()) {
                     final ObjectLoader loader = repository.open(treeWalk.getObjectId(0));
-                    final String content = new String(loader.getBytes());
-                    files.add(new FileModel(treeWalk.getNameString(), treeWalk.getPathString(), prUrl,
-                            userLogin, prDate, content));
+                    files.add(new FileModel(treeWalk.getNameString(), treeWalk.getPathString(), pr.getHtmlUrl(),
+                            pr.getUser().getLogin(), pr.getCreatedAt(), new String(loader.getBytes())));
                 }
             }
             revWalk.dispose();
@@ -169,6 +165,6 @@ public final class Files {
         final Pattern pattern = Pattern.compile("github.com/(.*?)/pull/");
         final Matcher matcher = pattern.matcher(pr.getHtmlUrl());
         return matcher.find() ?
-                getGitFiles(matcher.group(1), excludeFiles, pr.getUser().getLogin(), pr.getNumber(), pr.getCreatedAt(), pr.getHtmlUrl()) : Flux.empty();
+                getGitFiles(matcher.group(1), excludeFiles, pr) : Flux.empty();
     }
 }
