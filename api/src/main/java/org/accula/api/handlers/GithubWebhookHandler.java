@@ -54,7 +54,7 @@ public final class GithubWebhookHandler {
         final String sha = p.getPull().getHead().getSha();
         final Instant updatedAt = p.getPull().getUpdatedAt();
 
-        // save to commit table && get commit with id
+        // save to commit table & get commit with id
         final Mono<Commit> target = commitRepository
                 .save(new Commit(null, pullOwner, pullRepo, sha))
                 .cache();
@@ -76,8 +76,7 @@ public final class GithubWebhookHandler {
 
         // get previous commits
         final Flux<Commit> source = projectId
-                .flatMapMany(id -> pullRepository.findAllByProjectIdAndUpdatedAtBefore(id, updatedAt))
-                .filter(pull -> !pull.getNumber().equals(number))
+                .flatMapMany(id -> pullRepository.findAllByProjectIdAndUpdatedAtBeforeAndNumberIsNot(id, updatedAt, number))
                 .map(Pull::getLastCommitId)
                 .flatMap(commitRepository::findById);
 

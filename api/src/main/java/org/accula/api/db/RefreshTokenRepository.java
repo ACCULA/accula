@@ -12,7 +12,6 @@ import java.time.Instant;
 /**
  * @author Anton Lamtev
  */
-@Repository
 public interface RefreshTokenRepository extends ReactiveCrudRepository<RefreshToken, Long> {
     //@formatter:off
     @Modifying

@@ -147,9 +147,9 @@ public final class ProjectsHandler {
 
         //@formatter:off
         return Mono.zip(githubClient.hasAdminPermission(owner, repo).subscribeOn(scheduler),
-                githubClient.getRepo(owner, repo).subscribeOn(scheduler),
-                githubClient.getRepositoryOpenPulls(owner, repo).subscribeOn(scheduler),
-                currentUser.get());
+                        githubClient.getRepo(owner, repo).subscribeOn(scheduler),
+                        githubClient.getRepositoryOpenPulls(owner, repo).subscribeOn(scheduler),
+                        currentUser.get());
         //@formatter:on
     }
 

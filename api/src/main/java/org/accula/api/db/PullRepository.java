@@ -17,5 +17,5 @@ public interface PullRepository extends ReactiveCrudRepository<Pull, Long> {
 
     Mono<Pull> findByProjectIdAndNumber(Long projectId, Integer number);
 
-    Flux<Pull> findAllByProjectIdAndUpdatedAtBefore(Long projectId, Instant updateAt);
+    Flux<Pull> findAllByProjectIdAndUpdatedAtBeforeAndNumberIsNot(Long projectId, Instant updateAt, Integer number);
 }

@@ -5,6 +5,9 @@ import lombok.Data;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.data.annotation.Id;
 
+/**
+ * @author Vadim Dyachkov
+ */
 @Data
 @Builder
 public class Clone {

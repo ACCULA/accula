@@ -3,6 +3,9 @@ package org.accula.api.code;
 import lombok.Value;
 import org.accula.api.db.model.Commit;
 
+/**
+ * @author Vadim Dyachkov
+ */
 @Value
 public class FileEntity {
     Commit commit;
