@@ -1,11 +1,18 @@
 package org.accula.api.detector;
 
 import org.accula.api.code.FileEntity;
-import org.springframework.util.MultiValueMap;
+import reactor.core.publisher.Flux;
+import reactor.util.function.Tuple2;
 
-import java.util.Collection;
-
+/**
+ * @author Vadim Dyachkov
+ */
 public interface CloneDetector {
-    MultiValueMap<CodeSnippet, CodeSnippet> findClones(Collection<FileEntity> filesToCheck,
-                                                       Collection<FileEntity> otherFiles);
+    /**
+     * Find clones inside {@code targetFiles} that could be copied from {@code sourceFiles}.
+     * Each element emitted by the resulting {@code Flux} is a pair of:
+     * - a snippet from target file
+     * - a snippet from source file
+     */
+    Flux<Tuple2<CodeSnippet, CodeSnippet>> findClones(Flux<FileEntity> targetFiles, Flux<FileEntity> sourceFiles);
 }
