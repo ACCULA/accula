@@ -3,6 +3,7 @@ package org.accula.api.code;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.accula.api.db.model.Commit;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.ObjectReader;
@@ -45,26 +46,26 @@ public class CodeLoaderImpl implements CodeLoader {
     private final RepositoryProvider repositoryProvider;
 
     @Override
-    public Flux<FileEntity> getFiles(final CommitMarker marker) {
-        return getFiles(marker, FileFilter.ALL);
+    public Flux<FileEntity> getFiles(final Commit commit) {
+        return getFiles(commit, FileFilter.ALL);
     }
 
     @Override
-    public Flux<FileEntity> getFiles(final CommitMarker marker, final FileFilter filter) {
-        return repositoryProvider.getRepository(marker.getOwner(), marker.getRepo())
+    public Flux<FileEntity> getFiles(final Commit commit, final FileFilter filter) {
+        return repositoryProvider.getRepository(commit.getOwner(), commit.getRepo())
                 .switchIfEmpty(Mono.error(REPO_NOT_FOUND))
-                .flatMapMany(repo -> Flux.fromIterable(getObjectLoaders(repo, marker.getSha())))
+                .flatMapMany(repo -> Flux.fromIterable(getObjectLoaders(repo, commit.getSha())))
                 .filter(filenameAndLoader -> filter.test(filenameAndLoader.getT1()))
-                .map(filenameAndLoader -> new FileEntity(filenameAndLoader.getT1(), getFileContent(filenameAndLoader.getT2())))
+                .map(filenameAndLoader -> new FileEntity(commit, filenameAndLoader.getT1(), getFileContent(filenameAndLoader.getT2())))
                 .switchIfEmpty(Mono.error(CUT_ERROR))
                 .subscribeOn(scheduler);
     }
 
     @Override
-    public Mono<String> getFile(final CommitMarker marker, final String filename) {
-        return repositoryProvider.getRepository(marker.getOwner(), marker.getRepo())
+    public Mono<String> getFile(final Commit commit, final String filename) {
+        return repositoryProvider.getRepository(commit.getOwner(), commit.getRepo())
                 .switchIfEmpty(Mono.error(REPO_NOT_FOUND))
-                .flatMap(repo -> Mono.justOrEmpty(getObjectLoader(repo, marker.getSha(), filename)))
+                .flatMap(repo -> Mono.justOrEmpty(getObjectLoader(repo, commit.getSha(), filename)))
                 .switchIfEmpty(Mono.error(FILE_NOT_FOUND))
                 .map(this::getFileContent)
                 .switchIfEmpty(Mono.error(CUT_ERROR))
@@ -72,14 +73,13 @@ public class CodeLoaderImpl implements CodeLoader {
     }
 
     @Override
-    public Mono<String> getFileSnippet(final CommitMarker marker, final String filename,
-                                       final int fromLine, final int toLine) {
+    public Mono<String> getFileSnippet(final Commit commit, final String filename, final int fromLine, final int toLine) {
         if (fromLine > toLine) {
             return Mono.error(RANGE_ERROR);
         }
-        return repositoryProvider.getRepository(marker.getOwner(), marker.getRepo())
+        return repositoryProvider.getRepository(commit.getOwner(), commit.getRepo())
                 .switchIfEmpty(Mono.error(REPO_NOT_FOUND))
-                .flatMap(repo -> Mono.justOrEmpty(getObjectLoader(repo, marker.getSha(), filename)))
+                .flatMap(repo -> Mono.justOrEmpty(getObjectLoader(repo, commit.getSha(), filename)))
                 .switchIfEmpty(Mono.error(FILE_NOT_FOUND))
                 .map(loader -> cutFileContent(loader, fromLine, toLine))
                 .switchIfEmpty(Mono.error(CUT_ERROR))
@@ -129,16 +129,13 @@ public class CodeLoaderImpl implements CodeLoader {
     }
 
     @SneakyThrows
-    private String cutFileContent(
-            final ObjectLoader loader,
-            final int from,
-            final int to) {
+    private String cutFileContent(final ObjectLoader loader, final int fromLine, final int toLine) {
         final StringJoiner joiner = new StringJoiner(System.lineSeparator());
         try (InputStream is = loader.openStream();
              InputStreamReader isr = new InputStreamReader(is);
              BufferedReader br = new BufferedReader(isr)) {
-            int skip = from - 1;
-            int take = to - skip;
+            int skip = fromLine - 1;
+            int take = toLine - skip;
             String line = br.readLine();
             while (line != null) {
                 if (skip > 0) {

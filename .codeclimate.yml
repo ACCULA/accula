@@ -40,6 +40,8 @@ plugins:
         enabled: false
       ConstantsInInterface:
         enabled: false
+      AvoidInstantiatingObjectsInLoops:
+        enabled: false
 
     config:
       file: pmd.xml
