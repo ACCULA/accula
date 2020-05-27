@@ -1,5 +1,6 @@
 package org.accula.api.code;
 
+import org.accula.api.db.model.Commit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -15,7 +16,7 @@ class CodeLoaderTest {
     public static final String REPO = "2019-highload-dht";
     public static final String SHA = "720cefb3f361895e9e23524c2b4025f9a949d5d2";
     public static final String README = "README.md";
-    public static final CommitMarker MARKER = new CommitMarker(OWNER, REPO, SHA);
+    public static final Commit MARKER = new Commit(0L, OWNER, REPO, SHA);
 
     private CodeLoader codeLoader;
 

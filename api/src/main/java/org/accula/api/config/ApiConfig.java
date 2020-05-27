@@ -23,6 +23,6 @@ public class ApiConfig {
 
     @Bean
     public CloneDetector cloneDetector() {
-        return new PrimitiveCloneDetector(10, 4);
+        return new PrimitiveCloneDetector(1, 1);
     }
 }

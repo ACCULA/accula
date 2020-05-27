@@ -1,6 +1,7 @@
 package org.accula.api.detector;
 
 import org.accula.api.code.*;
+import org.accula.api.db.model.Commit;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import reactor.core.publisher.Flux;
@@ -26,15 +27,15 @@ class CloneDetectorTest {
         CloneDetector detector = new PrimitiveCloneDetector(1, 1);
 
         // target file
-        CommitMarker commit = new CommitMarker("owner", "repo", "sha");
+        Commit commit = new Commit(0L, "owner", "repo", "sha");
         FileEntity target1 = new FileEntity(commit, "01.txt", "4\n6\n7\n8\n9\n\n\n");
         FileEntity target2 = new FileEntity(commit, "02.txt", "10\n11\n1\n2\n");
 
         // source files
-        CommitMarker commit1 = new CommitMarker("owner1", "repo1", "sha1");
+        Commit commit1 = new Commit(1L, "owner1", "repo1", "sha1");
         FileEntity source1 = new FileEntity(commit1, "1.txt", "1\n2\n3\n4\n9\n");
 
-        CommitMarker commit2 = new CommitMarker("owner2", "repo2", "sha2");
+        Commit commit2 = new Commit(2L, "owner2", "repo2", "sha2");
         FileEntity source2 = new FileEntity(commit2, "2.txt", target1.getContent());
 
         // find clones
@@ -51,10 +52,10 @@ class CloneDetectorTest {
         RepositoryProvider repositoryProvider = new RepositoryManager(tempDir);
         CodeLoader codeLoader = new CodeLoaderImpl(repositoryProvider);
 
-        CommitMarker targetMarker = new CommitMarker("vaddya", "2017-highload-kv", "076c99d7bbb06b31c27a9c3164f152d5c18c5010");
+        Commit targetMarker = new Commit(0L, "vaddya", "2017-highload-kv", "076c99d7bbb06b31c27a9c3164f152d5c18c5010");
         Flux<FileEntity> targetFiles = codeLoader.getFiles(targetMarker, FileFilter.SRC_JAVA);
 
-        CommitMarker sourceMarker = new CommitMarker("lamtev", "2017-highload-kv", "8ad07b914c0c2cee8b5a47993061b79c611db65d");
+        Commit sourceMarker = new Commit(1L, "lamtev", "2017-highload-kv", "8ad07b914c0c2cee8b5a47993061b79c611db65d");
         Flux<FileEntity> sourceFiles = codeLoader.getFiles(sourceMarker, FileFilter.SRC_JAVA);
 
         CloneDetector detector = new PrimitiveCloneDetector(10, 5);

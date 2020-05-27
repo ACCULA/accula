@@ -19,9 +19,6 @@ public interface RefreshTokenRepository extends ReactiveCrudRepository<RefreshTo
     @Query("UPDATE refresh_token " +
            "SET token = :newToken, expiration_date = :newExpirationDate " +
            "WHERE user_id = :userId AND token = :oldToken")
-    Mono<Void> replaceRefreshToken(final Long userId,
-                                   final String oldToken,
-                                   final String newToken,
-                                   final Instant newExpirationDate);
+    Mono<Void> replaceRefreshToken(Long userId, String oldToken, String newToken, Instant newExpirationDate);
     //@formatter:on
 }

@@ -147,9 +147,9 @@ public final class ProjectsHandler {
 
         //@formatter:off
         return Mono.zip(githubClient.hasAdminPermission(owner, repo).subscribeOn(scheduler),
-                        githubClient.getRepo(owner, repo).subscribeOn(scheduler),
-                        githubClient.getRepositoryOpenPulls(owner, repo).subscribeOn(scheduler),
-                        currentUser.get());
+                githubClient.getRepo(owner, repo).subscribeOn(scheduler),
+                githubClient.getRepositoryOpenPulls(owner, repo).subscribeOn(scheduler),
+                currentUser.get());
         //@formatter:on
     }
 
@@ -197,7 +197,7 @@ public final class ProjectsHandler {
 
         final var pulls = Stream
                 .of(openPulls)
-                .map(ghPull -> new Pull(null, -1L, ghPull.getNumber()))
+                .map(ghPull -> new Pull(null, -1L, ghPull.getNumber(), null, ghPull.getUpdatedAt()))
                 .collect(toList());
 
         return Tuples.of(project, pulls);

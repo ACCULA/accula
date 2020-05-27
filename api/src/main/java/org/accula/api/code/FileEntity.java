@@ -1,10 +1,11 @@
 package org.accula.api.code;
 
 import lombok.Value;
+import org.accula.api.db.model.Commit;
 
 @Value
 public class FileEntity {
-    CommitMarker commit;
+    Commit commit;
     String name;
     String content;
 

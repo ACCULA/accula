@@ -7,17 +7,20 @@ import reactor.core.publisher.Mono;
 
 /**
  * @author Anton Lamtev
+ * @author Vadim Dyachkov
  */
 public interface ProjectRepository extends ReactiveCrudRepository<Project, Long> {
     @Query("SELECT NOT exists(SELECT 0 FROM project WHERE repo_owner = :repoOwner AND repo_name = :repoName)")
-    Mono<Boolean> notExistsByRepoOwnerAndRepoName(final String repoOwner, final String repoName);
+    Mono<Boolean> notExistsByRepoOwnerAndRepoName(String repoOwner, String repoName);
 
-    Mono<Boolean> deleteByIdAndCreatorId(final Long id, final Long creatorId);
+    Mono<Boolean> deleteByIdAndCreatorId(Long id, Long creatorId);
+
+    Mono<Project> findByRepoOwnerAndRepoName(String repoOwner, String repoName);
 
     //@formatter:off
     @Query("UPDATE project " +
            "SET admins = :admins " +
            "WHERE id = :id AND creator_id = :creatorId")
-    Mono<Void> setAdmins(final Long id, final Long[] admins, final Long creatorId);
+    Mono<Void> setAdmins(Long id, Long[] admins, Long creatorId);
     //@formatter:on
 }
