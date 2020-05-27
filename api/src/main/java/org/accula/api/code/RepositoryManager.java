@@ -54,9 +54,9 @@ public class RepositoryManager implements RepositoryProvider {
 
     @SneakyThrows
     @Nullable
-    private Repository fromCache(RepoRef ref) {
+    private Repository fromCache(final RepoRef ref) {
         if (cache.containsKey(ref)) {
-            Repository repository = cache.get(ref);
+            final Repository repository = cache.get(ref);
             Git.wrap(repository).fetch().call();
             return repository;
         }

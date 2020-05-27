@@ -19,6 +19,7 @@ public interface FileFilter extends Predicate<String> {
         return f -> test(f) && other.test(f);
     }
 
+    @Override
     default FileFilter negate() {
         return f -> !test(f);
     }

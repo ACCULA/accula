@@ -12,12 +12,6 @@ import java.time.Instant;
 @NoArgsConstructor
 @AllArgsConstructor
 public final class Pull {
-    public Pull(@Nullable Long id, Long projectId, Integer number) {
-        this.id = id;
-        this.projectId = projectId;
-        this.number = number;
-    }
-
     @Id
     @Nullable
     private Long id;
@@ -26,4 +20,10 @@ public final class Pull {
     @Nullable
     private Long lastCommitId;
     private Instant updatedAt;
+
+    public Pull(@Nullable final Long id, final Long projectId, final Integer number) {
+        this.id = id;
+        this.projectId = projectId;
+        this.number = number;
+    }
 }

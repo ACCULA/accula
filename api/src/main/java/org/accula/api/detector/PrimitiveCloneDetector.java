@@ -7,6 +7,7 @@ import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
@@ -30,12 +31,12 @@ public class PrimitiveCloneDetector implements CloneDetector {
                 .cache();
         return sourceFiles
                 .flatMap(source -> target.zipWith(Mono.just(source)))
-                .flatMap(targetAndSource -> Flux.fromIterable(findClones(targetAndSource.getT1(), targetAndSource.getT2())))
+                .flatMap(targetAndSource -> Flux.fromIterable(findClonesInFile(targetAndSource.getT1(), targetAndSource.getT2())))
                 .filter(targetAndSource -> targetAndSource.getT2().getLineCount() >= minLineCount);
     }
 
     private Map<String, Collection<CodeSnippet>> lineToSnippetsMap(final FileEntity file) {
-        final Map<String, Collection<CodeSnippet>> source = new LinkedHashMap<>();
+        final Map<String, Collection<CodeSnippet>> source = new ConcurrentHashMap<>();
         final String[] lines = file.getContent().split("\n");
         for (int i = 1; i <= lines.length; i++) {
             final String line = lines[i - 1];
@@ -48,7 +49,8 @@ public class PrimitiveCloneDetector implements CloneDetector {
         return source;
     }
 
-    private List<Tuple2<CodeSnippet, CodeSnippet>> findClones(final Map<String, Collection<CodeSnippet>> target, final FileEntity file) {
+    private List<Tuple2<CodeSnippet, CodeSnippet>> findClonesInFile(final Map<String, Collection<CodeSnippet>> target,
+                                                                    final FileEntity file) {
         final List<Tuple2<CodeSnippet, CodeSnippet>> clones = new ArrayList<>();
         final String[] lines = file.getContent().split("\n");
         for (int i = 1; i <= lines.length; i++) {
@@ -89,14 +91,14 @@ public class PrimitiveCloneDetector implements CloneDetector {
                 result.add(lastMerge);
                 prev = lastMerge;
             } else {
-                if (prev != lastMerge) {
+                if (prev != lastMerge) { // NOPMD
                     result.add(prev);
                 }
-                lastMerge = null;
+                lastMerge = null; // NOPMD
                 prev = curr;
             }
         }
-        if (prev != lastMerge) {
+        if (prev != lastMerge) { // NOPMD
             result.add(prev);
         }
         return result;
@@ -114,19 +116,19 @@ public class PrimitiveCloneDetector implements CloneDetector {
         return new CodeSnippet(first.getCommit(), first.getFile(), first.getFromLine(), second.getToLine());
     }
 
-    private static <K, V> Map<K, Collection<V>> reduceMaps(List<Map<K, Collection<V>>> maps) {
+    private static <K, V> Map<K, Collection<V>> reduceMaps(final List<Map<K, Collection<V>>> maps) {
         return maps
                 .stream()
                 .flatMap(s -> s.entrySet().stream())
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> {
-                    List<V> temp = new ArrayList<>();
+                    final List<V> temp = new ArrayList<>();
                     temp.addAll(a);
                     temp.addAll(b);
                     return temp;
                 }));
     }
 
-    private static <K, V> void add(Map<K, Collection<V>> map, K key, V value) {
+    private static <K, V> void add(final Map<K, Collection<V>> map, final K key, final V value) {
         map.putIfAbsent(key, new ArrayList<>());
         map.get(key).add(value);
     }
