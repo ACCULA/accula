@@ -10,6 +10,7 @@ public class CodeSnippet {
     int fromLine;
     int toLine;
     
+    @Override
     public String toString() {
         return commit.toString() + ":" + file + "[" + fromLine + ":" + toLine + "]";
     }

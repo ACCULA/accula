@@ -8,6 +8,7 @@ public class CommitMarker {
     String repo;
     String sha;
     
+    @Override
     public String toString() {
         return owner + "/" + repo + "/" + sha;
     }
