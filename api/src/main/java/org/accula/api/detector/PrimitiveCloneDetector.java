@@ -11,7 +11,7 @@ import java.util.*;
 /**
  * @author Vadim Dyachkov
  */
-public class CloneDetectorImpl implements CloneDetector {
+public class PrimitiveCloneDetector implements CloneDetector {
     public static int MIN_LINE_LENGTH = 20;
 
     @Override
@@ -19,7 +19,7 @@ public class CloneDetectorImpl implements CloneDetector {
         final Mono<Map<String, Collection<CodeSnippet>>> target = targetFiles
                 .map(this::lineToSnippetsMap)
                 .collectList()
-                .map(CloneDetectorImpl::reduceMaps)
+                .map(PrimitiveCloneDetector::reduceMaps)
                 .cache();
         return sourceFiles
                 .flatMap(source -> target.zipWith(Mono.just(source)))

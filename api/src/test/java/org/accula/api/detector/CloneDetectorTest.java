@@ -15,8 +15,8 @@ class CloneDetectorTest {
 
     @BeforeEach
     void setUp() {
-        detector = new CloneDetectorImpl();
-        CloneDetectorImpl.MIN_LINE_LENGTH = 1;
+        this.detector = new PrimitiveCloneDetector();
+        PrimitiveCloneDetector.MIN_LINE_LENGTH = 1;
     }
 
     /**
