@@ -2,6 +2,7 @@ package org.accula.api.github.api;
 
 import org.accula.api.github.model.GithubPull;
 import org.accula.api.github.model.GithubRepo;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
@@ -13,6 +14,8 @@ public interface GithubClient {
     Mono<GithubRepo> getRepo(final String owner, final String repo);
 
     Mono<GithubPull[]> getRepositoryOpenPulls(final String owner, final String repo);
+
+    Flux<GithubPull> getRepositoryPulls(final String owner, final String repo, final Integer page);
 
     Mono<GithubPull> getRepositoryPull(final String owner, final String repo, final Integer pullNumber);
 

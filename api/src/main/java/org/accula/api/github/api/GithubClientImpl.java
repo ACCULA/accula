@@ -5,8 +5,10 @@ import org.accula.api.github.model.GithubRepo;
 import org.accula.api.github.model.GithubUserPermission;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
 import java.util.function.Function;
 
 import static java.lang.Boolean.FALSE;
@@ -75,6 +77,26 @@ public final class GithubClientImpl implements GithubClient {
                 .retrieve()
                 .bodyToMono(GithubPull[].class)
                 .onErrorResume(e -> Mono.error(new GithubClientException(e))));
+    }
+
+    @Override
+    public Flux<GithubPull> getRepositoryPulls(final String owner, final String repo, final Integer page) {
+        return githubApiWebClient
+                .get()
+                .uri("/repos/{owner}/{repo}/pulls?state=all&per_page=100&page={page}", owner, repo, page)
+                .exchange()
+                .flatMapMany(rs -> {
+                    List<String> headerLink = rs.headers().header("link");
+                    //if repository contains more than 100 pull requests, request next page
+                    if (!headerLink.isEmpty()) {
+                        if (headerLink.get(0).contains("rel=\"next\"")) {
+                            return rs.bodyToFlux(GithubPull.class)
+                                    .concatWith(getRepositoryPulls(owner, repo, page + 1));
+                        }
+                    }
+                    return rs.bodyToFlux(GithubPull.class);
+                })
+                .onErrorResume(e -> Flux.error(new GithubClientException(e)));
     }
 
     @Override

@@ -1,8 +1,8 @@
-package org.accula.api.model;
+package org.accula.api.files.model;
 
 import lombok.Data;
 
-import java.util.Date;
+import java.time.Instant;
 
 @Data
 public class FileModel {
@@ -10,11 +10,11 @@ public class FileModel {
     private String filePath;
     private String prUrl;
     private String userLogin;
-    private Date prDate;
+    private Instant prDate;
     private String content;
 
     public FileModel(final String filename, final String filePath, final String prUrl,
-                     final String userLogin, final Date prDate,
+                     final String userLogin, final Instant prDate,
                      final String content) {
         this.filename = filename;
         this.filePath = filePath;

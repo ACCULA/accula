@@ -1,8 +1,8 @@
-package org.accula.api.handlers;
+package org.accula.api.files;
 
 import lombok.extern.slf4j.Slf4j;
-import org.accula.api.model.FileModel;
-import org.accula.api.model.GitPullRequest;
+import org.accula.api.files.model.FileModel;
+import org.accula.api.github.model.GithubPull;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.diff.DiffEntry;
@@ -22,8 +22,8 @@ import reactor.core.publisher.Flux;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -34,8 +34,8 @@ public final class Files {
     private Files(){
     }
 
-    public static Flux<FileModel> getRepo(final String repoName, final Set<String> excludeFiles,
-                                          final String userLogin, final Integer prNumber, final Date prDate) {
+    public static Flux<FileModel> getGitFiles(final String repoName, final Set<String> excludeFiles,
+                                          final String userLogin, final Integer prNumber, final Instant prDate, final String prUrl) {
         final File localPath = new File("/accula/github/" + repoName.replace("/", "_"));
         Git git = null;
         final String remoteUrl = "https://github.com/" + repoName;
@@ -56,7 +56,6 @@ public final class Files {
         }
         try {
             final Repository repo = git.getRepository();
-            final String prUrl = remoteUrl + prRef.replaceFirst("refs", "");
             git.fetch()
                     .setRemote(remoteUrl)
                     .setRefSpecs(new RefSpec(prRef + ":" + prRef))
@@ -134,8 +133,8 @@ public final class Files {
         }
     }
 
-    public static Flux<FileModel> getFiles(final ObjectId id, final Repository repository, final String prUrl,
-                                           final String userLogin, final Date prDate, List<TreeFilter> treeFilter) {
+    private static Flux<FileModel> getFiles(final ObjectId id, final Repository repository, final String prUrl,
+                                           final String userLogin, final Instant prDate, List<TreeFilter> treeFilter) {
         final List<FileModel> files = new ArrayList<>();
         try (RevWalk revWalk = new RevWalk(repository)) {
             final RevCommit commit = revWalk.parseCommit(id);
@@ -165,11 +164,11 @@ public final class Files {
         return Flux.fromIterable(files);
     }
 
-    public static Flux<FileModel> getRepoFiles(final GitPullRequest pr, final Set<String> excludeFiles) {
+    public static Flux<FileModel> getPRFiles(final GithubPull pr, final Set<String> excludeFiles) {
         // get repository in format "owner/repo" from pull request url
-        final Pattern pattern = Pattern.compile("api.github.com/repos/(.*?)/pulls/");
-        final Matcher matcher = pattern.matcher(pr.getUrl());
+        final Pattern pattern = Pattern.compile("github.com/(.*?)/pull/");
+        final Matcher matcher = pattern.matcher(pr.getHtmlUrl());
         return matcher.find() ?
-                getRepo(matcher.group(1), excludeFiles, pr.getUser().getLogin(), pr.getNumber(), pr.getCreatedAt()) : Flux.empty();
+                getGitFiles(matcher.group(1), excludeFiles, pr.getUser().getLogin(), pr.getNumber(), pr.getCreatedAt(), pr.getHtmlUrl()) : Flux.empty();
     }
 }
