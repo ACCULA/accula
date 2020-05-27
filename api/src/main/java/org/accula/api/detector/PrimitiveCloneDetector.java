@@ -7,6 +7,7 @@ import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Vadim Dyachkov
@@ -81,21 +82,23 @@ public class PrimitiveCloneDetector implements CloneDetector {
                 result.add(lastMerge);
                 prev = lastMerge;
             } else {
+                if (prev != lastMerge) {
+                    result.add(prev);
+                }
                 lastMerge = null;
-                result.add(prev);
                 prev = curr;
             }
         }
-        if (lastMerge == null) {
+        if (prev != lastMerge) {
             result.add(prev);
         }
         return result;
     }
 
     private static boolean isMergeable(final CodeSnippet first, final CodeSnippet second) {
-        assert first.getCommit().equals(second.getCommit());
-        assert first.getFile().equals(second.getFile());
-        return first.getToLine() + 1 == second.getFromLine();
+        return first.getCommit().equals(second.getCommit())
+                && first.getFile().equals(second.getFile())
+                && first.getToLine() + 1 == second.getFromLine();
     }
 
     private static CodeSnippet merge(final CodeSnippet first, final CodeSnippet second) {
@@ -105,9 +108,13 @@ public class PrimitiveCloneDetector implements CloneDetector {
     }
 
     private static <K, V> Map<K, Collection<V>> reduceMaps(List<Map<K, Collection<V>>> maps) {
-        return maps
-                .stream()
-                .collect(LinkedHashMap::new, Map::putAll, Map::putAll);
+        return maps.stream().flatMap(s -> s.entrySet().stream())
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> {
+                    List<V> temp = new ArrayList<>();
+                    temp.addAll(a);
+                    temp.addAll(b);
+                    return temp;
+                }));
     }
 
     private static <K, V> void add(Map<K, Collection<V>> map, K key, V value) {

@@ -20,27 +20,31 @@ class CloneDetectorTest {
     }
 
     /**
-     * owner3/repo3/sha3:3.txt[1:1] -> owner1/repo1/sha1:1.txt[2:2]
-     * owner3/repo3/sha3:3.txt[2:2] -> owner1/repo1/sha1:1.txt[4:4]
-     * owner3/repo3/sha3:3.txt[6:6] -> owner1/repo1/sha1:1.txt[5:5]
-     * owner3/repo3/sha3:3.txt[2:2] -> owner2/repo2/sha2:2.txt[1:1]
-     * owner3/repo3/sha3:3.txt[3:6] -> owner2/repo2/sha2:2.txt[4:7]
+     * owner/repo/sha:02.txt[3:4] -> owner1/repo1/sha1:1.txt[1:2]
+     * owner/repo/sha:01.txt[1:1] -> owner1/repo1/sha1:1.txt[4:4]
+     * owner/repo/sha:01.txt[5:5] -> owner1/repo1/sha1:1.txt[5:5]
+     * owner/repo/sha:01.txt[1:5] -> owner2/repo2/sha2:2.txt[1:5]
      */
     @Test
     void test() {
+        // target file
+        CommitMarker commit = new CommitMarker("owner", "repo", "sha");
+        FileEntity target1 = new FileEntity(commit, "01.txt", "4\n6\n7\n8\n9\n\n\n");
+        FileEntity target2 = new FileEntity(commit, "02.txt", "10\n11\n1\n2\n");
+
+        // source files
         CommitMarker commit1 = new CommitMarker("owner1", "repo1", "sha1");
-        FileEntity file1 = new FileEntity(commit1, "1.txt", "1\n2\n3\n4\n9\n");
+        FileEntity source1 = new FileEntity(commit1, "1.txt", "1\n2\n3\n4\n9\n");
 
         CommitMarker commit2 = new CommitMarker("owner2", "repo2", "sha2");
-        FileEntity file2 = new FileEntity(commit2, "2.txt", "4\n5\n0\n6\n7\n8\n9\n10\n\n");
+        FileEntity source2 = new FileEntity(commit2, "2.txt", target1.getContent());
 
-        CommitMarker commitToCheck1 = new CommitMarker("owner3", "repo3", "sha3");
-        FileEntity fileToCheck1 = new FileEntity(commitToCheck1, "3.txt", "2\n4\n6\n7\n8\n9\n\n\n");
-
-        List<Tuple2<CodeSnippet, CodeSnippet>> clones = detector.findClones(Flux.just(fileToCheck1), Flux.just(file1, file2))
-                .collectList().block();
+        // find clones
+        Flux<FileEntity> target = Flux.just(target1, target2);
+        Flux<FileEntity> source = Flux.just(source1, source2);
+        List<Tuple2<CodeSnippet, CodeSnippet>> clones = detector.findClones(target, source).collectList().block();
         assert clones != null;
         clones.forEach(t -> System.out.println(t.getT1() + " -> " + t.getT2()));
-        Assertions.assertEquals(5, clones.size());
+        Assertions.assertEquals(4, clones.size());
     }
 }
