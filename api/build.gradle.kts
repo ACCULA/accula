@@ -29,7 +29,9 @@ dependencies {
     implementation("org.springframework:spring-jdbc")
     implementation("org.flywaydb:flyway-core")
 
-    implementation("org.eclipse.jgit:org.eclipse.jgit:5.7.0.202003110725-r")
+    implementation("org.eclipse.jgit:org.eclipse.jgit:5.7.0.202003110725-r") {
+        exclude(group = "org.slf4j", module = "slf4j-api")
+    }
 
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 }

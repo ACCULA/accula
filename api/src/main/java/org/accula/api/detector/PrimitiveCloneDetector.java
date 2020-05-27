@@ -13,7 +13,13 @@ import java.util.stream.Collectors;
  * @author Vadim Dyachkov
  */
 public class PrimitiveCloneDetector implements CloneDetector {
-    public static int MIN_LINE_LENGTH = 20;
+    private final int minLineLength;
+    private final int minLineCount;
+
+    public PrimitiveCloneDetector(final int minLineLength, final int minLineCount) {
+        this.minLineLength = minLineLength;
+        this.minLineCount = minLineCount;
+    }
 
     @Override
     public Flux<Tuple2<CodeSnippet, CodeSnippet>> findClones(final Flux<FileEntity> targetFiles, final Flux<FileEntity> sourceFiles) {
@@ -24,7 +30,8 @@ public class PrimitiveCloneDetector implements CloneDetector {
                 .cache();
         return sourceFiles
                 .flatMap(source -> target.zipWith(Mono.just(source)))
-                .flatMap(targetAndSource -> Flux.fromIterable(findClones(targetAndSource.getT1(), targetAndSource.getT2())));
+                .flatMap(targetAndSource -> Flux.fromIterable(findClones(targetAndSource.getT1(), targetAndSource.getT2())))
+                .filter(targetAndSource -> targetAndSource.getT2().getLineCount() >= minLineCount);
     }
 
     private Map<String, Collection<CodeSnippet>> lineToSnippetsMap(final FileEntity file) {
@@ -32,7 +39,7 @@ public class PrimitiveCloneDetector implements CloneDetector {
         final String[] lines = file.getContent().split("\n");
         for (int i = 1; i <= lines.length; i++) {
             final String line = lines[i - 1];
-            if (line.isBlank() || line.length() < MIN_LINE_LENGTH) {
+            if (line.length() < minLineLength) {
                 continue;
             }
             final CodeSnippet snippet = new CodeSnippet(file.getCommit(), file.getName(), i, i);
@@ -46,7 +53,7 @@ public class PrimitiveCloneDetector implements CloneDetector {
         final String[] lines = file.getContent().split("\n");
         for (int i = 1; i <= lines.length; i++) {
             final String line = lines[i - 1];
-            if (line.isBlank() || line.length() < MIN_LINE_LENGTH) {
+            if (line.length() < minLineLength) {
                 continue;
             }
             if (target.containsKey(line)) {
@@ -108,7 +115,9 @@ public class PrimitiveCloneDetector implements CloneDetector {
     }
 
     private static <K, V> Map<K, Collection<V>> reduceMaps(List<Map<K, Collection<V>>> maps) {
-        return maps.stream().flatMap(s -> s.entrySet().stream())
+        return maps
+                .stream()
+                .flatMap(s -> s.entrySet().stream())
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> {
                     List<V> temp = new ArrayList<>();
                     temp.addAll(a);
