@@ -43,6 +43,7 @@ public final class GithubPull {
         private String label;
         private String ref;
         private GithubRepo repo;
+        private String sha;
 
         public String getTreeUrl() {
             return String.format("%s/tree/%s", repo.getHtmlUrl(), URLEncoder.encode(ref, StandardCharsets.UTF_8));
