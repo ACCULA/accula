@@ -30,5 +30,12 @@ public interface CodeLoader {
      */
     Mono<FileEntity> getFileSnippet(Commit commit, String filename, int fromLine, int toLine);
 
+    /**
+     * Get diff between two commits as tuples of file entities,
+     * each representing two corresponding files in {@code base} and {@code head} commits.
+     * If a file was added in {@code head}, then {@link FileEntity#getName} and {@link FileEntity#getContent}
+     * of the first element of the tuple return {@code null}.
+     * If file was removed in {@code head}, then second tuple element values are equal to {@code null}.
+     */
     Flux<Tuple2<FileEntity, FileEntity>> getDiff(Commit base, Commit head);
 }
