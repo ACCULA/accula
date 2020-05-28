@@ -37,7 +37,7 @@ accula:
       privateKey: accula.private.der
     issuer: accula
     expiresIn:
-      access: 12m
+      access: 1m
       refresh: 90d
 
   cluster:
