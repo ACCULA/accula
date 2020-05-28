@@ -23,6 +23,7 @@ public final class PullsRouter {
                 .path("/api/projects/{projectId}/pulls", builder -> builder
                         .GET("", pullsHandler::getAll)
                         .GET("/{pullNumber}", pullsHandler::get)
+                        .GET("/{pullNumber}/diff", pullsHandler::getDiff)
                         .POST("/refresh", pullsHandler::refresh))
                 .build();
     }

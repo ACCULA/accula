@@ -1,17 +1,19 @@
 import { AppDispatch, AppStateSupplier } from 'store'
-import { IClone, IPull } from 'types'
+import { IClone, IDiff, IPull } from 'types'
 import { requireToken } from 'store/users/actions'
 import {
   FETCHING_PULLS,
   FetchingPulls,
   SET_CLONES,
+  SET_DIFFS,
   SET_PULL,
   SET_PULLS,
   SetClones,
+  SetDiffs,
   SetPull,
   SetPulls
 } from './types'
-import { getClones, getPull, getPulls } from './services'
+import { getClones, getDiff, getPull, getPulls } from './services'
 
 const setPulls = (pulls: IPull[]): SetPulls => ({
   type: SET_PULLS,
@@ -26,6 +28,11 @@ const setPull = (pull: IPull): SetPull => ({
 const setClones = (clones: IClone[]): SetClones => ({
   type: SET_CLONES,
   clones
+})
+
+const setDiffs = (diffs: IDiff[]): SetDiffs => ({
+  type: SET_DIFFS,
+  diffs
 })
 
 const fetchingPulls = (isFetching: boolean): FetchingPulls => ({
@@ -90,7 +97,8 @@ export const getClonesAction = (projectId: number, pullId: number) => async (
   dispatch: AppDispatch, //
   getState: AppStateSupplier
 ) => {
-  const { pulls } = getState()
+  await requireToken(dispatch, getState)
+  const { pulls, users } = getState()
   if (
     !pulls.clones ||
     (pulls.clones.length > 0 &&
@@ -98,7 +106,7 @@ export const getClonesAction = (projectId: number, pullId: number) => async (
   ) {
     try {
       dispatch(fetchingPulls(true))
-      const result = await getClones(projectId, pullId)
+      const result = await getClones(users.token, projectId, pullId)
       dispatch(setClones(result))
     } catch (e) {
       console.log(e)
@@ -106,5 +114,23 @@ export const getClonesAction = (projectId: number, pullId: number) => async (
     } finally {
       dispatch(fetchingPulls(false))
     }
+  }
+}
+
+export const getDiffAction = (projectId: number, pullId: number) => async (
+  dispatch: AppDispatch, //
+  getState: AppStateSupplier
+) => {
+  await requireToken(dispatch, getState)
+  const { users } = getState()
+  try {
+    dispatch(fetchingPulls(true))
+    const result = await getDiff(users.token, projectId, pullId)
+    dispatch(setDiffs(result))
+  } catch (e) {
+    console.log(e)
+    dispatch(setDiffs([]))
+  } finally {
+    dispatch(fetchingPulls(false))
   }
 }

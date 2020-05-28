@@ -84,3 +84,10 @@ export interface IClone {
   target: ICodeSnippet
   source: ICodeSnippet
 }
+
+export interface IDiff {
+  baseFilename?: string
+  baseContent?: Base64
+  headFilename?: string
+  headContent?: Base64
+}
