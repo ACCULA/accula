@@ -70,9 +70,11 @@ export const getProjectAction = (id: number) => async (
       return
     }
   }
+  await requireToken(dispatch, getState)
+  const { users } = getState()
   try {
     dispatch(fetchingProjects(true))
-    const project = await getProject(id)
+    const project = await getProject(id, users.token)
     dispatch(setProject(project))
   } catch (e) {
     console.log(e)

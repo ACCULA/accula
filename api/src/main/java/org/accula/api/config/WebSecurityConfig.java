@@ -27,6 +27,7 @@ import org.springframework.security.web.server.authentication.ServerAuthenticati
 import org.springframework.security.web.server.authorization.HttpStatusServerAccessDeniedHandler;
 import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository;
 import org.springframework.security.web.server.savedrequest.NoOpServerRequestCache;
+import org.springframework.web.cors.reactive.CorsWebFilter;
 import org.springframework.web.server.WebFilter;
 
 import java.io.IOException;
@@ -37,6 +38,7 @@ import static org.springframework.http.HttpMethod.GET;
 import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 import static org.springframework.security.config.web.server.SecurityWebFiltersOrder.AUTHENTICATION;
+import static org.springframework.security.config.web.server.SecurityWebFiltersOrder.CORS;
 import static org.springframework.security.web.server.util.matcher.ServerWebExchangeMatchers.pathMatchers;
 
 /**
@@ -53,6 +55,7 @@ public class WebSecurityConfig {
 
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(final ServerHttpSecurity http,
+                                                         final CorsWebFilter corsWebFilter,
                                                          final WebFilter authenticationFilter,
                                                          final WebFilter jwtRefreshFilter,
                                                          final OAuth2LoginSuccessHandler oauth2LoginSuccessHandler) {
@@ -79,6 +82,7 @@ public class WebSecurityConfig {
                         .pathMatchers("/api/projects/**").authenticated()
                         .anyExchange().permitAll())
 
+                .addFilterAt(corsWebFilter, CORS)
                 .addFilterBefore(jwtRefreshFilter, AUTHENTICATION)
                 .addFilterAt(authenticationFilter, AUTHENTICATION)
 

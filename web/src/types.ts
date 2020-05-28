@@ -71,16 +71,16 @@ export interface IPull {
 
 type Base64 = string
 
-export interface ICodeRef {
+export interface ICodeSnippet {
   projectId: number
   pullId: number
-  repo: string
+  repoName: string
   file: string
   code: Base64
 }
 
 export interface IClone {
   id: number
-  from: ICodeRef
-  to: ICodeRef
+  target: ICodeSnippet
+  source: ICodeSnippet
 }

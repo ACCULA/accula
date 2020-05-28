@@ -94,7 +94,7 @@ export const getClonesAction = (projectId: number, pullId: number) => async (
   if (
     !pulls.clones ||
     (pulls.clones.length > 0 &&
-      (pulls.clones[0].to.projectId !== projectId || pulls.clones[0].to.pullId !== pullId))
+      (pulls.clones[0].source.projectId !== projectId || pulls.clones[0].source.pullId !== pullId))
   ) {
     try {
       dispatch(fetchingPulls(true))
