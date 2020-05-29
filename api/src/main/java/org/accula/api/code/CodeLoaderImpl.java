@@ -44,7 +44,7 @@ public class CodeLoaderImpl implements CodeLoader {
     public static final Exception FILE_NOT_FOUND = new Exception();
     public static final Exception CUT_ERROR = new Exception();
     public static final Exception RANGE_ERROR = new Exception();
-    public static final String DELETED_FILE = "/dev/null";
+    private static final String DELETED_FILE = "/dev/null";
 
     private final Scheduler scheduler = Schedulers.boundedElastic();
 
@@ -106,7 +106,7 @@ public class CodeLoaderImpl implements CodeLoader {
                 .sequential();
     }
 
-    private Mono<Repository> getRepository(Commit commit) {
+    private Mono<Repository> getRepository(final Commit commit) {
         return repositoryProvider.getRepository(commit.getOwner(), commit.getRepo());
     }
 

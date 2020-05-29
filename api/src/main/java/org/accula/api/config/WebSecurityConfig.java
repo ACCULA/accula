@@ -77,9 +77,9 @@ public class WebSecurityConfig {
                         .accessDeniedHandler(new HttpStatusServerAccessDeniedHandler(FORBIDDEN)))
 
                 .authorizeExchange(exchanges -> exchanges
-//                        .pathMatchers("/api/projects/**/pulls/**").authenticated()
-//                        .pathMatchers(GET, "/api/projects/**").permitAll()
-//                        .pathMatchers("/api/projects/**").authenticated()
+                        .pathMatchers("/api/projects/**/pulls/**").authenticated()
+                        .pathMatchers(GET, "/api/projects/**").permitAll()
+                        .pathMatchers("/api/projects/**").authenticated()
                         .anyExchange().permitAll())
 
                 .addFilterAt(corsWebFilter, CORS)
