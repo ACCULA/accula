@@ -88,28 +88,18 @@ public final class ClonesHandler {
 
                     final var targetCommit = cloneDatum.getT2();
                     final var targetFileContent = tuple.getT2();
-                    final var target = GetCloneResponseBody.FlatCodeSnippet
-                            .builder()
-                            .projectId(projectId)
-                            .pullNumber(pullNumber)
-                            .sha(targetCommit.getSha())
+                    final var target = codeSnippetWith(projectId, pullNumber, targetCommit.getSha(), targetFileContent)
                             .file(clone.getTargetFile())
                             .fromLine(clone.getTargetFromLine())
                             .toLine(clone.getTargetToLine())
-                            .content(targetFileContent)
                             .build();
 
                     final var sourceCommit = cloneDatum.getT3();
                     final var sourceFileContent = tuple.getT3();
-                    final var source = GetCloneResponseBody.FlatCodeSnippet
-                            .builder()
-                            .projectId(projectId)
-                            .pullNumber(pullNumber)
-                            .sha(sourceCommit.getSha())
+                    final var source = codeSnippetWith(projectId, pullNumber, sourceCommit.getSha(), sourceFileContent)
                             .file(clone.getSourceFile())
                             .fromLine(clone.getSourceFromLine())
                             .toLine(clone.getSourceToLine())
-                            .content(sourceFileContent)
                             .build();
 
                     return new GetCloneResponseBody(clone.getId(), target, source);
@@ -125,6 +115,17 @@ public final class ClonesHandler {
         return markers
                 .flatMap(marker -> codeLoader.getFileSnippet(marker.commit, marker.filename, marker.fromLine, marker.toLine))
                 .subscribeOn(codeLoadingScheduler);
+    }
+
+    private static GetCloneResponseBody.FlatCodeSnippet.FlatCodeSnippetBuilder codeSnippetWith(final long projectId,
+                                                                                               final int pullNumber,
+                                                                                               final String sha,
+                                                                                               final String content) {
+        return GetCloneResponseBody.FlatCodeSnippet.builder()
+                .projectId(projectId)
+                .pullNumber(pullNumber)
+                .sha(sha)
+                .content(content);
     }
 
     @Value
