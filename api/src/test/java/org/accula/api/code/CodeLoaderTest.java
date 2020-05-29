@@ -11,6 +11,7 @@ import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+//FIXME: replace block with StepVerifier
 class CodeLoaderTest {
     public static final String OWNER = "polis-mail-ru";
     public static final String REPO = "2019-highload-dht";

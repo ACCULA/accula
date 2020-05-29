@@ -29,7 +29,7 @@ public final class PullsHandler {
     private final GithubClient githubClient;
 
     //TODO: handle github errors
-    public Mono<ServerResponse> getAll(final ServerRequest request) {
+    public Mono<ServerResponse> getOpenPulls(final ServerRequest request) {
         return Mono
                 .fromSupplier(() -> Long.parseLong(request.pathVariable("projectId")))
                 .onErrorMap(NumberFormatException.class, e -> PULL_NOT_FOUND_EXCEPTION)
