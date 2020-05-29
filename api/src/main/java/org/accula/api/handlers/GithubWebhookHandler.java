@@ -27,6 +27,7 @@ import java.time.Instant;
 
 /**
  * @author Anton Lamtev
+ * @author Vadim Dyachkov
  */
 @Component
 @RequiredArgsConstructor

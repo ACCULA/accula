@@ -10,6 +10,7 @@ import java.time.Instant;
 
 /**
  * @author Anton Lamtev
+ * @author Vadim Dyachkov
  */
 public interface PullRepository extends ReactiveCrudRepository<Pull, Long> {
     @Query("SELECT exists(SELECT 0 FROM pull WHERE project_id = :projectId AND number = :number)")
