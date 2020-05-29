@@ -42,18 +42,18 @@ public final class GithubWebhookHandler {
     public Mono<ServerResponse> webhook(final ServerRequest request) {
         return request
                 .bodyToMono(GithubHookPayload.class)
-                .flatMap(this::processCommit)
+                .flatMap(this::processPayload)
                 .flatMap(p -> ServerResponse.ok().build());
     }
 
-    public Mono<Void> processCommit(final GithubHookPayload p) {
-        final String projectOwner = p.getRepository().getOwner().getLogin();
-        final String projectRepo = p.getRepository().getName();
-        final Integer number = p.getPull().getNumber();
-        final String pullOwner = p.getPull().getHead().getRepo().getOwner().getLogin();
-        final String pullRepo = p.getPull().getHead().getRepo().getName();
-        final String sha = p.getPull().getHead().getSha();
-        final Instant updatedAt = p.getPull().getUpdatedAt();
+    public Mono<Void> processPayload(final GithubHookPayload payload) {
+        final String projectOwner = payload.getRepository().getOwner().getLogin();
+        final String projectRepo = payload.getRepository().getName();
+        final Integer number = payload.getPull().getNumber();
+        final String pullOwner = payload.getPull().getHead().getRepo().getOwner().getLogin();
+        final String pullRepo = payload.getPull().getHead().getRepo().getName();
+        final String sha = payload.getPull().getHead().getSha();
+        final Instant updatedAt = payload.getPull().getUpdatedAt();
 
         // save to commit table & get commit with id
         final Mono<Commit> target = commitRepository
@@ -66,7 +66,9 @@ public final class GithubWebhookHandler {
                 .map(Project::getId)
                 .cache();
         final Mono<Pull> updatedPull = projectId
-                .flatMap(id -> pullRepository.findByProjectIdAndNumber(id, number))
+                .flatMap(id -> pullRepository
+                        .findByProjectIdAndNumber(id, number)
+                        .switchIfEmpty(pullRepository.save(new Pull(null, id, number, null, updatedAt))))
                 .zipWith(target)
                 .flatMap(pullAndCommit -> {
                     Pull pull = pullAndCommit.getT1();
