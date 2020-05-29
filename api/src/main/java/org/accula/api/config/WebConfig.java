@@ -3,17 +3,11 @@ package org.accula.api.config;
 import lombok.RequiredArgsConstructor;
 import org.accula.api.db.CurrentUserRepository;
 import org.accula.api.github.api.GithubClient;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.reactive.CorsWebFilter;
-import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 import org.springframework.web.reactive.config.WebFluxConfigurer;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
-
-import java.util.Collections;
 
 /**
  * @author Anton Lamtev
@@ -23,20 +17,6 @@ import java.util.Collections;
 @RequiredArgsConstructor
 public class WebConfig implements WebFluxConfigurer {
     private final CurrentUserRepository currentUserRepository;
-
-    @Bean
-    public CorsWebFilter corsWebFilter(@Value("${accula.cluster.webUrl}") final String webUrl) {
-        final var corsConfig = new CorsConfiguration();
-        corsConfig.setAllowedOrigins(Collections.singletonList(webUrl));
-        corsConfig.addAllowedMethod(CorsConfiguration.ALL);
-        corsConfig.addAllowedHeader(CorsConfiguration.ALL);
-        corsConfig.setAllowCredentials(true);
-
-        final var source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", corsConfig);
-
-        return new CorsWebFilter(source);
-    }
 
     @Bean
     public WebClient webClient() {
