@@ -90,8 +90,7 @@ public class CodeLoaderImpl implements CodeLoader {
                 .switchIfEmpty(Mono.error(FILE_NOT_FOUND))
                 .map(loader -> cutFileContent(loader, fromLine, toLine))
                 .map(content -> new FileEntity(commit, filename, content))
-                .switchIfEmpty(Mono.error(CUT_ERROR))
-                .subscribeOn(scheduler);
+                .switchIfEmpty(Mono.error(CUT_ERROR));
     }
 
     @Override

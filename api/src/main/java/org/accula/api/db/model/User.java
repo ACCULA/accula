@@ -18,6 +18,7 @@ public class User {
     @Id
     @Nullable
     private Long id;
+    @Nullable
     private String name;
     private Long githubId;
     private String githubLogin;
@@ -28,7 +29,7 @@ public class User {
         return !githubLogin.equals(login) || !Objects.equals(githubAccessToken, accessToken);
     }
 
-    public static User of(final String name, final Long githubId, final String githubLogin, final String githubAccessToken) {
+    public static User of(@Nullable final String name, final Long githubId, final String githubLogin, final String githubAccessToken) {
         return new User(null, name, githubId, githubLogin, githubAccessToken);
     }
 }

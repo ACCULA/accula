@@ -14,6 +14,8 @@ import java.util.regex.Pattern;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
+ * FIXME: replace block with StepVerifie
+ *
  * @author Vadim Dyachkov
  */
 class CodeLoaderTest {
