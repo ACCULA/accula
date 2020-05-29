@@ -78,6 +78,7 @@ public final class GithubWebhookHandler {
         // get previous commits
         final Flux<Commit> source = projectId
                 .flatMapMany(id -> pullRepository.findAllByProjectIdAndUpdatedAtBeforeAndNumberIsNot(id, updatedAt, number))
+                .filter(pull -> pull.getLastCommitId() != null)
                 .map(Pull::getLastCommitId)
                 .flatMap(commitRepository::findById);
 

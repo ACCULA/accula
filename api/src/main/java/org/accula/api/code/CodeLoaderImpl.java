@@ -31,6 +31,7 @@ import java.util.StringJoiner;
 
 /**
  * @author Vadim Dyachkov
+ * @author Anton Lamtev
  */
 @Component
 @Slf4j
@@ -62,10 +63,10 @@ public class CodeLoaderImpl implements CodeLoader {
     }
 
     @Override
-    public Mono<String> getFile(final Commit commit, final String filename) {
-        return repositoryProvider.getRepository(commit.getOwner(), commit.getRepo())
+    public Mono<String> getFile(final IFileMarker marker) {
+        return repositoryProvider.getRepository(marker.getCommit().getOwner(), marker.getCommit().getRepo())
                 .switchIfEmpty(Mono.error(REPO_NOT_FOUND))
-                .flatMap(repo -> Mono.justOrEmpty(getObjectLoader(repo, commit.getSha(), filename)))
+                .flatMap(repo -> Mono.justOrEmpty(getObjectLoader(repo, marker.getCommit().getSha(), marker.getFilename())))
                 .switchIfEmpty(Mono.error(FILE_NOT_FOUND))
                 .map(this::getFileContent)
                 .switchIfEmpty(Mono.error(CUT_ERROR))
@@ -73,16 +74,14 @@ public class CodeLoaderImpl implements CodeLoader {
     }
 
     @Override
-    public Mono<String> getFileSnippet(final Commit commit, final String filename, final int fromLine, final int toLine) {
-        if (fromLine > toLine) {
-            return Mono.error(RANGE_ERROR);
-        }
-        return repositoryProvider.getRepository(commit.getOwner(), commit.getRepo())
-                .switchIfEmpty(Mono.error(REPO_NOT_FOUND))
-                .flatMap(repo -> Mono.justOrEmpty(getObjectLoader(repo, commit.getSha(), filename)))
-                .switchIfEmpty(Mono.error(FILE_NOT_FOUND))
-                .map(loader -> cutFileContent(loader, fromLine, toLine))
-                .switchIfEmpty(Mono.error(CUT_ERROR))
+    public Mono<String> getFileSnippet(final IFileSnippetMarker marker) {
+        return getFileSnippetOnCallerScheduler(marker)
+                .subscribeOn(scheduler);
+    }
+
+    @Override
+    public Flux<String> getFileSnippets(final Flux<? extends IFileSnippetMarker> markers) {
+        return markers.flatMap(this::getFileSnippetOnCallerScheduler)
                 .subscribeOn(scheduler);
     }
 
@@ -152,5 +151,17 @@ public class CodeLoaderImpl implements CodeLoader {
             }
         }
         return joiner.toString();
+    }
+
+    private <T extends IFileSnippetMarker> Mono<String> getFileSnippetOnCallerScheduler(final T marker) {
+        if (marker.getFromLine() > marker.getToLine()) {
+            return Mono.error(RANGE_ERROR);
+        }
+        return repositoryProvider.getRepository(marker.getCommit().getOwner(), marker.getCommit().getRepo())
+                .switchIfEmpty(Mono.error(REPO_NOT_FOUND))
+                .flatMap(repo -> Mono.justOrEmpty(getObjectLoader(repo, marker.getCommit().getSha(), marker.getFilename())))
+                .switchIfEmpty(Mono.error(FILE_NOT_FOUND))
+                .map(loader -> cutFileContent(loader, marker.getFromLine(), marker.getToLine()))
+                .switchIfEmpty(Mono.error(CUT_ERROR));
     }
 }

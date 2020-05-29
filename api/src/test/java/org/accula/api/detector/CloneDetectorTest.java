@@ -13,8 +13,9 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
- * @vaddya
+ * @author Vadim Dyachkov
  */
+//FIXME: replace block() with StepVerifier
 class CloneDetectorTest {
     /**
      * owner/repo/sha:02.txt[3:4] -> owner1/repo1/sha1:1.txt[1:2]
@@ -69,7 +70,8 @@ class CloneDetectorTest {
         CodeSnippet into = clone.getT1();
         CodeSnippet from = clone.getT2();
 
-        String fromCode = codeLoader.getFileSnippet(from.getCommit(), from.getFile(), from.getFromLine(), from.getToLine()).block();
+        FileSnippetMarker marker = new FileSnippetMarker(from.getCommit(), from.getFile(), from.getFromLine(), from.getToLine());
+        String fromCode = codeLoader.getFileSnippet(marker).block();
 
         System.out.println(into + " -> " + from);
         System.out.println(fromCode);
