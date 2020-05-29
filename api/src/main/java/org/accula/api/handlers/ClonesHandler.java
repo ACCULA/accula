@@ -8,6 +8,7 @@ import org.accula.api.db.CommitRepository;
 import org.accula.api.db.PullRepository;
 import org.accula.api.db.model.Commit;
 import org.accula.api.handlers.response.GetCloneResponseBody;
+import org.accula.api.handlers.response.GetCloneResponseBody.FlatCodeSnippet.FlatCodeSnippetBuilder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
@@ -34,13 +35,11 @@ public final class ClonesHandler {
     private final Scheduler codeLoadingScheduler = Schedulers.boundedElastic();
 
     public Mono<ServerResponse> getLastCommitClones(final ServerRequest request) {
-        return Mono
-                .defer(() -> {
-                    final var projectId = Long.parseLong(request.pathVariable("projectId"));
-                    final var pullNumber = Integer.parseInt(request.pathVariable("pullNumber"));
-
-                    return getLastCommitClones(projectId, pullNumber);
-                });
+        return Mono.defer(() -> {
+            final var projectId = Long.parseLong(request.pathVariable("projectId"));
+            final var pullNumber = Integer.parseInt(request.pathVariable("pullNumber"));
+            return getLastCommitClones(projectId, pullNumber);
+        });
     }
 
     private Mono<ServerResponse> getLastCommitClones(final long projectId, final int pullNumber) {
@@ -117,10 +116,10 @@ public final class ClonesHandler {
                 .subscribeOn(codeLoadingScheduler);
     }
 
-    private static GetCloneResponseBody.FlatCodeSnippet.FlatCodeSnippetBuilder codeSnippetWith(final long projectId,
-                                                                                               final int pullNumber,
-                                                                                               final String sha,
-                                                                                               final String content) {
+    private static FlatCodeSnippetBuilder codeSnippetWith(final long projectId,
+                                                          final int pullNumber,
+                                                          final String sha,
+                                                          final String content) {
         return GetCloneResponseBody.FlatCodeSnippet.builder()
                 .projectId(projectId)
                 .pullNumber(pullNumber)
