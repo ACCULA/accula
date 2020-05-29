@@ -10,6 +10,7 @@ import org.accula.api.db.PullRepository;
 import org.accula.api.db.model.Clone;
 import org.accula.api.db.model.Commit;
 import org.accula.api.handlers.response.GetCloneResponseBody;
+import org.accula.api.handlers.response.GetCloneResponseBody.FlatCodeSnippet.FlatCodeSnippetBuilder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
@@ -71,14 +72,11 @@ public final class ClonesHandler {
                                 clone.getSourceFromLine(),
                                 clone.getSourceToLine())));
 
-        final var cloneData = commitMapMono
-                .flatMapMany(commitMap -> clones);
-
         return Flux
-                .zip(cloneData,
+                .zip(clones,
                         getFileSnippets(targetFileSnippetMarkers),
                         getFileSnippets(sourceFileSnippetMarkers))
-                .map(tuple -> toResponseBody(tuple, projectId, pullNumber))
+                .map(cloneAndFileEntities -> toResponseBody(cloneAndFileEntities, projectId, pullNumber))
                 .collectList()
                 .flatMap(clonesBody -> ServerResponse
                         .ok()
@@ -86,34 +84,37 @@ public final class ClonesHandler {
                         .bodyValue(clonesBody));
     }
 
-    private GetCloneResponseBody toResponseBody(final Tuple3<Clone, FileEntity, FileEntity> tuple,
+    private GetCloneResponseBody toResponseBody(final Tuple3<Clone, FileEntity, FileEntity> cloneAndFileEntities,
                                                 final long projectId,
                                                 final int pullNumber) {
-        final var clone = tuple.getT1();
+        final var clone = cloneAndFileEntities.getT1();
 
-        final var targetFile = tuple.getT2();
-        final var target = GetCloneResponseBody.FlatCodeSnippet.builder()
-                .projectId(projectId)
-                .pullNumber(pullNumber)
-                .sha(targetFile.getCommit().getSha())
-                .content(targetFile.getContent())
+        final var targetFile = cloneAndFileEntities.getT2();
+        final var target = codeSnippetWith(projectId, pullNumber, targetFile.getCommit().getSha(), targetFile.getContent())
                 .file(clone.getTargetFile())
                 .fromLine(clone.getTargetFromLine())
                 .toLine(clone.getTargetToLine())
                 .build();
 
-        final var sourceFile = tuple.getT3();
-        final var source = GetCloneResponseBody.FlatCodeSnippet.builder()
-                .projectId(projectId)
-                .pullNumber(pullNumber)
-                .sha(sourceFile.getCommit().getSha())
-                .content(sourceFile.getContent())
+        final var sourceFile = cloneAndFileEntities.getT3();
+        final var source = codeSnippetWith(projectId, pullNumber, sourceFile.getCommit().getSha(), sourceFile.getContent())
                 .file(clone.getSourceFile())
                 .fromLine(clone.getSourceFromLine())
                 .toLine(clone.getSourceToLine())
                 .build();
 
         return new GetCloneResponseBody(clone.getId(), target, source);
+    }
+
+    private static FlatCodeSnippetBuilder codeSnippetWith(final long projectId,
+                                                          final int pullNumber,
+                                                          final String sha,
+                                                          final String content) {
+        return GetCloneResponseBody.FlatCodeSnippet.builder()
+                .projectId(projectId)
+                .pullNumber(pullNumber)
+                .sha(sha)
+                .content(content);
     }
 
     private Flux<FileEntity> getFileSnippets(final Flux<FileSnippetMarker> markers) {

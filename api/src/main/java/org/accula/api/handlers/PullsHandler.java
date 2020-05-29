@@ -30,6 +30,8 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 public final class PullsHandler {
     //TODO: common handler for all NOT FOUND cases
     private static final Exception PULL_NOT_FOUND_EXCEPTION = new Exception();
+    public static final String PROJECT_ID = "projectId";
+    public static final String PULL_NUMBER = "pullNumber";
 
     private final ProjectRepository projects;
     private final CommitRepository commitRepository;
@@ -41,7 +43,7 @@ public final class PullsHandler {
     //TODO: handle github errors
     public Mono<ServerResponse> getOpenPulls(final ServerRequest request) {
         return Mono
-                .fromSupplier(() -> Long.parseLong(request.pathVariable("projectId")))
+                .fromSupplier(() -> Long.parseLong(request.pathVariable(PROJECT_ID)))
                 .onErrorMap(NumberFormatException.class, e -> PULL_NOT_FOUND_EXCEPTION)
                 .flatMap(projectId -> projects
                         .findById(projectId)
@@ -60,8 +62,8 @@ public final class PullsHandler {
     public Mono<ServerResponse> get(final ServerRequest request) {
         return Mono
                 .defer(() -> {
-                    final var projectId = Long.parseLong(request.pathVariable("projectId"));
-                    final var pullNumber = Integer.parseInt(request.pathVariable("pullNumber"));
+                    final var projectId = Long.parseLong(request.pathVariable(PROJECT_ID));
+                    final var pullNumber = Integer.parseInt(request.pathVariable(PULL_NUMBER));
 
                     return pulls
                             .existsByProjectIdAndNumber(projectId, pullNumber)
@@ -81,8 +83,8 @@ public final class PullsHandler {
     public Mono<ServerResponse> getDiff(final ServerRequest request) {
         return Mono
                 .defer(() -> {
-                    final var projectId = Long.parseLong(request.pathVariable("projectId"));
-                    final var pullNumber = Integer.parseInt(request.pathVariable("pullNumber"));
+                    final var projectId = Long.parseLong(request.pathVariable(PROJECT_ID));
+                    final var pullNumber = Integer.parseInt(request.pathVariable(PULL_NUMBER));
                     final var baseSha = request.queryParam("sha").orElseThrow();
                     final var base = projects.findById(projectId)
                             .map(p -> new Commit(-1L, p.getRepoOwner(), p.getRepoName(), baseSha));
@@ -104,7 +106,7 @@ public final class PullsHandler {
                 .onErrorResume(e -> e == PULL_NOT_FOUND_EXCEPTION, e -> ServerResponse.notFound().build());
     }
 
-    private GetDiffResponseBody toResponseBody(Tuple2<FileEntity, FileEntity> diff) {
+    private GetDiffResponseBody toResponseBody(final Tuple2<FileEntity, FileEntity> diff) {
         final var base = diff.getT1();
         final var head = diff.getT2();
         return GetDiffResponseBody.builder()
@@ -118,7 +120,7 @@ public final class PullsHandler {
     //TODO
     public Mono<ServerResponse> refresh(final ServerRequest request) {
         return Mono
-                .justOrEmpty(request.pathVariable("pullNumber"))
+                .justOrEmpty(request.pathVariable(PULL_NUMBER))
                 //switchIfEmpty
                 .map(Long::parseLong)
                 //onError

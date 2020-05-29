@@ -95,14 +95,14 @@ public class CodeLoaderImpl implements CodeLoader {
 
     @Override
     public Flux<Tuple2<FileEntity, FileEntity>> getDiff(final Commit base, final Commit head) {
-        Mono<AbstractTreeIterator> baseTree = repositoryProvider
+        final Mono<AbstractTreeIterator> baseTree = repositoryProvider
                 .getRepository(base.getOwner(), base.getRepo())
                 .map(repo -> getTreeIterator(repo, base.getSha()));
 
-        Mono<Repository> headRepo = repositoryProvider
+        final Mono<Repository> headRepo = repositoryProvider
                 .getRepository(head.getOwner(), head.getRepo())
                 .cache();
-        Mono<AbstractTreeIterator> headTree = headRepo
+        final Mono<AbstractTreeIterator> headTree = headRepo
                 .map(repo -> getTreeIterator(repo, head.getSha()));
 
         return Mono.zip(headRepo, baseTree, headTree)
