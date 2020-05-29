@@ -57,7 +57,7 @@ public class CodeLoaderImpl implements CodeLoader {
 
     @Override
     public Flux<FileEntity> getFiles(final Commit commit, final FileFilter filter) {
-        return repositoryProvider.getRepository(commit.getOwner(), commit.getRepo())
+        return getRepository(commit)
                 .switchIfEmpty(Mono.error(REPO_NOT_FOUND))
                 .flatMapMany(repo -> Flux.fromIterable(getObjectLoaders(repo, commit.getSha())))
                 .filter(filenameAndLoader -> filter.test(filenameAndLoader.getT1()))
@@ -68,12 +68,11 @@ public class CodeLoaderImpl implements CodeLoader {
 
     @Override
     public Mono<FileEntity> getFile(final Commit commit, final String filename) {
-        return repositoryProvider.getRepository(commit.getOwner(), commit.getRepo())
+        return getRepository(commit)
                 .switchIfEmpty(Mono.error(REPO_NOT_FOUND))
                 .flatMap(repo -> Mono.justOrEmpty(getObjectLoader(repo, commit.getSha(), filename)))
                 .switchIfEmpty(Mono.error(FILE_NOT_FOUND))
-                .map(this::getFileContent)
-                .map(content -> new FileEntity(commit, filename, content))
+                .map(loader -> new FileEntity(commit, filename, getFileContent(loader)))
                 .switchIfEmpty(Mono.error(CUT_ERROR))
                 .doOnSuccess(f -> log.info("Finished {}/{}", f.getCommit(), f.getName()))
                 .subscribeOn(scheduler);
@@ -84,32 +83,31 @@ public class CodeLoaderImpl implements CodeLoader {
         if (fromLine > toLine) {
             return Mono.error(RANGE_ERROR);
         }
-        return repositoryProvider.getRepository(commit.getOwner(), commit.getRepo())
+        return getRepository(commit)
                 .switchIfEmpty(Mono.error(REPO_NOT_FOUND))
                 .flatMap(repo -> Mono.justOrEmpty(getObjectLoader(repo, commit.getSha(), filename)))
                 .switchIfEmpty(Mono.error(FILE_NOT_FOUND))
-                .map(loader -> cutFileContent(loader, fromLine, toLine))
-                .map(content -> new FileEntity(commit, filename, content))
+                .map(loader -> new FileEntity(commit, filename, cutFileContent(loader, fromLine, toLine)))
                 .switchIfEmpty(Mono.error(CUT_ERROR));
     }
 
     @Override
     public Flux<Tuple2<FileEntity, FileEntity>> getDiff(final Commit base, final Commit head) {
-        final Mono<AbstractTreeIterator> baseTree = repositoryProvider
-                .getRepository(base.getOwner(), base.getRepo())
+        final Mono<AbstractTreeIterator> baseTree = getRepository(base)
                 .map(repo -> getTreeIterator(repo, base.getSha()));
 
-        final Mono<Repository> headRepo = repositoryProvider
-                .getRepository(head.getOwner(), head.getRepo())
-                .cache();
-        final Mono<AbstractTreeIterator> headTree = headRepo
-                .map(repo -> getTreeIterator(repo, head.getSha()));
+        final Mono<Repository> headRepo = getRepository(head).cache();
+        final Mono<AbstractTreeIterator> headTree = headRepo.map(repo -> getTreeIterator(repo, head.getSha()));
 
         return Mono.zip(headRepo, baseTree, headTree)
                 .flatMapMany(repoBaseHead -> getDiffEntries(repoBaseHead.getT1(), repoBaseHead.getT2(), repoBaseHead.getT3()))
                 .parallel()
                 .flatMap(diff -> Mono.zip(getFileNullable(base, diff.getOldPath()), getFileNullable(head, diff.getNewPath())))
                 .sequential();
+    }
+
+    private Mono<Repository> getRepository(Commit commit) {
+        return repositoryProvider.getRepository(commit.getOwner(), commit.getRepo());
     }
 
     @SneakyThrows
@@ -138,7 +136,6 @@ public class CodeLoaderImpl implements CodeLoader {
         if (DELETED_FILE.equals(filename)) {
             return Mono.just(new FileEntity(commit, null, null));
         }
-        log.info("Loading {}/{}", commit, filename);
         return getFile(commit, filename);
     }
 

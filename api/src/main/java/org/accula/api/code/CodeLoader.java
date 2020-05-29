@@ -25,7 +25,7 @@ public interface CodeLoader {
     Mono<FileEntity> getFile(Commit commit, String filename);
 
     /**
-     * Get the file snippet (file content from the specified line range)
+     * Get the file snippet (file entity with content from the specified line range)
      * by the commit, the file name and the line range
      */
     Mono<FileEntity> getFileSnippet(Commit commit, String filename, int fromLine, int toLine);
