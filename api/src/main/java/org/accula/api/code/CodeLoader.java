@@ -6,7 +6,6 @@ import reactor.core.publisher.Mono;
 
 /**
  * @author Vadim Dyachkov
- * @author Anton Lamtev
  */
 public interface CodeLoader {
     /**
@@ -22,18 +21,11 @@ public interface CodeLoader {
     /**
      * Get the file content by the commit and the file name
      */
-    Mono<String> getFile(IFileMarker marker);
+    Mono<String> getFile(Commit commit, String filename);
 
     /**
      * Get the file snippet (file content from the specified line range)
      * by the commit, the file name and the line range
      */
-    Mono<String> getFileSnippet(IFileSnippetMarker marker);
-
-    /**
-     * Get the file snippets for marker flux provided
-     *
-     * @see CodeLoader#getFileSnippet(IFileSnippetMarker)
-     */
-    Flux<String> getFileSnippets(Flux<? extends IFileSnippetMarker> markers);
+    Mono<String> getFileSnippet(Commit commit, String filename, int fromLine, int toLine);
 }
