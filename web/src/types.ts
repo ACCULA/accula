@@ -69,14 +69,16 @@ export interface IPull {
   previousPulls: IPullShort[]
 }
 
-type Base64 = string
-
 export interface ICodeSnippet {
   projectId: number
-  pullId: number
-  repoName: string
+  pullNumber: number
+  owner: string
+  repo: string
+  sha: string
   file: string
-  code: Base64
+  fromLine: number
+  toLine: number
+  content: string
 }
 
 export interface IClone {
@@ -87,7 +89,7 @@ export interface IClone {
 
 export interface IDiff {
   baseFilename?: string
-  baseContent?: Base64
+  baseContent?: string
   headFilename?: string
-  headContent?: Base64
+  headContent?: string
 }

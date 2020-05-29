@@ -31,7 +31,7 @@ const CodeDiff = ({
   language = 'java',
   leftTitle,
   onLineNumberClick,
-  codeFoldMessageRenderer,
+  codeFoldMessageRenderer
 }: CodeDiffProps) => {
   if (typeof oldValue !== 'string' || typeof newValue !== 'string') {
     throw Error('"oldValue" and "newValue" should be strings')
@@ -393,7 +393,28 @@ const CodeDiff = ({
     )
   }
 
-  const nodes = renderDiff()
+  let nodes = renderDiff()
+  if (nodes[0] === null) {
+    nodes = oldValue.split('\n').map((line, i) => {
+      const renderer = splitView ? renderSplitView : renderInlineView
+      return renderer(
+        {
+          left: {
+            value: line,
+            lineNumber: leftOffset + i,
+            type: DiffType.DEFAULT
+          },
+          right: {
+            value: line,
+            lineNumber: rightOffset + i,
+            type: DiffType.DEFAULT
+          }
+        },
+        i
+      )
+    })
+  }
+
   return (
     <Panel expanded={isShow} onToggle={show => setShow(show)} className="code-diff">
       <Panel.Heading>

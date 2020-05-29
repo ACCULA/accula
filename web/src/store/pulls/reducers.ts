@@ -36,7 +36,17 @@ export function pullsReducer(
     case SET_CLONES: {
       return {
         ...state,
-        clones: action.clones
+        clones: action.clones.map(diff => ({
+          id: diff.id,
+          target: {
+            ...diff.target,
+            content: atob(diff.target.content)
+          },
+          source: {
+            ...diff.source,
+            content: atob(diff.source.content)
+          }
+        }))
       }
     }
     case SET_DIFFS: {

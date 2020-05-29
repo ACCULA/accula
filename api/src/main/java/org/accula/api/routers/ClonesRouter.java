@@ -20,7 +20,7 @@ public final class ClonesRouter {
     public RouterFunction<ServerResponse> clonesRoute() {
         return RouterFunctions
                 .route()
-                .GET("/projects/{projectId}/pulls/{pullNumber}/clones", clonesHandler::getLastCommitClones)
+                .GET("/api/projects/{projectId}/pulls/{pullNumber}/clones", clonesHandler::getLastCommitClones)
                 .build();
     }
 }

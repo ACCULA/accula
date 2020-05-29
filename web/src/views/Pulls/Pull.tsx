@@ -99,7 +99,7 @@ const Pull = ({
             </>
           }
         >
-          <PullOverviewTab pull={pull} />
+          <PullOverviewTab pull={pull} clones={clones} />
         </Tab>
         <Tab
           eventKey="changes"
@@ -115,7 +115,7 @@ const Pull = ({
           eventKey="clones"
           title={
             <>
-              <i className="far fa-fw fa-copy" /> Clones <Badge>1</Badge>
+              <i className="far fa-fw fa-copy" /> Clones <Badge>{clones && clones.length}</Badge>
             </>
           }
         >

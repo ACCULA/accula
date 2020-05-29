@@ -18,6 +18,8 @@ public class GetCloneResponseBody implements ResponseBody {
     public static class FlatCodeSnippet {
         Long projectId;
         Integer pullNumber;
+        String owner;
+        String repo;
         String sha;
         String file;
         Integer fromLine;

@@ -51,7 +51,7 @@ export const getDiff = async (token: IToken, projectId: number, pullId: number):
 }
 
 export const getClones = async (token: IToken, projectId: number, pullId: number): Promise<IClone[]> => {
-  if (true || DEBUG) {
+  if (DEBUG) {
     return Promise.resolve(clones)
   }
   return axios
