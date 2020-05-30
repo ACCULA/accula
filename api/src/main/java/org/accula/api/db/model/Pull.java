@@ -17,13 +17,7 @@ public final class Pull {
     private Long id;
     private Long projectId;
     private Integer number;
-    @Nullable
-    private Long lastCommitId;
+    private Long headLastCommitId;
+    private String baseLastCommitSha;
     private Instant updatedAt;
-
-    public Pull(@Nullable final Long id, final Long projectId, final Integer number) {
-        this.id = id;
-        this.projectId = projectId;
-        this.number = number;
-    }
 }

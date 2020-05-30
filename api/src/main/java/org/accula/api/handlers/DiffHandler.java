@@ -46,7 +46,7 @@ public final class DiffHandler {
                             .map(p -> new Commit(-1L, p.getRepoOwner(), p.getRepoName(), baseSha));
 
                     final var head = pullRepository.findByProjectIdAndNumber(projectId, pullNumber)
-                            .map(pull -> Mono.justOrEmpty(pull.getLastCommitId()))
+                            .map(pull -> Mono.justOrEmpty(pull.getHeadLastCommitId()))
                             .flatMap(commitRepository::findById);
 
                     return Mono.zip(base, head)

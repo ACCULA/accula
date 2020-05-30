@@ -1,9 +1,11 @@
 package org.accula.api.routers;
 
 import lombok.SneakyThrows;
+import org.accula.api.db.CommitRepository;
 import org.accula.api.db.CurrentUserRepository;
 import org.accula.api.db.ProjectRepository;
 import org.accula.api.db.PullRepository;
+import org.accula.api.db.model.Commit;
 import org.accula.api.db.model.Project;
 import org.accula.api.db.model.Pull;
 import org.accula.api.db.model.User;
@@ -28,6 +30,7 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.Instant;
 import java.util.List;
 
 import static java.lang.Boolean.FALSE;
@@ -41,14 +44,20 @@ public class ProjectsRouterTest {
     private static final String REPO_URL = "https://github.com/accula/accula";
     private static final String REPO_NAME = "accula";
     private static final String REPO_OWNER = "accula";
-    private static final GithubPull[] OPEN_PULLS = new GithubPull[]{new GithubPull(), new GithubPull(), new GithubPull()};
-    private static final List<Pull> PULLS = List.of(new Pull(null, 0L, null), new Pull(null, 0L, null), new Pull(null, 0L, null));
+    private static final List<Commit> COMMITS = List.of(new Commit(), new Commit(), new Commit());
+    private static final List<Pull> PULLS = List.of(
+            new Pull(null, 0L, null, null, null, null),
+            new Pull(null, 0L, null, null, null, null),
+            new Pull(null, 0L, null, null, null, null));
     private static final String EMPTY = "";
     private static final Long[] ADMINS = new Long[]{1L, 2L, 3L};
     private static final User CURRENT_USER = new User(0L, "Steve", 123L, "jobs", "secret_token");
-    private static final Project PROJECT = new Project(0L, CURRENT_USER.getId(), REPO_URL, REPO_NAME, EMPTY, OPEN_PULLS.length, REPO_OWNER, EMPTY, ADMINS);
     private static final GithubUser GH_OWNER = new GithubUser(REPO_OWNER, EMPTY, EMPTY);
     private static final GithubRepo GH_REPO = new GithubRepo(REPO_URL, REPO_NAME, EMPTY, GH_OWNER);
+    private static final GithubPull.Marker MARKER = new GithubPull.Marker("", "", GH_REPO, "");
+    private static final GithubPull PULL = new GithubPull(null, MARKER, MARKER, GH_OWNER, 0, "", GithubPull.State.OPEN, Instant.now(), Instant.now());
+    private static final GithubPull[] OPEN_PULLS = new GithubPull[]{PULL, PULL, PULL};
+    private static final Project PROJECT = new Project(0L, CURRENT_USER.getId(), REPO_URL, REPO_NAME, EMPTY, OPEN_PULLS.length, REPO_OWNER, EMPTY, ADMINS);
     private static final RequestBody REQUEST_BODY = new CreateProjectRequestBody(REPO_URL);
     private static final String INVALID_REPO_URL = "htps://bad_url";
     private static final RequestBody REQUEST_BODY_INVALID_URL = new CreateProjectRequestBody(INVALID_REPO_URL);
@@ -61,6 +70,8 @@ public class ProjectsRouterTest {
     private ProjectRepository projectRepository;
     @MockBean
     private PullRepository pullRepository;
+    @MockBean
+    private CommitRepository commitRepository;
     @MockBean
     private GithubClient githubClient;
     @Autowired
@@ -79,13 +90,16 @@ public class ProjectsRouterTest {
         Mockito.when(currentUser.get())
                 .thenReturn(Mono.just(CURRENT_USER));
 
+        Mockito.when(commitRepository.saveAll(Mockito.anyCollection()))
+                .thenReturn(Flux.fromIterable(COMMITS));
+
         Mockito.when(projectRepository.save(Mockito.any(Project.class)))
                 .thenReturn(Mono.just(PROJECT));
 
         Mockito.when(projectRepository.notExistsByRepoOwnerAndRepoName(REPO_OWNER, REPO_NAME))
                 .thenReturn(Mono.just(TRUE));
 
-        Mockito.when(pullRepository.saveAll(PULLS))
+        Mockito.when(pullRepository.saveAll(Mockito.any(Flux.class)))
                 .thenReturn(Flux.fromIterable(PULLS));
 
         Mockito.when(githubClient.hasAdminPermission(PROJECT.getRepoOwner(), PROJECT.getRepoName()))

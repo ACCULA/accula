@@ -87,10 +87,10 @@ public final class PullsHandler {
                 .number(githubPull.getNumber())
                 .url(githubPull.getHtmlUrl())
                 .title(githubPull.getTitle())
-                .source(new GetPullResponseBody.PullRef(
+                .head(new GetPullResponseBody.PullRef(
                         githubPull.getHead().getTreeUrl(),
                         githubPull.getHead().getLabel()))
-                .target(new GetPullResponseBody.PullRef(
+                .base(new GetPullResponseBody.PullRef(
                         githubPull.getBase().getTreeUrl(),
                         githubPull.getBase().getLabel()))
                 .author(new GetPullResponseBody.PullAuthor(
