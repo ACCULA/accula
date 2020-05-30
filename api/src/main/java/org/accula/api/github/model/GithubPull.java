@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -14,6 +15,7 @@ import java.util.Locale;
  * @author Anton Lamtev
  */
 @Data
+@NoArgsConstructor
 @AllArgsConstructor
 public final class GithubPull {
     @JsonProperty("html_url")
@@ -41,6 +43,7 @@ public final class GithubPull {
     }
 
     @Data
+    @NoArgsConstructor
     @AllArgsConstructor
     public static final class Marker {
         private String label;
