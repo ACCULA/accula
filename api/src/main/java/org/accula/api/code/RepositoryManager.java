@@ -6,7 +6,6 @@ import lombok.Value;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.internal.storage.file.FileRepository;
 import org.eclipse.jgit.lib.Repository;
-import org.jetbrains.annotations.Nullable;
 import reactor.core.publisher.Mono;
 
 import java.io.File;
@@ -46,21 +45,11 @@ public class RepositoryManager implements RepositoryProvider {
         final RepoRef ref = new RepoRef(owner, repo);
         final File directory = getDirectory(ref);
         return Mono
-                .justOrEmpty(fromCache(ref))
+                .justOrEmpty(cache.get(ref))
                 .switchIfEmpty(openRepository(directory))
                 .switchIfEmpty(cloneRepository(ref, directory))
+                .map(this::doFetch) // TODO: schedule on different thread
                 .doOnSuccess(rep -> cache.put(ref, rep));
-    }
-
-    @SneakyThrows
-    @Nullable
-    private Repository fromCache(final RepoRef ref) {
-        if (cache.containsKey(ref)) {
-            final Repository repository = cache.get(ref);
-            Git.wrap(repository).fetch().call();
-            return repository;
-        }
-        return null;
     }
 
     @SneakyThrows
@@ -88,5 +77,11 @@ public class RepositoryManager implements RepositoryProvider {
                         .setURI(ref.getUrl())
                         .call()
                         .getRepository());
+    }
+
+    @SneakyThrows
+    private Repository doFetch(final Repository repository) {
+        Git.wrap(repository).fetch().call();
+        return repository;
     }
 }

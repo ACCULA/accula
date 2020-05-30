@@ -15,8 +15,8 @@ import java.util.Locale;
  * @author Anton Lamtev
  */
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 public final class GithubPull {
     @JsonProperty("html_url")
     private String htmlUrl;
@@ -43,8 +43,8 @@ public final class GithubPull {
     }
 
     @Data
-    @AllArgsConstructor
     @NoArgsConstructor
+    @AllArgsConstructor
     public static final class Marker {
         private String label;
         private String ref;

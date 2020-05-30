@@ -90,14 +90,14 @@ public final class GithubClientImpl implements GithubClient {
     }
 
     @Override
-    public Mono<Boolean> createHook(final String owner, final String repo, final GithubHook hook) {
+    public Mono<Void> createHook(final String owner, final String repo, final GithubHook hook) {
         return withAccessToken(accessToken -> githubApiWebClient
                 .post()
                 .uri("/repos/{owner}/{repo}/hooks", owner, repo)
                 .headers(h -> h.setBearerAuth(accessToken))
                 .bodyValue(hook)
-                .retrieve()
-                .bodyToMono(Boolean.class));
+                .exchange()
+                .then());
     }
 
     private <T> Mono<T> withAccessToken(final Function<String, Mono<T>> transform) {
