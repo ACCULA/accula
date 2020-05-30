@@ -58,5 +58,5 @@ accula:
   reposPath: ${REPOS_PATH}
   
   webhook:
-    url: ${API_URL}/api/webhook
+    url: ${WEBHOOK_URL}/api/webhook
     secret: ${WEBHOOK_SECRET}
