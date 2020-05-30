@@ -42,7 +42,10 @@ public class ProjectsRouterTest {
     private static final String REPO_NAME = "accula";
     private static final String REPO_OWNER = "accula";
     private static final GithubPull[] OPEN_PULLS = new GithubPull[]{new GithubPull(), new GithubPull(), new GithubPull()};
-    private static final List<Pull> PULLS = List.of(new Pull(null, 0L, null), new Pull(null, 0L, null), new Pull(null, 0L, null));
+    private static final List<Pull> PULLS = List.of(
+            new Pull(null, 0L, null, null, null),
+            new Pull(null, 0L, null, null, null),
+            new Pull(null, 0L, null, null, null));
     private static final String EMPTY = "";
     private static final Long[] ADMINS = new Long[]{1L, 2L, 3L};
     private static final User CURRENT_USER = new User(0L, "Steve", 123L, "jobs", "secret_token");

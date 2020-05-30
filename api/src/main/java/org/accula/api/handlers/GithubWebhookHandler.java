@@ -47,17 +47,19 @@ public final class GithubWebhookHandler {
     }
 
     public Mono<Void> processPayload(final GithubHookPayload payload) {
-        final String projectOwner = payload.getRepository().getOwner().getLogin();
-        final String projectRepo = payload.getRepository().getName();
-        final Integer number = payload.getPull().getNumber();
-        final String pullOwner = payload.getPull().getHead().getRepo().getOwner().getLogin();
-        final String pullRepo = payload.getPull().getHead().getRepo().getName();
-        final String sha = payload.getPull().getHead().getSha();
-        final Instant updatedAt = payload.getPull().getUpdatedAt();
+        final var projectOwner = payload.getRepository().getOwner().getLogin();
+        final var projectRepo = payload.getRepository().getName();
+        final var number = payload.getPull().getNumber();
+        final var pullOwner = payload.getPull().getHead().getRepo().getOwner().getLogin();
+        final var pullRepo = payload.getPull().getHead().getRepo().getName();
+        final var headSha = payload.getPull().getHead().getSha();
+        final var updatedAt = payload.getPull().getUpdatedAt();
+        final var base = payload.getPull().getBase();
 
         // save to commit table & get commit with id
-        final Mono<Commit> target = commitRepository
-                .save(new Commit(null, pullOwner, pullRepo, sha))
+        final Mono<Commit> headCommit = commitRepository
+                .findBySha(headSha)
+                .switchIfEmpty(commitRepository.save(new Commit(null, pullOwner, pullRepo, headSha)))
                 .cache();
 
         // update pull table
@@ -65,27 +67,24 @@ public final class GithubWebhookHandler {
                 .findByRepoOwnerAndRepoName(projectOwner, projectRepo)
                 .map(Project::getId)
                 .cache();
-        final Mono<Pull> updatedPull = projectId
+        final Mono<Pull> updatedPull = headCommit.flatMap(head -> projectId
                 .flatMap(id -> pullRepository
                         .findByProjectIdAndNumber(id, number)
-                        .switchIfEmpty(pullRepository.save(new Pull(null, id, number, null, updatedAt))))
-                .zipWith(target)
-                .flatMap(pullAndCommit -> {
-                    Pull pull = pullAndCommit.getT1();
-                    Long commitId = pullAndCommit.getT2().getId();
-                    pull.setLastCommitId(commitId);
+                        .switchIfEmpty(pullRepository.save(new Pull(null, id, number, head.getId(), base.getSha(), updatedAt))))
+                .flatMap(pull -> {
+                    pull.setHeadLastCommitId(head.getId());
+                    pull.setBaseLastCommitSha(base.getSha());
+                    pull.setUpdatedAt(updatedAt);
                     return pullRepository.save(pull);
-                });
+                }));
 
         // get previous commits
-        final Flux<Commit> source = projectId
+        final Flux<Commit> source = commitRepository.findAllById(projectId
                 .flatMapMany(id -> pullRepository.findAllByProjectIdAndUpdatedAtBeforeAndNumberIsNot(id, updatedAt, number))
-                .filter(pull -> pull.getLastCommitId() != null)
-                .map(Pull::getLastCommitId)
-                .flatMap(commitRepository::findById);
+                .map(Pull::getHeadLastCommitId));
 
         // get files by commits
-        final Flux<FileEntity> targetFiles = target
+        final Flux<FileEntity> targetFiles = headCommit
                 .flatMapMany(commit -> loader.getFiles(commit, FileFilter.ALL));
         final Flux<FileEntity> sourceFiles = source
                 .flatMap(commit -> loader.getFiles(commit, FileFilter.ALL));
