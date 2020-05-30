@@ -35,6 +35,7 @@ import java.util.StringJoiner;
 
 /**
  * @author Vadim Dyachkov
+ * @author Anton Lamtev
  */
 @Component
 @Slf4j

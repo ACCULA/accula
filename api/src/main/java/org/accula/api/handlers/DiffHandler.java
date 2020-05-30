@@ -20,7 +20,7 @@ import java.util.Base64;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 /**
- * @author Anton Lamtev
+ * @author Vadim Dyachkov
  */
 @Component
 @RequiredArgsConstructor
@@ -29,7 +29,7 @@ public final class DiffHandler {
     private static final String PROJECT_ID = "projectId";
     private static final String PULL_NUMBER = "pullNumber";
 
-    private final Base64.Encoder base64 = Base64.getEncoder();
+    private static final Base64.Encoder base64 = Base64.getEncoder();
 
     private final ProjectRepository projectRepository;
     private final CommitRepository commitRepository;
@@ -51,7 +51,7 @@ public final class DiffHandler {
 
                     return Mono.zip(base, head)
                             .flatMapMany(headBase -> codeLoader.getDiff(headBase.getT1(), headBase.getT2()))
-                            .map(this::toResponseBody)
+                            .map(DiffHandler::toResponseBody)
                             .collectList()
                             .flatMap(diffs -> ServerResponse
                                     .ok()
@@ -62,7 +62,7 @@ public final class DiffHandler {
                 .onErrorResume(e -> e == PULL_NOT_FOUND_EXCEPTION, e -> ServerResponse.notFound().build());
     }
 
-    private GetDiffResponseBody toResponseBody(final Tuple2<FileEntity, FileEntity> diff) {
+    private static GetDiffResponseBody toResponseBody(final Tuple2<FileEntity, FileEntity> diff) {
         final var base = diff.getT1();
         final var head = diff.getT2();
         return GetDiffResponseBody.builder()
@@ -74,7 +74,7 @@ public final class DiffHandler {
     }
 
     @Nullable
-    public String encode(@Nullable final String data) {
+    public static String encode(@Nullable final String data) {
         if (data == null) {
             return null;
         }

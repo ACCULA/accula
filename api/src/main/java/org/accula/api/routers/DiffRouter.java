@@ -9,7 +9,7 @@ import org.springframework.web.reactive.function.server.RouterFunctions;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
 /**
- * @author Anton Lamtev
+ * @author Vadim Dyachkov
  */
 @Component
 @RequiredArgsConstructor

@@ -35,7 +35,7 @@ public final class ClonesHandler {
     private static final String PROJECT_ID = "projectId";
     private static final String PULL_NUMBER = "pullNumber";
 
-    private final Base64.Encoder base64 = Base64.getEncoder();
+    private static final Base64.Encoder base64 = Base64.getEncoder();
 
     private final PullRepository pullRepo;
     private final CommitRepository commitRepo;
@@ -113,10 +113,10 @@ public final class ClonesHandler {
         return new GetCloneResponseBody(clone.getId(), target, source);
     }
 
-    private FlatCodeSnippetBuilder codeSnippetWith(final long projectId,
-                                                   final int pullNumber,
-                                                   final Commit commit,
-                                                   final String content) {
+    private static FlatCodeSnippetBuilder codeSnippetWith(final long projectId,
+                                                          final int pullNumber,
+                                                          final Commit commit,
+                                                          final String content) {
         return GetCloneResponseBody.FlatCodeSnippet.builder()
                 .projectId(projectId)
                 .pullNumber(pullNumber)

@@ -46,6 +46,7 @@ import static org.springframework.security.web.server.util.matcher.ServerWebExch
 
 /**
  * @author Anton Lamtev
+ * @author Vadim Dyachkov
  */
 @EnableWebFluxSecurity
 @EnableConfigurationProperties(JwtProperties.class)
