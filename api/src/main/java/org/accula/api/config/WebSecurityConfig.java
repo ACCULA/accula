@@ -81,8 +81,8 @@ public class WebSecurityConfig {
                         .accessDeniedHandler(new HttpStatusServerAccessDeniedHandler(FORBIDDEN)))
 
                 .authorizeExchange(exchanges -> exchanges
-                        .pathMatchers(GET, "/api/projects/**/pulls/**/clones").permitAll()
-                        .pathMatchers("/api/projects/**/pulls/**").authenticated()
+                        .pathMatchers(GET, "/api/projects/*/pulls/*/clones").permitAll()
+                        .pathMatchers("/api/projects/*/pulls/**").authenticated()
                         .pathMatchers(GET, "/api/projects/**").permitAll()
                         .pathMatchers("/api/projects/**").authenticated()
                         .anyExchange().permitAll())

@@ -2,6 +2,7 @@ package org.accula.api.github.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.net.URLEncoder;
@@ -13,6 +14,7 @@ import java.util.Locale;
  * @author Anton Lamtev
  */
 @Data
+@AllArgsConstructor
 public final class GithubPull {
     @JsonProperty("html_url")
     private String htmlUrl;
@@ -39,6 +41,7 @@ public final class GithubPull {
     }
 
     @Data
+    @AllArgsConstructor
     public static final class Marker {
         private String label;
         private String ref;

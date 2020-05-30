@@ -54,7 +54,7 @@ public final class ClonesHandler {
     private Mono<ServerResponse> getLastCommitClones(final long projectId, final int pullNumber) {
         final var clones = pullRepo
                 .findByProjectIdAndNumber(projectId, pullNumber)
-                .flatMapMany(pull -> cloneRepo.findAllByTargetCommitId(pull.getLastCommitId()))
+                .flatMapMany(pull -> cloneRepo.findAllByTargetCommitId(pull.getHeadLastCommitId()))
                 .cache();
 
         final var commitIds = clones.flatMapSequential(clone -> Flux
