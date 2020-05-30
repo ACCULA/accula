@@ -174,9 +174,10 @@ public final class ProjectsHandler {
                         .saveAll(commitRepository.saveAll(commits)
                                 .zipWith(Flux.fromArray(ghPulls))
                                 .map(headCommitAndGhPull -> {
-                                    final var headCommit = headCommitAndGhPull.getT1();
-                                    final var ghPull = headCommitAndGhPull.getT2();
-                                    return new Pull(null, savedProject.getId(), ghPull.getNumber(), headCommit.getId(), ghPull.getBase().getSha(), ghPull.getUpdatedAt());
+                                    final var head = headCommitAndGhPull.getT1();
+                                    final var pull = headCommitAndGhPull.getT2();
+                                    return new Pull(null, savedProject.getId(), pull.getNumber(), head.getId(),
+                                            pull.getBase().getSha(), pull.getUpdatedAt());
                                 }))
                         .then(Mono.just(savedProject)));
     }
