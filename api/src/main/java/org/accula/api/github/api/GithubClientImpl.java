@@ -96,8 +96,7 @@ public final class GithubClientImpl implements GithubClient {
                 .uri("/repos/{owner}/{repo}/hooks", owner, repo)
                 .headers(h -> h.setBearerAuth(accessToken))
                 .bodyValue(hook)
-                .retrieve()
-                .toBodilessEntity()
+                .exchange()
                 .then());
     }
 

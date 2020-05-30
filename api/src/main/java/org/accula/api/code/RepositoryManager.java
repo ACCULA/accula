@@ -45,10 +45,10 @@ public class RepositoryManager implements RepositoryProvider {
         final RepoRef ref = new RepoRef(owner, repo);
         final File directory = getDirectory(ref);
         return Mono
-                .justOrEmpty(cache.getOrDefault(ref, null))
+                .justOrEmpty(cache.get(ref))
                 .switchIfEmpty(openRepository(directory))
                 .switchIfEmpty(cloneRepository(ref, directory))
-                .map(this::doFetch)
+                .map(this::doFetch) // TODO: schedule on different thread
                 .doOnSuccess(rep -> cache.put(ref, rep));
     }
 
