@@ -60,4 +60,3 @@ accula:
   webhook:
     url: ${API_URL}/api/webhook
     secret: ${WEBHOOK_SECRET}
-
