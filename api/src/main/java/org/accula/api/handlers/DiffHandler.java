@@ -29,7 +29,7 @@ public final class DiffHandler {
     private static final String PROJECT_ID = "projectId";
     private static final String PULL_NUMBER = "pullNumber";
 
-    private static final Base64.Encoder base64 = Base64.getEncoder();
+    private static final Base64.Encoder base64 = Base64.getEncoder(); // nopmd
 
     private final ProjectRepository projectRepository;
     private final CommitRepository commitRepository;
