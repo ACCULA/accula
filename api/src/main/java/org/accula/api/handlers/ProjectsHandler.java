@@ -12,6 +12,7 @@ import org.accula.api.db.model.Project;
 import org.accula.api.db.model.Pull;
 import org.accula.api.db.model.User;
 import org.accula.api.github.api.GithubClient;
+import org.accula.api.github.api.GithubClientException;
 import org.accula.api.github.model.GithubHook;
 import org.accula.api.github.model.GithubPull;
 import org.accula.api.github.model.GithubPull.State;
