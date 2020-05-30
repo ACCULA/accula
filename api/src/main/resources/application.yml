@@ -56,3 +56,7 @@ accula:
       maxSize: 20
 
   reposPath: ${REPOS_PATH}
+  
+  webhook:
+    url: ${WEBHOOK_URL}/api/webhook
+    secret: ${WEBHOOK_SECRET}

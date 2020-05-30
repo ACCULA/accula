@@ -17,7 +17,7 @@ public interface GithubClient {
 
     Mono<GithubPull> getRepositoryPull(final String owner, final String repo, final Integer pullNumber);
 
-    Mono<Boolean> createHook(final String owner, final String repo, final GithubHook hook);
+    Mono<Void> createHook(final String owner, final String repo, final GithubHook hook);
 
     interface LoginProvider {
         Mono<String> login();

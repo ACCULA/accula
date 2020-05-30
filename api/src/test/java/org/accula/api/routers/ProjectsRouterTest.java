@@ -2,6 +2,7 @@ package org.accula.api.routers;
 
 import lombok.SneakyThrows;
 import org.accula.api.db.CommitRepository;
+import org.accula.api.config.WebhookProperties;
 import org.accula.api.db.CurrentUserRepository;
 import org.accula.api.db.ProjectRepository;
 import org.accula.api.db.PullRepository;
@@ -74,6 +75,8 @@ public class ProjectsRouterTest {
     private CommitRepository commitRepository;
     @MockBean
     private GithubClient githubClient;
+    @MockBean
+    private WebhookProperties webhookProperties;
     @Autowired
     private RouterFunction<ServerResponse> projectsRoute;
     private WebTestClient client;
@@ -110,6 +113,9 @@ public class ProjectsRouterTest {
 
         Mockito.when(githubClient.getRepositoryOpenPulls(GH_REPO.getOwner().getLogin(), GH_REPO.getName()))
                 .thenReturn(Mono.just(OPEN_PULLS));
+
+        Mockito.when(githubClient.createHook(Mockito.any(), Mockito.any(), Mockito.any()))
+                .thenReturn(Mono.empty());
 
         client.post().uri("/api/projects")
                 .contentType(APPLICATION_JSON)
