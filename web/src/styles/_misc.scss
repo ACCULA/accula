@@ -96,6 +96,16 @@ code {
   color: $info-color;
   background: lighten($info-color, 55);
   font-family: $font-family-mono;
+  
+  &.added {
+    color: $addedColor;
+    background: $addedGutterBackground;
+  }
+
+  &.removed {
+    color: $removedColor;
+    background: $removedGutterBackground;
+  }
 }
 
 .alert {

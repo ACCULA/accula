@@ -26,20 +26,20 @@ export const PullClonesTab = ({ clones }: PullClonesTabProps) => {
               <>
                 Code cloned from{' '}
                 <span className="left-title left-title-colored">
-                  {`#${clone.from.pullId}@${clone.from.repo}:${clone.from.file}`}
+                  {`#${clone.source.pullNumber}@${clone.source.repo}:${clone.source.file}`}
                 </span>{' '}
                 into{' '}
                 <span className="right-title right-title-colored">
-                  {clone.to.file}
+                  {clone.target.file}
                 </span>
               </>
             }
-            oldValue={atob(clone.from.code)}
-            newValue={atob(clone.to.code)}
+            oldValue={clone.target.content}
+            newValue={clone.source.content}
             splitView={splitView}
             showDiffOnly
-            leftOffset={10}
-            rightOffset={20}
+            leftOffset={clone.target.fromLine}
+            rightOffset={clone.source.fromLine}
             compareMethod={DiffMethod.WORDS_WITH_SPACE}
             // disableWordDiff
           />

@@ -214,3 +214,30 @@ $topbar-x: topbar-x !default;
 $topbar-back: topbar-back !default;
 $bottombar-x: bottombar-x !default;
 $bottombar-back: bottombar-back !default;
+
+
+// Code diff
+$diffViewerBackground: #ffffff;
+$diffViewerColor: #212529;
+$addedBackground: #e6ffed;
+$addedColor: #24292e;
+$removedBackground: #ffeef0;
+$removedColor: #24292e;
+$wordAddedBackground: #acf2bd;
+$wordRemovedBackground: #fdb8c0;
+$addedGutterBackground: #cdffd8;
+$removedGutterBackground: #ffdce0;
+$gutterBackground: #f7f7f7;
+$gutterBackgroundDark: #f3f1f1;
+$highlightBackground: #fffbdd;
+$highlightGutterBackground: #fff5b1;
+$codeFoldGutterBackground: #dbedff;
+$codeFoldBackground: #f1f8ff;
+$emptyLineBackground: #fafbfc;
+$gutterColor: #212529;
+$addedGutterColor: #212529;
+$removedGutterColor: #212529;
+$codeFoldContentColor: #212529;
+$diffViewerTitleBackground: #fafbfc;
+$diffViewerTitleColor: #212529;
+$diffViewerTitleBorderColor: #eee;

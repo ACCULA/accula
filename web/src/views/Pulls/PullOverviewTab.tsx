@@ -2,16 +2,17 @@ import React from 'react'
 import { Badge, Col, Grid, ListGroup, ListGroupItem, Panel, Row } from 'react-bootstrap'
 import { format, formatDistanceToNow } from 'date-fns'
 
-import { IPull } from 'types'
+import { IClone, IPull } from 'types'
 import { GitHubLink, Link } from 'components/Link'
 
 const DATE_TITLE_FORMAT = "d MMMM yyyy 'at' HH:mm"
 
 interface PullOverviewTabProps {
   pull: IPull
+  clones?: IClone[]
 }
 
-export const PullOverviewTab = ({ pull }: PullOverviewTabProps) => {
+export const PullOverviewTab = ({ pull, clones }: PullOverviewTabProps) => {
   return (
     <Grid fluid style={{ padding: 0 }}>
       <Row>
@@ -47,7 +48,7 @@ export const PullOverviewTab = ({ pull }: PullOverviewTabProps) => {
               </ListGroupItem>
               <ListGroupItem>
                 <i className="far fa-fw fa-copy" /> Clones found
-                <Badge className="badge-warning">1 clone</Badge>
+                {clones && <Badge className="badge-warning">{clones.length} clones</Badge>}
               </ListGroupItem>
               <ListGroupItem>
                 <i className="far fa-fw fa-clock" /> Created

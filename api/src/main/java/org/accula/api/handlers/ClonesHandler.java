@@ -3,9 +3,11 @@ package org.accula.api.handlers;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
 import org.accula.api.code.CodeLoader;
+import org.accula.api.code.FileEntity;
 import org.accula.api.db.CloneRepository;
 import org.accula.api.db.CommitRepository;
 import org.accula.api.db.PullRepository;
+import org.accula.api.db.model.Clone;
 import org.accula.api.db.model.Commit;
 import org.accula.api.handlers.response.GetCloneResponseBody;
 import org.accula.api.handlers.response.GetCloneResponseBody.FlatCodeSnippet.FlatCodeSnippetBuilder;
@@ -16,18 +18,25 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
-import reactor.util.function.Tuples;
+import reactor.util.function.Tuple3;
 
+import java.util.Base64;
 import java.util.List;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 /**
  * @author Anton Lamtev
+ * @author Vadim Dyachkov
  */
 @Component
 @RequiredArgsConstructor
 public final class ClonesHandler {
+    private static final String PROJECT_ID = "projectId";
+    private static final String PULL_NUMBER = "pullNumber";
+
+    private static final Base64.Encoder base64 = Base64.getEncoder(); // NOPMD
+
     private final PullRepository pullRepo;
     private final CommitRepository commitRepo;
     private final CloneRepository cloneRepo;
@@ -36,8 +45,8 @@ public final class ClonesHandler {
 
     public Mono<ServerResponse> getLastCommitClones(final ServerRequest request) {
         return Mono.defer(() -> {
-            final var projectId = Long.parseLong(request.pathVariable("projectId"));
-            final var pullNumber = Integer.parseInt(request.pathVariable("pullNumber"));
+            final var projectId = Long.parseLong(request.pathVariable(PROJECT_ID));
+            final var pullNumber = Integer.parseInt(request.pathVariable(PULL_NUMBER));
             return getLastCommitClones(projectId, pullNumber);
         });
     }
@@ -70,39 +79,11 @@ public final class ClonesHandler {
                                 clone.getSourceFromLine(),
                                 clone.getSourceToLine())));
 
-        final var cloneData = commitMapMono
-                .flatMapMany(commitMap -> clones
-                        .map(clone -> Tuples.of(
-                                clone,
-                                commitMap.get(clone.getTargetCommitId()),
-                                commitMap.get(clone.getSourceCommitId()))));
-
         return Flux
-                .zip(cloneData,
+                .zip(clones,
                         getFileSnippets(targetFileSnippetMarkers),
                         getFileSnippets(sourceFileSnippetMarkers))
-                .map(tuple -> {
-                    final var cloneDatum = tuple.getT1();
-                    final var clone = cloneDatum.getT1();
-
-                    final var targetCommit = cloneDatum.getT2();
-                    final var targetFileContent = tuple.getT2();
-                    final var target = codeSnippetWith(projectId, pullNumber, targetCommit.getSha(), targetFileContent)
-                            .file(clone.getTargetFile())
-                            .fromLine(clone.getTargetFromLine())
-                            .toLine(clone.getTargetToLine())
-                            .build();
-
-                    final var sourceCommit = cloneDatum.getT3();
-                    final var sourceFileContent = tuple.getT3();
-                    final var source = codeSnippetWith(projectId, pullNumber, sourceCommit.getSha(), sourceFileContent)
-                            .file(clone.getSourceFile())
-                            .fromLine(clone.getSourceFromLine())
-                            .toLine(clone.getSourceToLine())
-                            .build();
-
-                    return new GetCloneResponseBody(clone.getId(), target, source);
-                })
+                .map(cloneAndFileEntities -> toResponseBody(cloneAndFileEntities, projectId, pullNumber))
                 .collectList()
                 .flatMap(clonesBody -> ServerResponse
                         .ok()
@@ -110,21 +91,45 @@ public final class ClonesHandler {
                         .bodyValue(clonesBody));
     }
 
-    private Flux<String> getFileSnippets(final Flux<FileSnippetMarker> markers) {
-        return markers
-                .flatMap(marker -> codeLoader.getFileSnippet(marker.commit, marker.filename, marker.fromLine, marker.toLine))
-                .subscribeOn(codeLoadingScheduler);
+    private GetCloneResponseBody toResponseBody(final Tuple3<Clone, FileEntity, FileEntity> cloneAndFileEntities,
+                                                final long projectId,
+                                                final int pullNumber) {
+        final var clone = cloneAndFileEntities.getT1();
+
+        final var targetFile = cloneAndFileEntities.getT2();
+        final var target = codeSnippetWith(projectId, pullNumber, targetFile.getCommit(), targetFile.getContent())
+                .file(clone.getTargetFile())
+                .fromLine(clone.getTargetFromLine())
+                .toLine(clone.getTargetToLine())
+                .build();
+
+        final var sourceFile = cloneAndFileEntities.getT3();
+        final var source = codeSnippetWith(projectId, pullNumber, sourceFile.getCommit(), sourceFile.getContent())
+                .file(clone.getSourceFile())
+                .fromLine(clone.getSourceFromLine())
+                .toLine(clone.getSourceToLine())
+                .build();
+
+        return new GetCloneResponseBody(clone.getId(), target, source);
     }
 
     private static FlatCodeSnippetBuilder codeSnippetWith(final long projectId,
                                                           final int pullNumber,
-                                                          final String sha,
+                                                          final Commit commit,
                                                           final String content) {
         return GetCloneResponseBody.FlatCodeSnippet.builder()
                 .projectId(projectId)
                 .pullNumber(pullNumber)
-                .sha(sha)
-                .content(content);
+                .owner(commit.getOwner())
+                .repo(commit.getRepo())
+                .sha(commit.getSha())
+                .content(base64.encodeToString(content.getBytes()));
+    }
+
+    private Flux<FileEntity> getFileSnippets(final Flux<FileSnippetMarker> markers) {
+        return markers
+                .flatMap(marker -> codeLoader.getFileSnippet(marker.commit, marker.filename, marker.fromLine, marker.toLine))
+                .subscribeOn(codeLoadingScheduler);
     }
 
     @Value

@@ -188,36 +188,52 @@ Mono<Void> replaceRefreshToken(final Long userId,
 export const clones: IClone[] = [
   {
     id: 1,
-    from: {
+    target: {
       projectId: 1,
-      pullId: 6,
-      repo: '2018-highload',
-      file: 'src/main/java/ru/mail/polis/Main.java',
-      code: btoa(oldCode2)
-    },
-    to: {
-      projectId: 2,
-      pullId: 4,
+      pullNumber: 6,
+      owner: 'vaddya',
       repo: '2019-highload',
+      sha: 'somesha',
+      file: 'src/main/java/ru/mail/polis/Main.java',
+      fromLine: 2,
+      toLine: 2,
+      content: btoa(oldCode2)
+    },
+    source: {
+      projectId: 2,
+      pullNumber: 4,
+      owner: 'lamtev',
+      repo: '2019-highload',
+      sha: 'somesha',
       file: 'src/main/java/ru/mail/polis/MyMain.java',
-      code: btoa(newCode2)
+      fromLine: 1,
+      toLine: 1,
+      content: btoa(newCode2)
     }
   },
   {
     id: 2,
-    from: {
+    target: {
       projectId: 2,
-      pullId: 1,
+      pullNumber: 1,
+      owner: 'lamtev',
       repo: '2019-highload',
+      sha: 'somesha',
       file: 'src/main/java/ru/mail/polis/Database.java',
-      code: btoa(oldCode2)
+      fromLine: 3,
+      toLine: 3,
+      content: btoa(oldCode2)
     },
-    to: {
+    source: {
       projectId: 2,
-      pullId: 4,
+      pullNumber: 4,
+      owner: 'vaddya',
       repo: '2019-highload',
+      sha: 'somesha',
       file: 'src/main/java/ru/mail/polis/Database.java',
-      code: btoa(newCode2)
+      fromLine: 4,
+      toLine: 4,
+      content: btoa(newCode2)
     }
   }
 ]

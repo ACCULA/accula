@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.accula.api.db.model.Commit;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.ObjectReader;
@@ -11,6 +13,8 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
+import org.eclipse.jgit.treewalk.AbstractTreeIterator;
+import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Component;
@@ -31,6 +35,7 @@ import java.util.StringJoiner;
 
 /**
  * @author Vadim Dyachkov
+ * @author Anton Lamtev
  */
 @Component
 @Slf4j
@@ -40,6 +45,7 @@ public class CodeLoaderImpl implements CodeLoader {
     public static final Exception FILE_NOT_FOUND = new Exception();
     public static final Exception CUT_ERROR = new Exception();
     public static final Exception RANGE_ERROR = new Exception();
+    private static final String DELETED_FILE = "/dev/null";
 
     private final Scheduler scheduler = Schedulers.boundedElastic();
 
@@ -52,7 +58,7 @@ public class CodeLoaderImpl implements CodeLoader {
 
     @Override
     public Flux<FileEntity> getFiles(final Commit commit, final FileFilter filter) {
-        return repositoryProvider.getRepository(commit.getOwner(), commit.getRepo())
+        return getRepository(commit)
                 .switchIfEmpty(Mono.error(REPO_NOT_FOUND))
                 .flatMapMany(repo -> Flux.fromIterable(getObjectLoaders(repo, commit.getSha())))
                 .filter(filenameAndLoader -> filter.test(filenameAndLoader.getT1()))
@@ -62,27 +68,76 @@ public class CodeLoaderImpl implements CodeLoader {
     }
 
     @Override
-    public Mono<String> getFile(final Commit commit, final String filename) {
-        return repositoryProvider.getRepository(commit.getOwner(), commit.getRepo())
+    public Mono<FileEntity> getFile(final Commit commit, final String filename) {
+        return getRepository(commit)
                 .switchIfEmpty(Mono.error(REPO_NOT_FOUND))
                 .flatMap(repo -> Mono.justOrEmpty(getObjectLoader(repo, commit.getSha(), filename)))
                 .switchIfEmpty(Mono.error(FILE_NOT_FOUND))
-                .map(this::getFileContent)
+                .map(loader -> new FileEntity(commit, filename, getFileContent(loader)))
                 .switchIfEmpty(Mono.error(CUT_ERROR))
+                .doOnSuccess(f -> log.info("Finished {}/{}", f.getCommit(), f.getName()))
                 .subscribeOn(scheduler);
     }
 
     @Override
-    public Mono<String> getFileSnippet(final Commit commit, final String filename, final int fromLine, final int toLine) {
+    public Mono<FileEntity> getFileSnippet(final Commit commit, final String filename, final int fromLine, final int toLine) {
         if (fromLine > toLine) {
             return Mono.error(RANGE_ERROR);
         }
-        return repositoryProvider.getRepository(commit.getOwner(), commit.getRepo())
+        return getRepository(commit)
                 .switchIfEmpty(Mono.error(REPO_NOT_FOUND))
                 .flatMap(repo -> Mono.justOrEmpty(getObjectLoader(repo, commit.getSha(), filename)))
                 .switchIfEmpty(Mono.error(FILE_NOT_FOUND))
-                .map(loader -> cutFileContent(loader, fromLine, toLine))
+                .map(loader -> new FileEntity(commit, filename, cutFileContent(loader, fromLine, toLine)))
                 .switchIfEmpty(Mono.error(CUT_ERROR));
+    }
+
+    @Override
+    public Flux<Tuple2<FileEntity, FileEntity>> getDiff(final Commit base, final Commit head) {
+        final Mono<AbstractTreeIterator> baseTree = getRepository(base)
+                .map(repo -> getTreeIterator(repo, base.getSha()));
+
+        final Mono<Repository> headRepo = getRepository(head).cache();
+        final Mono<AbstractTreeIterator> headTree = headRepo.map(repo -> getTreeIterator(repo, head.getSha()));
+
+        return Mono.zip(headRepo, baseTree, headTree)
+                .flatMapMany(repoBaseHead -> getDiffEntries(repoBaseHead.getT1(), repoBaseHead.getT2(), repoBaseHead.getT3()))
+                .parallel()
+                .flatMap(diff -> Mono.zip(getFileNullable(base, diff.getOldPath()), getFileNullable(head, diff.getNewPath())))
+                .sequential();
+    }
+
+    private Mono<Repository> getRepository(final Commit commit) {
+        return repositoryProvider.getRepository(commit.getOwner(), commit.getRepo());
+    }
+
+    @SneakyThrows
+    private Flux<DiffEntry> getDiffEntries(final Repository repo, final AbstractTreeIterator base, final AbstractTreeIterator head) {
+        return Flux.fromIterable(Git
+                .wrap(repo)
+                .diff()
+                .setOldTree(base)
+                .setNewTree(head)
+                .call());
+    }
+
+    @SneakyThrows
+    private AbstractTreeIterator getTreeIterator(final Repository repository, final String sha) {
+        final ObjectReader reader = repository.newObjectReader();
+        final RevWalk revWalk = new RevWalk(reader);
+        final ObjectId commitId = repository.resolve(sha);
+        final RevCommit commit = revWalk.parseCommit(commitId);
+        final RevTree revTree = commit.getTree();
+        final CanonicalTreeParser tree = new CanonicalTreeParser();
+        tree.reset(reader, revTree.getId());
+        return tree;
+    }
+
+    private Mono<FileEntity> getFileNullable(final Commit commit, final String filename) {
+        if (DELETED_FILE.equals(filename)) {
+            return Mono.just(new FileEntity(commit, null, null));
+        }
+        return getFile(commit, filename);
     }
 
     @SneakyThrows

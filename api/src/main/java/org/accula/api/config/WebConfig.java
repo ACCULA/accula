@@ -5,7 +5,6 @@ import org.accula.api.db.CurrentUserRepository;
 import org.accula.api.github.api.GithubClient;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.web.reactive.config.CorsRegistry;
 import org.springframework.web.reactive.config.WebFluxConfigurer;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -18,15 +17,6 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class WebConfig implements WebFluxConfigurer {
     private final CurrentUserRepository currentUserRepository;
-
-    @Override
-    public void addCorsMappings(final CorsRegistry registry) {
-        registry.addMapping("/**")
-                .allowedOrigins("*")
-                .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
-                .allowedHeaders("*")
-                .allowCredentials(true);
-    }
 
     @Bean
     public WebClient webClient() {

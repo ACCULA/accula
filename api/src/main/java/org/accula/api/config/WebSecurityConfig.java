@@ -27,20 +27,26 @@ import org.springframework.security.web.server.authentication.ServerAuthenticati
 import org.springframework.security.web.server.authorization.HttpStatusServerAccessDeniedHandler;
 import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository;
 import org.springframework.security.web.server.savedrequest.NoOpServerRequestCache;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.reactive.CorsWebFilter;
+import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 import org.springframework.web.server.WebFilter;
 
 import java.io.IOException;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
+import java.util.Collections;
 
 import static org.springframework.http.HttpMethod.GET;
 import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 import static org.springframework.security.config.web.server.SecurityWebFiltersOrder.AUTHENTICATION;
+import static org.springframework.security.config.web.server.SecurityWebFiltersOrder.CORS;
 import static org.springframework.security.web.server.util.matcher.ServerWebExchangeMatchers.pathMatchers;
 
 /**
  * @author Anton Lamtev
+ * @author Vadim Dyachkov
  */
 @EnableWebFluxSecurity
 @EnableConfigurationProperties(JwtProperties.class)
@@ -53,6 +59,7 @@ public class WebSecurityConfig {
 
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(final ServerHttpSecurity http,
+                                                         final CorsWebFilter corsWebFilter,
                                                          final WebFilter authenticationFilter,
                                                          final WebFilter jwtRefreshFilter,
                                                          final OAuth2LoginSuccessHandler oauth2LoginSuccessHandler) {
@@ -74,11 +81,13 @@ public class WebSecurityConfig {
                         .accessDeniedHandler(new HttpStatusServerAccessDeniedHandler(FORBIDDEN)))
 
                 .authorizeExchange(exchanges -> exchanges
+                        .pathMatchers(GET, "/api/projects/**/pulls/**/clones").permitAll()
                         .pathMatchers("/api/projects/**/pulls/**").authenticated()
                         .pathMatchers(GET, "/api/projects/**").permitAll()
                         .pathMatchers("/api/projects/**").authenticated()
                         .anyExchange().permitAll())
 
+                .addFilterAt(corsWebFilter, CORS)
                 .addFilterBefore(jwtRefreshFilter, AUTHENTICATION)
                 .addFilterAt(authenticationFilter, AUTHENTICATION)
 
@@ -155,6 +164,20 @@ public class WebSecurityConfig {
     @Bean
     public ServerAuthenticationConverter authenticationConverter(final Jwt jwt) {
         return new JwtAuthenticationConverter(jwt);
+    }
+
+    @Bean
+    public CorsWebFilter corsWebFilter(@Value("${accula.cluster.webUrl}") final String webUrl) {
+        final var corsConfig = new CorsConfiguration();
+        corsConfig.setAllowedOrigins(Collections.singletonList(webUrl));
+        corsConfig.addAllowedMethod(CorsConfiguration.ALL);
+        corsConfig.addAllowedHeader(CorsConfiguration.ALL);
+        corsConfig.setAllowCredentials(true);
+
+        final var source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", corsConfig);
+
+        return new CorsWebFilter(source);
     }
 
     @Bean

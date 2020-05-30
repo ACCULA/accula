@@ -11,9 +11,10 @@ import java.io.File;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
- * @vaddya
+ * @author Vadim Dyachkov
  */
 class CloneDetectorTest {
     /**
@@ -60,7 +61,7 @@ class CloneDetectorTest {
 
         CloneDetector detector = new PrimitiveCloneDetector(10, 5);
         List<Tuple2<CodeSnippet, CodeSnippet>> clones = detector.findClones(targetFiles, sourceFiles).collectList().block();
-        assert clones != null;
+        assertNotNull(clones);
         clones.forEach(t -> printClone(codeLoader, t));
         assertEquals(5, clones.size());
     }
@@ -68,11 +69,10 @@ class CloneDetectorTest {
     private void printClone(CodeLoader codeLoader, Tuple2<CodeSnippet, CodeSnippet> clone) {
         CodeSnippet into = clone.getT1();
         CodeSnippet from = clone.getT2();
-
-        String fromCode = codeLoader.getFileSnippet(from.getCommit(), from.getFile(), from.getFromLine(), from.getToLine()).block();
-
+        FileEntity fromCode = codeLoader.getFileSnippet(from.getCommit(), from.getFile(), from.getFromLine(), from.getToLine()).block();
+        assertNotNull(fromCode);
         System.out.println(into + " -> " + from);
-        System.out.println(fromCode);
+        System.out.println(fromCode.getContent());
         System.out.println("======================");
     }
 }

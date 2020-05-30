@@ -8,7 +8,7 @@ import { Helmet } from 'react-helmet'
 import { Breadcrumbs } from 'components/Breadcrumbs'
 import { Loader } from 'components/Loader'
 import { AppDispatch, AppState } from 'store'
-import { getClonesAction, getPullAction } from 'store/pulls/actions'
+import { getClonesAction, getDiffAction, getPullAction } from 'store/pulls/actions'
 import { getProjectAction } from 'store/projects/actions'
 import { PullClonesTab } from './PullClonesTab'
 import { PullChangesTab } from './PullChangesTab'
@@ -22,13 +22,15 @@ const mapStateToProps = (state: AppState) => ({
     !state.projects.project,
   project: state.projects.project,
   pull: state.pulls.pull,
-  clones: state.pulls.clones
+  clones: state.pulls.clones,
+  diffs: state.pulls.diffs
 })
 
 const mapDispatchToProps = (dispatch: AppDispatch) => ({
   getProject: bindActionCreators(getProjectAction, dispatch),
   getPull: bindActionCreators(getPullAction, dispatch),
-  getClones: bindActionCreators(getClonesAction, dispatch)
+  getClones: bindActionCreators(getClonesAction, dispatch),
+  getDiffs: bindActionCreators(getDiffAction, dispatch)
 })
 
 const connector = connect(mapStateToProps, mapDispatchToProps)
@@ -41,7 +43,9 @@ const Pull = ({
   pull,
   getPull,
   clones,
-  getClones
+  diffs,
+  getClones,
+  getDiffs
 }: PullsProps) => {
   const history = useHistory()
   const { prId, plId, tab } = useParams()
@@ -59,6 +63,10 @@ const Pull = ({
   useEffect(() => {
     getClones(projectId, pullId)
   }, [getClones, projectId, pullId])
+
+  useEffect(() => {
+    getDiffs(projectId, pullId)
+  }, [getDiffs, projectId, pullId])
 
   if (isFetching || (pull && pull.number !== pullId)) {
     return <Loader />
@@ -91,23 +99,23 @@ const Pull = ({
             </>
           }
         >
-          <PullOverviewTab pull={pull} />
+          <PullOverviewTab pull={pull} clones={clones} />
         </Tab>
         <Tab
           eventKey="changes"
           title={
             <>
-              <i className="fas fa-fw fa-code" /> Changes <Badge>4</Badge>
+              <i className="fas fa-fw fa-code" /> Changes <Badge>{diffs && diffs.length}</Badge>
             </>
           }
         >
-          <PullChangesTab />
+          <PullChangesTab diffs={diffs} />
         </Tab>
         <Tab
           eventKey="clones"
           title={
             <>
-              <i className="far fa-fw fa-copy" /> Clones <Badge>1</Badge>
+              <i className="far fa-fw fa-copy" /> Clones <Badge>{clones && clones.length}</Badge>
             </>
           }
         >
