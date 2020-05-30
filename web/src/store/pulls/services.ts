@@ -39,8 +39,7 @@ export const getDiff = async (token: IToken, projectId: number, pullId: number):
     return Promise.resolve([])
   }
   return axios
-    // TODO: remove sha
-    .get(`${API_URL}/api/projects/${projectId}/pulls/${pullId}/diff?sha=0daef8b6940e974ca57c5afa647d30c87bfb61bd`, {
+    .get(`${API_URL}/api/projects/${projectId}/pulls/${pullId}/diff`, {
       headers: {
         Accept: 'application/json',
         Authorization: `Bearer ${token.accessToken}`

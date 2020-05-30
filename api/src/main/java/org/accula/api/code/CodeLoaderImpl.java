@@ -92,8 +92,12 @@ public class CodeLoaderImpl implements CodeLoader {
                 .switchIfEmpty(Mono.error(CUT_ERROR));
     }
 
-    @Override
     public Flux<Tuple2<FileEntity, FileEntity>> getDiff(final Commit base, final Commit head) {
+        return getDiff(base, head, FileFilter.ALL);
+    }
+
+    @Override
+    public Flux<Tuple2<FileEntity, FileEntity>> getDiff(final Commit base, final Commit head, final FileFilter filter) {
         final Mono<AbstractTreeIterator> baseTree = getRepository(base)
                 .map(repo -> getTreeIterator(repo, base.getSha()));
 
@@ -102,6 +106,7 @@ public class CodeLoaderImpl implements CodeLoader {
 
         return Mono.zip(headRepo, baseTree, headTree)
                 .flatMapMany(repoBaseHead -> getDiffEntries(repoBaseHead.getT1(), repoBaseHead.getT2(), repoBaseHead.getT3()))
+                .filter(e -> filter.test(e.getOldPath()) && filter.test(e.getNewPath()))
                 .parallel()
                 .flatMap(diff -> Mono.zip(getFileNullable(base, diff.getOldPath()), getFileNullable(head, diff.getNewPath())))
                 .sequential();

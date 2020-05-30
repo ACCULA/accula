@@ -25,12 +25,12 @@ export const PullOverviewTab = ({ pull }: PullOverviewTabProps) => {
             <ListGroup>
               <ListGroupItem>
                 <i className="fas fa-fw fa-code-branch" /> Pull request into{' '}
-                <Link to={pull.target.url}>
-                  <code>{pull.target.label}</code>
+                <Link to={pull.base.url}>
+                  <code>{pull.base.label}</code>
                 </Link>{' '}
                 from{' '}
-                <Link to={pull.source.url}>
-                  <code>{pull.source.label}</code>
+                <Link to={pull.head.url}>
+                  <code>{pull.head.label}</code>
                 </Link>
               </ListGroupItem>
               <ListGroupItem>

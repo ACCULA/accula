@@ -46,11 +46,11 @@ export interface IPull {
   number: number
   projectId: number
   url: string
-  source: {
+  head: {
     url: string
     label: string
   }
-  target: {
+  base: {
     url: string
     label: string
   }

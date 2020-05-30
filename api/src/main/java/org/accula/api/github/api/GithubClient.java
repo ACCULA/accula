@@ -9,15 +9,15 @@ import reactor.core.publisher.Mono;
  * @author Anton Lamtev
  */
 public interface GithubClient {
-    Mono<Boolean> hasAdminPermission(final String owner, final String repo);
+    Mono<Boolean> hasAdminPermission(String owner, String repo);
 
-    Mono<GithubRepo> getRepo(final String owner, final String repo);
+    Mono<GithubRepo> getRepo(String owner, String repo);
 
-    Mono<GithubPull[]> getRepositoryOpenPulls(final String owner, final String repo);
+    Mono<GithubPull[]> getRepositoryPulls(String owner, String repo, GithubPull.State state);
 
-    Mono<GithubPull> getRepositoryPull(final String owner, final String repo, final Integer pullNumber);
+    Mono<GithubPull> getRepositoryPull(String owner, String repo, Integer pullNumber);
 
-    Mono<Void> createHook(final String owner, final String repo, final GithubHook hook);
+    Mono<Void> createHook(String owner, String repo, GithubHook hook);
 
     interface LoginProvider {
         Mono<String> login();

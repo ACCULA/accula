@@ -3,6 +3,7 @@ package org.accula.api.handlers;
 import lombok.RequiredArgsConstructor;
 import org.accula.api.code.CodeLoader;
 import org.accula.api.code.FileEntity;
+import org.accula.api.code.FileFilter;
 import org.accula.api.db.CommitRepository;
 import org.accula.api.db.ProjectRepository;
 import org.accula.api.db.PullRepository;
@@ -41,25 +42,32 @@ public final class DiffHandler {
                 .defer(() -> {
                     final var projectId = Long.parseLong(request.pathVariable(PROJECT_ID));
                     final var pullNumber = Integer.parseInt(request.pathVariable(PULL_NUMBER));
-                    final var baseSha = request.queryParam("sha").orElseThrow();
-                    final var base = projectRepository.findById(projectId)
-                            .map(p -> new Commit(-1L, p.getRepoOwner(), p.getRepoName(), baseSha));
-
-                    final var head = pullRepository.findByProjectIdAndNumber(projectId, pullNumber)
-                            .map(pull -> Mono.justOrEmpty(pull.getHeadLastCommitId()))
-                            .flatMap(commitRepository::findById);
-
-                    return Mono.zip(base, head)
-                            .flatMapMany(headBase -> codeLoader.getDiff(headBase.getT1(), headBase.getT2()))
-                            .map(DiffHandler::toResponseBody)
-                            .collectList()
-                            .flatMap(diffs -> ServerResponse
-                                    .ok()
-                                    .contentType(APPLICATION_JSON)
-                                    .bodyValue(diffs));
+                    return getDiff(projectId, pullNumber);
                 })
                 .onErrorMap(NumberFormatException.class, e -> PULL_NOT_FOUND_EXCEPTION)
-                .onErrorResume(e -> e == PULL_NOT_FOUND_EXCEPTION, e -> ServerResponse.notFound().build());
+                .onErrorResume(PULL_NOT_FOUND_EXCEPTION::equals, e -> ServerResponse.notFound().build());
+    }
+
+    private Mono<ServerResponse> getDiff(final long projectId, final int pullNumber) {
+        final var pullMono = pullRepository
+                .findByProjectIdAndNumber(projectId, pullNumber)
+                .cache();
+        final var base = pullMono.flatMap(pull -> projectRepository
+                .findById(projectId)
+                .map(project -> new Commit(-1L, project.getRepoOwner(), project.getRepoName(), pull.getBaseLastCommitSha())));
+
+        final var head = pullMono
+                .map(pull -> Mono.justOrEmpty(pull.getHeadLastCommitId()))
+                .flatMap(commitRepository::findById);
+
+        return Mono.zip(base, head)
+                .flatMapMany(baseHead -> codeLoader.getDiff(baseHead.getT1(), baseHead.getT2(), FileFilter.JAVA))
+                .map(DiffHandler::toResponseBody)
+                .collectList()
+                .flatMap(diffs -> ServerResponse
+                        .ok()
+                        .contentType(APPLICATION_JSON)
+                        .bodyValue(diffs));
     }
 
     private static GetDiffResponseBody toResponseBody(final Tuple2<FileEntity, FileEntity> diff) {

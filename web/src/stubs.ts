@@ -39,11 +39,11 @@ export const pulls: IPull[] = [
     projectId: 1,
     title: 'Stage 1',
     url: 'https://github.com/polis-mail-ru/2019-highload-dht/pull/3',
-    target: {
+    base: {
       url: 'https://github.com/polis-mail-ru/2019-highload-dht',
       label: 'polis-mail-ru:master'
     },
-    source: {
+    head: {
       url: 'https://github.com/kilinochi/2019-highload-dht',
       label: 'kilinochi:master'
     },
@@ -65,11 +65,11 @@ export const pulls: IPull[] = [
     projectId: 1,
     title: 'Single Node | Vadim Dyachkov',
     url: 'https://github.com/polis-mail-ru/2019-highload-dht/pull/5',
-    target: {
+    base: {
       url: 'https://github.com/polis-mail-ru/2019-highload-dht',
       label: 'polis-mail-ru:master'
     },
-    source: {
+    head: {
       url: 'https://github.com/vaddya/2019-highload-dht',
       label: 'vaddya:master'
     },

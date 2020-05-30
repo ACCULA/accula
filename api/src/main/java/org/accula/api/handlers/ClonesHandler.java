@@ -58,18 +58,19 @@ public final class ClonesHandler {
                 .flatMapMany(pull -> cloneRepo.findAllByTargetCommitId(pull.getHeadLastCommitId()))
                 .cache();
 
-        final var sourcePullNumbers = pullRepo
-                .findAllById(clones.map(Clone::getSourceCommitId).distinct())
+        final var sourcePullNumbers = clones.map(Clone::getSourceCommitId)
+                .flatMap(pullRepo::findById)
                 .map(Pull::getNumber);
 
         final var commitIds = clones.flatMapSequential(clone -> Flux
                 .fromIterable(List.of(clone.getSourceCommitId(), clone.getTargetCommitId())))
                 .distinct();
 
-        final var commits = commitRepo.findAllById(commitIds);
-        final var commitMapMono = commits.collectMap(Commit::getId);
+        final var commits = commitRepo
+                .findAllById(commitIds)
+                .collectMap(Commit::getId);
 
-        final var targetFileSnippetMarkers = commitMapMono
+        final var targetFileSnippetMarkers = commits
                 .flatMapMany(commitMap -> clones
                         .map(clone -> new FileSnippetMarker(
                                 commitMap.get(clone.getTargetCommitId()),
@@ -77,7 +78,7 @@ public final class ClonesHandler {
                                 clone.getTargetFromLine(),
                                 clone.getTargetToLine())));
 
-        final var sourceFileSnippetMarkers = commitMapMono
+        final var sourceFileSnippetMarkers = commits
                 .flatMapMany(commitMap -> clones
                         .map(clone -> new FileSnippetMarker(
                                 commitMap.get(clone.getSourceCommitId()),

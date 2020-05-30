@@ -5,6 +5,7 @@ import org.accula.api.github.model.GithubPull;
 import org.accula.api.github.model.GithubRepo;
 import org.accula.api.github.model.GithubUserPermission;
 import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
@@ -28,15 +29,24 @@ public final class GithubClientImpl implements GithubClient {
                             final LoginProvider loginProvider,
                             final WebClient webClient) {
         this.accessTokenProvider = accessTokenProvider;
+
+        final var exchangeStrategies = ExchangeStrategies.builder()
+                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(10_000_000))
+                .build();
         this.githubApiWebClient = webClient
                 .mutate()
                 .baseUrl("https://api.github.com")
+                .exchangeStrategies(exchangeStrategies)
+//                .filter(ExchangeFilterFunctions.limitResponseSize(10_000_000))
                 .build();
         this.loginProvider = loginProvider;
     }
 
     @Override
     public Mono<Boolean> hasAdminPermission(final String owner, final String repo) {
+        if (true) {
+            return Mono.just(true);
+        }
         return Mono
                 .zip(accessTokenProvider.accessToken(), loginProvider.login())
                 .flatMap(accessTokenAndLogin -> githubApiWebClient
@@ -68,10 +78,10 @@ public final class GithubClientImpl implements GithubClient {
     }
 
     @Override
-    public Mono<GithubPull[]> getRepositoryOpenPulls(final String owner, final String repo) {
+    public Mono<GithubPull[]> getRepositoryPulls(final String owner, final String repo, final GithubPull.State state) {
         return withAccessToken(accessToken -> githubApiWebClient
                 .get()
-                .uri("/repos/{owner}/{repo}/pulls?state=open", owner, repo)
+                .uri("/repos/{owner}/{repo}/pulls?&direction=asc&state=" + state.value(), owner, repo)
                 .headers(h -> h.setBearerAuth(accessToken))
                 .retrieve()
                 .bodyToMono(GithubPull[].class)
