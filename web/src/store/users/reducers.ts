@@ -1,37 +1,34 @@
+import { notFetching } from 'store/wrapper'
 import {
-  FETCHING_USER,
-  SET_ACCESS_TOKEN,
+  SET_ACCESS_TOKEN, //
   SET_USER,
   UsersActionTypes,
   UsersState
-} from 'store/users/types'
+} from './types'
 
 const initialState: UsersState = {
-  user: null,
-  isFetching: false
+  user: notFetching,
+  token: {
+    accessToken: null
+  }
 }
 
 export function usersReducer(
-  state = initialState, //
+  state: UsersState = initialState, //
   action: UsersActionTypes
 ): UsersState {
   switch (action.type) {
+    case SET_USER:
+      return {
+        ...state,
+        user: action.payload
+      }
     case SET_ACCESS_TOKEN: {
       return {
         ...state,
         token: action.token
       }
     }
-    case SET_USER:
-      return {
-        ...state,
-        user: action.user
-      }
-    case FETCHING_USER:
-      return {
-        ...state,
-        isFetching: action.isFetching
-      }
     default:
       return state
   }

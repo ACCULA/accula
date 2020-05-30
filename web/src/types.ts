@@ -69,6 +69,11 @@ export interface IPull {
   previousPulls: IPullShort[]
 }
 
+export interface IPullRef {
+  projectId?: number
+  pullNumber?: number
+}
+
 export interface ICodeSnippet {
   projectId: number
   pullNumber: number

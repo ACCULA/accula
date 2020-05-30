@@ -2,8 +2,10 @@ import React, { useState } from 'react'
 import { Button } from 'react-bootstrap'
 import { CodeDiff, DiffMethod } from 'components/CodeDiff'
 import { IDiff } from 'types'
+import { Loader } from 'components/Loader'
 
 interface PullChangesTabProps {
+  isFetching: boolean
   diffs: IDiff[]
 }
 
@@ -23,9 +25,11 @@ const getTitle = (base?: string, head?: string): JSX.Element => {
   return <code />
 }
 
-export const PullChangesTab = ({ diffs }: PullChangesTabProps) => {
+export const PullChangesTab = ({ isFetching, diffs }: PullChangesTabProps) => {
   const [splitView, setSplitView] = useState(false)
-  return (
+  return isFetching ? (
+    <Loader />
+  ) : (
     <>
       <div className="pull-right">
         <Button bsStyle="info" onClick={() => setSplitView(!splitView)} style={{ marginTop: -7 }}>

@@ -15,12 +15,12 @@ import { ProjectPanelHeading } from './ProjectPanelHeading'
 
 const mapStateToProps = (state: AppState) => ({
   isFetching:
-    state.projects.isFetching ||
-    !state.projects.project ||
-    state.pulls.isFetching ||
-    !state.pulls.pulls,
-  project: state.projects.project,
-  pulls: state.pulls.pulls
+    state.projects.project.isFetching ||
+    state.pulls.pulls.isFetching ||
+    !state.projects.project.value ||
+    !state.pulls.pulls.value,
+  project: state.projects.project.value,
+  pulls: state.pulls.pulls.value
 })
 
 const mapDispatchToProps = (dispatch: AppDispatch) => ({
@@ -52,7 +52,6 @@ const Project = ({
   if (isFetching || (project && project.id !== projectId)) {
     return <Loader />
   }
-
   return (
     <div className="content">
       <Helmet>

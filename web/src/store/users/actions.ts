@@ -1,15 +1,9 @@
 import jwtDecode from 'jwt-decode'
 
 import { AppDispatch, AppStateSupplier } from 'store'
-import { IToken, IUser } from 'types'
-import {
-  FETCHING_USER,
-  FetchingUser,
-  SET_ACCESS_TOKEN,
-  SET_USER,
-  SetAccessToken,
-  SetUser
-} from './types'
+import { IToken } from 'types'
+import { failed, fetched, fetching, notFetching } from 'store/wrapper'
+import { SET_ACCESS_TOKEN, SET_USER, SetAccessToken, SetUser } from './types'
 import { getUserById, refreshToken } from './services'
 
 export const setAccessTokenAction = (token: IToken): SetAccessToken => ({
@@ -17,14 +11,9 @@ export const setAccessTokenAction = (token: IToken): SetAccessToken => ({
   token
 })
 
-const setUser = (user: IUser): SetUser => ({
+const setUser = (payload): SetUser => ({
   type: SET_USER,
-  user
-})
-
-const fetchingUser = (isFetching: boolean): FetchingUser => ({
-  type: FETCHING_USER,
-  isFetching
+  payload
 })
 
 export const getAccessTokenAction = () => async (
@@ -59,31 +48,18 @@ export const getCurrentUserAction = () => async (
   getState: AppStateSupplier
 ) => {
   try {
-    dispatch(fetchingUser(true))
+    dispatch(setUser(fetching))
     await requireToken(dispatch, getState)
     const { users } = getState()
-    if (users.token && users.token.accessToken) {
-      const { sub } = jwtDecode(users.token.accessToken)
-      const user = await getUserById(parseInt(sub, 10))
-      dispatch(setUser(user))
+    if (!users.token.accessToken) {
+      dispatch(setUser(notFetching))
+      return
     }
-  } catch (e) {
-    console.log(e)
-  } finally {
-    dispatch(fetchingUser(false))
-  }
-}
 
-export const getUserAction = (id: number) => async (
-  dispatch: AppDispatch //
-) => {
-  try {
-    dispatch(fetchingUser(true))
-    const user = await getUserById(id)
-    dispatch(setUser(user))
+    const { sub } = jwtDecode(users.token.accessToken)
+    const user = await getUserById(parseInt(sub, 10))
+    dispatch(setUser(fetched(user)))
   } catch (e) {
-    console.log(e)
-  } finally {
-    dispatch(fetchingUser(false))
+    dispatch(setUser(failed(e)))
   }
 }

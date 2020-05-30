@@ -3,14 +3,18 @@ import { Button } from 'react-bootstrap'
 
 import { CodeDiff, DiffMethod } from 'components/CodeDiff'
 import { IClone } from 'types'
+import { Loader } from 'components/Loader'
 
 interface PullClonesTabProps {
+  isFetching: boolean
   clones: IClone[]
 }
 
-export const PullClonesTab = ({ clones }: PullClonesTabProps) => {
+export const PullClonesTab = ({ isFetching, clones }: PullClonesTabProps) => {
   const [splitView, setSplitView] = useState(false)
-  return (
+  return isFetching ? (
+    <Loader />
+  ) : (
     <>
       <div className="pull-right">
         <Button bsStyle="info" onClick={() => setSplitView(!splitView)} style={{ marginTop: -7 }}>
@@ -28,10 +32,7 @@ export const PullClonesTab = ({ clones }: PullClonesTabProps) => {
                 <span className="left-title left-title-colored">
                   {`#${clone.source.pullNumber}@${clone.source.repo}:${clone.source.file}`}
                 </span>{' '}
-                into{' '}
-                <span className="right-title right-title-colored">
-                  {clone.target.file}
-                </span>
+                into <span className="right-title right-title-colored">{clone.target.file}</span>
               </>
             }
             oldValue={clone.target.content}

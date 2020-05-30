@@ -1,42 +1,36 @@
-import { IClone, IDiff, IPull } from 'types'
+import { IClone, IDiff, IPull, IPullRef } from 'types'
+import { Wrapper } from 'store/wrapper'
 
 export const SET_PULLS = 'SET_PULLS'
 export const SET_PULL = 'SET_PULL'
 export const SET_DIFFS = 'SET_DIFF'
 export const SET_CLONES = 'SET_CLONES'
-export const FETCHING_PULLS = 'FETCHING_PULLS'
 
 export interface PullsState {
-  pulls?: IPull[]
-  pull?: IPull
-  clones?: IClone[]
-  diffs?: IDiff[]
-  isFetching: boolean
+  pulls: Wrapper<IPull[]>
+  pull: Wrapper<IPull>
+  diff: Wrapper<IDiff[]> & IPullRef
+  clones: Wrapper<IClone[]> & IPullRef
 }
 
 export interface SetPulls {
   type: typeof SET_PULLS
-  pulls: IPull[]
+  payload: Wrapper<IPull[]>
 }
 
 export interface SetPull {
   type: typeof SET_PULL
-  pull: IPull
+  payload: Wrapper<IPull>
 }
 
 export interface SetDiffs {
   type: typeof SET_DIFFS
-  diffs: IDiff[]
+  payload: Wrapper<IDiff[]> & IPullRef
 }
 
 export interface SetClones {
   type: typeof SET_CLONES
-  clones: IClone[]
-}
-
-export interface FetchingPulls {
-  type: typeof FETCHING_PULLS
-  isFetching: boolean
+  payload: Wrapper<IClone[]> & IPullRef
 }
 
 export type PullsActionTypes =
@@ -44,4 +38,3 @@ export type PullsActionTypes =
   | SetPull
   | SetClones
   | SetDiffs
-  | FetchingPulls

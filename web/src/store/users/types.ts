@@ -1,13 +1,12 @@
 import { IToken, IUser } from 'types'
+import { Wrapper } from 'store/wrapper'
 
 export const SET_ACCESS_TOKEN = 'SET_ACCESS_TOKEN'
-export const SET_USER = 'GET_USER'
-export const FETCHING_USER = 'FETCHING_USER'
+export const SET_USER = 'SET_USER'
 
 export interface UsersState {
-  user?: IUser
-  token?: IToken
-  isFetching: boolean
+  user: Wrapper<IUser>
+  token: IToken
 }
 
 export interface SetAccessToken {
@@ -17,15 +16,9 @@ export interface SetAccessToken {
 
 export interface SetUser {
   type: typeof SET_USER
-  user: IUser
-}
-
-export interface FetchingUser {
-  type: typeof FETCHING_USER
-  isFetching: boolean
+  payload: Wrapper<IUser>
 }
 
 export type UsersActionTypes =
   | SetAccessToken //
   | SetUser
-  | FetchingUser
