@@ -66,7 +66,7 @@ public final class ClonesHandler {
                 .fromIterable(List.of(clone.getSourceCommitId(), clone.getTargetCommitId())))
                 .distinct();
 
-        final var commits = commitRepo.findAllById(commitIds).cache();
+        final var commits = commitRepo.findAllById(commitIds);
         final var commitMapMono = commits.collectMap(Commit::getId);
 
         final var targetFileSnippetMarkers = commitMapMono
