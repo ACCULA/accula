@@ -98,20 +98,20 @@ public final class ClonesHandler {
                         .bodyValue(clonesBody));
     }
 
-    private GetCloneResponseBody toResponseBody(final Tuple4<Clone, Integer, FileEntity, FileEntity> cloneAndSourcePullNumberAndFileEntities,
+    private GetCloneResponseBody toResponseBody(final Tuple4<Clone, Integer, FileEntity, FileEntity> tuple,
                                                 final long projectId,
                                                 final int targetPullNumber) {
-        final var clone = cloneAndSourcePullNumberAndFileEntities.getT1();
-        final int sourcePullNumber = cloneAndSourcePullNumberAndFileEntities.getT2();
+        final var clone = tuple.getT1();
+        final int sourcePullNumber = tuple.getT2();
 
-        final var targetFile = cloneAndSourcePullNumberAndFileEntities.getT3();
+        final var targetFile = tuple.getT3();
         final var target = codeSnippetWith(projectId, targetPullNumber, targetFile.getCommit(), targetFile.getContent())
                 .file(clone.getTargetFile())
                 .fromLine(clone.getTargetFromLine())
                 .toLine(clone.getTargetToLine())
                 .build();
 
-        final var sourceFile = cloneAndSourcePullNumberAndFileEntities.getT4();
+        final var sourceFile = tuple.getT4();
         final var source = codeSnippetWith(projectId, sourcePullNumber, sourceFile.getCommit(), sourceFile.getContent())
                 .file(clone.getSourceFile())
                 .fromLine(clone.getSourceFromLine())
