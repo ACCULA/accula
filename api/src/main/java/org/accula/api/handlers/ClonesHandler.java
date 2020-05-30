@@ -35,7 +35,7 @@ public final class ClonesHandler {
     private static final String PROJECT_ID = "projectId";
     private static final String PULL_NUMBER = "pullNumber";
 
-    private static final Base64.Encoder base64 = Base64.getEncoder(); // nopmd
+    private static final Base64.Encoder base64 = Base64.getEncoder(); // NOPMD
 
     private final PullRepository pullRepo;
     private final CommitRepository commitRepo;
