@@ -9,6 +9,7 @@ import org.accula.api.db.CommitRepository;
 import org.accula.api.db.PullRepository;
 import org.accula.api.db.model.Clone;
 import org.accula.api.db.model.Commit;
+import org.accula.api.db.model.Pull;
 import org.accula.api.handlers.response.GetCloneResponseBody;
 import org.accula.api.handlers.response.GetCloneResponseBody.FlatCodeSnippet.FlatCodeSnippetBuilder;
 import org.springframework.stereotype.Component;
@@ -18,7 +19,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
-import reactor.util.function.Tuple3;
+import reactor.util.function.Tuple4;
 
 import java.util.Base64;
 import java.util.List;
@@ -57,8 +58,13 @@ public final class ClonesHandler {
                 .flatMapMany(pull -> cloneRepo.findAllByTargetCommitId(pull.getHeadLastCommitId()))
                 .cache();
 
+        final var sourcePullNumbers = pullRepo
+                .findAllById(clones.map(Clone::getSourceCommitId).distinct())
+                .map(Pull::getNumber);
+
         final var commitIds = clones.flatMapSequential(clone -> Flux
-                .fromIterable(List.of(clone.getSourceCommitId(), clone.getTargetCommitId())));
+                .fromIterable(List.of(clone.getSourceCommitId(), clone.getTargetCommitId())))
+                .distinct();
 
         final var commits = commitRepo.findAllById(commitIds);
         final var commitMapMono = commits.collectMap(Commit::getId);
@@ -81,6 +87,7 @@ public final class ClonesHandler {
 
         return Flux
                 .zip(clones,
+                        sourcePullNumbers,
                         getFileSnippets(targetFileSnippetMarkers),
                         getFileSnippets(sourceFileSnippetMarkers))
                 .map(cloneAndFileEntities -> toResponseBody(cloneAndFileEntities, projectId, pullNumber))
@@ -91,20 +98,21 @@ public final class ClonesHandler {
                         .bodyValue(clonesBody));
     }
 
-    private GetCloneResponseBody toResponseBody(final Tuple3<Clone, FileEntity, FileEntity> cloneAndFileEntities,
+    private GetCloneResponseBody toResponseBody(final Tuple4<Clone, Integer, FileEntity, FileEntity> tuple,
                                                 final long projectId,
-                                                final int pullNumber) {
-        final var clone = cloneAndFileEntities.getT1();
+                                                final int targetPullNumber) {
+        final var clone = tuple.getT1();
+        final int sourcePullNumber = tuple.getT2();
 
-        final var targetFile = cloneAndFileEntities.getT2();
-        final var target = codeSnippetWith(projectId, pullNumber, targetFile.getCommit(), targetFile.getContent())
+        final var targetFile = tuple.getT3();
+        final var target = codeSnippetWith(projectId, targetPullNumber, targetFile.getCommit(), targetFile.getContent())
                 .file(clone.getTargetFile())
                 .fromLine(clone.getTargetFromLine())
                 .toLine(clone.getTargetToLine())
                 .build();
 
-        final var sourceFile = cloneAndFileEntities.getT3();
-        final var source = codeSnippetWith(projectId, pullNumber, sourceFile.getCommit(), sourceFile.getContent())
+        final var sourceFile = tuple.getT4();
+        final var source = codeSnippetWith(projectId, sourcePullNumber, sourceFile.getCommit(), sourceFile.getContent())
                 .file(clone.getSourceFile())
                 .fromLine(clone.getSourceFromLine())
                 .toLine(clone.getSourceToLine())
