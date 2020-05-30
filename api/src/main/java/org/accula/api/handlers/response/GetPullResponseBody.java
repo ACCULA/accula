@@ -11,20 +11,20 @@ import java.time.Instant;
 @Builder
 @Value
 public class GetPullResponseBody implements ResponseBody {
-    final Long projectId;
-    final Integer number;
-    final String url;
-    final String title;
-    final PullRef source;
-    final PullRef target;
-    final PullAuthor author;
-    final Boolean open;
-    final Instant createdAt;
-    final Instant updatedAt;
-    final PullStatus status;
-    final Integer cloneCount;
+    Long projectId;
+    Integer number;
+    String url;
+    String title;
+    PullRef head;
+    PullRef base;
+    PullAuthor author;
+    Boolean open;
+    Instant createdAt;
+    Instant updatedAt;
+    PullStatus status;
+    Integer cloneCount;
     //An empty array
-    final int[] previousPulls = new int[0];
+    int[] previousPulls = new int[0];
 
     public enum PullStatus {
         PENDING,

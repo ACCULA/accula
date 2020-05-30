@@ -2,15 +2,18 @@ package org.accula.api.handlers;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.accula.api.db.CommitRepository;
 import org.accula.api.config.WebhookProperties;
 import org.accula.api.db.CurrentUserRepository;
 import org.accula.api.db.ProjectRepository;
 import org.accula.api.db.PullRepository;
+import org.accula.api.db.model.Commit;
 import org.accula.api.db.model.Project;
 import org.accula.api.db.model.Pull;
 import org.accula.api.db.model.User;
 import org.accula.api.github.api.GithubClient;
 import org.accula.api.github.api.GithubClientException;
+import org.accula.api.github.model.GithubHook;
 import org.accula.api.github.model.GithubHook;
 import org.accula.api.github.model.GithubPull;
 import org.accula.api.github.model.GithubRepo;
@@ -19,6 +22,7 @@ import org.accula.api.handlers.response.ErrorBody;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import reactor.util.function.Tuple2;
@@ -27,7 +31,6 @@ import reactor.util.function.Tuples;
 
 import java.util.Arrays;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.function.Predicate.not;
@@ -47,8 +50,9 @@ public final class ProjectsHandler {
     private final WebhookProperties webhookProperties;
     private final CurrentUserRepository currentUser;
     private final GithubClient githubClient;
-    private final ProjectRepository projects;
-    private final PullRepository pulls;
+    private final ProjectRepository projectRepository;
+    private final CommitRepository commitRepository;
+    private final PullRepository pullRepository;
 
     public Mono<ServerResponse> getAll(final ServerRequest request) {
         return Mono
@@ -56,7 +60,7 @@ public final class ProjectsHandler {
                 .map(Integer::parseInt)
                 .flatMap(count -> ServerResponse
                         .ok()
-                        .body(projects.findAll().take(count), Project.class))
+                        .body(projectRepository.findAll().take(count), Project.class))
                 .doOnSuccess(response -> log.debug("{}: {}", request, response.statusCode()));
     }
 
@@ -65,7 +69,7 @@ public final class ProjectsHandler {
                 .justOrEmpty(request.pathVariable("id"))
                 .map(Long::parseLong)
                 .onErrorMap(e -> e instanceof NumberFormatException, e -> PROJECT_NOT_FOUND_EXCEPTION)
-                .flatMap(projects::findById)
+                .flatMap(projectRepository::findById)
                 .switchIfEmpty(Mono.error(PROJECT_NOT_FOUND_EXCEPTION))
                 .flatMap(project -> ServerResponse
                         .ok()
@@ -80,13 +84,13 @@ public final class ProjectsHandler {
                 .bodyToMono(CreateProjectRequestBody.class)
                 .onErrorResume(e -> Mono.error(CreateProjectException.BAD_FORMAT))
                 .map(ProjectsHandler::extractOwnerAndRepo)
-                .filterWhen(ownerAndRepo -> projects
+                .filterWhen(ownerAndRepo -> projectRepository
                         .notExistsByRepoOwnerAndRepoName(ownerAndRepo.getT1().toLowerCase(), ownerAndRepo.getT2().toLowerCase()))
                 .switchIfEmpty(Mono.error(CreateProjectException.ALREADY_EXISTS))
                 .flatMap(this::retrieveGithubInfoForProjectCreation)
                 .onErrorMap(e -> e instanceof GithubClientException, e -> CreateProjectException.WRONG_URL)
                 .map(ProjectsHandler::convertGithubResponse)
-                .flatMap(this::saveProjectAndPulls)
+                .flatMap(this::saveProjectAndCommitsAndPulls)
                 .flatMap(this::createWebhook)
                 .flatMap(project -> ServerResponse
                         .ok()
@@ -118,9 +122,8 @@ public final class ProjectsHandler {
                     final var project = projectAndCurrentUser.getT2();
                     final var admins = project.getAdmins();
 
-                    return currentUser
-                            .get()
-                            .flatMap(currentUser -> projects.
+                    return currentUser.get()
+                            .flatMap(currentUser -> projectRepository.
                                     setAdmins(projectId, admins, requireNonNull(currentUser.getId())));
                 })
                 .flatMap(nil -> ServerResponse.ok().build())
@@ -137,7 +140,7 @@ public final class ProjectsHandler {
                     final var projectId = projectIdAndCurrentUser.getT1();
                     final var userId = requireNonNull(projectIdAndCurrentUser.getT2().getId());
 
-                    return projects.deleteByIdAndCreatorId(projectId, userId);
+                    return projectRepository.deleteByIdAndCreatorId(projectId, userId);
                 })
                 .flatMap(success -> ServerResponse.ok().build())
                 .onErrorResume(PROJECT_NOT_FOUND_EXCEPTION::equals, e -> ServerResponse.notFound().build());
@@ -157,16 +160,30 @@ public final class ProjectsHandler {
         //@formatter:on
     }
 
-    private Mono<Project> saveProjectAndPulls(final Tuple2<Project, Iterable<Pull>> projectAndPulls) {
+    private Mono<Project> saveProjectAndCommitsAndPulls(final Tuple2<Project, GithubPull[]> projectAndPulls) {
         final var project = projectAndPulls.getT1();
-        final var openPulls = projectAndPulls.getT2();
+        final var ghPulls = projectAndPulls.getT2();
 
-        return projects
+        final var commits = Arrays
+                .stream(ghPulls)
+                .map(ghPull -> {
+                    final var head = ghPull.getHead();
+                    final var repo = head.getRepo();
+                    return new Commit(null, repo.getOwner().getLogin(), repo.getName(), head.getSha());
+                })
+                .collect(toList());
+
+        return projectRepository
                 .save(project)
-                .doOnSuccess(savedProject -> openPulls
-                        .forEach(pull -> pull.setProjectId(savedProject.getId())))
-                .flatMap(savedProject -> pulls
-                        .saveAll(openPulls)
+                .flatMap(savedProject -> pullRepository
+                        .saveAll(commitRepository.saveAll(commits)
+                                .zipWith(Flux.fromArray(ghPulls))
+                                .map(headCommitAndGhPull -> {
+                                    final var head = headCommitAndGhPull.getT1();
+                                    final var pull = headCommitAndGhPull.getT2();
+                                    return new Pull(null, savedProject.getId(), pull.getNumber(), head.getId(),
+                                            pull.getBase().getSha(), pull.getUpdatedAt());
+                                }))
                         .then(Mono.just(savedProject)));
     }
 
@@ -178,7 +195,7 @@ public final class ProjectsHandler {
                 .thenReturn(project);
     }
 
-    private static Tuple2<Project, Iterable<Pull>> convertGithubResponse(final Tuple4<Boolean, GithubRepo, GithubPull[], User> tuple) {
+    private static Tuple2<Project, GithubPull[]> convertGithubResponse(final Tuple4<Boolean, GithubRepo, GithubPull[], User> tuple) {
         final var isAdmin = tuple.getT1();
 
         if (!isAdmin) {
@@ -207,12 +224,7 @@ public final class ProjectsHandler {
                 .repoOwnerAvatar(repoOwnerAvatar)
                 .build();
 
-        final var pulls = Stream
-                .of(openPulls)
-                .map(ghPull -> new Pull(null, -1L, ghPull.getNumber(), null, ghPull.getUpdatedAt()))
-                .collect(toList());
-
-        return Tuples.of(project, pulls);
+        return Tuples.of(project, openPulls);
     }
 
     private static Tuple2<String, String> extractOwnerAndRepo(final CreateProjectRequestBody requestBody) {
