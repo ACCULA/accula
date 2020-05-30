@@ -32,6 +32,9 @@ import java.time.Instant;
 @Component
 @RequiredArgsConstructor
 public final class GithubWebhookHandler {
+    private static final String GITHUB_EVENT = "X-GitHub-Event";
+    private static final String GITHUB_EVENT_PING = "ping";
+
     private final ProjectRepository projectRepository;
     private final PullRepository pullRepository;
     private final CommitRepository commitRepository;
@@ -40,6 +43,11 @@ public final class GithubWebhookHandler {
     private final CodeLoader loader;
 
     public Mono<ServerResponse> webhook(final ServerRequest request) {
+        final var eventType = request.headers().firstHeader(GITHUB_EVENT);
+        if (GITHUB_EVENT_PING.equals(eventType)) {
+            return ServerResponse.ok().build();
+        }
+        // TODO: validate signature in X-Hub-Signature 
         return request
                 .bodyToMono(GithubHookPayload.class)
                 .flatMap(this::processPayload)

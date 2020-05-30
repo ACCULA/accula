@@ -2,6 +2,7 @@ package org.accula.api.handlers;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.accula.api.config.WebhookProperties;
 import org.accula.api.db.CurrentUserRepository;
 import org.accula.api.db.ProjectRepository;
 import org.accula.api.db.PullRepository;
@@ -10,6 +11,7 @@ import org.accula.api.db.model.Pull;
 import org.accula.api.db.model.User;
 import org.accula.api.github.api.GithubClient;
 import org.accula.api.github.api.GithubClientException;
+import org.accula.api.github.model.GithubHook;
 import org.accula.api.github.model.GithubPull;
 import org.accula.api.github.model.GithubRepo;
 import org.accula.api.handlers.request.CreateProjectRequestBody;
@@ -42,6 +44,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 public final class ProjectsHandler {
     private static final Exception PROJECT_NOT_FOUND_EXCEPTION = new Exception();
 
+    private final WebhookProperties webhookProperties;
     private final CurrentUserRepository currentUser;
     private final GithubClient githubClient;
     private final ProjectRepository projects;
@@ -84,6 +87,7 @@ public final class ProjectsHandler {
                 .onErrorMap(e -> e instanceof GithubClientException, e -> CreateProjectException.WRONG_URL)
                 .map(ProjectsHandler::convertGithubResponse)
                 .flatMap(this::saveProjectAndPulls)
+                .flatMap(this::createWebhook)
                 .flatMap(project -> ServerResponse
                         .ok()
                         .contentType(APPLICATION_JSON)
@@ -164,6 +168,14 @@ public final class ProjectsHandler {
                 .flatMap(savedProject -> pulls
                         .saveAll(openPulls)
                         .then(Mono.just(savedProject)));
+    }
+
+    private Mono<Project> createWebhook(final Project project) {
+        final var hook = GithubHook.onPullUpdates(webhookProperties.getUrl(), webhookProperties.getSecret());
+        return githubClient.createHook(project.getRepoOwner(), project.getRepoName(), hook)
+                .doOnSuccess(p -> log.info("Created GitHub webhook for projectId={}", project.getId()))
+                .doOnError(e -> log.error("Cannot create hook for projectId={}", project.getId(), e))
+                .thenReturn(project);
     }
 
     private static Tuple2<Project, Iterable<Pull>> convertGithubResponse(final Tuple4<Boolean, GithubRepo, GithubPull[], User> tuple) {
