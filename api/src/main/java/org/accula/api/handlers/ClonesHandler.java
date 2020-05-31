@@ -58,11 +58,13 @@ public final class ClonesHandler {
                 .flatMapMany(pull -> cloneRepo.findAllByTargetCommitId(pull.getHeadLastCommitId()))
                 .cache();
 
-        final var sourcePullNumbers = clones.map(Clone::getSourceCommitId)
+        final var sourcePullNumbers = clones
+                .map(Clone::getSourceCommitId)
                 .flatMap(pullRepo::findById)
                 .map(Pull::getNumber);
 
-        final var commitIds = clones.flatMapSequential(clone -> Flux
+        final var commitIds = clones
+                .flatMapSequential(clone -> Flux
                 .fromIterable(List.of(clone.getSourceCommitId(), clone.getTargetCommitId())))
                 .distinct();
 
