@@ -90,6 +90,7 @@ public class CodeLoaderImpl implements CodeLoader {
                 .flatMap(repo -> Mono.justOrEmpty(getObjectLoader(repo, commit.getSha(), filename)))
                 .switchIfEmpty(Mono.error(FILE_NOT_FOUND))
                 .map(loader -> new FileEntity(commit, filename, cutFileContent(loader, fromLine, toLine)))
+                .doOnSuccess(f -> log.debug("Loaded file entity: {}/{}", f.getCommit(), f.getName()))
                 .switchIfEmpty(Mono.error(CUT_ERROR));
     }
 

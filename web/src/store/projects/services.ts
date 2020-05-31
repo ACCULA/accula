@@ -9,7 +9,7 @@ export const getProjects = async (): Promise<IProject[]> => {
     return Promise.resolve(projects)
   }
   return axios
-    .get(`${API_URL}/api/projects`, {
+    .get(`${API_URL}/api/projects?count=100`, {
       headers: {
         Accept: 'application/json'
       },

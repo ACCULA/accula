@@ -70,7 +70,8 @@ public final class ClonesHandler {
 
         final var commits = commitRepo
                 .findAllById(commitIds)
-                .collectMap(Commit::getId);
+                .collectMap(Commit::getId)
+                .cache();
 
         final var targetFileSnippetMarkers = commits
                 .flatMapMany(commitMap -> clones
@@ -78,7 +79,8 @@ public final class ClonesHandler {
                                 commitMap.get(clone.getTargetCommitId()),
                                 clone.getTargetFile(),
                                 clone.getTargetFromLine(),
-                                clone.getTargetToLine())));
+                                clone.getTargetToLine())))
+                .subscribeOn(codeLoadingScheduler);
 
         final var sourceFileSnippetMarkers = commits
                 .flatMapMany(commitMap -> clones
@@ -86,7 +88,8 @@ public final class ClonesHandler {
                                 commitMap.get(clone.getSourceCommitId()),
                                 clone.getSourceFile(),
                                 clone.getSourceFromLine(),
-                                clone.getSourceToLine())));
+                                clone.getSourceToLine())))
+                .subscribeOn(codeLoadingScheduler);
 
         return Flux
                 .zip(clones,
