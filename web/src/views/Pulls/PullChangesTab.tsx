@@ -27,7 +27,7 @@ const getTitle = (base?: string, head?: string): JSX.Element => {
 
 export const PullChangesTab = ({ isFetching, diffs }: PullChangesTabProps) => {
   const [splitView, setSplitView] = useState(false)
-  return isFetching ? (
+  return isFetching || !diffs ? (
     <Loader />
   ) : (
     <>
@@ -36,22 +36,21 @@ export const PullChangesTab = ({ isFetching, diffs }: PullChangesTabProps) => {
           {splitView ? 'Unified view' : 'Split view'}
         </Button>
       </div>
-      <h5>3 files changed</h5>
-      {diffs &&
-        diffs.map((diff, i) => {
-          const { baseContent, baseFilename, headFilename, headContent } = diff
-          return (
-            <CodeDiff
-              key={i}
-              leftTitle={getTitle(baseFilename, headFilename)}
-              splitView={splitView} //
-              oldValue={baseContent}
-              newValue={headContent}
-              compareMethod={DiffMethod.LINES}
-              disableWordDiff
-            />
-          )
-        })}
+      <h5>{diffs.length} files changed</h5>
+      {diffs.map((diff, i) => {
+        const { baseContent, baseFilename, headFilename, headContent } = diff
+        return (
+          <CodeDiff
+            key={i}
+            leftTitle={getTitle(baseFilename, headFilename)}
+            splitView={splitView} //
+            oldValue={baseContent}
+            newValue={headContent}
+            compareMethod={DiffMethod.LINES}
+            disableWordDiff
+          />
+        )
+      })}
     </>
   )
 }

@@ -82,7 +82,7 @@ export const createProjectAction = (url: string) => async (
     if (typeof result === 'string') {
       dispatch(setCreationState(false, result))
     } else {
-      dispatch(setProjects(setProjects(fetched([...projects.projects.value, result]))))
+      dispatch(setProjects(fetched([...projects.projects.value, result])))
       dispatch(setCreationState(false, null))
     }
   }
