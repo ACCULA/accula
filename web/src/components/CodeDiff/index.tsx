@@ -394,7 +394,8 @@ const CodeDiff = ({
   }
 
   let nodes = renderDiff()
-  if (nodes[0] === null) {
+  const isEmpty = nodes.find(n => n !== null && n.props.className === 'line') === undefined
+  if (isEmpty) {
     nodes = oldValue.split('\n').map((line, i) => {
       const renderer = splitView ? renderSplitView : renderInlineView
       return renderer(

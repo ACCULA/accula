@@ -14,9 +14,9 @@ import { getCurrentUserAction } from 'store/users/actions'
 import { PrivateRoute } from 'components/PrivateRoute'
 
 const mapStateToProps = (state: AppState) => ({
-  auth: state.users.user !== null,
-  user: state.users.user,
-  isFetching: state.users.isFetching
+  isFetching: state.users.user.isFetching,
+  auth: state.users.user.value !== null,
+  user: state.users.user.value
 })
 
 const mapDispatchToProps = (dispatch: AppDispatch) => ({

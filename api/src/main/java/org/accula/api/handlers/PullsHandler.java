@@ -5,6 +5,7 @@ import org.accula.api.db.ProjectRepository;
 import org.accula.api.db.PullRepository;
 import org.accula.api.github.api.GithubClient;
 import org.accula.api.github.model.GithubPull;
+import org.accula.api.github.model.GithubPull.State;
 import org.accula.api.handlers.response.GetPullResponseBody;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
@@ -37,9 +38,10 @@ public final class PullsHandler {
                 .onErrorMap(NumberFormatException.class, e -> PULL_NOT_FOUND_EXCEPTION)
                 .flatMap(projectId -> projects
                         .findById(projectId)
-                        .flatMap(project -> githubClient.getRepositoryOpenPulls(project.getRepoOwner(), project.getRepoName()))
+                        .flatMap(project -> githubClient.getRepositoryPulls(project.getRepoOwner(), project.getRepoName(), State.ALL))
                         .switchIfEmpty(Mono.error(PULL_NOT_FOUND_EXCEPTION))
                         .flatMapMany(Flux::fromArray)
+                        .filter(GithubPull::isValid)
                         .flatMap(pull -> Mono.just(fromGithubPull(pull, projectId)))
                         .collectList()
                         .flatMap(githubPulls -> ServerResponse
@@ -97,7 +99,7 @@ public final class PullsHandler {
                         githubPull.getUser().getLogin(),
                         githubPull.getUser().getAvatarUrl(),
                         githubPull.getUser().getHtmlUrl()))
-                .open(githubPull.getState() == GithubPull.State.OPEN)
+                .open(githubPull.getState() == State.OPEN)
                 .createdAt(githubPull.getCreatedAt())
                 .updatedAt(githubPull.getUpdatedAt())
                 .status(GetPullResponseBody.PullStatus.PENDING)

@@ -1,9 +1,8 @@
 import { AppDispatch, AppStateSupplier } from 'store'
-import { IProject } from 'types'
+import { requireToken } from 'store/users/actions'
+import { failed, fetched, fetching } from 'store/wrapper'
 import {
-  FETCHING_PROJECTS,
-  FetchingProjects,
-  SET_CREATION_STATE,
+  SET_CREATION_STATE, //
   SET_PROJECT,
   SET_PROJECTS,
   SetCreationState,
@@ -11,21 +10,15 @@ import {
   SetProjects
 } from './types'
 import { createProject, getProject, getProjects } from './services'
-import { requireToken } from 'store/users/actions'
 
-const setProjects = (projects: IProject[]): SetProjects => ({
+const setProjects = (payload): SetProjects => ({
   type: SET_PROJECTS,
-  projects
+  payload
 })
 
-const setProject = (project: IProject): SetProject => ({
+const setProject = (payload): SetProject => ({
   type: SET_PROJECT,
-  project
-})
-
-const fetchingProjects = (isFetching: boolean): FetchingProjects => ({
-  type: FETCHING_PROJECTS,
-  isFetching
+  payload
 })
 
 const setCreationState = (isCreating: boolean, error: string): SetCreationState => ({
@@ -40,18 +33,15 @@ export const getProjectsAction = () => async (
   getState: AppStateSupplier
 ) => {
   const { projects } = getState()
-  if (projects.projects) {
+  if (projects.projects.value) {
     return
   }
   try {
-    dispatch(fetchingProjects(true))
-    const projs = await getProjects()
-    dispatch(setProjects(projs))
+    dispatch(setProjects(fetching))
+    const result = await getProjects()
+    dispatch(setProjects(fetched(result)))
   } catch (e) {
-    console.log(e)
-    dispatch(setProjects([]))
-  } finally {
-    dispatch(fetchingProjects(false))
+    dispatch(setProjects(failed(e)))
   }
 }
 
@@ -60,27 +50,24 @@ export const getProjectAction = (id: number) => async (
   getState: AppStateSupplier
 ) => {
   const { projects } = getState()
-  if (projects.project && projects.project.id === id) {
+  if (projects.project.value && projects.project.value.id === id) {
     return
   }
-  if (projects.projects) {
-    const project = projects.projects.find(p => p.id === id)
+  if (projects.projects.value) {
+    const project = projects.projects.value.find(p => p.id === id)
     if (project) {
-      dispatch(setProject(project))
+      dispatch(setProject(fetched(project)))
       return
     }
   }
   await requireToken(dispatch, getState)
   const { users } = getState()
   try {
-    dispatch(fetchingProjects(true))
+    dispatch(setProject(fetching))
     const project = await getProject(id, users.token)
-    dispatch(setProject(project))
+    dispatch(setProject(fetched(project)))
   } catch (e) {
-    console.log(e)
-    dispatch(setProjects([]))
-  } finally {
-    dispatch(fetchingProjects(false))
+    dispatch(setProjects(failed(e)))
   }
 }
 
@@ -90,18 +77,13 @@ export const createProjectAction = (url: string) => async (
 ) => {
   await requireToken(dispatch, getState)
   const { users, projects } = getState()
-  if (!users.token) {
-    return
-  }
-  if (users.token) {
+  if (users.token.accessToken) {
     const result = await createProject(url, users.token)
     if (typeof result === 'string') {
       dispatch(setCreationState(false, result))
     } else {
-      dispatch(setProjects([...projects.projects, result]))
+      dispatch(setProjects(fetched([...projects.projects.value, result])))
       dispatch(setCreationState(false, null))
     }
-  } else {
-    console.log('else')
   }
 }

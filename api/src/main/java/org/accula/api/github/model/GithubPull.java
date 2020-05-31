@@ -31,7 +31,12 @@ public final class GithubPull {
     @JsonProperty("updated_at")
     private Instant updatedAt;
 
+    public boolean isValid() {
+        return head.repo != null;
+    }
+
     public enum State {
+        ALL,
         OPEN,
         CLOSED,
         ;

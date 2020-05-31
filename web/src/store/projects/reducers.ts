@@ -1,40 +1,33 @@
+import { notFetching } from 'store/wrapper'
 import {
-  FETCHING_PROJECTS,
   ProjectsActionTypes,
   ProjectsState,
   SET_CREATION_STATE,
   SET_PROJECT,
   SET_PROJECTS
-} from 'store/projects/types'
+} from './types'
 
 const initialState: ProjectsState = {
-  projects: null,
-  project: null,
-  isFetching: false,
+  projects: notFetching,
+  project: notFetching,
   creationState: [false, null]
 }
 
 export function projectsReducer(
-  state = initialState, //
+  state: ProjectsState = initialState, //
   action: ProjectsActionTypes
 ): ProjectsState {
   switch (action.type) {
     case SET_PROJECTS: {
       return {
         ...state,
-        projects: action.projects
+        projects: action.payload
       }
     }
     case SET_PROJECT: {
       return {
         ...state,
-        project: action.project
-      }
-    }
-    case FETCHING_PROJECTS: {
-      return {
-        ...state,
-        isFetching: action.isFetching
+        project: action.payload
       }
     }
     case SET_CREATION_STATE: {

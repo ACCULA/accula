@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.accula.api.db.model.Commit;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.diff.DiffEntry;
+import org.eclipse.jgit.errors.MissingObjectException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.ObjectReader;
@@ -92,19 +93,35 @@ public class CodeLoaderImpl implements CodeLoader {
                 .switchIfEmpty(Mono.error(CUT_ERROR));
     }
 
-    @Override
     public Flux<Tuple2<FileEntity, FileEntity>> getDiff(final Commit base, final Commit head) {
+        return getDiff(base, head, FileFilter.ALL);
+    }
+
+    @Override
+    public Flux<Tuple2<FileEntity, FileEntity>> getDiff(final Commit base, final Commit head, final FileFilter filter) {
         final Mono<AbstractTreeIterator> baseTree = getRepository(base)
-                .map(repo -> getTreeIterator(repo, base.getSha()));
+                .map(repo -> getTreeIterator(repo, base.getSha()))
+                .doOnError(e -> log.error("Cannot get tree iterator for base {}: {}", base, e.getMessage()));
 
         final Mono<Repository> headRepo = getRepository(head).cache();
-        final Mono<AbstractTreeIterator> headTree = headRepo.map(repo -> getTreeIterator(repo, head.getSha()));
+        final Mono<AbstractTreeIterator> headTree = headRepo
+                .map(repo -> getTreeIterator(repo, head.getSha()))
+                .doOnError(e -> log.error("Cannot get tree iterator for head {}: {}", head, e.getMessage()));
 
         return Mono.zip(headRepo, baseTree, headTree)
                 .flatMapMany(repoBaseHead -> getDiffEntries(repoBaseHead.getT1(), repoBaseHead.getT2(), repoBaseHead.getT3()))
+                .filter(diff -> {
+                    final var result = (diff.getOldPath().equals(DELETED_FILE) || filter.test(diff.getOldPath()))
+                            && (diff.getNewPath().equals(DELETED_FILE) || filter.test(diff.getNewPath()));
+                    if (!result) {
+                        log.debug("Skipping diff: {} for base {} and head {}", diff, base, head);
+                    }
+                    return result;
+                })
                 .parallel()
                 .flatMap(diff -> Mono.zip(getFileNullable(base, diff.getOldPath()), getFileNullable(head, diff.getNewPath())))
-                .sequential();
+                .sequential()
+                .onErrorResume(MissingObjectException.class, e -> Flux.empty());
     }
 
     private Mono<Repository> getRepository(final Commit commit) {

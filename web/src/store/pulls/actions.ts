@@ -1,10 +1,8 @@
 import { AppDispatch, AppStateSupplier } from 'store'
-import { IClone, IDiff, IPull } from 'types'
 import { requireToken } from 'store/users/actions'
+import { failed, fetched, fetching } from 'store/wrapper'
 import {
-  FETCHING_PULLS,
-  FetchingPulls,
-  SET_CLONES,
+  SET_CLONES, //
   SET_DIFFS,
   SET_PULL,
   SET_PULLS,
@@ -15,29 +13,24 @@ import {
 } from './types'
 import { getClones, getDiff, getPull, getPulls } from './services'
 
-const setPulls = (pulls: IPull[]): SetPulls => ({
+const setPulls = (payload): SetPulls => ({
   type: SET_PULLS,
-  pulls
+  payload
 })
 
-const setPull = (pull: IPull): SetPull => ({
+const setPull = (payload): SetPull => ({
   type: SET_PULL,
-  pull
+  payload
 })
 
-const setClones = (clones: IClone[]): SetClones => ({
+const setClones = (payload): SetClones => ({
   type: SET_CLONES,
-  clones
+  payload
 })
 
-const setDiffs = (diffs: IDiff[]): SetDiffs => ({
+const setDiff = (payload): SetDiffs => ({
   type: SET_DIFFS,
-  diffs
-})
-
-const fetchingPulls = (isFetching: boolean): FetchingPulls => ({
-  type: FETCHING_PULLS,
-  isFetching
+  payload
 })
 
 export const getPullsAction = (projectId: number) => async (
@@ -46,91 +39,99 @@ export const getPullsAction = (projectId: number) => async (
 ) => {
   await requireToken(dispatch, getState)
   const { pulls, users } = getState()
-  if (!users.token || pulls.isFetching) {
+  if (pulls.pulls.isFetching) {
     return
   }
-  if (!pulls.pulls || pulls.pulls.length === 0 || pulls.pulls[0].projectId !== projectId) {
+  if (
+    !pulls.pulls.value ||
+    pulls.pulls.value.length === 0 ||
+    pulls.pulls.value[0].projectId !== projectId
+  ) {
     try {
-      dispatch(fetchingPulls(true))
+      dispatch(setPulls(fetching))
       const result = await getPulls(users.token, projectId)
-      dispatch(setPulls(result))
+      dispatch(setPulls(fetched(result)))
     } catch (e) {
-      console.log(e)
-      dispatch(setPulls([]))
-    } finally {
-      dispatch(fetchingPulls(false))
+      dispatch(setPulls(failed(e)))
     }
   }
 }
 
-export const getPullAction = (projectId: number, pullId: number) => async (
+export const getPullAction = (projectId: number, pullNumber: number) => async (
   dispatch: AppDispatch, //
   getState: AppStateSupplier
 ) => {
   await requireToken(dispatch, getState)
   const { pulls, users } = getState()
-  if (pulls.pulls) {
-    const pull = pulls.pulls.find(p => p.number === pullId && p.projectId === projectId)
+  if (pulls.pulls.value) {
+    const pull = pulls.pulls.value.find(p => p.number === pullNumber && p.projectId === projectId)
     if (pull) {
-      dispatch(setPull(pull))
+      dispatch(setPull(fetched(pull)))
       return
     }
   }
-  if (!users.token) {
+  if (pulls.pull.isFetching) {
     return
   }
-  if (!pulls.pull || pulls.pull.projectId !== projectId || pulls.pull.number !== pullId) {
-    try {
-      dispatch(fetchingPulls(true))
-      const pull = await getPull(users.token, projectId, pullId)
-      dispatch(setPull(pull))
-    } catch (e) {
-      console.log(e)
-      dispatch(setPull(null))
-    } finally {
-      dispatch(fetchingPulls(false))
-    }
-  }
-}
-
-export const getClonesAction = (projectId: number, pullId: number) => async (
-  dispatch: AppDispatch, //
-  getState: AppStateSupplier
-) => {
-  await requireToken(dispatch, getState)
-  const { pulls, users } = getState()
   if (
-    !pulls.clones ||
-    (pulls.clones.length > 0 &&
-      (pulls.clones[0].source.projectId !== projectId || pulls.clones[0].source.pullNumber !== pullId))
+    !pulls.pull.value ||
+    pulls.pull.value.projectId !== projectId ||
+    pulls.pull.value.number !== pullNumber
   ) {
     try {
-      dispatch(fetchingPulls(true))
-      const result = await getClones(users.token, projectId, pullId)
-      dispatch(setClones(result))
+      dispatch(setPull(fetching))
+      const pull = await getPull(users.token, projectId, pullNumber)
+      dispatch(setPull(fetched(pull)))
     } catch (e) {
-      console.log(e)
-      dispatch(setPulls([]))
-    } finally {
-      dispatch(fetchingPulls(false))
+      dispatch(setPull(failed(e)))
     }
   }
 }
 
-export const getDiffAction = (projectId: number, pullId: number) => async (
+export const getClonesAction = (projectId: number, pullNumber: number) => async (
   dispatch: AppDispatch, //
   getState: AppStateSupplier
 ) => {
   await requireToken(dispatch, getState)
-  const { users } = getState()
-  try {
-    dispatch(fetchingPulls(true))
-    const result = await getDiff(users.token, projectId, pullId)
-    dispatch(setDiffs(result))
-  } catch (e) {
-    console.log(e)
-    dispatch(setDiffs([]))
-  } finally {
-    dispatch(fetchingPulls(false))
+  const { users, pulls } = getState()
+  if (pulls.clones.isFetching) {
+    return
+  }
+  if (
+    !pulls.clones.value || //
+    pulls.clones.projectId !== projectId ||
+    pulls.clones.pullNumber !== pullNumber
+  ) {
+    try {
+      dispatch(setClones(fetching))
+      const result = await getClones(users.token, projectId, pullNumber)
+      dispatch(setClones(fetched(result, { projectId, pullNumber })))
+    } catch (e) {
+      dispatch(setClones(failed(e)))
+    }
+  }
+}
+
+export const getDiffAction = (projectId: number, pullNumber: number) => async (
+  dispatch: AppDispatch, //
+  getState: AppStateSupplier
+) => {
+  await requireToken(dispatch, getState)
+  const { users, pulls } = getState()
+  if (pulls.diff.isFetching) {
+    return
+  }
+  if (
+    !pulls.diff.value || //
+    pulls.diff.projectId !== projectId ||
+    pulls.diff.pullNumber !== pullNumber
+  ) {
+    try {
+      dispatch(setDiff(fetching))
+      const result = await getDiff(users.token, projectId, pullNumber)
+      dispatch(setDiff(fetched(result, { projectId, pullNumber })))
+    } catch (e) {
+      dispatch(setDiff(failed(e)))
+    }
   }
 }

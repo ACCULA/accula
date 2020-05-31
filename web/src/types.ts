@@ -46,11 +46,11 @@ export interface IPull {
   number: number
   projectId: number
   url: string
-  source: {
+  head: {
     url: string
     label: string
   }
-  target: {
+  base: {
     url: string
     label: string
   }
@@ -67,6 +67,11 @@ export interface IPull {
   status: string
   cloneCount: number
   previousPulls: IPullShort[]
+}
+
+export interface IPullRef {
+  projectId?: number
+  pullNumber?: number
 }
 
 export interface ICodeSnippet {

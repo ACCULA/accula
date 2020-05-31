@@ -14,8 +14,8 @@ import org.accula.api.db.model.User;
 import org.accula.api.github.api.GithubClient;
 import org.accula.api.github.api.GithubClientException;
 import org.accula.api.github.model.GithubHook;
-import org.accula.api.github.model.GithubHook;
 import org.accula.api.github.model.GithubPull;
+import org.accula.api.github.model.GithubPull.State;
 import org.accula.api.github.model.GithubRepo;
 import org.accula.api.handlers.request.CreateProjectRequestBody;
 import org.accula.api.handlers.response.ErrorBody;
@@ -155,17 +155,19 @@ public final class ProjectsHandler {
         //@formatter:off
         return Mono.zip(githubClient.hasAdminPermission(owner, repo).subscribeOn(scheduler),
                         githubClient.getRepo(owner, repo).subscribeOn(scheduler),
-                        githubClient.getRepositoryOpenPulls(owner, repo).subscribeOn(scheduler),
+                        githubClient.getRepositoryPulls(owner, repo, State.ALL).subscribeOn(scheduler),
                         currentUser.get());
         //@formatter:on
     }
 
     private Mono<Project> saveProjectAndCommitsAndPulls(final Tuple2<Project, GithubPull[]> projectAndPulls) {
         final var project = projectAndPulls.getT1();
-        final var ghPulls = projectAndPulls.getT2();
+        final var ghPulls = Arrays.stream(projectAndPulls.getT2())
+                .filter(GithubPull::isValid)
+                .collect(toList());
 
-        final var commits = Arrays
-                .stream(ghPulls)
+        final var commits = ghPulls
+                .stream()
                 .map(ghPull -> {
                     final var head = ghPull.getHead();
                     final var repo = head.getRepo();
@@ -177,7 +179,7 @@ public final class ProjectsHandler {
                 .save(project)
                 .flatMap(savedProject -> pullRepository
                         .saveAll(commitRepository.saveAll(commits)
-                                .zipWith(Flux.fromArray(ghPulls))
+                                .zipWith(Flux.fromIterable(ghPulls))
                                 .map(headCommitAndGhPull -> {
                                     final var head = headCommitAndGhPull.getT1();
                                     final var pull = headCommitAndGhPull.getT2();

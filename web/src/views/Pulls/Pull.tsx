@@ -16,21 +16,21 @@ import { PullOverviewTab } from './PullOverviewTab'
 
 const mapStateToProps = (state: AppState) => ({
   isFetching:
-    state.pulls.isFetching ||
-    state.projects.isFetching ||
-    !state.pulls.pull ||
+    state.pulls.pull.isFetching ||
+    state.projects.project.isFetching ||
+    !state.pulls.pull.value ||
     !state.projects.project,
-  project: state.projects.project,
-  pull: state.pulls.pull,
-  clones: state.pulls.clones,
-  diffs: state.pulls.diffs
+  project: state.projects.project.value,
+  pull: state.pulls.pull.value,
+  diffs: state.pulls.diff,
+  clones: state.pulls.clones
 })
 
 const mapDispatchToProps = (dispatch: AppDispatch) => ({
   getProject: bindActionCreators(getProjectAction, dispatch),
   getPull: bindActionCreators(getPullAction, dispatch),
-  getClones: bindActionCreators(getClonesAction, dispatch),
-  getDiffs: bindActionCreators(getDiffAction, dispatch)
+  getDiffs: bindActionCreators(getDiffAction, dispatch),
+  getClones: bindActionCreators(getClonesAction, dispatch)
 })
 
 const connector = connect(mapStateToProps, mapDispatchToProps)
@@ -39,11 +39,11 @@ type PullsProps = ConnectedProps<typeof connector>
 const Pull = ({
   isFetching,
   project,
-  getProject,
   pull,
-  getPull,
-  clones,
   diffs,
+  clones,
+  getProject,
+  getPull,
   getClones,
   getDiffs
 }: PullsProps) => {
@@ -99,27 +99,41 @@ const Pull = ({
             </>
           }
         >
-          <PullOverviewTab pull={pull} clones={clones} />
+          <PullOverviewTab pull={pull} />
         </Tab>
         <Tab
           eventKey="changes"
           title={
             <>
-              <i className="fas fa-fw fa-code" /> Changes <Badge>{diffs && diffs.length}</Badge>
+              <i className="fas fa-fw fa-code" /> Changes{' '}
+              <Badge>
+                {diffs.isFetching ? (
+                  <i className="fas fa-spinner fa-spin" />
+                ) : (
+                  diffs.value && diffs.value.length
+                )}
+              </Badge>
             </>
           }
         >
-          <PullChangesTab diffs={diffs} />
+          <PullChangesTab isFetching={diffs.isFetching} diffs={diffs.value} />
         </Tab>
         <Tab
           eventKey="clones"
           title={
             <>
-              <i className="far fa-fw fa-copy" /> Clones <Badge>{clones && clones.length}</Badge>
+              <i className="far fa-fw fa-copy" /> Clones{' '}
+              <Badge>
+                {clones.isFetching ? (
+                  <i className="fas fa-spinner fa-spin" />
+                ) : (
+                  clones.value && clones.value.length
+                )}
+              </Badge>
             </>
           }
         >
-          <PullClonesTab clones={clones} />
+          <PullClonesTab isFetching={clones.isFetching} clones={clones.value} />
         </Tab>
       </Tabs>
     </div>

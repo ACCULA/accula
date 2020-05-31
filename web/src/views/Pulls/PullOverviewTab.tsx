@@ -2,17 +2,16 @@ import React from 'react'
 import { Badge, Col, Grid, ListGroup, ListGroupItem, Panel, Row } from 'react-bootstrap'
 import { format, formatDistanceToNow } from 'date-fns'
 
-import { IClone, IPull } from 'types'
+import { IPull } from 'types'
 import { GitHubLink, Link } from 'components/Link'
 
 const DATE_TITLE_FORMAT = "d MMMM yyyy 'at' HH:mm"
 
 interface PullOverviewTabProps {
   pull: IPull
-  clones?: IClone[]
 }
 
-export const PullOverviewTab = ({ pull, clones }: PullOverviewTabProps) => {
+export const PullOverviewTab = ({ pull }: PullOverviewTabProps) => {
   return (
     <Grid fluid style={{ padding: 0 }}>
       <Row>
@@ -26,12 +25,12 @@ export const PullOverviewTab = ({ pull, clones }: PullOverviewTabProps) => {
             <ListGroup>
               <ListGroupItem>
                 <i className="fas fa-fw fa-code-branch" /> Pull request into{' '}
-                <Link to={pull.target.url}>
-                  <code>{pull.target.label}</code>
+                <Link to={pull.base.url}>
+                  <code>{pull.base.label}</code>
                 </Link>{' '}
                 from{' '}
-                <Link to={pull.source.url}>
-                  <code>{pull.source.label}</code>
+                <Link to={pull.head.url}>
+                  <code>{pull.head.label}</code>
                 </Link>
               </ListGroupItem>
               <ListGroupItem>
@@ -45,10 +44,6 @@ export const PullOverviewTab = ({ pull, clones }: PullOverviewTabProps) => {
               <ListGroupItem>
                 <i className="far fa-fw fa-check-square" /> Checks status
                 <Badge className="badge-success">Passed</Badge>
-              </ListGroupItem>
-              <ListGroupItem>
-                <i className="far fa-fw fa-copy" /> Clones found
-                {clones && <Badge className="badge-warning">{clones.length} clones</Badge>}
               </ListGroupItem>
               <ListGroupItem>
                 <i className="far fa-fw fa-clock" /> Created
@@ -75,7 +70,7 @@ export const PullOverviewTab = ({ pull, clones }: PullOverviewTabProps) => {
         <Col xs={12} sm={4} md={4} lg={3}>
           <Panel className="panel-user">
             <Panel.Heading>
-              <Panel.Title>Student</Panel.Title>
+              <Panel.Title>Author</Panel.Title>
             </Panel.Heading>
             <ListGroup>
               <ListGroupItem className="text-center">

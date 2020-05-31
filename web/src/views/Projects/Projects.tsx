@@ -16,9 +16,9 @@ import { CreateProjectModal } from './CreateProjectModal'
 import { ProjectPanel } from './ProjectPanel'
 
 const mapStateToProps = (state: AppState) => ({
-  user: state.users.user,
-  isFetching: state.projects.isFetching,
-  projects: state.projects.projects,
+  isFetching: state.projects.projects.isFetching || !state.projects.projects.value,
+  user: state.users.user.value,
+  projects: state.projects.projects.value,
   creationState: state.projects.creationState
 })
 
@@ -52,10 +52,9 @@ const Projects = ({
     }
   }, [creationState, setShowModal])
 
-  if (isFetching || !projects) {
-    return <Loader />
-  }
-  return (
+  return isFetching ? (
+    <Loader />
+  ) : (
     <div className="content">
       <Helmet>
         <title>Projects - ACCULA</title>

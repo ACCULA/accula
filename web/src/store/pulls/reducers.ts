@@ -1,69 +1,72 @@
+import { notFetching } from 'store/wrapper'
 import {
-  FETCHING_PULLS,
-  PullsActionTypes,
+  PullsActionTypes, //
   PullsState,
   SET_CLONES,
   SET_DIFFS,
   SET_PULL,
   SET_PULLS
-} from 'store/pulls/types'
+} from './types'
 
 const initialState: PullsState = {
-  pulls: null,
-  pull: null,
-  clones: null,
-  diffs: null,
-  isFetching: false
+  pulls: notFetching,
+  pull: notFetching,
+  clones: notFetching,
+  diff: notFetching
 }
 
 export function pullsReducer(
-  state = initialState, //
+  state: PullsState = initialState, //
   action: PullsActionTypes
 ): PullsState {
   switch (action.type) {
     case SET_PULLS: {
       return {
         ...state,
-        pulls: action.pulls
+        pulls: action.payload
       }
     }
     case SET_PULL: {
       return {
         ...state,
-        pull: action.pull
+        pull: action.payload
       }
     }
     case SET_CLONES: {
       return {
         ...state,
-        clones: action.clones.map(diff => ({
-          id: diff.id,
-          target: {
-            ...diff.target,
-            content: atob(diff.target.content)
-          },
-          source: {
-            ...diff.source,
-            content: atob(diff.source.content)
-          }
-        }))
+        clones: {
+          ...action.payload,
+          value:
+            action.payload.value &&
+            action.payload.value.map(diff => ({
+              id: diff.id,
+              target: {
+                ...diff.target,
+                content: atob(diff.target.content)
+              },
+              source: {
+                ...diff.source,
+                content: atob(diff.source.content)
+              }
+            }))
+        }
       }
     }
     case SET_DIFFS: {
       return {
         ...state,
-        diffs: action.diffs.map(diff => ({
-          baseFilename: diff.baseFilename,
-          baseContent: diff.baseContent ? atob(diff.baseContent) : '',
-          headFilename: diff.headFilename,
-          headContent: diff.headContent ? atob(diff.headContent) : ''
-        }))
-      }
-    }
-    case FETCHING_PULLS: {
-      return {
-        ...state,
-        isFetching: action.isFetching
+        diff: {
+          ...action.payload,
+          value:
+            action.payload.value &&
+            action.payload.value.map(diff => ({
+              baseFilename: diff.baseFilename,
+              baseContent: diff.baseContent ? atob(diff.baseContent) : '',
+              headFilename: diff.headFilename,
+              headContent: diff.headContent ? atob(diff.headContent) : ''
+            }))
+        }
       }
     }
     default:
