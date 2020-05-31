@@ -191,9 +191,8 @@ public final class ProjectsHandler {
 
     private Mono<Project> createWebhook(final Project project) {
         final var hook = GithubHook.onPullUpdates(webhookProperties.getUrl(), webhookProperties.getSecret());
-        return githubClient.createHook(project.getRepoOwner(), project.getRepoName(), hook)
-                .doOnSuccess(p -> log.info("Created GitHub webhook for projectId={}", project.getId()))
-                .doOnError(e -> log.error("Cannot create hook for projectId={}", project.getId(), e))
+        return githubClient
+                .createHook(project.getRepoOwner(), project.getRepoName(), hook)
                 .thenReturn(project);
     }
 

@@ -6,7 +6,6 @@ import lombok.Value;
 
 import java.util.Locale;
 
-import static org.accula.api.github.model.GithubHook.Config.Insecurity.NO;
 import static org.accula.api.github.model.GithubHook.Config.Insecurity.YES;
 import static org.accula.api.github.model.GithubHook.Event.PULL_REQUEST;
 
@@ -18,7 +17,7 @@ public class GithubHook {
     Config config;
 
     public static GithubHook onPullUpdates(final String url, final String secret) {
-        return new GithubHook(new Event[]{PULL_REQUEST}, true, new Config(url, secret, NO));
+        return new GithubHook(new Event[]{PULL_REQUEST}, true, new Config(url, secret, YES));
     }
 
     public enum Event {

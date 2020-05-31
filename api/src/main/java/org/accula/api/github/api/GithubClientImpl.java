@@ -1,5 +1,6 @@
 package org.accula.api.github.api;
 
+import lombok.extern.slf4j.Slf4j;
 import org.accula.api.github.model.GithubHook;
 import org.accula.api.github.model.GithubPull;
 import org.accula.api.github.model.GithubRepo;
@@ -18,7 +19,9 @@ import static org.springframework.http.HttpStatus.OK;
 /**
  * @author Anton Lamtev
  * @author Ivan Krylov
+ * @author Vadim Dyachkov
  */
+@Slf4j
 @Component
 public final class GithubClientImpl implements GithubClient {
     private final AccessTokenProvider accessTokenProvider;
@@ -102,6 +105,8 @@ public final class GithubClientImpl implements GithubClient {
                 .headers(h -> h.setBearerAuth(accessToken))
                 .bodyValue(hook)
                 .exchange()
+                .doOnSuccess(p -> log.info("Created GitHub webhook for {}/{}", owner, repo))
+                .doOnError(e -> log.error("Cannot create hook for {}/{}", owner, repo, e))
                 .then());
     }
 

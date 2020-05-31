@@ -23,7 +23,7 @@ services:
       - API_URL=http://64.225.96.225
       - WEB_URL=http://64.225.96.225
       - WEBHOOK_URL=http://64.225.96.225
-        WEBHOOK_SECRET=accula
+      - WEBHOOK_SECRET=accula
       - DB_HOST=postgres
       - DB_PORT=5432
       - DB_USER=postgres
