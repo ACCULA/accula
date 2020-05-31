@@ -106,7 +106,7 @@ public class CodeLoaderImpl implements CodeLoader {
         final Mono<Repository> headRepo = getRepository(head).cache();
         final Mono<AbstractTreeIterator> headTree = headRepo
                 .map(repo -> getTreeIterator(repo, head.getSha()))
-                .doOnError(e -> log.error("Cannot get tree iterator for head {}: {}", head, e.getMessage()));;
+                .doOnError(e -> log.error("Cannot get tree iterator for head {}: {}", head, e.getMessage()));
 
         return Mono.zip(headRepo, baseTree, headTree)
                 .flatMapMany(repoBaseHead -> getDiffEntries(repoBaseHead.getT1(), repoBaseHead.getT2(), repoBaseHead.getT3()))
