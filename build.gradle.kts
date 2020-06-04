@@ -23,6 +23,8 @@ dependencies {
 
     implementation("org.jetbrains:annotations:19.0.0")
 
+    implementation(fileTree("dir" to "libs", "include" to  "*.jar"))
+
     val lombok = "org.projectlombok:lombok:1.18.12"
     compileOnly(lombok)
     annotationProcessor(lombok)
