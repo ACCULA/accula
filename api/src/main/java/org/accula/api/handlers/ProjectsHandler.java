@@ -2,15 +2,15 @@ package org.accula.api.handlers;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.accula.api.db.CommitRepository;
 import org.accula.api.config.WebhookProperties;
+import org.accula.api.db.CommitRepository;
 import org.accula.api.db.CurrentUserRepository;
 import org.accula.api.db.ProjectRepository;
 import org.accula.api.db.PullRepository;
 import org.accula.api.db.model.Commit;
 import org.accula.api.db.model.Project;
 import org.accula.api.db.model.PullOld;
-import org.accula.api.db.model.UserOld;
+import org.accula.api.db.model.User;
 import org.accula.api.github.api.GithubClient;
 import org.accula.api.github.api.GithubClientException;
 import org.accula.api.github.model.GithubHook;
@@ -146,7 +146,7 @@ public final class ProjectsHandler {
                 .onErrorResume(PROJECT_NOT_FOUND_EXCEPTION::equals, e -> ServerResponse.notFound().build());
     }
 
-    private Mono<Tuple4<Boolean, GithubRepo, GithubPull[], UserOld>> retrieveGithubInfoForProjectCreation(
+    private Mono<Tuple4<Boolean, GithubRepo, GithubPull[], User>> retrieveGithubInfoForProjectCreation(
             final Tuple2<String, String> ownerAndRepo) {
         final var owner = ownerAndRepo.getT1();
         final var repo = ownerAndRepo.getT2();
@@ -196,7 +196,7 @@ public final class ProjectsHandler {
                 .thenReturn(project);
     }
 
-    private static Tuple2<Project, GithubPull[]> convertGithubResponse(final Tuple4<Boolean, GithubRepo, GithubPull[], UserOld> tuple) {
+    private static Tuple2<Project, GithubPull[]> convertGithubResponse(final Tuple4<Boolean, GithubRepo, GithubPull[], User> tuple) {
         final var isAdmin = tuple.getT1();
 
         if (!isAdmin) {

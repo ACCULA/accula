@@ -27,13 +27,13 @@ public class WebConfig implements WebFluxConfigurer {
     public GithubClient.AccessTokenProvider githubAccessTokenProvider() {
         return () -> currentUserRepository
                 .get()
-                .flatMap(user -> Mono.justOrEmpty(user.getGithubAccessToken()));
+                .flatMap(user -> Mono.justOrEmpty(user.getGhAccessToken()));
     }
 
     @Bean
     public GithubClient.LoginProvider githubLoginProvider() {
         return () -> currentUserRepository
                 .get()
-                .flatMap(user -> Mono.just(user.getGithubLogin()));
+                .flatMap(user -> Mono.just(user.getGhLogin()));
     }
 }

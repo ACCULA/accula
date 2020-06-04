@@ -3,7 +3,6 @@ package org.accula.api.config;
 import io.r2dbc.pool.ConnectionPool;
 import io.r2dbc.pool.ConnectionPoolConfiguration;
 import io.r2dbc.spi.ConnectionFactories;
-import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.ConnectionFactoryOptions;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -34,7 +33,7 @@ public class DbConfig extends AbstractR2dbcConfiguration {
 
     @Bean
     @Override
-    public ConnectionFactory connectionFactory() {
+    public ConnectionPool connectionFactory() {
         final var pool = dbProperties.getPool();
 
         final var connectionFactory = ConnectionFactories.get(ConnectionFactoryOptions.builder()

@@ -3,21 +3,23 @@ package org.accula.api.db;
 import io.r2dbc.pool.ConnectionPool;
 import lombok.RequiredArgsConstructor;
 import org.accula.api.db.model.User;
-import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 @RequiredArgsConstructor
 public final class UserRepoImpl implements UserRepo {
+    private final Map<Integer, OnUpsert> onUpserts = new ConcurrentHashMap<>();
     private final ConnectionPool connectionPool;
 
     @Override
     public Mono<Long> upsert(final Long ghId,
                              final String ghLogin,
-                             @Nullable final String ghName,
+                             final String ghName,
                              final String ghAvatar,
                              final String ghAccessToken) {
         return connectionPool
@@ -49,7 +51,9 @@ public final class UserRepoImpl implements UserRepo {
                                 .execute())
                         .flatMap(result -> Mono.from(result
                                 .map((row, metadata) -> row.get("id", Long.class))))
-                        .flatMap(id -> Mono.from(connection.close()).thenReturn(id)));
+                        .flatMap(id -> Mono.from(connection.close()).thenReturn(id))
+                        .doOnSuccess(id -> onUpserts
+                                .forEach((k, onUpsert) -> onUpsert.onUpsert(id))));
     }
 
     @Override
@@ -83,5 +87,10 @@ public final class UserRepoImpl implements UserRepo {
                                         .ghAccessToken(Objects.requireNonNull(row.get("gh_access_token", String.class)))
                                         .build())))
                         .flatMap(user -> Mono.from(connection.close()).thenReturn(user)));
+    }
+
+    @Override
+    public void addOnUpsert(final OnUpsert onUpsert) {
+        onUpserts.put(onUpsert.hashCode(), onUpsert);
     }
 }
