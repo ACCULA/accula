@@ -11,7 +11,7 @@ import org.accula.api.db.PullRepository;
 import org.accula.api.db.model.Clone;
 import org.accula.api.db.model.Commit;
 import org.accula.api.db.model.Project;
-import org.accula.api.db.model.Pull;
+import org.accula.api.db.model.PullOld;
 import org.accula.api.detector.CloneDetector;
 import org.accula.api.detector.CodeSnippet;
 import org.accula.api.github.model.GithubHookPayload;
@@ -73,10 +73,10 @@ public final class GithubWebhookHandler {
                 .findByRepoOwnerAndRepoName(projectOwner, projectRepo)
                 .map(Project::getId)
                 .cache();
-        final Mono<Pull> updatedPull = headCommit.flatMap(head -> projectId
+        final Mono<PullOld> updatedPull = headCommit.flatMap(head -> projectId
                 .flatMap(id -> pullRepository
                         .findByProjectIdAndNumber(id, number)
-                        .switchIfEmpty(pullRepository.save(new Pull(null, id, number, head.getId(), base.getSha(), updatedAt))))
+                        .switchIfEmpty(pullRepository.save(new PullOld(null, id, number, head.getId(), base.getSha(), updatedAt))))
                 .flatMap(pull -> {
                     pull.setHeadLastCommitId(head.getId());
                     pull.setBaseLastCommitSha(base.getSha());
@@ -87,7 +87,7 @@ public final class GithubWebhookHandler {
         // get previous commits
         final Flux<Commit> source = commitRepository.findAllById(projectId
                 .flatMapMany(id -> pullRepository.findAllByProjectIdAndUpdatedAtBeforeAndNumberIsNot(id, updatedAt, number))
-                .map(Pull::getHeadLastCommitId));
+                .map(PullOld::getHeadLastCommitId));
 
         // get files by commits
         final Flux<FileEntity> targetFiles = headCommit

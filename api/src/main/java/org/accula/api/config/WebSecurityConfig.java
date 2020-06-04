@@ -11,6 +11,7 @@ import org.accula.api.auth.oauth2.OAuth2LoginFailureHandler;
 import org.accula.api.auth.oauth2.OAuth2LoginSuccessHandler;
 import org.accula.api.auth.util.CookieRefreshTokenHelper;
 import org.accula.api.db.RefreshTokenRepository;
+import org.accula.api.db.UserRepo;
 import org.accula.api.db.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -148,7 +149,7 @@ public class WebSecurityConfig {
             final JwtAccessTokenResponseProducer accessTokenResponseProducer,
             final Jwt jwt,
             final ReactiveOAuth2AuthorizedClientService authorizedClientService,
-            final UserRepository users,
+            final UserRepo users,
             final RefreshTokenRepository refreshTokens) {
 
         return new OAuth2LoginSuccessHandler(

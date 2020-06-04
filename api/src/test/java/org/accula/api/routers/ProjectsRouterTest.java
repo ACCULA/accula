@@ -8,8 +8,8 @@ import org.accula.api.db.ProjectRepository;
 import org.accula.api.db.PullRepository;
 import org.accula.api.db.model.Commit;
 import org.accula.api.db.model.Project;
-import org.accula.api.db.model.Pull;
-import org.accula.api.db.model.User;
+import org.accula.api.db.model.PullOld;
+import org.accula.api.db.model.UserOld;
 import org.accula.api.github.api.GithubClient;
 import org.accula.api.github.api.GithubClientException;
 import org.accula.api.github.model.GithubPull.State;
@@ -47,13 +47,13 @@ public class ProjectsRouterTest {
     private static final String REPO_NAME = "accula";
     private static final String REPO_OWNER = "accula";
     private static final List<Commit> COMMITS = List.of(new Commit(), new Commit(), new Commit());
-    private static final List<Pull> PULLS = List.of(
-            new Pull(null, 0L, null, null, null, null),
-            new Pull(null, 0L, null, null, null, null),
-            new Pull(null, 0L, null, null, null, null));
+    private static final List<PullOld> PULLS = List.of(
+            new PullOld(null, 0L, null, null, null, null),
+            new PullOld(null, 0L, null, null, null, null),
+            new PullOld(null, 0L, null, null, null, null));
     private static final String EMPTY = "";
     private static final Long[] ADMINS = new Long[]{1L, 2L, 3L};
-    private static final User CURRENT_USER = new User(0L, "Steve", 123L, "jobs", "secret_token");
+    private static final UserOld CURRENT_USER = new UserOld(0L, "Steve", 123L, "jobs", "secret_token");
     private static final GithubUser GH_OWNER = new GithubUser(REPO_OWNER, EMPTY, EMPTY);
     private static final GithubRepo GH_REPO = new GithubRepo(REPO_URL, REPO_NAME, EMPTY, GH_OWNER);
     private static final GithubPull.Marker MARKER = new GithubPull.Marker("", "", GH_REPO, "");

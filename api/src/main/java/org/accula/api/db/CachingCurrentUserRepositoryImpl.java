@@ -2,7 +2,7 @@ package org.accula.api.db;
 
 import lombok.RequiredArgsConstructor;
 import org.accula.api.auth.CurrentAuthorizedUserProvider;
-import org.accula.api.db.model.User;
+import org.accula.api.db.model.UserOld;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
@@ -17,13 +17,13 @@ import java.util.concurrent.ConcurrentHashMap;
 //FIXME: possible inconsistency
 public final class CachingCurrentUserRepositoryImpl implements CurrentUserRepository {
     private final UserRepository users;
-    private final Map<Long, User> cache = new ConcurrentHashMap<>();
+    private final Map<Long, UserOld> cache = new ConcurrentHashMap<>();
 
     /**
      * @return current authorized user
      */
     @Override
-    public Mono<User> get() {
+    public Mono<UserOld> get() {
         return CurrentAuthorizedUserProvider
                 .get()
                 .flatMap(authorizedUser -> Mono

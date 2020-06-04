@@ -9,7 +9,7 @@ import org.accula.api.db.CommitRepository;
 import org.accula.api.db.PullRepository;
 import org.accula.api.db.model.Clone;
 import org.accula.api.db.model.Commit;
-import org.accula.api.db.model.Pull;
+import org.accula.api.db.model.PullOld;
 import org.accula.api.handlers.response.GetCloneResponseBody;
 import org.accula.api.handlers.response.GetCloneResponseBody.FlatCodeSnippet.FlatCodeSnippetBuilder;
 import org.springframework.stereotype.Component;
@@ -61,7 +61,7 @@ public final class ClonesHandler {
         final var sourcePullNumbers = clones
                 .map(Clone::getSourceCommitId)
                 .flatMap(pullRepo::findById)
-                .map(Pull::getNumber);
+                .map(PullOld::getNumber);
 
         final var commitIds = clones
                 .flatMapSequential(clone -> Flux

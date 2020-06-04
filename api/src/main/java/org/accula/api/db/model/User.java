@@ -1,35 +1,18 @@
 package org.accula.api.db.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import org.jetbrains.annotations.Nullable;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.relational.core.mapping.Table;
+import io.micrometer.core.lang.Nullable;
+import lombok.Builder;
+import lombok.Value;
 
-import java.util.Objects;
-
-/**
- * @author Anton Lamtev
- */
-@Table("users")
-@Data
-@AllArgsConstructor
+@Builder
+@Value
 public class User {
-    @Id
+    Long id;
+    Long ghId;
+    String ghLogin;
     @Nullable
-    private Long id;
+    String ghName;
+    String ghAvatar;
     @Nullable
-    private String name;
-    private Long githubId;
-    private String githubLogin;
-    @Nullable
-    private String githubAccessToken;
-
-    public boolean shouldUpdateLoginOrAccessToken(final String login, final String accessToken) {
-        return !githubLogin.equals(login) || !Objects.equals(githubAccessToken, accessToken);
-    }
-
-    public static User of(@Nullable final String name, final Long githubId, final String githubLogin, final String githubAccessToken) {
-        return new User(null, name, githubId, githubLogin, githubAccessToken);
-    }
+    String ghAccessToken;
 }

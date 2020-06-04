@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.accula.api.db.UserRepository;
-import org.accula.api.db.model.User;
+import org.accula.api.db.model.UserOld;
 import org.accula.api.handlers.UsersHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,7 +24,7 @@ import reactor.core.publisher.Mono;
 @WebFluxTest
 @ContextConfiguration(classes = {UsersRouter.class, UsersHandler.class})
 public class UsersRouterTest {
-    private static final User STUB_USER = new User(1L, "name", 123L, "login", null);
+    private static final UserOld STUB_USER = new UserOld(1L, "name", 123L, "login", null);
     private static final ResponseUser RESPONSE_USER =
             new ResponseUser(STUB_USER.getId(), STUB_USER.getGithubLogin(), STUB_USER.getName());
 

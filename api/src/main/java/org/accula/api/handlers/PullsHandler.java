@@ -48,7 +48,7 @@ public final class PullsHandler {
                                 .ok()
                                 .contentType(APPLICATION_JSON)
                                 .bodyValue(githubPulls)))
-                .onErrorResume(e -> e == PULL_NOT_FOUND_EXCEPTION, e -> ServerResponse.notFound().build());
+                .onErrorResume(PULL_NOT_FOUND_EXCEPTION::equals, e -> ServerResponse.notFound().build());
     }
 
     public Mono<ServerResponse> get(final ServerRequest request) {
@@ -69,7 +69,7 @@ public final class PullsHandler {
                                     .bodyValue(fromGithubPull(githubPull, projectId)));
                 })
                 .onErrorMap(NumberFormatException.class, e -> PULL_NOT_FOUND_EXCEPTION)
-                .onErrorResume(e -> e == PULL_NOT_FOUND_EXCEPTION, e -> ServerResponse.notFound().build());
+                .onErrorResume(PULL_NOT_FOUND_EXCEPTION::equals, e -> ServerResponse.notFound().build());
     }
 
     //TODO

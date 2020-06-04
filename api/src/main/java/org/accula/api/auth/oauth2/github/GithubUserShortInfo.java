@@ -12,4 +12,5 @@ public class GithubUserShortInfo {
     String login;
     @Nullable
     String name;
+    String avatar;
 }

@@ -13,7 +13,8 @@ public final class GithubUserInfoExtractor {
         final var id = (Integer) rawUserInfo.get("id");
         final var login = (String) rawUserInfo.get("login");
         final var name = (String) rawUserInfo.get("name");
+        final var avatar = (String) rawUserInfo.get("avatar_url");
 
-        return new GithubUserShortInfo(id.longValue(), login, name);
+        return new GithubUserShortInfo(id.longValue(), login, name, avatar);
     }
 }

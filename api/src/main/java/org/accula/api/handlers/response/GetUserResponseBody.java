@@ -1,7 +1,7 @@
 package org.accula.api.handlers.response;
 
 import lombok.Value;
-import org.accula.api.db.model.User;
+import org.accula.api.db.model.UserOld;
 
 import static java.util.Objects.requireNonNull;
 
@@ -14,7 +14,7 @@ public class GetUserResponseBody implements ResponseBody {
     String login;
     String name;
 
-    public static GetUserResponseBody from(final User user) {
+    public static GetUserResponseBody from(final UserOld user) {
         return new GetUserResponseBody(requireNonNull(user.getId()), user.getGithubLogin(), user.getName());
     }
 }

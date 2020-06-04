@@ -9,8 +9,8 @@ import org.accula.api.db.ProjectRepository;
 import org.accula.api.db.PullRepository;
 import org.accula.api.db.model.Commit;
 import org.accula.api.db.model.Project;
-import org.accula.api.db.model.Pull;
-import org.accula.api.db.model.User;
+import org.accula.api.db.model.PullOld;
+import org.accula.api.db.model.UserOld;
 import org.accula.api.github.api.GithubClient;
 import org.accula.api.github.api.GithubClientException;
 import org.accula.api.github.model.GithubHook;
@@ -146,7 +146,7 @@ public final class ProjectsHandler {
                 .onErrorResume(PROJECT_NOT_FOUND_EXCEPTION::equals, e -> ServerResponse.notFound().build());
     }
 
-    private Mono<Tuple4<Boolean, GithubRepo, GithubPull[], User>> retrieveGithubInfoForProjectCreation(
+    private Mono<Tuple4<Boolean, GithubRepo, GithubPull[], UserOld>> retrieveGithubInfoForProjectCreation(
             final Tuple2<String, String> ownerAndRepo) {
         final var owner = ownerAndRepo.getT1();
         final var repo = ownerAndRepo.getT2();
@@ -183,7 +183,7 @@ public final class ProjectsHandler {
                                 .map(headCommitAndGhPull -> {
                                     final var head = headCommitAndGhPull.getT1();
                                     final var pull = headCommitAndGhPull.getT2();
-                                    return new Pull(null, savedProject.getId(), pull.getNumber(), head.getId(),
+                                    return new PullOld(null, savedProject.getId(), pull.getNumber(), head.getId(),
                                             pull.getBase().getSha(), pull.getUpdatedAt());
                                 }))
                         .then(Mono.just(savedProject)));
@@ -196,7 +196,7 @@ public final class ProjectsHandler {
                 .thenReturn(project);
     }
 
-    private static Tuple2<Project, GithubPull[]> convertGithubResponse(final Tuple4<Boolean, GithubRepo, GithubPull[], User> tuple) {
+    private static Tuple2<Project, GithubPull[]> convertGithubResponse(final Tuple4<Boolean, GithubRepo, GithubPull[], UserOld> tuple) {
         final var isAdmin = tuple.getT1();
 
         if (!isAdmin) {
