@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-import { API_URL } from 'utils'
+import { API_URL, DEBUG } from 'utils'
 import { IUser, IToken } from 'types'
 
 const REFRESH_TOKEN = 'refreshToken'
@@ -11,6 +11,9 @@ type AuthEndpoint =
   | typeof LOGOUT
 
 const updateRefreshToken = (endpoint: AuthEndpoint): Promise<IToken> => {
+  if (DEBUG) {
+    return Promise.resolve({ accessToken: '' })
+  }
   return axios
     .get(`${API_URL}/api/${endpoint}`, {
       headers: {

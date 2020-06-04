@@ -13,6 +13,7 @@ import { getProjectAction } from 'store/projects/actions'
 import { PullClonesTab } from './PullClonesTab'
 import { PullChangesTab } from './PullChangesTab'
 import { PullOverviewTab } from './PullOverviewTab'
+import { PullGraphTab } from 'views/Pulls/PullGraphTab'
 
 const mapStateToProps = (state: AppState) => ({
   isFetching:
@@ -91,6 +92,16 @@ const Pull = ({
         }}
         id="pull-tabs"
       >
+        <Tab
+          eventKey="graph"
+          title={
+            <>
+              <i className="fas fa-fw fa-project-diagram" /> Graph
+            </>
+          }
+        >
+          <PullGraphTab />
+        </Tab>
         <Tab
           eventKey="overview"
           title={
