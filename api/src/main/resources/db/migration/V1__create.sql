@@ -1,18 +1,19 @@
 CREATE TABLE IF NOT EXISTS user_github
 (
     id     BIGINT PRIMARY KEY,
-    login  VARCHAR(39) UNIQUE NOT NULL,
-    name   VARCHAR(256),
-    avatar VARCHAR(2000)      NOT NULL
+    login  VARCHAR(39) UNIQUE    NOT NULL,
+    name   VARCHAR(256)          NOT NULL,
+    avatar VARCHAR(2000)         NOT NULL,
+    is_org BOOLEAN DEFAULT FALSE NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS user_internal
+CREATE TABLE IF NOT EXISTS user_
 (
-    id              BIGSERIAL PRIMARY KEY,
-    gh_id           BIGINT UNIQUE NOT NULL,
-    gh_access_token VARCHAR(256),
+    id                  BIGSERIAL PRIMARY KEY,
+    github_id           BIGINT UNIQUE NOT NULL,
+    github_access_token VARCHAR(256)  NOT NULL,
 
-    FOREIGN KEY (gh_id) REFERENCES user_github (id)
+    FOREIGN KEY (github_id) REFERENCES user_github (id)
 );
 
 CREATE TABLE IF NOT EXISTS refresh_token
@@ -22,19 +23,27 @@ CREATE TABLE IF NOT EXISTS refresh_token
     token           VARCHAR(256) UNIQUE      NOT NULL,
     expiration_date TIMESTAMP WITH TIME ZONE NOT NULL,
 
-    FOREIGN KEY (user_id) REFERENCES user_internal (id)
+    FOREIGN KEY (user_id) REFERENCES user_ (id)
+);
+
+CREATE TABLE IF NOT EXISTS repo_github
+(
+    id          BIGINT PRIMARY KEY,
+    name        VARCHAR(256) NOT NULL,
+    owner_id    BIGINT       NOT NULL,
+    description TEXT         NOT NULL,
+
+    FOREIGN KEY (owner_id) REFERENCES user_github (id)
 );
 
 CREATE TABLE IF NOT EXISTS project
 (
-    id                  BIGSERIAL PRIMARY KEY,
-    gh_repo_id          BIGINT UNIQUE NOT NULL,
-    creator_id          BIGINT        NOT NULL,
-    gh_repo_name        VARCHAR(256)  NOT NULL,
-    gh_repo_owner       VARCHAR(39)   NOT NULL,
-    gh_repo_description TEXT          NOT NULL,
+    id             BIGSERIAL PRIMARY KEY,
+    github_repo_id BIGINT UNIQUE NOT NULL,
+    creator_id     BIGINT        NOT NULL,
 
-    FOREIGN KEY (creator_id) REFERENCES user_internal (id)
+    FOREIGN KEY (github_repo_id) REFERENCES repo_github (id),
+    FOREIGN KEY (creator_id) REFERENCES user_ (id)
 );
 
 CREATE TABLE IF NOT EXISTS project_admin
@@ -43,7 +52,7 @@ CREATE TABLE IF NOT EXISTS project_admin
     admin_id   BIGSERIAL NOT NULL,
 
     FOREIGN KEY (project_id) REFERENCES project (id),
-    FOREIGN KEY (admin_id) REFERENCES user_internal (id),
+    FOREIGN KEY (admin_id) REFERENCES user_ (id),
     CONSTRAINT project_admin_pk PRIMARY KEY (project_id, admin_id)
 );
 
@@ -72,12 +81,12 @@ CREATE TABLE IF NOT EXISTS pull
     base_last_commit_id BIGINT                   NOT NULL,
     base_branch         VARCHAR(256)             NOT NULL,
 
-    author_gh_id        BIGINT                   NOT NULL,
+    author_github_id    BIGINT                   NOT NULL,
 
     FOREIGN KEY (project_id) REFERENCES project (id),
     FOREIGN KEY (head_last_commit_id) REFERENCES commit (id),
     FOREIGN KEY (base_last_commit_id) REFERENCES commit (id),
-    FOREIGN KEY (author_gh_id) REFERENCES user_github (id)
+    FOREIGN KEY (author_github_id) REFERENCES user_github (id)
 );
 
 CREATE TABLE IF NOT EXISTS clone

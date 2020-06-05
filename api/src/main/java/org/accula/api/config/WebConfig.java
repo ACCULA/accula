@@ -1,7 +1,7 @@
 package org.accula.api.config;
 
 import lombok.RequiredArgsConstructor;
-import org.accula.api.db.CurrentUserRepository;
+import org.accula.api.db.repo.CurrentUserRepo;
 import org.accula.api.github.api.GithubClient;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -16,7 +16,7 @@ import reactor.core.publisher.Mono;
 @SpringBootConfiguration
 @RequiredArgsConstructor
 public class WebConfig implements WebFluxConfigurer {
-    private final CurrentUserRepository currentUserRepository;
+    private final CurrentUserRepo currentUserRepository;
 
     @Bean
     public WebClient webClient() {
@@ -27,13 +27,13 @@ public class WebConfig implements WebFluxConfigurer {
     public GithubClient.AccessTokenProvider githubAccessTokenProvider() {
         return () -> currentUserRepository
                 .get()
-                .flatMap(user -> Mono.justOrEmpty(user.getGhAccessToken()));
+                .flatMap(user -> Mono.justOrEmpty(user.getGithubAccessToken()));
     }
 
     @Bean
     public GithubClient.LoginProvider githubLoginProvider() {
         return () -> currentUserRepository
                 .get()
-                .flatMap(user -> Mono.just(user.getGhLogin()));
+                .flatMap(user -> Mono.just(user.getGithubUser().getLogin()));
     }
 }

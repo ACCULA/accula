@@ -6,8 +6,9 @@ import lombok.Value;
  * @author Anton Lamtev
  */
 @Value
-public class User {
+public class GithubRepo {
     Long id;
-    GithubUser githubUser;
-    String githubAccessToken;
+    String name;
+    GithubUser owner;
+    String description;
 }

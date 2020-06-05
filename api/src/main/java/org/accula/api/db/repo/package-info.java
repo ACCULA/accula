@@ -1,4 +1,4 @@
 @NonNullApi
-package org.accula.api.auth.oauth2.github;
+package org.accula.api.db.repo;
 
 import org.springframework.lang.NonNullApi;

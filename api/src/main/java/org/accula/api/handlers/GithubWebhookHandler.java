@@ -10,11 +10,11 @@ import org.accula.api.db.ProjectRepository;
 import org.accula.api.db.PullRepository;
 import org.accula.api.db.model.Clone;
 import org.accula.api.db.model.Commit;
-import org.accula.api.db.model.Project;
+import org.accula.api.db.model.ProjectOld;
 import org.accula.api.db.model.PullOld;
 import org.accula.api.detector.CloneDetector;
 import org.accula.api.detector.CodeSnippet;
-import org.accula.api.github.model.GithubHookPayload;
+import org.accula.api.github.model.GithubApiHookPayload;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
@@ -47,12 +47,12 @@ public final class GithubWebhookHandler {
         }
         // TODO: validate signature in X-Hub-Signature 
         return request
-                .bodyToMono(GithubHookPayload.class)
+                .bodyToMono(GithubApiHookPayload.class)
                 .flatMap(this::processPayload)
                 .flatMap(p -> ServerResponse.ok().build());
     }
 
-    public Mono<Void> processPayload(final GithubHookPayload payload) {
+    public Mono<Void> processPayload(final GithubApiHookPayload payload) {
         final var projectOwner = payload.getRepository().getOwner().getLogin();
         final var projectRepo = payload.getRepository().getName();
         final var number = payload.getPull().getNumber();
@@ -71,7 +71,7 @@ public final class GithubWebhookHandler {
         // update pull table
         final Mono<Long> projectId = projectRepository
                 .findByRepoOwnerAndRepoName(projectOwner, projectRepo)
-                .map(Project::getId)
+                .map(ProjectOld::getId)
                 .cache();
         final Mono<PullOld> updatedPull = headCommit.flatMap(head -> projectId
                 .flatMap(id -> pullRepository

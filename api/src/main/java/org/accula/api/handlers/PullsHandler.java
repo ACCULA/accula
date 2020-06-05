@@ -4,8 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.accula.api.db.ProjectRepository;
 import org.accula.api.db.PullRepository;
 import org.accula.api.github.api.GithubClient;
-import org.accula.api.github.model.GithubPull;
-import org.accula.api.github.model.GithubPull.State;
+import org.accula.api.github.model.GithubApiPull;
+import org.accula.api.github.model.GithubApiPull.State;
 import org.accula.api.handlers.response.GetPullResponseBody;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
@@ -41,7 +41,7 @@ public final class PullsHandler {
                         .flatMap(project -> githubClient.getRepositoryPulls(project.getRepoOwner(), project.getRepoName(), State.ALL))
                         .switchIfEmpty(Mono.error(PULL_NOT_FOUND_EXCEPTION))
                         .flatMapMany(Flux::fromArray)
-                        .filter(GithubPull::isValid)
+                        .filter(GithubApiPull::isValid)
                         .flatMap(pull -> Mono.just(fromGithubPull(pull, projectId)))
                         .collectList()
                         .flatMap(githubPulls -> ServerResponse
@@ -83,7 +83,7 @@ public final class PullsHandler {
                 .then(Mono.empty());
     }
 
-    private static GetPullResponseBody fromGithubPull(final GithubPull githubPull, final Long projectId) {
+    private static GetPullResponseBody fromGithubPull(final GithubApiPull githubPull, final Long projectId) {
         return GetPullResponseBody.builder()
                 .projectId(projectId)
                 .number(githubPull.getNumber())

@@ -11,7 +11,7 @@ import java.util.Locale;
  */
 @Data
 @NoArgsConstructor
-public final class GithubUserPermission {
+public final class GithubApiUserPermission {
     private Permission permission;
 
     public enum Permission {

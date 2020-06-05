@@ -17,12 +17,12 @@ import java.util.Locale;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public final class GithubPull {
+public final class GithubApiPull {
     @JsonProperty("html_url")
     private String htmlUrl;
     private Marker head;
     private Marker base;
-    private GithubUser user;
+    private GithubApiUser user;
     private Integer number;
     private String title;
     private State state;
@@ -53,7 +53,7 @@ public final class GithubPull {
     public static final class Marker {
         private String label;
         private String ref;
-        private GithubRepo repo;
+        private GithubApiRepo repo;
         private String sha;
 
         public String getTreeUrl() {

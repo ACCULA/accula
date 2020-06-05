@@ -24,7 +24,7 @@ public final class ProjectsRouter {
         return RouterFunctions
                 .route()
                 .path("/api/projects", b1 -> b1
-                        .GET("", projectsHandler::getAll)
+                        .GET("", projectsHandler::getTop)
                         .GET("/{id}", projectsHandler::get)
                         .nest(accept(APPLICATION_JSON), b2 -> b2
                                 .POST("", projectsHandler::create)

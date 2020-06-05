@@ -12,11 +12,12 @@ import org.jetbrains.annotations.Nullable;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public final class GithubRepo {
+public final class GithubApiRepo {
+    private Long id;
     @JsonProperty("html_url")
     private String htmlUrl;
     private String name;
     @Nullable
     private String description;
-    private GithubUser owner;
+    private GithubApiUser owner;
 }

@@ -1,4 +1,4 @@
-package org.accula.api.db;
+package org.accula.api.db.repo;
 
 import org.accula.api.auth.CurrentAuthorizedUserProvider;
 import org.accula.api.db.model.User;
@@ -12,11 +12,11 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Anton Lamtev
  */
 @Component
-public final class CachingCurrentUserRepositoryImpl implements CurrentUserRepository {
+public final class CachingCurrentUserRepoImpl implements CurrentUserRepo {
     private final Map<Long, User> cache = new ConcurrentHashMap<>();
     private final UserRepo userRepo;
 
-    public CachingCurrentUserRepositoryImpl(final UserRepo userRepo) {
+    public CachingCurrentUserRepoImpl(final UserRepo userRepo) {
         this.userRepo = userRepo;
         this.userRepo.addOnUpsert(this::evict);
     }
@@ -28,7 +28,7 @@ public final class CachingCurrentUserRepositoryImpl implements CurrentUserReposi
                 .flatMap(authorizedUser -> Mono
                         .justOrEmpty(cache.get(authorizedUser.getId()))
                         .switchIfEmpty(userRepo
-                                .get(authorizedUser.getId())
+                                .findById(authorizedUser.getId())
                                 .doOnSuccess(user -> {
                                     if (user != null) {
                                         cache.put(authorizedUser.getId(), user);

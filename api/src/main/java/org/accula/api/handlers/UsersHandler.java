@@ -2,7 +2,7 @@ package org.accula.api.handlers;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.accula.api.db.UserRepository;
+import org.accula.api.db.repo.UserRepo;
 import org.accula.api.handlers.response.GetUserResponseBody;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
@@ -22,14 +22,14 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 public final class UsersHandler {
     private static final Exception USER_NOT_FOUND_EXCEPTION = new Exception();
 
-    private final UserRepository users;
+    private final UserRepo userRepo;
 
     public Mono<ServerResponse> getById(final ServerRequest request) {
         return Mono
                 .justOrEmpty(request.pathVariable("id"))
                 .map(Long::parseLong)
                 .onErrorMap(NumberFormatException.class, e -> USER_NOT_FOUND_EXCEPTION)
-                .flatMap(users::findById)
+                .flatMap(userRepo::findById)
                 .flatMap(user -> ServerResponse
                         .ok()
                         .contentType(APPLICATION_JSON)
