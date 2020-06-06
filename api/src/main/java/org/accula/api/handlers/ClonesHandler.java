@@ -5,10 +5,10 @@ import lombok.Value;
 import org.accula.api.code.CodeLoader;
 import org.accula.api.code.FileEntity;
 import org.accula.api.db.CloneRepository;
-import org.accula.api.db.CommitRepository;
+import org.accula.api.db.CommitRepo;
 import org.accula.api.db.PullRepository;
 import org.accula.api.db.model.Clone;
-import org.accula.api.db.model.Commit;
+import org.accula.api.db.model.CommitOld;
 import org.accula.api.db.model.PullOld;
 import org.accula.api.handlers.response.GetCloneResponseBody;
 import org.accula.api.handlers.response.GetCloneResponseBody.FlatCodeSnippet.FlatCodeSnippetBuilder;
@@ -39,7 +39,7 @@ public final class ClonesHandler {
     private static final Base64.Encoder base64 = Base64.getEncoder(); // NOPMD
 
     private final PullRepository pullRepo;
-    private final CommitRepository commitRepo;
+    private final CommitRepo commitRepo;
     private final CloneRepository cloneRepo;
     private final CodeLoader codeLoader;
     private final Scheduler codeLoadingScheduler = Schedulers.boundedElastic();
@@ -70,7 +70,7 @@ public final class ClonesHandler {
 
         final var commits = commitRepo
                 .findAllById(commitIds)
-                .collectMap(Commit::getId)
+                .collectMap(CommitOld::getId)
                 .cache();
 
         final var targetFileSnippetMarkers = commits
@@ -129,7 +129,7 @@ public final class ClonesHandler {
 
     private static FlatCodeSnippetBuilder codeSnippetWith(final long projectId,
                                                           final int pullNumber,
-                                                          final Commit commit,
+                                                          final CommitOld commit,
                                                           final String content) {
         return GetCloneResponseBody.FlatCodeSnippet.builder()
                 .projectId(projectId)
@@ -148,7 +148,7 @@ public final class ClonesHandler {
 
     @Value
     private static class FileSnippetMarker {
-        Commit commit;
+        CommitOld commit;
         String filename;
         int fromLine;
         int toLine;

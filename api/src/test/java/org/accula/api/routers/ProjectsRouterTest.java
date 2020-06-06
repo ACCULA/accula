@@ -3,9 +3,9 @@ package org.accula.api.routers;
 import lombok.SneakyThrows;
 import org.accula.api.config.WebhookProperties;
 import org.accula.api.converter.DataConverter;
-import org.accula.api.db.CommitRepository;
+import org.accula.api.db.CommitRepo;
 import org.accula.api.db.PullRepository;
-import org.accula.api.db.model.Commit;
+import org.accula.api.db.model.CommitOld;
 import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.GithubUser;
 import org.accula.api.db.model.Project;
@@ -49,7 +49,7 @@ public class ProjectsRouterTest {
     private static final String REPO_URL = "https://github.com/accula/accula";
     private static final String REPO_NAME = "accula";
     private static final String REPO_OWNER = "accula";
-    private static final List<Commit> COMMITS = List.of(new Commit(), new Commit(), new Commit());
+    private static final List<CommitOld> COMMITS = List.of(new CommitOld(), new CommitOld(), new CommitOld());
     private static final List<PullOld> PULLS = List.of(
             new PullOld(null, 0L, null, null, null, null),
             new PullOld(null, 0L, null, null, null, null),
@@ -80,7 +80,7 @@ public class ProjectsRouterTest {
     @MockBean
     private PullRepository pullRepository;
     @MockBean
-    private CommitRepository commitRepository;
+    private CommitRepo commitRepo;
     @MockBean
     private GithubClient githubClient;
     @MockBean
@@ -103,7 +103,7 @@ public class ProjectsRouterTest {
         Mockito.when(currentUser.get())
                 .thenReturn(Mono.just(CURRENT_USER));
 
-        Mockito.when(commitRepository.saveAll(Mockito.anyCollection()))
+        Mockito.when(commitRepo.saveAll(Mockito.anyCollection()))
                 .thenReturn(Flux.fromIterable(COMMITS));
 
         Mockito.when(githubUserRepo.upsert(Mockito.any(GithubUser.class)))

@@ -3,7 +3,7 @@ package org.accula.api.code;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.accula.api.db.model.Commit;
+import org.accula.api.db.model.CommitOld;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.errors.MissingObjectException;
@@ -53,12 +53,12 @@ public class CodeLoaderImpl implements CodeLoader {
     private final RepositoryProvider repositoryProvider;
 
     @Override
-    public Flux<FileEntity> getFiles(final Commit commit) {
+    public Flux<FileEntity> getFiles(final CommitOld commit) {
         return getFiles(commit, FileFilter.ALL);
     }
 
     @Override
-    public Flux<FileEntity> getFiles(final Commit commit, final FileFilter filter) {
+    public Flux<FileEntity> getFiles(final CommitOld commit, final FileFilter filter) {
         return getRepository(commit)
                 .switchIfEmpty(Mono.error(REPO_NOT_FOUND))
                 .flatMapMany(repo -> Flux.fromIterable(getObjectLoaders(repo, commit.getSha())))
@@ -69,7 +69,7 @@ public class CodeLoaderImpl implements CodeLoader {
     }
 
     @Override
-    public Mono<FileEntity> getFile(final Commit commit, final String filename) {
+    public Mono<FileEntity> getFile(final CommitOld commit, final String filename) {
         return getRepository(commit)
                 .switchIfEmpty(Mono.error(REPO_NOT_FOUND))
                 .flatMap(repo -> Mono.justOrEmpty(getObjectLoader(repo, commit.getSha(), filename)))
@@ -81,7 +81,7 @@ public class CodeLoaderImpl implements CodeLoader {
     }
 
     @Override
-    public Mono<FileEntity> getFileSnippet(final Commit commit, final String filename, final int fromLine, final int toLine) {
+    public Mono<FileEntity> getFileSnippet(final CommitOld commit, final String filename, final int fromLine, final int toLine) {
         if (fromLine > toLine) {
             return Mono.error(RANGE_ERROR);
         }
@@ -94,12 +94,12 @@ public class CodeLoaderImpl implements CodeLoader {
                 .switchIfEmpty(Mono.error(CUT_ERROR));
     }
 
-    public Flux<Tuple2<FileEntity, FileEntity>> getDiff(final Commit base, final Commit head) {
+    public Flux<Tuple2<FileEntity, FileEntity>> getDiff(final CommitOld base, final CommitOld head) {
         return getDiff(base, head, FileFilter.ALL);
     }
 
     @Override
-    public Flux<Tuple2<FileEntity, FileEntity>> getDiff(final Commit base, final Commit head, final FileFilter filter) {
+    public Flux<Tuple2<FileEntity, FileEntity>> getDiff(final CommitOld base, final CommitOld head, final FileFilter filter) {
         final Mono<AbstractTreeIterator> baseTree = getRepository(base)
                 .map(repo -> getTreeIterator(repo, base.getSha()))
                 .doOnError(e -> log.error("Cannot get tree iterator for base {}: {}", base, e.getMessage()));
@@ -125,7 +125,7 @@ public class CodeLoaderImpl implements CodeLoader {
                 .onErrorResume(MissingObjectException.class, e -> Flux.empty());
     }
 
-    private Mono<Repository> getRepository(final Commit commit) {
+    private Mono<Repository> getRepository(final CommitOld commit) {
         return repositoryProvider.getRepository(commit.getOwner(), commit.getRepo());
     }
 
@@ -151,7 +151,7 @@ public class CodeLoaderImpl implements CodeLoader {
         return tree;
     }
 
-    private Mono<FileEntity> getFileNullable(final Commit commit, final String filename) {
+    private Mono<FileEntity> getFileNullable(final CommitOld commit, final String filename) {
         if (DELETED_FILE.equals(filename)) {
             return Mono.just(new FileEntity(commit, null, null));
         }

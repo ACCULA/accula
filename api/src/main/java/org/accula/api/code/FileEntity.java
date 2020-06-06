@@ -1,14 +1,14 @@
 package org.accula.api.code;
 
 import lombok.Value;
-import org.accula.api.db.model.Commit;
+import org.accula.api.db.model.CommitOld;
 
 /**
  * @author Vadim Dyachkov
  */
 @Value
 public class FileEntity {
-    Commit commit;
+    CommitOld commit;
     String name;
     String content;
 

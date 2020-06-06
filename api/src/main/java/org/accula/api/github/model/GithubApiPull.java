@@ -18,12 +18,13 @@ import java.util.Locale;
 @NoArgsConstructor
 @AllArgsConstructor
 public final class GithubApiPull {
+    private Long id;
     @JsonProperty("html_url")
     private String htmlUrl;
     private Marker head;
     private Marker base;
     private GithubApiUser user;
-    private Integer number;
+    private Long number;
     private String title;
     private State state;
     @JsonProperty("created_at")
@@ -53,6 +54,7 @@ public final class GithubApiPull {
     public static final class Marker {
         private String label;
         private String ref;
+        private GithubApiUser user;
         private GithubApiRepo repo;
         private String sha;
 

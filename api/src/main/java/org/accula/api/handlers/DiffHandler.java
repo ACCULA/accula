@@ -4,10 +4,10 @@ import lombok.RequiredArgsConstructor;
 import org.accula.api.code.CodeLoader;
 import org.accula.api.code.FileEntity;
 import org.accula.api.code.FileFilter;
-import org.accula.api.db.CommitRepository;
+import org.accula.api.db.CommitRepo;
 import org.accula.api.db.ProjectRepository;
 import org.accula.api.db.PullRepository;
-import org.accula.api.db.model.Commit;
+import org.accula.api.db.model.CommitOld;
 import org.accula.api.handlers.response.GetDiffResponseBody;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Component;
@@ -33,7 +33,7 @@ public final class DiffHandler {
     private static final Base64.Encoder base64 = Base64.getEncoder(); // NOPMD
 
     private final ProjectRepository projectRepository;
-    private final CommitRepository commitRepository;
+    private final CommitRepo commitRepo;
     private final PullRepository pullRepository;
     private final CodeLoader codeLoader;
 
@@ -54,11 +54,11 @@ public final class DiffHandler {
                 .cache();
         final var base = pullMono.flatMap(pull -> projectRepository
                 .findById(projectId)
-                .map(project -> new Commit(-1L, project.getRepoOwner(), project.getRepoName(), pull.getBaseLastCommitSha())));
+                .map(project -> new CommitOld(-1L, project.getRepoOwner(), project.getRepoName(), pull.getBaseLastCommitSha())));
 
         final var head = pullMono
                 .map(pull -> Mono.justOrEmpty(pull.getHeadLastCommitId()))
-                .flatMap(commitRepository::findById);
+                .flatMap(commitRepo::findById);
 
         return Mono.zip(base, head)
                 .flatMapMany(baseHead -> codeLoader.getDiff(baseHead.getT1(), baseHead.getT2(), FileFilter.JAVA))

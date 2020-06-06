@@ -86,7 +86,7 @@ public final class PullsHandler {
     private static GetPullResponseBody fromGithubPull(final GithubApiPull githubPull, final Long projectId) {
         return GetPullResponseBody.builder()
                 .projectId(projectId)
-                .number(githubPull.getNumber())
+                .number(githubPull.getNumber().intValue())
                 .url(githubPull.getHtmlUrl())
                 .title(githubPull.getTitle())
                 .head(new GetPullResponseBody.PullRef(

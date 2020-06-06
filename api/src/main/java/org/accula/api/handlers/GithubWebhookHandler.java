@@ -5,11 +5,11 @@ import org.accula.api.code.CodeLoader;
 import org.accula.api.code.FileEntity;
 import org.accula.api.code.FileFilter;
 import org.accula.api.db.CloneRepository;
-import org.accula.api.db.CommitRepository;
+import org.accula.api.db.CommitRepo;
 import org.accula.api.db.ProjectRepository;
 import org.accula.api.db.PullRepository;
 import org.accula.api.db.model.Clone;
-import org.accula.api.db.model.Commit;
+import org.accula.api.db.model.CommitOld;
 import org.accula.api.db.model.ProjectOld;
 import org.accula.api.db.model.PullOld;
 import org.accula.api.detector.CloneDetector;
@@ -35,7 +35,7 @@ public final class GithubWebhookHandler {
 
     private final ProjectRepository projectRepository;
     private final PullRepository pullRepository;
-    private final CommitRepository commitRepository;
+    private final CommitRepo commitRepo;
     private final CloneRepository cloneRepository;
     private final CloneDetector detector;
     private final CodeLoader loader;
@@ -63,9 +63,9 @@ public final class GithubWebhookHandler {
         final var base = payload.getPull().getBase();
 
         // save to commit table & get commit with id
-        final Mono<Commit> headCommit = commitRepository
+        final Mono<CommitOld> headCommit = commitRepo
                 .findBySha(headSha)
-                .switchIfEmpty(commitRepository.save(new Commit(null, pullOwner, pullRepo, headSha)))
+                .switchIfEmpty(commitRepo.save(new CommitOld(null, pullOwner, pullRepo, headSha)))
                 .cache();
 
         // update pull table
@@ -75,8 +75,8 @@ public final class GithubWebhookHandler {
                 .cache();
         final Mono<PullOld> updatedPull = headCommit.flatMap(head -> projectId
                 .flatMap(id -> pullRepository
-                        .findByProjectIdAndNumber(id, number)
-                        .switchIfEmpty(pullRepository.save(new PullOld(null, id, number, head.getId(), base.getSha(), updatedAt))))
+                        .findByProjectIdAndNumber(id, number.intValue())
+                        .switchIfEmpty(pullRepository.save(new PullOld(null, id, number.intValue(), head.getId(), base.getSha(), updatedAt))))
                 .flatMap(pull -> {
                     pull.setHeadLastCommitId(head.getId());
                     pull.setBaseLastCommitSha(base.getSha());
@@ -85,8 +85,8 @@ public final class GithubWebhookHandler {
                 }));
 
         // get previous commits
-        final Flux<Commit> source = commitRepository.findAllById(projectId
-                .flatMapMany(id -> pullRepository.findAllByProjectIdAndUpdatedAtBeforeAndNumberIsNot(id, updatedAt, number))
+        final Flux<CommitOld> source = commitRepo.findAllById(projectId
+                .flatMapMany(id -> pullRepository.findAllByProjectIdAndUpdatedAtBeforeAndNumberIsNot(id, updatedAt, number.intValue()))
                 .map(PullOld::getHeadLastCommitId));
 
         // get files by commits

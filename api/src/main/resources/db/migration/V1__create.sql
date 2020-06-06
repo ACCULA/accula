@@ -58,50 +58,59 @@ CREATE TABLE IF NOT EXISTS project_admin
 
 CREATE TABLE IF NOT EXISTS commit
 (
-    id    BIGSERIAL PRIMARY KEY,
-    owner VARCHAR(39)     NOT NULL,
-    repo  VARCHAR(256)    NOT NULL,
-    sha   CHAR(40) UNIQUE NOT NULL
+    sha            CHAR(40) PRIMARY KEY,
+    github_repo_id BIGINT NOT NULL,
+
+    FOREIGN KEY (github_repo_id) REFERENCES repo_github (id)
 );
 
 CREATE TABLE IF NOT EXISTS pull
 (
-    id                  BIGSERIAL PRIMARY KEY,
-    project_id          BIGINT                   NOT NULL,
-    number              BIGINT                   NOT NULL,
-    title               VARCHAR(128)             NOT NULL,
-    open                BOOLEAN                  NOT NULL,
+    id                   BIGINT PRIMARY KEY,
+    project_id           BIGINT                   NOT NULL,
 
-    created_at          TIMESTAMP WITH TIME ZONE NOT NULL,
-    updated_at          TIMESTAMP WITH TIME ZONE NOT NULL,
+    number               BIGINT                   NOT NULL,
+    title                VARCHAR(128)             NOT NULL,
+    open                 BOOLEAN                  NOT NULL,
 
-    head_last_commit_id BIGINT                   NOT NULL,
-    head_branch         VARCHAR(256)             NOT NULL,
+    created_at           TIMESTAMP WITH TIME ZONE NOT NULL,
+    updated_at           TIMESTAMP WITH TIME ZONE NOT NULL,
 
-    base_last_commit_id BIGINT                   NOT NULL,
-    base_branch         VARCHAR(256)             NOT NULL,
+    head_last_commit_sha VARCHAR(40)              NOT NULL,
+    head_branch          VARCHAR(256)             NOT NULL,
+    head_repo_id         BIGINT                   NOT NULL,
+    head_user_github_id  BIGINT                   NOT NULL,
 
-    author_github_id    BIGINT                   NOT NULL,
+    base_last_commit_sha VARCHAR(40)              NOT NULL,
+    base_branch          VARCHAR(256)             NOT NULL,
+    base_repo_id         BIGINT                   NOT NULL,
+    base_user_github_id  BIGINT                   NOT NULL,
+
+    author_github_id     BIGINT                   NOT NULL,
 
     FOREIGN KEY (project_id) REFERENCES project (id),
-    FOREIGN KEY (head_last_commit_id) REFERENCES commit (id),
-    FOREIGN KEY (base_last_commit_id) REFERENCES commit (id),
+    FOREIGN KEY (head_last_commit_sha) REFERENCES commit (sha),
+    FOREIGN KEY (head_repo_id) REFERENCES repo_github (id),
+    FOREIGN KEY (head_user_github_id) REFERENCES user_github (id),
+    FOREIGN KEY (base_last_commit_sha) REFERENCES commit (sha),
+    FOREIGN KEY (base_repo_id) REFERENCES repo_github (id),
+    FOREIGN KEY (base_user_github_id) REFERENCES repo_github (id),
     FOREIGN KEY (author_github_id) REFERENCES user_github (id)
 );
 
 CREATE TABLE IF NOT EXISTS clone
 (
-    id               BIGSERIAL PRIMARY KEY,
-    target_commit_id BIGINT       NOT NULL,
-    target_file      VARCHAR(256) NOT NULL,
-    target_from_line INT          NOT NULL,
-    target_to_line   INT          NOT NULL,
-    source_commit_id BIGINT       NOT NULL,
-    source_file      VARCHAR(256) NOT NULL,
-    source_from_line INT          NOT NULL,
-    source_to_line   INT          NOT NULL,
-    suppressed       BOOLEAN      NOT NULL DEFAULT FALSE,
+    id                BIGSERIAL PRIMARY KEY,
+    target_commit_sha VARCHAR(40)  NOT NULL,
+    target_file       VARCHAR(256) NOT NULL,
+    target_from_line  INT          NOT NULL,
+    target_to_line    INT          NOT NULL,
+    source_commit_sha VARCHAR(40)  NOT NULL,
+    source_file       VARCHAR(256) NOT NULL,
+    source_from_line  INT          NOT NULL,
+    source_to_line    INT          NOT NULL,
+    suppressed        BOOLEAN      NOT NULL DEFAULT FALSE,
 
-    FOREIGN KEY (target_commit_id) REFERENCES commit (id),
-    FOREIGN KEY (source_commit_id) REFERENCES commit (id)
+    FOREIGN KEY (target_commit_sha) REFERENCES commit (sha),
+    FOREIGN KEY (source_commit_sha) REFERENCES commit (sha)
 );

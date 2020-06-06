@@ -1,6 +1,6 @@
 package org.accula.api.code;
 
-import org.accula.api.db.model.Commit;
+import org.accula.api.db.model.CommitOld;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -23,7 +23,7 @@ class CodeLoaderTest {
     public static final String REPO = "2019-highload-dht";
     public static final String SHA = "720cefb3f361895e9e23524c2b4025f9a949d5d2";
     public static final String README = "README.md";
-    public static final Commit COMMIT = new Commit(0L, OWNER, REPO, SHA);
+    public static final CommitOld COMMIT = new CommitOld(0L, OWNER, REPO, SHA);
 
     private static CodeLoader codeLoader;
 
@@ -87,8 +87,8 @@ class CodeLoaderTest {
 
     @Test
     void testDiff() {
-        Commit base = new Commit(0L, OWNER, REPO, "d6357dccc16c7d5c001fd2a2203298c36fe96b63");
-        Commit head = new Commit(1L, "vaddya", REPO, "a1c28a1b500701819cf9919246f15f3f900bb609");
+        CommitOld base = new CommitOld(0L, OWNER, REPO, "d6357dccc16c7d5c001fd2a2203298c36fe96b63");
+        CommitOld head = new CommitOld(1L, "vaddya", REPO, "a1c28a1b500701819cf9919246f15f3f900bb609");
         List<Tuple2<FileEntity, FileEntity>> diff = codeLoader.getDiff(base, head).collectList().block();
         assertNotNull(diff);
         assertEquals(18, diff.size());

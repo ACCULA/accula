@@ -24,6 +24,10 @@ final class Repos {
         return Mono.from(connection.close()).thenMany(values);
     }
 
+    static <T> Flux<T> closeAndReturn(final Connection connection, final Iterable<T> values) {
+        return Mono.from(connection.close()).thenMany(Flux.fromIterable(values));
+    }
+
     static <T> Mono<T> column(final Result result, final String name, final Class<T> clazz) {
         return Mono.from(result
                 .map(((row, metadata) -> Objects.requireNonNull(row.get(name, clazz)))));

@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import javax.naming.OperationNotSupportedException;
 import java.util.Objects;
 
 /**
@@ -151,8 +150,16 @@ public final class ProjectRepoImpl implements ProjectRepo {
     }
 
     @Override
-    public Mono<Boolean> delete(final Long ghRepoId) {
-        return Mono.error(new OperationNotSupportedException("DELETE /projects/{id} is not yet implemented"));
+    public Mono<Boolean> delete(final Long id) {
+        return connectionPool
+                .create()
+                .flatMap(connection -> Mono
+                        .from(connection
+                                .createStatement("DELETE FROM project WHERE id = $1")
+                                .bind("$1", id)
+                                .execute())
+                        .flatMap(result -> Mono.from(result.getRowsUpdated()))
+                        .flatMap(rowsUpdated -> Repos.closeAndReturn(connection, rowsUpdated.equals(1))));
     }
 
     private Project convert(final Row row) {

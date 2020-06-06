@@ -1,29 +1,29 @@
-package org.accula.api.db.model.composite;
+package org.accula.api.db.model;
 
-import io.micrometer.core.lang.Nullable;
+import lombok.Builder;
 import lombok.Value;
-import org.accula.api.db.model.CommitOld;
-import org.accula.api.db.model.GithubUser;
 
 import java.time.Instant;
 
+@Builder
 @Value
 public class Pull {
-    @Nullable
     Long id;
-    Long projectId;
     Long number;
     String title;
-    Boolean open;
+    boolean open;
     Instant createdAt;
     Instant updatedAt;
     Marker head;
     Marker base;
     GithubUser author;
+    Project project;
 
     @Value
     public static class Marker {
-        CommitOld commit;
+        Commit commit;
         String branch;
+        GithubRepo repo;
+        GithubUser user;
     }
 }

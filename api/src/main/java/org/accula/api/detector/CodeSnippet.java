@@ -1,11 +1,11 @@
 package org.accula.api.detector;
 
 import lombok.Value;
-import org.accula.api.db.model.Commit;
+import org.accula.api.db.model.CommitOld;
 
 @Value
 public class CodeSnippet {
-    Commit commit;
+    CommitOld commit;
     String file;
     int fromLine;
     int toLine;
