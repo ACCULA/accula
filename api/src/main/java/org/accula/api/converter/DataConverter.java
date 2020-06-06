@@ -20,8 +20,8 @@ public final class DataConverter {
         return new GithubRepo(
                 apiRepo.getId(),
                 apiRepo.getName(),
-                convert(apiRepo.getOwner()),
-                orEmpty(apiRepo.getDescription())
+                orEmpty(apiRepo.getDescription()),
+                convert(apiRepo.getOwner())
         );
     }
 
@@ -43,7 +43,7 @@ public final class DataConverter {
         return new GithubUser(id, login, name, avatar, false);
     }
 
-    private String orEmpty(@Nullable String s) {
+    private static String orEmpty(@Nullable final String s) {
         return s != null ? s : EMPTY;
     }
 }

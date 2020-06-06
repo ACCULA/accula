@@ -4,7 +4,6 @@ import io.r2dbc.pool.ConnectionPool;
 import io.r2dbc.spi.Row;
 import lombok.RequiredArgsConstructor;
 import org.accula.api.db.model.GithubRepo;
-import org.accula.api.db.model.GithubUser;
 import org.accula.api.db.model.Project;
 import org.accula.api.db.model.User;
 import org.springframework.stereotype.Component;
@@ -164,30 +163,24 @@ public final class ProjectRepoImpl implements ProjectRepo {
 
     private Project convert(final Row row) {
         return new Project(
-                Objects.requireNonNull(row.get("project_id", Long.class)),
-                new GithubRepo(
-                        Objects.requireNonNull(row.get("project_repo_id", Long.class)),
-                        Objects.requireNonNull(row.get("project_repo_name", String.class)),
-                        new GithubUser(
-                                Objects.requireNonNull(row.get("project_repo_owner_id", Long.class)),
-                                Objects.requireNonNull(row.get("project_repo_owner_login", String.class)),
-                                Objects.requireNonNull(row.get("project_repo_owner_name", String.class)),
-                                Objects.requireNonNull(row.get("project_repo_owner_avatar", String.class)),
-                                Objects.requireNonNull(row.get("project_repo_owner_is_org", Boolean.class))
-                        ),
-                        Objects.requireNonNull(row.get("project_repo_description", String.class))
-                ),
-                new User(
-                        Objects.requireNonNull(row.get("project_creator_id", Long.class)),
-                        new GithubUser(
-                                Objects.requireNonNull(row.get("project_creator_github_user_id", Long.class)),
-                                Objects.requireNonNull(row.get("project_creator_github_user_login", String.class)),
-                                Objects.requireNonNull(row.get("project_creator_github_user_name", String.class)),
-                                Objects.requireNonNull(row.get("project_creator_github_user_avatar", String.class)),
-                                Objects.requireNonNull(row.get("project_creator_github_user_is_org", Boolean.class))
-                        ),
-                        Objects.requireNonNull(row.get("project_creator_github_access_token", String.class))
-                ),
+                Converters.value(row, "project_id", Long.class),
+                Converters.convertRepo(row,
+                        "project_repo_id",
+                        "project_repo_name",
+                        "project_repo_description",
+                        "project_repo_owner_id",
+                        "project_repo_owner_login",
+                        "project_repo_owner_name",
+                        "project_repo_owner_avatar",
+                        "project_repo_owner_is_org"),
+                Converters.convertUser(row,
+                        "project_creator_id",
+                        "project_creator_github_access_token",
+                        "project_creator_github_user_id",
+                        "project_creator_github_user_login",
+                        "project_creator_github_user_name",
+                        "project_creator_github_user_avatar",
+                        "project_creator_github_user_is_org"),
                 new User[0]
         );
     }

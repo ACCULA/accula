@@ -47,4 +47,10 @@ final class Repos {
         final var results = Flux.from(result.map((row, metadata) -> transform.apply(row))).cache();
         return results.thenMany(closeAndReturn(connection, results));
     }
+
+    static void assertThat(final boolean condition, final String message) {
+        if (!condition) {
+            throw new IllegalArgumentException(message);
+        }
+    }
 }

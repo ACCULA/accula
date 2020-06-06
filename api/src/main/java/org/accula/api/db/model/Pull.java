@@ -1,13 +1,16 @@
 package org.accula.api.db.model;
 
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Value;
 
 import java.time.Instant;
 
 @Builder
 @Value
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Pull {
+    @EqualsAndHashCode.Include
     Long id;
     Long number;
     String title;
@@ -17,13 +20,12 @@ public class Pull {
     Marker head;
     Marker base;
     GithubUser author;
-    Project project;
+    Long projectId;
 
     @Value
     public static class Marker {
         Commit commit;
         String branch;
         GithubRepo repo;
-        GithubUser user;
     }
 }

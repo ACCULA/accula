@@ -16,5 +16,7 @@ public interface PullRepo {
 
     Mono<Pull> findById(Long id);
 
+    Flux<Pull> findById(Collection<Long> ids);
+
     Flux<Pull> findByProjectId(Long projectId);
 }

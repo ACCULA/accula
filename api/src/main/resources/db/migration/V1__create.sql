@@ -28,12 +28,14 @@ CREATE TABLE IF NOT EXISTS refresh_token
 
 CREATE TABLE IF NOT EXISTS repo_github
 (
-    id          BIGINT PRIMARY KEY,
-    name        VARCHAR(256) NOT NULL,
-    owner_id    BIGINT       NOT NULL,
-    description TEXT         NOT NULL,
+    id             BIGINT PRIMARY KEY,
+    name           VARCHAR(256) NOT NULL,
+    owner_id       BIGINT       NOT NULL,
+    description    TEXT         NOT NULL,
+    forked_from_id BIGINT DEFAULT NULL,
 
-    FOREIGN KEY (owner_id) REFERENCES user_github (id)
+    FOREIGN KEY (owner_id) REFERENCES user_github (id),
+    FOREIGN KEY (forked_from_id) REFERENCES repo_github (id)
 );
 
 CREATE TABLE IF NOT EXISTS project
@@ -58,10 +60,7 @@ CREATE TABLE IF NOT EXISTS project_admin
 
 CREATE TABLE IF NOT EXISTS commit
 (
-    sha            CHAR(40) PRIMARY KEY,
-    github_repo_id BIGINT NOT NULL,
-
-    FOREIGN KEY (github_repo_id) REFERENCES repo_github (id)
+    sha CHAR(40) PRIMARY KEY
 );
 
 CREATE TABLE IF NOT EXISTS pull
@@ -76,22 +75,18 @@ CREATE TABLE IF NOT EXISTS pull
     head_last_commit_sha VARCHAR(40)              NOT NULL,
     head_branch          VARCHAR(256)             NOT NULL,
     head_repo_id         BIGINT                   NOT NULL,
-    head_user_github_id  BIGINT                   NOT NULL,
 
     base_last_commit_sha VARCHAR(40)              NOT NULL,
     base_branch          VARCHAR(256)             NOT NULL,
     base_repo_id         BIGINT                   NOT NULL,
-    base_user_github_id  BIGINT                   NOT NULL,
 
     project_id           BIGINT                   NOT NULL,
     author_github_id     BIGINT                   NOT NULL,
 
     FOREIGN KEY (head_last_commit_sha) REFERENCES commit (sha),
     FOREIGN KEY (head_repo_id) REFERENCES repo_github (id),
-    FOREIGN KEY (head_user_github_id) REFERENCES user_github (id),
     FOREIGN KEY (base_last_commit_sha) REFERENCES commit (sha),
     FOREIGN KEY (base_repo_id) REFERENCES repo_github (id),
-    FOREIGN KEY (base_user_github_id) REFERENCES user_github (id),
     FOREIGN KEY (project_id) REFERENCES project (id),
     FOREIGN KEY (author_github_id) REFERENCES user_github (id)
 );

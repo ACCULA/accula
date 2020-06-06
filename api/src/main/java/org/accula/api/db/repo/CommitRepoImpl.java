@@ -30,7 +30,6 @@ public final class CommitRepoImpl implements CommitRepo {
                         .from(insertStatement(connection)
                                 //@formatter:on
                                 .bind("$1", commit.getSha())
-                                .bind("$2", commit.getRepo().getId())
                                 .execute())
                         .flatMap(PostgresqlResult::getRowsUpdated)
                         .filter(Integer.valueOf(1)::equals)
@@ -47,7 +46,6 @@ public final class CommitRepoImpl implements CommitRepo {
                     //@formatter:on
                     commits.forEach(commit -> statement
                             .bind("$1", commit.getSha())
-                            .bind("$2", commit.getRepo().getId())
                             .add());
                     statement.fetchSize(commits.size());
 
@@ -74,7 +72,6 @@ public final class CommitRepoImpl implements CommitRepo {
                 .create()
                 .flatMapMany(connection -> {
                     final var statement = selectStatement(connection);
-                    //@formatter:on
                     shas.forEach(sha -> statement
                             .bind("$1", sha)
                             .add());
@@ -88,8 +85,8 @@ public final class CommitRepoImpl implements CommitRepo {
     private static PostgresqlStatement insertStatement(final Connection connection) {
         //@formatter:off
         return (PostgresqlStatement) connection
-                .createStatement("INSERT INTO commit (sha, github_repo_id) " +
-                                 "VALUES ($1, $2) " +
+                .createStatement("INSERT INTO commit (sha) " +
+                                 "VALUES ($1) " +
                                  "ON CONFLICT DO NOTHING");
         //@formatter:on
     }
@@ -97,28 +94,12 @@ public final class CommitRepoImpl implements CommitRepo {
     private static PostgresqlStatement selectStatement(final Connection connection) {
         //@formatter:off
         return (PostgresqlStatement) connection
-                .createStatement("SELECT commit.sha        AS commit_sha," +
-                                 "       repo.id           AS repo_id," +
-                                 "       repo.name         AS repo_name," +
-                                 "       repo.description  AS repo_description," +
-                                 "       repo_owner.id     AS repo_owner_id," +
-                                 "       repo_owner.login  AS repo_owner_login," +
-                                 "       repo_owner.name   AS repo_owner_name," +
-                                 "       repo_owner.avatar AS repo_owner_avatar," +
-                                 "       repo_owner.is_org AS repo_owner_is_org " +
-                                 "FROM commit" +
-                                 "   JOIN repo_github repo" +
-                                 "       ON commit.github_repo_id = repo.id" +
-                                 "   JOIN user_github repo_owner" +
-                                 "       ON repo.owner_id = repo_owner.id " +
-                                 "WHERE commit.sha = $1");
+                .createStatement("SELECT * " +
+                                 "FROM commit");
         //@formatter:on
     }
 
     private Commit convert(final Row row) {
-        return new Commit(
-                Objects.requireNonNull(row.get("commit_sha", String.class)),
-                GithubRepoRepoImpl.convert(row)
-        );
+        return Converters.convertCommit(row, "commit_sha");
     }
 }

@@ -175,28 +175,13 @@ public final class ProjectsHandler {
         final var ghPulls = tuple.getT3();
         final var creator = tuple.getT4();
 
-
-        final var githubRepo = converter.convert(ghRepo);
-
-//        final var project = projectAndPulls.getT1();
-//        final var ghPulls = Arrays.stream(projectAndPulls.getT2())
-//                .filter(GithubPull::isValid)
-//                .collect(toList());
-//
-//        final var commits = ghPulls
-//                .stream()
-//                .map(ghPull -> {
-//                    final var head = ghPull.getHead();
-//                    final var repo = head.getRepo();
-//                    return new Commit(null, repo.getOwner().getLogin(), repo.getName(), head.getSha());
-//                })
-//                .collect(toList());
+        final var projectRepo = converter.convert(ghRepo);
 
         return githubUserRepo
-                .upsert(githubRepo.getOwner())
-                .filterWhen(repoOwner -> projectRepo.notExists(githubRepo.getId()))
+                .upsert(projectRepo.getOwner())
+                .filterWhen(repoOwner -> this.projectRepo.notExists(projectRepo.getId()))
                 .switchIfEmpty(Mono.error(CreateProjectException.ALREADY_EXISTS))
-                .flatMap(repoOwner -> projectRepo.upsert(githubRepo, creator))
+                .flatMap(repoOwner -> this.projectRepo.upsert(projectRepo, creator))
                 .flatMap(project -> {
                     Set<GithubUser> users = new HashSet<>();
                     Set<GithubRepo> repos = new HashSet<>();
@@ -204,24 +189,19 @@ public final class ProjectsHandler {
                     Set<Pull> pulls = new HashSet<>();
 
                     for (final var ghPull : ghPulls) {
-                        final var pullUser = converter.convert(ghPull.getUser());
-                        users.add(pullUser);
+                        final var pullAuthor = converter.convert(ghPull.getUser());
+                        users.add(pullAuthor);
                         final var head = ghPull.getHead();
-                        users.add(converter.convert(head.getUser()));
-                        final var headApiRepo = head.getRepo();
-                        final var headUser = converter.convert(headApiRepo.getOwner());
-                        users.add(headUser);
-                        final var headRepo = converter.convert(headApiRepo);
-
+                        final var headRepo = converter.convert(head.getRepo());
                         repos.add(headRepo);
-                        final var headCommit = new Commit(head.getSha(), headRepo);
+                        users.add(headRepo.getOwner());
+
+                        final var headCommit = new Commit(head.getSha());
                         commits.add(headCommit);
 
                         final var base = ghPull.getBase();
-                        final var baseCommit = new Commit(base.getSha(), githubRepo);
+                        final var baseCommit = new Commit(base.getSha());
                         commits.add(baseCommit);
-                        final var baseUser = converter.convert(base.getUser());
-                        users.add(baseUser);
 
                         pulls.add(Pull.builder()
                                 .id(ghPull.getId())
@@ -230,12 +210,13 @@ public final class ProjectsHandler {
                                 .open(ghPull.getState() == State.OPEN)
                                 .createdAt(ghPull.getCreatedAt())
                                 .updatedAt(ghPull.getUpdatedAt())
-                                .head(new Pull.Marker(headCommit, head.getRef(), headRepo, headUser))
-                                .base(new Pull.Marker(baseCommit, base.getRef(), githubRepo, baseUser))
-                                .project(project)
-                                .author(pullUser)
+                                .head(new Pull.Marker(headCommit, head.getRef(), headRepo))
+                                .base(new Pull.Marker(baseCommit, base.getRef(), projectRepo))
+                                .projectId(project.getId())
+                                .author(pullAuthor)
                                 .build());
                     }
+
                     return githubUserRepo.upsert(users)
                             .thenMany(githubRepoRepo.upsert(repos))
                             .thenMany(commitRepo.upsert(commits))

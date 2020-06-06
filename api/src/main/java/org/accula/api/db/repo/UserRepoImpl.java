@@ -1,13 +1,13 @@
 package org.accula.api.db.repo;
 
 import io.r2dbc.pool.ConnectionPool;
+import io.r2dbc.spi.Row;
 import lombok.RequiredArgsConstructor;
 import org.accula.api.db.model.GithubUser;
 import org.accula.api.db.model.User;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -53,9 +53,9 @@ public final class UserRepoImpl implements UserRepo {
                                 .execute())
                         .flatMap(result -> Repos
                                 .convert(result, connection, row -> new User(
-                                        Objects.requireNonNull(row.get("id", Long.class)),
-                                        githubUser,
-                                        githubAccessToken
+                                        Converters.value(row, "id", Long.class),
+                                        githubAccessToken,
+                                        githubUser
                                 )))
                         .doOnSuccess(user -> onUpserts
                                 .forEach(onUpsert -> onUpsert.onUpsert(user.getId()))));
@@ -82,18 +82,22 @@ public final class UserRepoImpl implements UserRepo {
                                 //@formatter:on
                                 .execute())
                         .flatMap(result -> Repos
-                                .convert(result, connection, row -> new User(
-                                        Objects.requireNonNull(row.get("id", Long.class)),
-                                        new GithubUser(Objects.requireNonNull(row.get("github_id", Long.class)),
-                                                Objects.requireNonNull(row.get("github_login", String.class)),
-                                                Objects.requireNonNull(row.get("github_name", String.class)),
-                                                Objects.requireNonNull(row.get("github_avatar", String.class)),
-                                                Objects.requireNonNull(row.get("github_org", Boolean.class))),
-                                        Objects.requireNonNull(row.get("github_access_token", String.class))))));
+                                .convert(result, connection, this::convert)));
     }
 
     @Override
     public void addOnUpsert(final OnUpsert onUpsert) {
         onUpserts.add(onUpsert);
+    }
+
+    private User convert(final Row row) {
+        return Converters.convertUser(row,
+                "id",
+                "github_access_token",
+                "github_id",
+                "github_login",
+                "github_name",
+                "github_avatar",
+                "github_org");
     }
 }

@@ -7,13 +7,11 @@ import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.Row;
 import lombok.RequiredArgsConstructor;
 import org.accula.api.db.model.GithubRepo;
-import org.accula.api.db.model.GithubUser;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Collection;
-import java.util.Objects;
 
 /**
  * @author Anton Lamtev
@@ -68,22 +66,7 @@ public final class GithubRepoRepoImpl implements GithubRepoRepo {
                         .from(selectStatement(connection)
                                 .bind("$1", id)
                                 .execute())
-                        .flatMap(result -> Repos.convert(result, connection, GithubRepoRepoImpl::convert)));
-    }
-
-    public static GithubRepo convert(final Row row) {
-        return new GithubRepo(
-                Objects.requireNonNull(row.get("repo_id", Long.class)),
-                Objects.requireNonNull(row.get("repo_name", String.class)),
-                new GithubUser(
-                        Objects.requireNonNull(row.get("repo_owner_id", Long.class)),
-                        Objects.requireNonNull(row.get("repo_owner_login", String.class)),
-                        Objects.requireNonNull(row.get("repo_owner_name", String.class)),
-                        Objects.requireNonNull(row.get("repo_owner_avatar", String.class)),
-                        Objects.requireNonNull(row.get("repo_owner_is_org", Boolean.class))
-                ),
-                Objects.requireNonNull(row.get("repo_description", String.class))
-        );
+                        .flatMap(result -> Repos.convert(result, connection, this::convert)));
     }
 
     private static PostgresqlStatement insertStatement(final Connection connection) {
@@ -114,5 +97,18 @@ public final class GithubRepoRepoImpl implements GithubRepoRepo {
                                  "       ON repo.owner_id = usr.id " +
                                  "WHERE repo.id = $1");
         //@formatter:on
+    }
+
+    private GithubRepo convert(final Row row) {
+        return Converters.convertRepo(row,
+                "repo_id",
+                "repo_name",
+                "repo_description",
+                "repo_owner_id",
+                "repo_owner_login",
+                "repo_owner_name",
+                "repo_owner_avatar",
+                "repo_owner_is_org"
+        );
     }
 }
