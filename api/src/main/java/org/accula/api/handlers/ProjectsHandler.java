@@ -34,10 +34,8 @@ import reactor.util.function.Tuple2;
 import reactor.util.function.Tuple4;
 import reactor.util.function.Tuples;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import static java.util.function.Predicate.not;
@@ -231,28 +229,11 @@ public final class ProjectsHandler {
                                 .head(new Pull.Marker(headCommit, head.getRef(), headRepo, headUser))
                                 .base(new Pull.Marker(baseCommit, base.getRef(), githubRepo, creator.getGithubUser()))
                                 .build());
-
-//                        githubUserRepo.upsert(users)
-//                                .thenMany(githubRepoRepo.upsert(repos))
-//                                .thenMany()
-
-                        log.info("");
                     }
-                    return Mono.just(project);
+                    return githubUserRepo.upsert(users)
+                            .thenMany(githubRepoRepo.upsert(repos))
+                            .then(Mono.just(project));
                 });
-
-//        return projectRepo.
-//                .save(project);
-//                .flatMap(savedProject -> pullRepository
-//                        .saveAll(commitRepository.saveAll(commits)
-//                                .zipWith(Flux.fromIterable(ghPulls))
-//                                .map(headCommitAndGhPull -> {
-//                                    final var head = headCommitAndGhPull.getT1();
-//                                    final var pull = headCommitAndGhPull.getT2();
-//                                    return new PullOld(null, savedProject.getId(), pull.getNumber(), head.getId(),
-//                                            pull.getBase().getSha(), pull.getUpdatedAt());
-//                                }))
-//                        .then(Mono.just(savedProject)));
     }
 
     private Mono<Project> createWebhook(final Project project) {

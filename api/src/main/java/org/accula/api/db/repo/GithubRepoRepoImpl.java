@@ -1,6 +1,8 @@
 package org.accula.api.db.repo;
 
 import io.r2dbc.pool.ConnectionPool;
+import io.r2dbc.postgresql.api.PostgresqlResult;
+import io.r2dbc.postgresql.api.PostgresqlStatement;
 import io.r2dbc.spi.Row;
 import lombok.RequiredArgsConstructor;
 import org.accula.api.db.model.GithubRepo;
@@ -50,7 +52,7 @@ public final class GithubRepoRepoImpl implements GithubRepoRepo {
                 .create()
                 .flatMapMany(connection -> {
                     //@formatter:off
-                    final var statement = connection
+                    final var statement = (PostgresqlStatement) connection
                             .createStatement("INSERT INTO repo_github (id, name, owner_id, description) " +
                                              "VALUES ($1, $2, $3, $4) " +
                                              "ON CONFLICT (id) DO UPDATE " +
@@ -64,11 +66,11 @@ public final class GithubRepoRepoImpl implements GithubRepoRepo {
                             .bind("$3", repo.getOwner().getId())
                             .bind("$4", repo.getDescription())
                             .add());
-                    return Mono
-                            .from(statement.execute())
-                            .flatMap(result -> Mono.from(result.getRowsUpdated()))
+                    statement.fetchSize(repos.size());
+                    return Flux.from(statement.execute())
+                            .flatMap(PostgresqlResult::getRowsUpdated)
                             .filter(Integer.valueOf(repos.size())::equals)
-                            .flatMapMany(rowsUpdated -> Repos.closeAndReturn(connection, repos));
+                            .thenMany(Repos.closeAndReturn(connection, repos));
                 });
     }
 

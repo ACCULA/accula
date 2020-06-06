@@ -78,7 +78,7 @@ public final class GithubClientImpl implements GithubClient {
     public Mono<GithubApiPull[]> getRepositoryPulls(final String owner, final String repo, final GithubApiPull.State state) {
         return withAccessToken(accessToken -> githubApiWebClient
                 .get()
-                .uri("/repos/{owner}/{repo}/pulls?&direction=asc&state=" + state.value(), owner, repo)
+                .uri("/repos/{owner}/{repo}/pulls?&page=1&per_page=100&state=" + state.value(), owner, repo)
                 .headers(h -> h.setBearerAuth(accessToken))
                 .retrieve()
                 .bodyToMono(GithubApiPull[].class)
