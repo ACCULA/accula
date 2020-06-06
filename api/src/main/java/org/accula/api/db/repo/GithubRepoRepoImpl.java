@@ -3,6 +3,7 @@ package org.accula.api.db.repo;
 import io.r2dbc.pool.ConnectionPool;
 import io.r2dbc.postgresql.api.PostgresqlResult;
 import io.r2dbc.postgresql.api.PostgresqlStatement;
+import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.Row;
 import lombok.RequiredArgsConstructor;
 import org.accula.api.db.model.GithubRepo;
@@ -27,15 +28,7 @@ public final class GithubRepoRepoImpl implements GithubRepoRepo {
         return connectionPool
                 .create()
                 .flatMap(connection -> Mono
-                        .from(connection
-                                //@formatter:off
-                                .createStatement("INSERT INTO repo_github (id, name, owner_id, description) " +
-                                                 "VALUES ($1, $2, $3, $4) " +
-                                                 "ON CONFLICT (id) DO UPDATE " +
-                                                 "   SET name = $2," +
-                                                 "       owner_id = $3," +
-                                                 "       description = $4")
-                                //@formatter:on
+                        .from(insertStatement(connection)
                                 .bind("$1", repo.getId())
                                 .bind("$2", repo.getName())
                                 .bind("$3", repo.getOwner().getId())
@@ -51,15 +44,7 @@ public final class GithubRepoRepoImpl implements GithubRepoRepo {
         return connectionPool
                 .create()
                 .flatMapMany(connection -> {
-                    //@formatter:off
-                    final var statement = (PostgresqlStatement) connection
-                            .createStatement("INSERT INTO repo_github (id, name, owner_id, description) " +
-                                             "VALUES ($1, $2, $3, $4) " +
-                                             "ON CONFLICT (id) DO UPDATE " +
-                                             "   SET name = $2," +
-                                             "       owner_id = $3," +
-                                             "       description = $4");
-                    //@formatter:on
+                    final var statement = insertStatement(connection);
                     repos.forEach(repo -> statement
                             .bind("$1", repo.getId())
                             .bind("$2", repo.getName())
@@ -67,7 +52,8 @@ public final class GithubRepoRepoImpl implements GithubRepoRepo {
                             .bind("$4", repo.getDescription())
                             .add());
                     statement.fetchSize(repos.size());
-                    return Flux.from(statement.execute())
+
+                    return statement.execute()
                             .flatMap(PostgresqlResult::getRowsUpdated)
                             .filter(Integer.valueOf(repos.size())::equals)
                             .thenMany(Repos.closeAndReturn(connection, repos));
@@ -79,27 +65,13 @@ public final class GithubRepoRepoImpl implements GithubRepoRepo {
         return connectionPool
                 .create()
                 .flatMap(connection -> Mono
-                        .from(connection
-                                //@formatter:off
-                                .createStatement("SELECT repo.id          AS repo_id," +
-                                                 "            repo.name        AS repo_name," +
-                                                 "            repo.description AS repo_description," +
-                                                 "            usr.id           AS repo_owner_id," +
-                                                 "            usr.login        AS repo_owner_login," +
-                                                 "            usr.name         AS repo_owner_name," +
-                                                 "            usr.avatar       AS repo_owner_avatar," +
-                                                 "            usr.is_org       AS repo_owner_is_org " +
-                                                 "FROM repo_github repo " +
-                                                 "   JOIN user_github usr " +
-                                                 "       ON repo.owner_id = usr.id " +
-                                                 "WHERE repo.id = $1")
-                                //@formatter:on
+                        .from(selectStatement(connection)
                                 .bind("$1", id)
                                 .execute())
-                        .flatMap(result -> Repos.convert(result, connection, this::convert)));
+                        .flatMap(result -> Repos.convert(result, connection, GithubRepoRepoImpl::convert)));
     }
 
-    private GithubRepo convert(final Row row) {
+    public static GithubRepo convert(final Row row) {
         return new GithubRepo(
                 Objects.requireNonNull(row.get("repo_id", Long.class)),
                 Objects.requireNonNull(row.get("repo_name", String.class)),
@@ -112,5 +84,35 @@ public final class GithubRepoRepoImpl implements GithubRepoRepo {
                 ),
                 Objects.requireNonNull(row.get("repo_description", String.class))
         );
+    }
+
+    private static PostgresqlStatement insertStatement(final Connection connection) {
+        //@formatter:off
+        return (PostgresqlStatement) connection
+                .createStatement("INSERT INTO repo_github (id, name, owner_id, description) " +
+                                 "VALUES ($1, $2, $3, $4) " +
+                                 "ON CONFLICT (id) DO UPDATE " +
+                                 "   SET name = $2," +
+                                 "       owner_id = $3," +
+                                 "       description = $4");
+        //@formatter:on
+    }
+
+    private static PostgresqlStatement selectStatement(final Connection connection) {
+        //@formatter:off
+        return (PostgresqlStatement) connection
+                .createStatement("SELECT repo.id          AS repo_id," +
+                                 "       repo.name        AS repo_name," +
+                                 "       repo.description AS repo_description," +
+                                 "       usr.id           AS repo_owner_id," +
+                                 "       usr.login        AS repo_owner_login," +
+                                 "       usr.name         AS repo_owner_name," +
+                                 "       usr.avatar       AS repo_owner_avatar," +
+                                 "       usr.is_org       AS repo_owner_is_org " +
+                                 "FROM repo_github repo " +
+                                 "   JOIN user_github usr " +
+                                 "       ON repo.owner_id = usr.id " +
+                                 "WHERE repo.id = $1");
+        //@formatter:on
     }
 }

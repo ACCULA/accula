@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.accula.api.config.WebhookProperties;
 import org.accula.api.converter.DataConverter;
-import org.accula.api.db.CommitRepo;
+import org.accula.api.db.CommitRepository;
 import org.accula.api.db.PullRepository;
 import org.accula.api.db.model.Commit;
 import org.accula.api.db.model.GithubRepo;
@@ -12,6 +12,7 @@ import org.accula.api.db.model.GithubUser;
 import org.accula.api.db.model.Project;
 import org.accula.api.db.model.Pull;
 import org.accula.api.db.model.User;
+import org.accula.api.db.repo.CommitRepo;
 import org.accula.api.db.repo.CurrentUserRepo;
 import org.accula.api.db.repo.GithubRepoRepo;
 import org.accula.api.db.repo.GithubUserRepo;
@@ -232,6 +233,7 @@ public final class ProjectsHandler {
                     }
                     return githubUserRepo.upsert(users)
                             .thenMany(githubRepoRepo.upsert(repos))
+                            .thenMany(commitRepo.upsert(commits))
                             .then(Mono.just(project));
                 });
     }

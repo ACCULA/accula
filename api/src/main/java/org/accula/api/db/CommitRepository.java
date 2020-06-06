@@ -8,6 +8,6 @@ import reactor.core.publisher.Mono;
  * @author Vadim Dyachkov
  * @author Anton Lamtev
  */
-public interface CommitRepo extends ReactiveCrudRepository<CommitOld, Long> {
+public interface CommitRepository extends ReactiveCrudRepository<CommitOld, Long> {
     Mono<CommitOld> findBySha(String sha);
 }

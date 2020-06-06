@@ -3,6 +3,7 @@ package org.accula.api.db.repo;
 import io.r2dbc.pool.ConnectionPool;
 import io.r2dbc.postgresql.api.PostgresqlResult;
 import io.r2dbc.postgresql.api.PostgresqlStatement;
+import io.r2dbc.spi.Connection;
 import lombok.RequiredArgsConstructor;
 import org.accula.api.db.model.GithubUser;
 import org.springframework.stereotype.Component;
@@ -25,15 +26,7 @@ public final class GithubUserRepoImpl implements GithubUserRepo {
         return connectionPool
                 .create()
                 .flatMap(connection -> Mono
-                        .from(connection
-                                //@formatter:off
-                                .createStatement("INSERT INTO user_github (id, login, name, avatar, is_org) " +
-                                                 "VALUES ($1, $2, $3, $4, $5) " +
-                                                 "ON CONFLICT (id) DO UPDATE " +
-                                                 "   SET login = $2," +
-                                                 "       name = $3," +
-                                                 "       avatar = $4")
-                                //@formatter:on
+                        .from(insertStatement(connection)
                                 .bind("$1", user.getId())
                                 .bind("$2", user.getLogin())
                                 .bind("$3", user.getName())
@@ -50,15 +43,7 @@ public final class GithubUserRepoImpl implements GithubUserRepo {
         return connectionPool
                 .create()
                 .flatMapMany(connection -> {
-                    //@formatter:off
-                    final var statement = (PostgresqlStatement)  connection
-                            .createStatement("INSERT INTO user_github (id, login, name, avatar, is_org) " +
-                                             "VALUES ($1, $2, $3, $4, $5) " +
-                                             "ON CONFLICT (id) DO UPDATE " +
-                                             "   SET login = $2," +
-                                             "       name = $3," +
-                                             "       avatar = $4");
-                    //@formatter:on
+                    final var statement = insertStatement(connection);
                     users.forEach(user -> statement
                             .bind("$1", user.getId())
                             .bind("$2", user.getLogin())
@@ -67,7 +52,8 @@ public final class GithubUserRepoImpl implements GithubUserRepo {
                             .bind("$5", user.isOrganization())
                             .add());
                     statement.fetchSize(users.size());
-                    return Flux.from(statement.execute())
+
+                    return statement.execute()
                             .flatMap(PostgresqlResult::getRowsUpdated)
                             .thenMany(Repos.closeAndReturn(connection, users));
                 });
@@ -78,12 +64,7 @@ public final class GithubUserRepoImpl implements GithubUserRepo {
         return connectionPool
                 .create()
                 .flatMap(connection -> Mono
-                        .from(connection
-                                //@formatter:off
-                                .createStatement("SELECT * " +
-                                                 "FROM user_github " +
-                                                 "WHERE id = $1")
-                                //@formatter:on
+                        .from(selectStatement(connection)
                                 .bind("$1", id)
                                 .execute())
                         .flatMap(result -> Repos
@@ -94,5 +75,26 @@ public final class GithubUserRepoImpl implements GithubUserRepo {
                                         Objects.requireNonNull(row.get("avatar", String.class)),
                                         Objects.requireNonNull(row.get("is_org", Boolean.class))
                                 ))));
+    }
+
+    private static PostgresqlStatement insertStatement(final Connection connection) {
+        //@formatter:off
+        return (PostgresqlStatement) connection
+                .createStatement("INSERT INTO user_github (id, login, name, avatar, is_org) " +
+                                 "VALUES ($1, $2, $3, $4, $5) " +
+                                 "ON CONFLICT (id) DO UPDATE " +
+                                 "   SET login = $2," +
+                                 "       name = $3," +
+                                 "       avatar = $4");
+        //@formatter:on
+    }
+
+    private static PostgresqlStatement selectStatement(final Connection connection) {
+        //@formatter:off
+        return (PostgresqlStatement) connection
+                .createStatement("SELECT * " +
+                                 "FROM user_github " +
+                                 "WHERE id = $1");
+        //@formatter:on
     }
 }

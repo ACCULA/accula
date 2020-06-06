@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.accula.api.code.CodeLoader;
 import org.accula.api.code.FileEntity;
 import org.accula.api.code.FileFilter;
-import org.accula.api.db.CommitRepo;
+import org.accula.api.db.CommitRepository;
 import org.accula.api.db.ProjectRepository;
 import org.accula.api.db.PullRepository;
 import org.accula.api.db.model.CommitOld;
@@ -33,7 +33,7 @@ public final class DiffHandler {
     private static final Base64.Encoder base64 = Base64.getEncoder(); // NOPMD
 
     private final ProjectRepository projectRepository;
-    private final CommitRepo commitRepo;
+    private final CommitRepository commitRepo;
     private final PullRepository pullRepository;
     private final CodeLoader codeLoader;
 

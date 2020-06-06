@@ -3,7 +3,7 @@ package org.accula.api.routers;
 import lombok.SneakyThrows;
 import org.accula.api.config.WebhookProperties;
 import org.accula.api.converter.DataConverter;
-import org.accula.api.db.CommitRepo;
+import org.accula.api.db.CommitRepository;
 import org.accula.api.db.PullRepository;
 import org.accula.api.db.model.CommitOld;
 import org.accula.api.db.model.GithubRepo;
@@ -80,7 +80,7 @@ public class ProjectsRouterTest {
     @MockBean
     private PullRepository pullRepository;
     @MockBean
-    private CommitRepo commitRepo;
+    private CommitRepository commitRepo;
     @MockBean
     private GithubClient githubClient;
     @MockBean

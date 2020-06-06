@@ -5,7 +5,7 @@ import lombok.Value;
 import org.accula.api.code.CodeLoader;
 import org.accula.api.code.FileEntity;
 import org.accula.api.db.CloneRepository;
-import org.accula.api.db.CommitRepo;
+import org.accula.api.db.CommitRepository;
 import org.accula.api.db.PullRepository;
 import org.accula.api.db.model.Clone;
 import org.accula.api.db.model.CommitOld;
@@ -39,7 +39,7 @@ public final class ClonesHandler {
     private static final Base64.Encoder base64 = Base64.getEncoder(); // NOPMD
 
     private final PullRepository pullRepo;
-    private final CommitRepo commitRepo;
+    private final CommitRepository commitRepo;
     private final CloneRepository cloneRepo;
     private final CodeLoader codeLoader;
     private final Scheduler codeLoadingScheduler = Schedulers.boundedElastic();
