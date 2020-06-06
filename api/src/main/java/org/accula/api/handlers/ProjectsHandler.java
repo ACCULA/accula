@@ -4,8 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.accula.api.config.WebhookProperties;
 import org.accula.api.converter.DataConverter;
-import org.accula.api.db.CommitRepository;
-import org.accula.api.db.PullRepository;
 import org.accula.api.db.model.Commit;
 import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.GithubUser;
@@ -17,6 +15,7 @@ import org.accula.api.db.repo.CurrentUserRepo;
 import org.accula.api.db.repo.GithubRepoRepo;
 import org.accula.api.db.repo.GithubUserRepo;
 import org.accula.api.db.repo.ProjectRepo;
+import org.accula.api.db.repo.PullRepo;
 import org.accula.api.github.api.GithubClient;
 import org.accula.api.github.api.GithubClientException;
 import org.accula.api.github.model.GithubApiHook;
@@ -28,6 +27,7 @@ import org.accula.api.handlers.response.ErrorBody;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
@@ -60,7 +60,7 @@ public final class ProjectsHandler {
     private final GithubUserRepo githubUserRepo;
     private final GithubRepoRepo githubRepoRepo;
     private final CommitRepo commitRepo;
-    private final PullRepository pullRepository;
+    private final PullRepo pullRepo;
     private final DataConverter converter;
     private final Scheduler remoteCallsScheduler = Schedulers.boundedElastic();
 
@@ -204,7 +204,8 @@ public final class ProjectsHandler {
                     Set<Pull> pulls = new HashSet<>();
 
                     for (final var ghPull : ghPulls) {
-                        users.add(converter.convert(ghPull.getUser()));
+                        final var pullUser = converter.convert(ghPull.getUser());
+                        users.add(pullUser);
                         final var head = ghPull.getHead();
                         users.add(converter.convert(head.getUser()));
                         final var headApiRepo = head.getRepo();
@@ -219,6 +220,8 @@ public final class ProjectsHandler {
                         final var base = ghPull.getBase();
                         final var baseCommit = new Commit(base.getSha(), githubRepo);
                         commits.add(baseCommit);
+                        final var baseUser = converter.convert(base.getUser());
+                        users.add(baseUser);
 
                         pulls.add(Pull.builder()
                                 .id(ghPull.getId())
@@ -228,12 +231,15 @@ public final class ProjectsHandler {
                                 .createdAt(ghPull.getCreatedAt())
                                 .updatedAt(ghPull.getUpdatedAt())
                                 .head(new Pull.Marker(headCommit, head.getRef(), headRepo, headUser))
-                                .base(new Pull.Marker(baseCommit, base.getRef(), githubRepo, creator.getGithubUser()))
+                                .base(new Pull.Marker(baseCommit, base.getRef(), githubRepo, baseUser))
+                                .project(project)
+                                .author(pullUser)
                                 .build());
                     }
                     return githubUserRepo.upsert(users)
                             .thenMany(githubRepoRepo.upsert(repos))
                             .thenMany(commitRepo.upsert(commits))
+                            .thenMany(pullRepo.upsert(pulls))
                             .then(Mono.just(project));
                 });
     }

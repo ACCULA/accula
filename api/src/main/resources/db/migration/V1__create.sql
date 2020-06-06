@@ -67,12 +67,9 @@ CREATE TABLE IF NOT EXISTS commit
 CREATE TABLE IF NOT EXISTS pull
 (
     id                   BIGINT PRIMARY KEY,
-    project_id           BIGINT                   NOT NULL,
-
     number               BIGINT                   NOT NULL,
     title                VARCHAR(128)             NOT NULL,
     open                 BOOLEAN                  NOT NULL,
-
     created_at           TIMESTAMP WITH TIME ZONE NOT NULL,
     updated_at           TIMESTAMP WITH TIME ZONE NOT NULL,
 
@@ -86,15 +83,16 @@ CREATE TABLE IF NOT EXISTS pull
     base_repo_id         BIGINT                   NOT NULL,
     base_user_github_id  BIGINT                   NOT NULL,
 
+    project_id           BIGINT                   NOT NULL,
     author_github_id     BIGINT                   NOT NULL,
 
-    FOREIGN KEY (project_id) REFERENCES project (id),
     FOREIGN KEY (head_last_commit_sha) REFERENCES commit (sha),
     FOREIGN KEY (head_repo_id) REFERENCES repo_github (id),
     FOREIGN KEY (head_user_github_id) REFERENCES user_github (id),
     FOREIGN KEY (base_last_commit_sha) REFERENCES commit (sha),
     FOREIGN KEY (base_repo_id) REFERENCES repo_github (id),
-    FOREIGN KEY (base_user_github_id) REFERENCES repo_github (id),
+    FOREIGN KEY (base_user_github_id) REFERENCES user_github (id),
+    FOREIGN KEY (project_id) REFERENCES project (id),
     FOREIGN KEY (author_github_id) REFERENCES user_github (id)
 );
 

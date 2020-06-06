@@ -6,6 +6,9 @@ import reactor.core.publisher.Mono;
 
 import java.util.Collection;
 
+/**
+ * @author Anton Lamtev
+ */
 public interface CommitRepo {
     Mono<Commit> upsert(Commit commit);
 

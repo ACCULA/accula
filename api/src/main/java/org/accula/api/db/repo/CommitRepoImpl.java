@@ -14,6 +14,9 @@ import reactor.core.publisher.Mono;
 import java.util.Collection;
 import java.util.Objects;
 
+/**
+ * @author Anton Lamtev
+ */
 @Component
 @RequiredArgsConstructor
 public final class CommitRepoImpl implements CommitRepo {

@@ -6,6 +6,9 @@ import reactor.core.publisher.Mono;
 
 import java.util.Collection;
 
+/**
+ * @author Anton Lamtev
+ */
 public interface GithubRepoRepo {
     Mono<GithubRepo> upsert(GithubRepo repo);
 
