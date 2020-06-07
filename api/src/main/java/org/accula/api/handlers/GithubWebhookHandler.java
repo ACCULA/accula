@@ -12,6 +12,10 @@ import org.accula.api.db.model.Clone;
 import org.accula.api.db.model.CommitOld;
 import org.accula.api.db.model.ProjectOld;
 import org.accula.api.db.model.PullOld;
+import org.accula.api.db.repo.CommitRepo;
+import org.accula.api.db.repo.GithubRepoRepo;
+import org.accula.api.db.repo.GithubUserRepo;
+import org.accula.api.db.repo.PullRepo;
 import org.accula.api.detector.CloneDetector;
 import org.accula.api.detector.CodeSnippet;
 import org.accula.api.github.model.GithubApiHookPayload;
@@ -33,16 +37,20 @@ public final class GithubWebhookHandler {
     private static final String GITHUB_EVENT = "X-GitHub-Event";
     private static final String GITHUB_EVENT_PING = "ping";
 
+    private final PullRepo pullRepo;
+    private final GithubUserRepo githubUserRepo;
+    private final GithubRepoRepo githubRepoRepo;
+    private final CommitRepo commitRepo;
+
     private final ProjectRepository projectRepository;
     private final PullRepository pullRepository;
-    private final CommitRepository commitRepo;
+    private final CommitRepository commitRepository;
     private final CloneRepository cloneRepository;
     private final CloneDetector detector;
     private final CodeLoader loader;
 
     public Mono<ServerResponse> webhook(final ServerRequest request) {
-        final var eventType = request.headers().firstHeader(GITHUB_EVENT);
-        if (GITHUB_EVENT_PING.equals(eventType)) {
+        if (GITHUB_EVENT_PING.equals(request.headers().firstHeader(GITHUB_EVENT))) {
             return ServerResponse.ok().build();
         }
         // TODO: validate signature in X-Hub-Signature 
@@ -53,8 +61,8 @@ public final class GithubWebhookHandler {
     }
 
     public Mono<Void> processPayload(final GithubApiHookPayload payload) {
-        final var projectOwner = payload.getRepository().getOwner().getLogin();
-        final var projectRepo = payload.getRepository().getName();
+        final var projectOwner = payload.getRepo().getOwner().getLogin();
+        final var projectRepo = payload.getRepo().getName();
         final var number = payload.getPull().getNumber();
         final var pullOwner = payload.getPull().getHead().getRepo().getOwner().getLogin();
         final var pullRepo = payload.getPull().getHead().getRepo().getName();
@@ -63,9 +71,9 @@ public final class GithubWebhookHandler {
         final var base = payload.getPull().getBase();
 
         // save to commit table & get commit with id
-        final Mono<CommitOld> headCommit = commitRepo
+        final Mono<CommitOld> headCommit = commitRepository
                 .findBySha(headSha)
-                .switchIfEmpty(commitRepo.save(new CommitOld(null, pullOwner, pullRepo, headSha)))
+                .switchIfEmpty(commitRepository.save(new CommitOld(null, pullOwner, pullRepo, headSha)))
                 .cache();
 
         // update pull table
@@ -75,8 +83,8 @@ public final class GithubWebhookHandler {
                 .cache();
         final Mono<PullOld> updatedPull = headCommit.flatMap(head -> projectId
                 .flatMap(id -> pullRepository
-                        .findByProjectIdAndNumber(id, number.intValue())
-                        .switchIfEmpty(pullRepository.save(new PullOld(null, id, number.intValue(), head.getId(), base.getSha(), updatedAt))))
+                        .findByProjectIdAndNumber(id, number)
+                        .switchIfEmpty(pullRepository.save(new PullOld(null, id, number, head.getId(), base.getSha(), updatedAt))))
                 .flatMap(pull -> {
                     pull.setHeadLastCommitId(head.getId());
                     pull.setBaseLastCommitSha(base.getSha());
@@ -85,8 +93,8 @@ public final class GithubWebhookHandler {
                 }));
 
         // get previous commits
-        final Flux<CommitOld> source = commitRepo.findAllById(projectId
-                .flatMapMany(id -> pullRepository.findAllByProjectIdAndUpdatedAtBeforeAndNumberIsNot(id, updatedAt, number.intValue()))
+        final Flux<CommitOld> source = commitRepository.findAllById(projectId
+                .flatMapMany(id -> pullRepository.findAllByProjectIdAndUpdatedAtBeforeAndNumberIsNot(id, updatedAt, number))
                 .map(PullOld::getHeadLastCommitId));
 
         // get files by commits

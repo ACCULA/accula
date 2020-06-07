@@ -14,7 +14,8 @@ import static lombok.AccessLevel.PRIVATE;
 @NoArgsConstructor(force = true, access = PRIVATE)
 @AllArgsConstructor
 public class GithubApiHookPayload {
-    GithubApiRepo repository;
+    @JsonProperty("repository")
+    GithubApiRepo repo;
     @JsonProperty("pull_request")
     GithubApiPull pull;
 }

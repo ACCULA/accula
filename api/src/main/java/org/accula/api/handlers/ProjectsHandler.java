@@ -5,18 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.accula.api.config.WebhookProperties;
 import org.accula.api.converter.GithubApiToModelConverter;
 import org.accula.api.converter.ModelToDtoConverter;
-import org.accula.api.db.model.Commit;
-import org.accula.api.db.model.GithubRepo;
-import org.accula.api.db.model.GithubUser;
-import org.accula.api.db.model.Project;
-import org.accula.api.db.model.Pull;
 import org.accula.api.db.model.User;
-import org.accula.api.db.repo.CommitRepo;
 import org.accula.api.db.repo.CurrentUserRepo;
-import org.accula.api.db.repo.GithubRepoRepo;
 import org.accula.api.db.repo.GithubUserRepo;
 import org.accula.api.db.repo.ProjectRepo;
-import org.accula.api.db.repo.PullRepo;
 import org.accula.api.github.api.GithubClient;
 import org.accula.api.github.api.GithubClientException;
 import org.accula.api.github.model.GithubApiHook;
@@ -26,6 +18,7 @@ import org.accula.api.github.model.GithubApiRepo;
 import org.accula.api.handlers.dto.ProjectDto;
 import org.accula.api.handlers.request.CreateProjectRequestBody;
 import org.accula.api.handlers.response.ErrorBody;
+import org.accula.api.handlers.util.ProjectUpdater;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
@@ -37,7 +30,6 @@ import reactor.util.function.Tuple4;
 import reactor.util.function.Tuples;
 
 import java.util.Arrays;
-import java.util.HashSet;
 
 import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.toList;
@@ -53,18 +45,15 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 public final class ProjectsHandler {
     private static final Exception PROJECT_NOT_FOUND_EXCEPTION = new Exception();
 
+    private final Scheduler remoteCallsScheduler = Schedulers.boundedElastic();
     private final WebhookProperties webhookProperties;
     private final CurrentUserRepo currentUser;
     private final GithubClient githubClient;
     private final ProjectRepo projectRepo;
     private final GithubUserRepo githubUserRepo;
-    private final GithubRepoRepo githubRepoRepo;
-    private final CommitRepo commitRepo;
-    private final PullRepo pullRepo;
+    private final ProjectUpdater projectUpdater;
     private final GithubApiToModelConverter githubToModelConverter;
     private final ModelToDtoConverter modelToDtoConverter;
-    private final Scheduler remoteCallsScheduler = Schedulers.boundedElastic();
-    private final Scheduler pullProcessingScheduler = Schedulers.boundedElastic();
 
     public Mono<ServerResponse> getTop(final ServerRequest request) {
         return Mono
@@ -169,73 +158,9 @@ public final class ProjectsHandler {
                     .filterWhen(repoOwner -> projectRepo.notExists(projectGithubRepo.getId()))
                     .switchIfEmpty(Mono.error(CreateProjectException.ALREADY_EXISTS))
                     .flatMap(repoOwner -> projectRepo.upsert(projectGithubRepo, currentUser))
-                    .flatMap(project -> saveProjectPulls(project, githubApiPulls)
+                    .flatMap(project -> projectUpdater.update(project, githubApiPulls)
                             .map(openPullCount -> modelToDtoConverter.convert(project, openPullCount)));
         });
-    }
-
-    private Mono<Integer> saveProjectPulls(final Project project, final GithubApiPull[] githubApiPulls) {
-        if (githubApiPulls.length == 0) {
-            return Mono.empty();
-        }
-
-        return Mono
-                .defer(() -> {
-                    final var users = new HashSet<GithubUser>();
-                    final var repos = new HashSet<GithubRepo>();
-                    final var commits = new HashSet<Commit>();
-                    final var pulls = new HashSet<Pull>();
-                    int openPullCount = 0;
-
-                    final var baseRepo = githubToModelConverter.convert(githubApiPulls[0].getBase().getRepo());
-                    users.add(baseRepo.getOwner());
-                    repos.add(baseRepo);
-
-                    for (final var githubApiPull : githubApiPulls) {
-                        if (!githubApiPull.isValid()) {
-                            continue;
-                        }
-
-                        final var head = githubApiPull.getHead();
-                        final var headRepo = githubToModelConverter.convert(head.getRepo());
-                        users.add(headRepo.getOwner());
-                        repos.add(headRepo);
-                        final var headCommit = new Commit(head.getSha());
-                        commits.add(headCommit);
-
-                        final var base = githubApiPull.getBase();
-                        final var baseCommit = new Commit(base.getSha());
-                        commits.add(baseCommit);
-
-                        final var isPullOpen = githubApiPull.getState() == State.OPEN;
-                        final var pullAuthor = githubToModelConverter.convert(githubApiPull.getUser());
-                        users.add(pullAuthor);
-
-                        pulls.add(Pull.builder()
-                                .id(githubApiPull.getId())
-                                .number(githubApiPull.getNumber())
-                                .title(githubApiPull.getTitle())
-                                .open(isPullOpen)
-                                .createdAt(githubApiPull.getCreatedAt())
-                                .updatedAt(githubApiPull.getUpdatedAt())
-                                .head(new Pull.Marker(headCommit, head.getRef(), headRepo))
-                                .base(new Pull.Marker(baseCommit, base.getRef(), project.getGithubRepo()))
-                                .projectId(project.getId())
-                                .author(pullAuthor)
-                                .build());
-
-                        if (isPullOpen) {
-                            ++openPullCount;
-                        }
-                    }
-
-                    return githubUserRepo.upsert(users)
-                            .thenMany(githubRepoRepo.upsert(repos))
-                            .thenMany(commitRepo.upsert(commits))
-                            .thenMany(pullRepo.upsert(pulls))
-                            .then(Mono.just(openPullCount));
-                })
-                .subscribeOn(pullProcessingScheduler);
     }
 
     private Mono<ProjectDto> createWebhook(final ProjectDto project) {
