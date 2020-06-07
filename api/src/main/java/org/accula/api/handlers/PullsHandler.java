@@ -1,13 +1,9 @@
 package org.accula.api.handlers;
 
 import lombok.RequiredArgsConstructor;
-import org.accula.api.db.ProjectRepository;
-import org.accula.api.db.model.Pull;
+import org.accula.api.converter.ModelToDtoConverter;
 import org.accula.api.db.repo.PullRepo;
-import org.accula.api.github.api.GithubClient;
-import org.accula.api.github.model.GithubApiPull;
-import org.accula.api.github.model.GithubApiPull.State;
-import org.accula.api.handlers.response.GetPullResponseBody;
+import org.accula.api.handlers.dto.PullDto;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
@@ -27,8 +23,7 @@ public final class PullsHandler {
     private static final String PULL_NUMBER = "pullNumber";
 
     private final PullRepo pullRepo;
-    private final ProjectRepository projects;
-    private final GithubClient githubClient;
+    private final ModelToDtoConverter modelToDtoConverter;
 
     //TODO: handle github errors
     public Mono<ServerResponse> getMany(final ServerRequest request) {
@@ -38,7 +33,7 @@ public final class PullsHandler {
                 .flatMap(projectId -> ServerResponse
                         .ok()
                         .contentType(APPLICATION_JSON)
-                        .body(pullRepo.findByProjectId(projectId), Pull.class))
+                        .body(pullRepo.findByProjectId(projectId).map(modelToDtoConverter::convert), PullDto.class))
                 .onErrorResume(PULL_NOT_FOUND_EXCEPTION::equals, e -> ServerResponse.notFound().build());
     }
 
@@ -53,60 +48,9 @@ public final class PullsHandler {
                             .flatMap(pull -> ServerResponse
                                     .ok()
                                     .contentType(APPLICATION_JSON)
-                                    .bodyValue(pull));
+                                    .bodyValue(modelToDtoConverter.convert(pull)));
                 })
                 .onErrorMap(NumberFormatException.class, e -> PULL_NOT_FOUND_EXCEPTION)
                 .onErrorResume(PULL_NOT_FOUND_EXCEPTION::equals, e -> ServerResponse.notFound().build());
-    }
-
-    //TODO
-    public Mono<ServerResponse> refresh(final ServerRequest request) {
-        return Mono
-                .justOrEmpty(request.pathVariable(PULL_NUMBER))
-                //switchIfEmpty
-                .map(Long::parseLong)
-                //onError
-                .flatMap(projects::findById)
-                .then(Mono.empty());
-        //return Mono
-        //                .fromSupplier(() -> Long.parseLong(request.pathVariable(PROJECT_ID)))
-        //                .onErrorMap(NumberFormatException.class, e -> PULL_NOT_FOUND_EXCEPTION)
-        //                .flatMap(projectId -> projects
-        //                        .findById(projectId)
-        //                        .flatMap(project -> githubClient.getRepositoryPulls(project.getRepoOwner(), project.getRepoName(), State.ALL))
-        //                        .switchIfEmpty(Mono.error(PULL_NOT_FOUND_EXCEPTION))
-        //                        .flatMapMany(Flux::fromArray)
-        //                        .filter(GithubApiPull::isValid)
-        //                        .flatMap(pull -> Mono.just(fromGithubPull(pull, projectId)))
-        //                        .collectList()
-        //                        .flatMap(githubPulls -> ServerResponse
-        //                                .ok()
-        //                                .contentType(APPLICATION_JSON)
-        //                                .bodyValue(githubPulls)))
-        //                .onErrorResume(PULL_NOT_FOUND_EXCEPTION::equals, e -> ServerResponse.notFound().build());
-    }
-
-    private static GetPullResponseBody fromGithubPull(final GithubApiPull githubPull, final Long projectId) {
-        return GetPullResponseBody.builder()
-                .projectId(projectId)
-                .number(githubPull.getNumber().intValue())
-                .url(githubPull.getHtmlUrl())
-                .title(githubPull.getTitle())
-                .head(new GetPullResponseBody.PullRef(
-                        githubPull.getHead().getTreeUrl(),
-                        githubPull.getHead().getLabel()))
-                .base(new GetPullResponseBody.PullRef(
-                        githubPull.getBase().getTreeUrl(),
-                        githubPull.getBase().getLabel()))
-                .author(new GetPullResponseBody.PullAuthor(
-                        githubPull.getUser().getLogin(),
-                        githubPull.getUser().getAvatarUrl(),
-                        githubPull.getUser().getHtmlUrl()))
-                .open(githubPull.getState() == State.OPEN)
-                .createdAt(githubPull.getCreatedAt())
-                .updatedAt(githubPull.getUpdatedAt())
-                .status(GetPullResponseBody.PullStatus.PENDING)
-                .cloneCount(0)
-                .build();
     }
 }

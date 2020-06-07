@@ -7,8 +7,6 @@ import lombok.NoArgsConstructor;
 import lombok.Value;
 import org.jetbrains.annotations.Nullable;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Locale;
 
@@ -27,7 +25,7 @@ public class GithubApiPull {
     Marker head;
     Marker base;
     GithubApiUser user;
-    Long number;
+    Integer number;
     String title;
     State state;
     @JsonProperty("created_at")
@@ -63,9 +61,5 @@ public class GithubApiPull {
         @Nullable
         GithubApiRepo repo;
         String sha;
-
-        public String getTreeUrl() {
-            return String.format("%s/tree/%s", repo.getHtmlUrl(), URLEncoder.encode(ref, StandardCharsets.UTF_8));
-        }
     }
 }

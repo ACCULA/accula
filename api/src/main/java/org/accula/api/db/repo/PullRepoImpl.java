@@ -216,7 +216,7 @@ public final class PullRepoImpl implements PullRepo {
     private Pull convert(final Row row) {
         return Pull.builder()
                 .id(Converters.value(row, "id", Long.class))
-                .number(Converters.value(row, "number", Long.class))
+                .number(Converters.value(row, "number", Integer.class))
                 .title(Converters.value(row, "title", String.class))
                 .open(Converters.value(row, "open", Boolean.class))
                 .createdAt(Converters.value(row, "created_at", Instant.class))

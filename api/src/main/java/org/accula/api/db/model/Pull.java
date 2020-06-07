@@ -12,7 +12,7 @@ import java.time.Instant;
 public class Pull {
     @EqualsAndHashCode.Include
     Long id;
-    Long number;
+    Integer number;
     String title;
     boolean open;
     Instant createdAt;

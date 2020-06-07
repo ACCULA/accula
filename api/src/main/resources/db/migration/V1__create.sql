@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS commit
 CREATE TABLE IF NOT EXISTS pull
 (
     id                   BIGINT PRIMARY KEY,
-    number               BIGINT                   NOT NULL,
+    number               INT                      NOT NULL,
     title                VARCHAR(128)             NOT NULL,
     open                 BOOLEAN                  NOT NULL,
     created_at           TIMESTAMP WITH TIME ZONE NOT NULL,

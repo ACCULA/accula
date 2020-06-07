@@ -22,8 +22,7 @@ public final class PullsRouter {
                 .route()
                 .path("/api/projects/{projectId}/pulls", builder -> builder
                         .GET("", pullsHandler::getMany)
-                        .GET("/{pullNumber}", pullsHandler::get)
-                        .POST("/refresh", pullsHandler::refresh))
+                        .GET("/{pullNumber}", pullsHandler::get))
                 .build();
     }
 }

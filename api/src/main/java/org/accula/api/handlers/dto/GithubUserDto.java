@@ -1,15 +1,13 @@
 package org.accula.api.handlers.dto;
 
 import lombok.Value;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Anton Lamtev
  */
 @Value
-public class UserDto {
-    Long id;
+public class GithubUserDto {
     String login;
-    @Nullable
-    String name;
+    String avatar;
+    String url;
 }
