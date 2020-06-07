@@ -16,7 +16,6 @@ import java.util.function.Function;
  *
  * @author Anton Lamtev
  */
-@SuppressWarnings("NullableProblems")
 public final class EcKeys {
     private EcKeys() {
     }
@@ -31,10 +30,12 @@ public final class EcKeys {
         return keyProducer.apply(factory, spec);
     }
 
+    @SuppressWarnings("NullableProblems")
     public static ECPrivateKey privateKey(final byte[] keyBytes) {
         return (ECPrivateKey) key(keyBytes, PKCS8EncodedKeySpec::new, KeyFactory::generatePrivate);
     }
 
+    @SuppressWarnings("NullableProblems")
     public static ECPublicKey publicKey(final byte[] keyBytes) {
         return (ECPublicKey) key(keyBytes, X509EncodedKeySpec::new, KeyFactory::generatePublic);
     }
