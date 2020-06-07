@@ -89,7 +89,8 @@ public final class ProjectRepoImpl implements ProjectRepo {
                         .from(selectTopStatement(connection)
                                 .bind("$1", count)
                                 .execute())
-                        .flatMapMany(result -> Repos.convertMany(result, connection, this::convert)));
+                        .flatMapMany(result -> Repos.convertMany(result, connection, this::convert)))
+                .map(it -> it);
     }
 
     @Override
@@ -110,11 +111,19 @@ public final class ProjectRepoImpl implements ProjectRepo {
     }
 
     private static PostgresqlStatement selectByIdStatement(final Connection connection) {
-        return selectStatement(connection, "WHERE p.id = $1");
+        //@formatter:off
+        return selectStatement(connection,
+                "WHERE p.id = $1 " +
+                "GROUP BY p.id, project_repo.id, project_repo_owner.id, project_creator.id, project_creator_github_user.id, pulls.count");
+        //@formatter:on
     }
 
     private static PostgresqlStatement selectTopStatement(final Connection connection) {
-        return selectStatement(connection, "LIMIT $1");
+        //@formatter:off
+        return selectStatement(connection,
+                "GROUP BY p.id, project_repo.id, project_repo_owner.id, project_creator.id, project_creator_github_user.id, pulls.count " +
+                "LIMIT $1");
+        //@formatter:on
     }
 
     private static PostgresqlStatement selectStatement(final Connection connection, final String terminatingCondition) {
@@ -147,7 +156,7 @@ public final class ProjectRepoImpl implements ProjectRepo {
                 "              ON p.creator_id = project_creator.id " +
                 "         JOIN user_github project_creator_github_user " +
                 "              ON project_creator.github_id = project_creator_github_user.id" +
-                "         JOIN (SELECT count(*) FILTER ( WHERE open )," +
+                "         LEFT JOIN (SELECT count(*) FILTER ( WHERE open )," +
                 "                      project_id" +
                 "               FROM pull" +
                 "               GROUP BY project_id) pulls " +
@@ -176,7 +185,7 @@ public final class ProjectRepoImpl implements ProjectRepo {
                         "project_creator_github_user_name",
                         "project_creator_github_user_avatar",
                         "project_creator_github_user_is_org"))
-                .openPullCount(Converters.value(row, "project_open_pull_count", Integer.class))
+                .openPullCount(Converters.integer(row, "project_open_pull_count"))
                 .build();
     }
 }

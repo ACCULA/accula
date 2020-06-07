@@ -6,6 +6,7 @@ import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.GithubUser;
 import org.accula.api.db.model.Pull;
 import org.accula.api.db.model.User;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -95,5 +96,13 @@ final class Converters {
 
     static <T> T value(final Row row, final String name, final Class<T> clazz) {
         return Objects.requireNonNull(row.get(name, clazz));
+    }
+
+    static Integer integer(final Row row, final String name) {
+        return or(row.get(name, Integer.class), 0);
+    }
+
+    private static <T> T or(@Nullable final T value, final T defaultValue) {
+        return value != null ? value : defaultValue;
     }
 }
