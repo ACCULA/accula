@@ -21,7 +21,7 @@ public final class PullsRouter {
         return RouterFunctions
                 .route()
                 .path("/api/projects/{projectId}/pulls", builder -> builder
-                        .GET("", pullsHandler::getOpenPulls)
+                        .GET("", pullsHandler::getMany)
                         .GET("/{pullNumber}", pullsHandler::get)
                         .POST("/refresh", pullsHandler::refresh))
                 .build();

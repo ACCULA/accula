@@ -166,62 +166,61 @@ public final class PullRepoImpl implements PullRepo {
     }
 
     private static PostgresqlStatement selectByIdStatement(final Connection connection) {
-        return selectStatement(connection, "id");
+        return selectStatement(connection, "WHERE pull.id = $1");
     }
 
     private static PostgresqlStatement selectByProjectIdStatement(final Connection connection) {
-        return selectStatement(connection, "project_id");
+        return selectStatement(connection, "WHERE pull.project_id = $1");
     }
 
-    private static PostgresqlStatement selectStatement(final Connection connection, final String whereClauseKey) {
+    private static PostgresqlStatement selectStatement(final Connection connection, final String whereClause) {
         //@formatter:off
         @Language("SQL")
-        final var format = "SELECT pull.id                   AS id," +
-                           "       pull.number               AS number," +
-                           "       pull.title                AS title," +
-                           "       pull.open                 AS open," +
-                           "       pull.created_at           AS created_at," +
-                           "       pull.updated_at           AS updated_at," +
-                           "       pull.project_id           AS project_id," +
-                           "       pull.head_last_commit_sha AS head_last_commit_sha," +
-                           "       pull.head_branch          AS head_branch," +
-                           "       head_repo.id              AS head_repo_id," +
-                           "       head_repo.name            AS head_repo_name," +
-                           "       head_repo.description     AS head_repo_description," +
-                           "       head_repo_owner.id        AS head_repo_owner_id," +
-                           "       head_repo_owner.login     AS head_repo_owner_login," +
-                           "       head_repo_owner.name      AS head_repo_owner_name," +
-                           "       head_repo_owner.avatar    AS head_repo_owner_avatar," +
-                           "       head_repo_owner.is_org    AS head_repo_owner_is_org," +
-                           "       base_repo.id              AS base_repo_id," +
-                           "       base_repo.name            AS base_repo_name," +
-                           "       base_repo.description     AS base_repo_description," +
-                           "       base_repo_owner.id        AS base_repo_owner_id," +
-                           "       base_repo_owner.login     AS base_repo_owner_login," +
-                           "       base_repo_owner.name      AS base_repo_owner_name," +
-                           "       base_repo_owner.avatar    AS base_repo_owner_avatar," +
-                           "       base_repo_owner.is_org    AS base_repo_owner_is_org," +
-                           "       author.id                 AS author_id," +
-                           "       author.login              AS author_login," +
-                           "       author.name               AS author_name," +
-                           "       author.avatar             AS author_avatar," +
-                           "       author.is_org             AS author_is_org " +
-                           "FROM pull" +
-                           "   JOIN user_github author" +
-                           "       ON pull.author_github_id = author.id" +
-                           "   JOIN repo_github base_repo" +
-                           "       ON pull.base_repo_id = base_repo.id" +
-                           "   JOIN user_github base_repo_owner" +
-                           "       ON base_repo.owner_id = base_repo_owner" +
-                           "   JOIN repo_github head_repo" +
-                           "       ON pull.head_repo_id = head_repo.id" +
-                           "   JOIN user_github head_repo_owner" +
-                           "       ON head_repo.owner_id = head_repo_owner.id" +
-                           "   JOIN user_github author" +
-                           "       ON pull.author_github_id = author.id " +
-                           "WHERE pull.%s = $1"; // <- String param here
+        final var sql = "SELECT pull.id                   AS id," +
+                        "       pull.number               AS number," +
+                        "       pull.title                AS title," +
+                        "       pull.open                 AS open," +
+                        "       pull.created_at           AS created_at," +
+                        "       pull.updated_at           AS updated_at," +
+                        "       pull.project_id           AS project_id," +
+                        "       pull.head_last_commit_sha AS head_last_commit_sha," +
+                        "       pull.head_branch          AS head_branch," +
+                        "       head_repo.id              AS head_repo_id," +
+                        "       head_repo.name            AS head_repo_name," +
+                        "       head_repo.description     AS head_repo_description," +
+                        "       head_repo_owner.id        AS head_repo_owner_id," +
+                        "       head_repo_owner.login     AS head_repo_owner_login," +
+                        "       head_repo_owner.name      AS head_repo_owner_name," +
+                        "       head_repo_owner.avatar    AS head_repo_owner_avatar," +
+                        "       head_repo_owner.is_org    AS head_repo_owner_is_org," +
+                        "       pull.base_last_commit_sha AS base_last_commit_sha," +
+                        "       pull.base_branch          AS base_branch," +
+                        "       base_repo.id              AS base_repo_id," +
+                        "       base_repo.name            AS base_repo_name," +
+                        "       base_repo.description     AS base_repo_description," +
+                        "       base_repo_owner.id        AS base_repo_owner_id," +
+                        "       base_repo_owner.login     AS base_repo_owner_login," +
+                        "       base_repo_owner.name      AS base_repo_owner_name," +
+                        "       base_repo_owner.avatar    AS base_repo_owner_avatar," +
+                        "       base_repo_owner.is_org    AS base_repo_owner_is_org," +
+                        "       author.id                 AS author_id," +
+                        "       author.login              AS author_login," +
+                        "       author.name               AS author_name," +
+                        "       author.avatar             AS author_avatar," +
+                        "       author.is_org             AS author_is_org " +
+                        "FROM pull" +
+                        "   JOIN repo_github base_repo" +
+                        "       ON pull.base_repo_id = base_repo.id" +
+                        "   JOIN user_github base_repo_owner" +
+                        "       ON base_repo.owner_id = base_repo_owner.id" +
+                        "   JOIN repo_github head_repo" +
+                        "       ON pull.head_repo_id = head_repo.id" +
+                        "   JOIN user_github head_repo_owner" +
+                        "       ON head_repo.owner_id = head_repo_owner.id" +
+                        "   JOIN user_github author" +
+                        "       ON pull.author_github_id = author.id";
         //@formatter:on
-        return (PostgresqlStatement) connection.createStatement(String.format(format, whereClauseKey));
+        return (PostgresqlStatement) connection.createStatement(String.format("%s %s", sql, whereClause));
     }
 
     private static PostgresqlStatement selectCountStatement(final Connection connection) {

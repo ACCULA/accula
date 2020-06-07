@@ -72,6 +72,7 @@ public final class ProjectsHandler {
                 .map(Integer::parseInt)
                 .flatMap(count -> ServerResponse
                         .ok()
+                        .contentType(APPLICATION_JSON)
                         .body(projectRepo.getTop(count).map(modelToDtoConverter::convert), ProjectDto.class))
                 .doOnSuccess(response -> log.debug("{}: {}", request, response.statusCode()));
     }
