@@ -17,9 +17,9 @@ public interface ProjectRepo {
      */
     Mono<Project> upsert(GithubRepo githubRepo, User creator);
 
-    Mono<Project> get(Long id);
+    Mono<Project> findById(Long id);
 
     Flux<Project> getTop(int count);
 
-    Mono<Boolean> delete(Long id);
+    Mono<Boolean> delete(Long id, Long creatorId);
 }

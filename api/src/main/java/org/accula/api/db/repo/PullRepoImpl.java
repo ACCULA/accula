@@ -89,6 +89,33 @@ public final class PullRepoImpl implements PullRepo {
                         .flatMapMany(result -> Repos.convertMany(result, connection, this::convert)));
     }
 
+    @Override
+    public Mono<Integer> countOpenOnes(final Long projectId) {
+        return connectionPool
+                .create()
+                .flatMap(connection -> Mono
+                        .from(selectCountStatement(connection)
+                                .bind("$1", projectId)
+                                .execute())
+                        .flatMap(result -> Repos.column(result, "count", Integer.class, connection)));
+    }
+
+    @Override
+    public Flux<Integer> countOpenOnes(final Collection<Long> projectIds) {
+        return connectionPool
+                .create()
+                .flatMapMany(connection -> {
+                    final var statement = selectCountStatement(connection);
+                    projectIds.forEach(projectId -> statement
+                            .bind("$1", projectId)
+                            .add());
+                    statement.fetchSize(projectIds.size());
+
+                    return statement.execute()
+                            .flatMap(result -> Repos.column(result, "count", Integer.class, connection));
+                });
+    }
+
     private static PostgresqlStatement insertStatement(final Connection connection) {
         //@formatter:off
         return (PostgresqlStatement) connection
@@ -192,6 +219,11 @@ public final class PullRepoImpl implements PullRepo {
                            "WHERE pull.%s = $1"; // <- String param here
         //@formatter:on
         return (PostgresqlStatement) connection.createStatement(String.format(format, whereClauseKey));
+    }
+
+    private static PostgresqlStatement selectCountStatement(final Connection connection) {
+        return (PostgresqlStatement) connection
+                .createStatement("SELECT count(*) FROM pull WHERE project_id = $1 AND open");
     }
 
     private Pull convert(final Row row) {

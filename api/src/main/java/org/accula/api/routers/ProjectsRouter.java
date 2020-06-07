@@ -28,7 +28,6 @@ public final class ProjectsRouter {
                         .GET("/{id}", projectsHandler::get)
                         .nest(accept(APPLICATION_JSON), b2 -> b2
                                 .POST("", projectsHandler::create)
-                                .PUT("/{id}", projectsHandler::update)
                                 .DELETE("/{id}", projectsHandler::delete)))
                 .build();
     }

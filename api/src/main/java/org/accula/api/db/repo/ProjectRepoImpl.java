@@ -1,6 +1,8 @@
 package org.accula.api.db.repo;
 
 import io.r2dbc.pool.ConnectionPool;
+import io.r2dbc.postgresql.api.PostgresqlResult;
+import io.r2dbc.postgresql.api.PostgresqlStatement;
 import io.r2dbc.spi.Row;
 import lombok.RequiredArgsConstructor;
 import org.accula.api.db.model.GithubRepo;
@@ -69,7 +71,7 @@ public final class ProjectRepoImpl implements ProjectRepo {
     }
 
     @Override
-    public Mono<Project> get(final Long id) {
+    public Mono<Project> findById(final Long id) {
         return connectionPool
                 .create()
                 .flatMap(connection -> Mono
@@ -149,15 +151,19 @@ public final class ProjectRepoImpl implements ProjectRepo {
     }
 
     @Override
-    public Mono<Boolean> delete(final Long id) {
+    public Mono<Boolean> delete(final Long id, final Long creatorId) {
         return connectionPool
                 .create()
                 .flatMap(connection -> Mono
-                        .from(connection
-                                .createStatement("DELETE FROM project WHERE id = $1")
+                        .from(((PostgresqlStatement) connection
+                                //formatter:off
+                                .createStatement("DELETE FROM project " +
+                                                 "WHERE id = $1 AND creator_id = $2"))
+                                //@formatter:on
                                 .bind("$1", id)
+                                .bind("$2", creatorId)
                                 .execute())
-                        .flatMap(result -> Mono.from(result.getRowsUpdated()))
+                        .flatMap(PostgresqlResult::getRowsUpdated)
                         .flatMap(rowsUpdated -> Repos.closeAndReturn(connection, rowsUpdated.equals(1))));
     }
 

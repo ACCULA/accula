@@ -19,4 +19,8 @@ public interface PullRepo {
     Flux<Pull> findById(Collection<Long> ids);
 
     Flux<Pull> findByProjectId(Long projectId);
+
+    Mono<Integer> countOpenOnes(Long projectId);
+
+    Flux<Integer> countOpenOnes(Collection<Long> projectIds);
 }

@@ -260,7 +260,7 @@ public class ProjectsRouterTest {
 
     @Test
     public void testGetProjectFailure() {
-        Mockito.when(projectRepo.get(0L))
+        Mockito.when(projectRepo.findById(0L))
                 .thenReturn(Mono.empty());
 
         client.get().uri("/api/projects/{id}", 0L)

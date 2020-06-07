@@ -1,4 +1,4 @@
-package org.accula.api.handlers.request;
+package org.accula.api.handlers.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
@@ -10,6 +10,8 @@ import lombok.Value;
 @Value
 @NoArgsConstructor(force = true)
 @AllArgsConstructor
-public class CreateProjectRequestBody {
-    String githubRepoUrl;
+public class UserDto {
+    Long id;
+    String login;
+    String name;
 }

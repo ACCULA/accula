@@ -22,12 +22,12 @@ import org.accula.api.github.model.GithubApiHook;
 import org.accula.api.github.model.GithubApiPull;
 import org.accula.api.github.model.GithubApiPull.State;
 import org.accula.api.github.model.GithubApiRepo;
+import org.accula.api.handlers.dto.ProjectDto;
 import org.accula.api.handlers.request.CreateProjectRequestBody;
 import org.accula.api.handlers.response.ErrorBody;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
@@ -63,14 +63,18 @@ public final class ProjectsHandler {
     private final PullRepo pullRepo;
     private final DataConverter converter;
     private final Scheduler remoteCallsScheduler = Schedulers.boundedElastic();
+    private final Scheduler pullProcessingScheduler = Schedulers.boundedElastic();
 
+    //FIXME: actual open pull count
     public Mono<ServerResponse> getTop(final ServerRequest request) {
         return Mono
                 .just(request.queryParam("count").orElse("5"))
                 .map(Integer::parseInt)
                 .flatMap(count -> ServerResponse
                         .ok()
-                        .body(projectRepo.getTop(count), Project.class))
+                        .body(projectRepo
+                                .getTop(count)
+                                .map(project -> converter.convert(project, 0)), ProjectDto.class))
                 .doOnSuccess(response -> log.debug("{}: {}", request, response.statusCode()));
     }
 
@@ -79,7 +83,8 @@ public final class ProjectsHandler {
                 .justOrEmpty(request.pathVariable("id"))
                 .map(Long::parseLong)
                 .onErrorMap(e -> e instanceof NumberFormatException, e -> PROJECT_NOT_FOUND_EXCEPTION)
-                .flatMap(projectRepo::get)
+                .flatMap(projectId -> Mono.zip(projectRepo.findById(projectId), pullRepo.countOpenOnes(projectId)))
+                .map(tuple -> converter.convert(tuple.getT1(), tuple.getT2()))
                 .switchIfEmpty(Mono.error(PROJECT_NOT_FOUND_EXCEPTION))
                 .flatMap(project -> ServerResponse
                         .ok()
@@ -95,7 +100,10 @@ public final class ProjectsHandler {
                 .onErrorResume(e -> Mono.error(CreateProjectException.BAD_FORMAT))
                 .map(ProjectsHandler::extractOwnerAndRepo)
                 .flatMap(this::retrieveGithubInfoForProjectCreation)
-                .onErrorMap(e -> e instanceof GithubClientException, e -> CreateProjectException.WRONG_URL)
+                .onErrorMap(e -> e instanceof GithubClientException, e -> {
+                    log.error("Github Api Client error:", e);
+                    return CreateProjectException.WRONG_URL;
+                })
                 .flatMap(this::saveProjectData)
                 .flatMap(this::createWebhook)
                 .flatMap(project -> ServerResponse
@@ -115,41 +123,20 @@ public final class ProjectsHandler {
                         });
     }
 
-    // Only admin updating is currently supported
-    public Mono<ServerResponse> update(final ServerRequest request) {
-        return Mono.empty();
-//                .justOrEmpty(request.pathVariable("id"))
-//                .map(Long::parseLong)
-//                .onErrorMap(e -> e instanceof NumberFormatException, e -> PROJECT_NOT_FOUND_EXCEPTION)
-//                .zipWith(request.bodyToMono(ProjectOld.class))
-//                .switchIfEmpty(Mono.error(PROJECT_NOT_FOUND_EXCEPTION))
-//                .flatMap(projectAndCurrentUser -> {
-//                    final var projectId = projectAndCurrentUser.getT1();
-//                    final var project = projectAndCurrentUser.getT2();
-//                    final var admins = project.getAdmins();
-//
-//                    return currentUser.get()
-//                            .flatMap(currentUser -> projectRepository.
-//                                    setAdmins(projectId, admins, requireNonNull(currentUser.getId())));
-//                })
-//                .flatMap(nil -> ServerResponse.ok().build())
-//                .onErrorResume(PROJECT_NOT_FOUND_EXCEPTION::equals, e -> ServerResponse.notFound().build());
-    }
-
     public Mono<ServerResponse> delete(final ServerRequest request) {
-        return Mono.empty();
-//                .justOrEmpty(request.pathVariable("id"))
-//                .map(Long::parseLong)
-//                .onErrorMap(e -> e instanceof NumberFormatException, e -> PROJECT_NOT_FOUND_EXCEPTION)
-//                .zipWith(currentUser.get())
-//                .flatMap(projectIdAndCurrentUser -> {
-//                    final var projectId = projectIdAndCurrentUser.getT1();
-//                    final var userId = requireNonNull(projectIdAndCurrentUser.getT2().getId());
-//
-//                    return projectRepository.deleteByIdAndCreatorId(projectId, userId);
-//                })
-//                .flatMap(success -> ServerResponse.ok().build())
-//                .onErrorResume(PROJECT_NOT_FOUND_EXCEPTION::equals, e -> ServerResponse.notFound().build());
+        return Mono
+                .justOrEmpty(request.pathVariable("id"))
+                .map(Long::parseLong)
+                .onErrorMap(e -> e instanceof NumberFormatException, e -> PROJECT_NOT_FOUND_EXCEPTION)
+                .zipWith(currentUser.get())
+                .flatMap(projectIdAndCurrentUser -> {
+                    final var projectId = projectIdAndCurrentUser.getT1();
+                    final var currentUserId = projectIdAndCurrentUser.getT2().getId();
+
+                    return projectRepo.delete(projectId, currentUserId);
+                })
+                .flatMap(success -> ServerResponse.ok().build())
+                .onErrorResume(PROJECT_NOT_FOUND_EXCEPTION::equals, e -> ServerResponse.notFound().build());
     }
 
     private Mono<Tuple4<Boolean, GithubApiRepo, GithubApiPull[], User>> retrieveGithubInfoForProjectCreation(
@@ -165,53 +152,68 @@ public final class ProjectsHandler {
         //@formatter:on
     }
 
-    private Mono<Project> saveProjectData(final Tuple4<Boolean, GithubApiRepo, GithubApiPull[], User> tuple) {
-        final var isAdmin = tuple.getT1();
-        if (!isAdmin) {
-            throw CreateProjectException.NO_PERMISSION;
-        }
+    private Mono<ProjectDto> saveProjectData(final Tuple4<Boolean, GithubApiRepo, GithubApiPull[], User> tuple) {
+        return Mono.defer(() -> {
+            final var isAdmin = tuple.getT1();
+            if (!isAdmin) {
+                throw CreateProjectException.NO_PERMISSION;
+            }
 
-        final var ghRepo = tuple.getT2();
-        final var ghPulls = tuple.getT3();
-        final var creator = tuple.getT4();
+            final var githubApiRepo = tuple.getT2();
+            final var githubApiPulls = tuple.getT3();
+            final var currentUser = tuple.getT4();
 
-        final var projectRepo = converter.convert(ghRepo);
+            final var projectGithubRepo = converter.convert(githubApiRepo);
 
-        return githubUserRepo
-                .upsert(projectRepo.getOwner())
-                .filterWhen(repoOwner -> this.projectRepo.notExists(projectRepo.getId()))
-                .switchIfEmpty(Mono.error(CreateProjectException.ALREADY_EXISTS))
-                .flatMap(repoOwner -> this.projectRepo.upsert(projectRepo, creator))
-                .flatMap(project -> {
+            return githubUserRepo
+                    .upsert(projectGithubRepo.getOwner())
+                    .filterWhen(repoOwner -> projectRepo.notExists(projectGithubRepo.getId()))
+                    .switchIfEmpty(Mono.error(CreateProjectException.ALREADY_EXISTS))
+                    .flatMap(repoOwner -> projectRepo.upsert(projectGithubRepo, currentUser))
+                    .flatMap(project -> saveProjectPulls(project, githubApiPulls)
+                            .map(openPullCount -> converter.convert(project, openPullCount)));
+        });
+    }
+
+    private Mono<Integer> saveProjectPulls(final Project project, final GithubApiPull[] githubApiPulls) {
+        return Mono
+                .defer(() -> {
                     Set<GithubUser> users = new HashSet<>();
                     Set<GithubRepo> repos = new HashSet<>();
                     Set<Commit> commits = new HashSet<>();
                     Set<Pull> pulls = new HashSet<>();
 
-                    for (final var ghPull : ghPulls) {
-                        final var pullAuthor = converter.convert(ghPull.getUser());
+                    int openPullCount = 0;
+
+                    for (final var githubApiPull : githubApiPulls) {
+                        final var isPullOpen = githubApiPull.getState() == State.OPEN;
+                        if (isPullOpen) {
+                            ++openPullCount;
+                        }
+
+                        final var pullAuthor = converter.convert(githubApiPull.getUser());
                         users.add(pullAuthor);
-                        final var head = ghPull.getHead();
+
+                        final var head = githubApiPull.getHead();
                         final var headRepo = converter.convert(head.getRepo());
                         repos.add(headRepo);
                         users.add(headRepo.getOwner());
-
                         final var headCommit = new Commit(head.getSha());
                         commits.add(headCommit);
 
-                        final var base = ghPull.getBase();
+                        final var base = githubApiPull.getBase();
                         final var baseCommit = new Commit(base.getSha());
                         commits.add(baseCommit);
 
                         pulls.add(Pull.builder()
-                                .id(ghPull.getId())
-                                .number(ghPull.getNumber())
-                                .title(ghPull.getTitle())
-                                .open(ghPull.getState() == State.OPEN)
-                                .createdAt(ghPull.getCreatedAt())
-                                .updatedAt(ghPull.getUpdatedAt())
+                                .id(githubApiPull.getId())
+                                .number(githubApiPull.getNumber())
+                                .title(githubApiPull.getTitle())
+                                .open(isPullOpen)
+                                .createdAt(githubApiPull.getCreatedAt())
+                                .updatedAt(githubApiPull.getUpdatedAt())
                                 .head(new Pull.Marker(headCommit, head.getRef(), headRepo))
-                                .base(new Pull.Marker(baseCommit, base.getRef(), projectRepo))
+                                .base(new Pull.Marker(baseCommit, base.getRef(), project.getGithubRepo()))
                                 .projectId(project.getId())
                                 .author(pullAuthor)
                                 .build());
@@ -221,14 +223,15 @@ public final class ProjectsHandler {
                             .thenMany(githubRepoRepo.upsert(repos))
                             .thenMany(commitRepo.upsert(commits))
                             .thenMany(pullRepo.upsert(pulls))
-                            .then(Mono.just(project));
-                });
+                            .then(Mono.just(openPullCount));
+                })
+                .subscribeOn(pullProcessingScheduler);
     }
 
-    private Mono<Project> createWebhook(final Project project) {
+    private Mono<ProjectDto> createWebhook(final ProjectDto project) {
         final var hook = GithubApiHook.onPullUpdates(webhookProperties.getUrl(), webhookProperties.getSecret());
         return githubClient
-                .createHook(project.getGithubRepo().getOwner().getLogin(), project.getGithubRepo().getName(), hook)
+                .createHook(project.getRepoOwner(), project.getRepoName(), hook)
                 .thenReturn(project);
     }
 
