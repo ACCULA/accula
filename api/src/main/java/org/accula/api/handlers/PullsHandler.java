@@ -2,9 +2,7 @@ package org.accula.api.handlers;
 
 import lombok.RequiredArgsConstructor;
 import org.accula.api.db.ProjectRepository;
-import org.accula.api.db.PullRepository;
 import org.accula.api.db.model.Pull;
-import org.accula.api.db.repo.ProjectRepo;
 import org.accula.api.db.repo.PullRepo;
 import org.accula.api.github.api.GithubClient;
 import org.accula.api.github.model.GithubApiPull;
@@ -15,7 +13,6 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
-import static java.lang.Boolean.TRUE;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 /**
@@ -29,10 +26,8 @@ public final class PullsHandler {
     private static final String PROJECT_ID = "projectId";
     private static final String PULL_NUMBER = "pullNumber";
 
-    private final ProjectRepo projectRepo;
     private final PullRepo pullRepo;
     private final ProjectRepository projects;
-    private final PullRepository pulls;
     private final GithubClient githubClient;
 
     //TODO: handle github errors
@@ -53,16 +48,12 @@ public final class PullsHandler {
                     final var projectId = Long.parseLong(request.pathVariable(PROJECT_ID));
                     final var pullNumber = Integer.parseInt(request.pathVariable(PULL_NUMBER));
 
-                    return pulls
-                            .existsByProjectIdAndNumber(projectId, pullNumber)
-                            .filter(TRUE::equals)
-                            .flatMap(exists -> projects.findById(projectId))
-                            .flatMap(project -> githubClient.getRepositoryPull(project.getRepoOwner(), project.getRepoName(), pullNumber))
+                    return pullRepo.findByNumber(projectId, pullNumber)
                             .switchIfEmpty(Mono.error(PULL_NOT_FOUND_EXCEPTION))
-                            .flatMap(githubPull -> ServerResponse
+                            .flatMap(pull -> ServerResponse
                                     .ok()
                                     .contentType(APPLICATION_JSON)
-                                    .bodyValue(fromGithubPull(githubPull, projectId)));
+                                    .bodyValue(pull));
                 })
                 .onErrorMap(NumberFormatException.class, e -> PULL_NOT_FOUND_EXCEPTION)
                 .onErrorResume(PULL_NOT_FOUND_EXCEPTION::equals, e -> ServerResponse.notFound().build());

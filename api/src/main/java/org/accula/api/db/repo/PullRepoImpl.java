@@ -83,6 +83,18 @@ public final class PullRepoImpl implements PullRepo {
     }
 
     @Override
+    public Mono<Pull> findByNumber(final Long projectId, final Integer number) {
+        return connectionPool
+                .create()
+                .flatMap(connection -> Mono
+                        .from(selectByNumberStatement(connection)
+                                .bind("$1", projectId)
+                                .bind("$2", number)
+                                .execute())
+                        .flatMap(result -> Repos.convert(result, connection, this::convert)));
+    }
+
+    @Override
     public Flux<Pull> findByProjectId(final Long projectId) {
         return connectionPool
                 .create()
@@ -91,32 +103,6 @@ public final class PullRepoImpl implements PullRepo {
                                 .bind("$1", projectId)
                                 .execute())
                         .flatMapMany(result -> Repos.convertMany(result, connection, this::convert)));
-    }
-
-    @Override
-    public Mono<Integer> countOpenOnes(final Long projectId) {
-        return connectionPool
-                .create()
-                .flatMap(connection -> Mono
-                        .from(selectCountStatement(connection)
-                                .bind("$1", projectId)
-                                .execute())
-                        .flatMap(result -> Repos.column(result, "count", Integer.class, connection)));
-    }
-
-    @Override
-    public Flux<Integer> countOpenOnes(final Collection<Long> projectIds) {
-        return connectionPool
-                .create()
-                .flatMapMany(connection -> {
-                    final var statement = selectCountStatement(connection);
-                    projectIds.forEach(projectId -> statement
-                            .bind("$1", projectId)
-                            .add());
-                    statement.fetchSize(projectIds.size());
-
-                    return Repos.convertMany(statement.execute(), connection, row -> Converters.value(row, "count", Integer.class));
-                });
     }
 
     private static PostgresqlStatement insertStatement(final Connection connection) {
@@ -170,7 +156,11 @@ public final class PullRepoImpl implements PullRepo {
     }
 
     private static PostgresqlStatement selectByProjectIdStatement(final Connection connection) {
-        return selectStatement(connection, "WHERE pull.project_id = $1");
+        return selectStatement(connection, "WHERE pull.project_id = $1 ORDER BY pull.updated_at DESC");
+    }
+
+    private static PostgresqlStatement selectByNumberStatement(final Connection connection) {
+        return selectStatement(connection, "WHERE pull.project_id = $1 AND pull.number = $2");
     }
 
     private static PostgresqlStatement selectStatement(final Connection connection, final String whereClause) {
@@ -221,11 +211,6 @@ public final class PullRepoImpl implements PullRepo {
                         "       ON pull.author_github_id = author.id";
         //@formatter:on
         return (PostgresqlStatement) connection.createStatement(String.format("%s %s", sql, whereClause));
-    }
-
-    private static PostgresqlStatement selectCountStatement(final Connection connection) {
-        return (PostgresqlStatement) connection
-                .createStatement("SELECT count(*) FROM pull WHERE project_id = $1 AND open");
     }
 
     private Pull convert(final Row row) {
