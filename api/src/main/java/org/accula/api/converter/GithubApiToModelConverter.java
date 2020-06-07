@@ -29,7 +29,7 @@ public final class GithubApiToModelConverter {
         return new GithubUser(
                 apiUser.getId(),
                 apiUser.getLogin(),
-                orEmpty(apiUser.getName()),
+                apiUser.getName(),
                 apiUser.getAvatarUrl(),
                 apiUser.getType() == GithubApiUser.Type.ORGANIZATION
         );
@@ -38,12 +38,12 @@ public final class GithubApiToModelConverter {
     public GithubUser convert(final Map<String, Object> attributes) {
         final var id = ((Number) attributes.get("id")).longValue();
         final var login = (String) attributes.get("login");
-        final var name = (String) attributes.getOrDefault("name", "");
+        final var name = (String) attributes.get("name");
         final var avatar = (String) attributes.get("avatar_url");
         return new GithubUser(id, login, name, avatar, false);
     }
 
     private static String orEmpty(@Nullable final String s) {
-        return s != null ? s : EMPTY;
+        return s != null && !s.isBlank() ? s : EMPTY;
     }
 }

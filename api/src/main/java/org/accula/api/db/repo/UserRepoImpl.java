@@ -2,6 +2,7 @@ package org.accula.api.db.repo;
 
 import io.r2dbc.pool.ConnectionPool;
 import io.r2dbc.spi.Row;
+import io.r2dbc.spi.Statement;
 import lombok.RequiredArgsConstructor;
 import org.accula.api.db.model.GithubUser;
 import org.accula.api.db.model.User;
@@ -25,14 +26,14 @@ public final class UserRepoImpl implements UserRepo {
         return connectionPool
                 .create()
                 .flatMap(connection -> Mono
-                        .from(connection
+                        .from(applyInsertBindings(githubUser, githubAccessToken, connection
                                 //@formatter:off
                                 .createStatement("WITH upserted_gh_user AS (" +
                                                  "INSERT INTO user_github (id, login, name, avatar, is_org) " +
                                                  "VALUES ($1, $2, $3, $4, $5)" +
-                                                 "ON CONFLICT (id) DO UPDATE " +
-                                                 "   SET login = $2, " +
-                                                 "       name = $3, " +
+                                                 "ON CONFLICT (id) DO UPDATE" +
+                                                 "   SET login = $2," +
+                                                 "       name = COALESCE($3, user_github.name)," +
                                                  "       avatar = $4," +
                                                  "       is_org = $5 " +
                                                  "RETURNING id" +
@@ -40,16 +41,10 @@ public final class UserRepoImpl implements UserRepo {
                                                  "INSERT INTO user_ (github_id, github_access_token) " +
                                                  "SELECT id, $6 " +
                                                  "FROM upserted_gh_user " +
-                                                 "ON CONFLICT (github_id) DO UPDATE " +
-                                                 "SET  github_access_token = $6 " +
-                                                 "RETURNING id")
+                                                 "ON CONFLICT (github_id) DO UPDATE" +
+                                                 "  SET github_access_token = $6 " +
+                                                 "RETURNING id"))
                                 //@formatter:on
-                                .bind("$1", githubUser.getId())
-                                .bind("$2", githubUser.getLogin())
-                                .bind("$3", githubUser.getName())
-                                .bind("$4", githubUser.getAvatar())
-                                .bind("$5", githubUser.isOrganization())
-                                .bind("$6", githubAccessToken)
                                 .execute())
                         .flatMap(result -> Repos
                                 .convert(result, connection, row -> new User(
@@ -75,7 +70,7 @@ public final class UserRepoImpl implements UserRepo {
                                                  "       ug.avatar             AS github_avatar," +
                                                  "       ug.is_org             AS github_org," +
                                                  "       u.github_access_token " +
-                                                 "FROM user_ u " +
+                                                 "FROM user_ u" +
                                                  "  JOIN user_github ug ON u.github_id = ug.id " +
                                                  "WHERE u.id = $1")
                                 .bind("$1", id)
@@ -88,6 +83,14 @@ public final class UserRepoImpl implements UserRepo {
     @Override
     public void addOnUpsert(final OnUpsert onUpsert) {
         onUpserts.add(onUpsert);
+    }
+
+    private static Statement applyInsertBindings(final GithubUser githubUser,
+                                                 final String githubAccessToken,
+                                                 final Statement statement) {
+        return GithubUserRepoImpl
+                .applyInsertBindings(githubUser, statement)
+                .bind("$6", githubAccessToken);
     }
 
     private User convert(final Row row) {

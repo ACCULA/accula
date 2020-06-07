@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS user_github
 (
     id     BIGINT PRIMARY KEY,
     login  VARCHAR(39) UNIQUE    NOT NULL,
-    name   VARCHAR(256)          NOT NULL,
+    name   VARCHAR(256),
     avatar VARCHAR(2000)         NOT NULL,
     is_org BOOLEAN DEFAULT FALSE NOT NULL
 );

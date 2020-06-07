@@ -1,7 +1,9 @@
 package org.accula.api.converter;
 
 import org.accula.api.db.model.Project;
+import org.accula.api.db.model.User;
 import org.accula.api.handlers.dto.ProjectDto;
+import org.accula.api.handlers.dto.UserDto;
 import org.springframework.stereotype.Component;
 
 /**
@@ -27,5 +29,9 @@ public final class ModelToDtoConverter {
                 .creatorId(project.getCreator().getId())
                 .admins(new Long[0])
                 .build();
+    }
+
+    public UserDto convert(final User user) {
+        return new UserDto(user.getId(), user.getGithubUser().getLogin(), user.getGithubUser().getName());
     }
 }

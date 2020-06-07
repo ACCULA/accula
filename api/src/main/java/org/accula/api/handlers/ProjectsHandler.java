@@ -174,6 +174,10 @@ public final class ProjectsHandler {
     }
 
     private Mono<Integer> saveProjectPulls(final Project project, final GithubApiPull[] githubApiPulls) {
+        if (githubApiPulls.length == 0) {
+            return Mono.empty();
+        }
+
         return Mono
                 .defer(() -> {
                     final var users = new HashSet<GithubUser>();
@@ -182,6 +186,10 @@ public final class ProjectsHandler {
                     final var pulls = new HashSet<Pull>();
                     int openPullCount = 0;
 
+                    final var baseRepo = githubToModelConverter.convert(githubApiPulls[0].getBase().getRepo());
+                    users.add(baseRepo.getOwner());
+                    repos.add(baseRepo);
+
                     for (final var githubApiPull : githubApiPulls) {
                         if (!githubApiPull.isValid()) {
                             continue;
@@ -189,8 +197,8 @@ public final class ProjectsHandler {
 
                         final var head = githubApiPull.getHead();
                         final var headRepo = githubToModelConverter.convert(head.getRepo());
-                        repos.add(headRepo);
                         users.add(headRepo.getOwner());
+                        repos.add(headRepo);
                         final var headCommit = new Commit(head.getSha());
                         commits.add(headCommit);
 

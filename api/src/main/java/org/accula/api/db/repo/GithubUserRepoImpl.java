@@ -4,6 +4,7 @@ import io.r2dbc.pool.ConnectionPool;
 import io.r2dbc.postgresql.api.PostgresqlResult;
 import io.r2dbc.postgresql.api.PostgresqlStatement;
 import io.r2dbc.spi.Connection;
+import io.r2dbc.spi.Statement;
 import lombok.RequiredArgsConstructor;
 import org.accula.api.db.model.GithubUser;
 import org.springframework.stereotype.Component;
@@ -26,12 +27,7 @@ public final class GithubUserRepoImpl implements GithubUserRepo {
         return connectionPool
                 .create()
                 .flatMap(connection -> Mono
-                        .from(insertStatement(connection)
-                                .bind("$1", user.getId())
-                                .bind("$2", user.getLogin())
-                                .bind("$3", user.getName())
-                                .bind("$4", user.getAvatar())
-                                .bind("$5", user.isOrganization())
+                        .from(applyInsertBindings(user, insertStatement(connection))
                                 .execute())
                         .flatMap(result -> Mono.from(result.getRowsUpdated()))
                         .filter(Integer.valueOf(1)::equals)
@@ -48,13 +44,7 @@ public final class GithubUserRepoImpl implements GithubUserRepo {
                 .create()
                 .flatMapMany(connection -> {
                     final var statement = insertStatement(connection);
-                    users.forEach(user -> statement
-                            .bind("$1", user.getId())
-                            .bind("$2", user.getLogin())
-                            .bind("$3", user.getName())
-                            .bind("$4", user.getAvatar())
-                            .bind("$5", user.isOrganization())
-                            .add());
+                    users.forEach(user -> applyInsertBindings(user, statement).add());
                     statement.fetchSize(users.size());
 
                     return statement.execute()
@@ -88,7 +78,7 @@ public final class GithubUserRepoImpl implements GithubUserRepo {
                                  "VALUES ($1, $2, $3, $4, $5) " +
                                  "ON CONFLICT (id) DO UPDATE " +
                                  "   SET login = $2," +
-                                 "       name = $3," +
+                                 "       name = COALESCE($3, user_github.name)," +
                                  "       avatar = $4");
         //@formatter:on
     }
@@ -100,5 +90,18 @@ public final class GithubUserRepoImpl implements GithubUserRepo {
                                  "FROM user_github " +
                                  "WHERE id = $1");
         //@formatter:on
+    }
+
+    static Statement applyInsertBindings(final GithubUser user, final Statement statement) {
+        statement.bind("$1", user.getId());
+        statement.bind("$2", user.getLogin());
+        if (user.getName() != null && !user.getName().isBlank()) {
+            statement.bind("$3", user.getName());
+        } else {
+            statement.bindNull("$3", String.class);
+        }
+        statement.bind("$4", user.getAvatar());
+        statement.bind("$5", user.isOrganization());
+        return statement;
     }
 }

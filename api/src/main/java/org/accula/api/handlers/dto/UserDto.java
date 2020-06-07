@@ -3,6 +3,7 @@ package org.accula.api.handlers.dto;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.Value;
+import org.jetbrains.annotations.Nullable;
 
 import static lombok.AccessLevel.PRIVATE;
 
@@ -15,5 +16,6 @@ import static lombok.AccessLevel.PRIVATE;
 public class UserDto {
     Long id;
     String login;
+    @Nullable
     String name;
 }

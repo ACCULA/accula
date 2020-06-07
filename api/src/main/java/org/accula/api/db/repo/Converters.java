@@ -42,7 +42,7 @@ final class Converters {
                                   final String ownerOrganization) {
         return new GithubRepo(
                 value(row, id, Long.class),
-                value(row, name, String.class),
+                row.get(name, String.class),
                 value(row, description, String.class),
                 convertUser(row, ownerId, ownerLogin, ownerName, ownerAvatar, ownerOrganization)
         );
