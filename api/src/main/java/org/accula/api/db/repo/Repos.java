@@ -48,6 +48,14 @@ final class Repos {
         return results.thenMany(closeAndReturn(connection, results));
     }
 
+    static <T> Flux<T> convertMany(final Flux<? extends Result> result, final Connection connection, final Function<Row, T> transform) {
+        final var results = result
+                .flatMap(res -> res
+                        .map((row, metadata) -> transform.apply(row)))
+                .cache();
+        return results.thenMany(closeAndReturn(connection, results));
+    }
+
     static void assertThat(final boolean condition, final String message) {
         if (!condition) {
             throw new IllegalArgumentException(message);

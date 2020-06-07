@@ -40,6 +40,10 @@ public final class GithubUserRepoImpl implements GithubUserRepo {
 
     @Override
     public Flux<GithubUser> upsert(final Collection<GithubUser> users) {
+        if (users.isEmpty()) {
+            return Flux.empty();
+        }
+
         return connectionPool
                 .create()
                 .flatMapMany(connection -> {

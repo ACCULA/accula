@@ -3,37 +3,40 @@ package org.accula.api.github.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.Value;
+import org.jetbrains.annotations.Nullable;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Locale;
 
+import static lombok.AccessLevel.PRIVATE;
+
 /**
  * @author Anton Lamtev
  */
-@Data
-@NoArgsConstructor
+@Value
+@NoArgsConstructor(force = true, access = PRIVATE)
 @AllArgsConstructor
-public final class GithubApiPull {
-    private Long id;
+public class GithubApiPull {
+    Long id;
     @JsonProperty("html_url")
-    private String htmlUrl;
-    private Marker head;
-    private Marker base;
-    private GithubApiUser user;
-    private Long number;
-    private String title;
-    private State state;
+    String htmlUrl;
+    Marker head;
+    Marker base;
+    GithubApiUser user;
+    Long number;
+    String title;
+    State state;
     @JsonProperty("created_at")
-    private Instant createdAt;
+    Instant createdAt;
     @JsonProperty("updated_at")
-    private Instant updatedAt;
+    Instant updatedAt;
 
     public boolean isValid() {
-        return head.repo != null;
+        return head.repo != null && head.user != null && !head.user.didDeleteAccount();
     }
 
     public enum State {
@@ -48,15 +51,18 @@ public final class GithubApiPull {
         }
     }
 
-    @Data
-    @NoArgsConstructor
+    @Value
+    @NoArgsConstructor(force = true, access = PRIVATE)
     @AllArgsConstructor
-    public static final class Marker {
-        private String label;
-        private String ref;
-        private GithubApiUser user;
-        private GithubApiRepo repo;
-        private String sha;
+    public static class Marker {
+        @Nullable
+        String label;
+        String ref;
+        @Nullable
+        GithubApiUser user;
+        @Nullable
+        GithubApiRepo repo;
+        String sha;
 
         public String getTreeUrl() {
             return String.format("%s/tree/%s", repo.getHtmlUrl(), URLEncoder.encode(ref, StandardCharsets.UTF_8));

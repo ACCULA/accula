@@ -1,11 +1,13 @@
 package org.accula.api.db.model;
 
+import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 
 /**
  * @author Anton Lamtev
  */
+@Builder
 @Value
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Project {
@@ -13,5 +15,8 @@ public class Project {
     Long id;
     GithubRepo githubRepo;
     User creator;
-    User[] admins;
+    @Builder.Default
+    User[] admins = new User[0];
+    @Builder.Default
+    Integer openPullCount = 0;
 }

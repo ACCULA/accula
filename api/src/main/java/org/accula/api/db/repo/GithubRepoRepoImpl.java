@@ -39,6 +39,10 @@ public final class GithubRepoRepoImpl implements GithubRepoRepo {
 
     @Override
     public Flux<GithubRepo> upsert(final Collection<GithubRepo> repos) {
+        if (repos.isEmpty()) {
+            return Flux.empty();
+        }
+
         return connectionPool
                 .create()
                 .flatMapMany(connection -> {

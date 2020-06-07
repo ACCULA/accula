@@ -3,7 +3,8 @@ package org.accula.api.handlers;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.accula.api.config.WebhookProperties;
-import org.accula.api.converter.DataConverter;
+import org.accula.api.converter.GithubApiToModelConverter;
+import org.accula.api.converter.ModelToDtoConverter;
 import org.accula.api.db.model.Commit;
 import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.GithubUser;
@@ -37,7 +38,6 @@ import reactor.util.function.Tuples;
 
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Set;
 
 import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.toList;
@@ -61,20 +61,18 @@ public final class ProjectsHandler {
     private final GithubRepoRepo githubRepoRepo;
     private final CommitRepo commitRepo;
     private final PullRepo pullRepo;
-    private final DataConverter converter;
+    private final GithubApiToModelConverter githubToModelConverter;
+    private final ModelToDtoConverter modelToDtoConverter;
     private final Scheduler remoteCallsScheduler = Schedulers.boundedElastic();
     private final Scheduler pullProcessingScheduler = Schedulers.boundedElastic();
 
-    //FIXME: actual open pull count
     public Mono<ServerResponse> getTop(final ServerRequest request) {
         return Mono
                 .just(request.queryParam("count").orElse("5"))
                 .map(Integer::parseInt)
                 .flatMap(count -> ServerResponse
                         .ok()
-                        .body(projectRepo
-                                .getTop(count)
-                                .map(project -> converter.convert(project, 0)), ProjectDto.class))
+                        .body(projectRepo.getTop(count).map(modelToDtoConverter::convert), ProjectDto.class))
                 .doOnSuccess(response -> log.debug("{}: {}", request, response.statusCode()));
     }
 
@@ -83,8 +81,8 @@ public final class ProjectsHandler {
                 .justOrEmpty(request.pathVariable("id"))
                 .map(Long::parseLong)
                 .onErrorMap(e -> e instanceof NumberFormatException, e -> PROJECT_NOT_FOUND_EXCEPTION)
-                .flatMap(projectId -> Mono.zip(projectRepo.findById(projectId), pullRepo.countOpenOnes(projectId)))
-                .map(tuple -> converter.convert(tuple.getT1(), tuple.getT2()))
+                .flatMap(projectRepo::findById)
+                .map(modelToDtoConverter::convert)
                 .switchIfEmpty(Mono.error(PROJECT_NOT_FOUND_EXCEPTION))
                 .flatMap(project -> ServerResponse
                         .ok()
@@ -163,7 +161,7 @@ public final class ProjectsHandler {
             final var githubApiPulls = tuple.getT3();
             final var currentUser = tuple.getT4();
 
-            final var projectGithubRepo = converter.convert(githubApiRepo);
+            final var projectGithubRepo = githubToModelConverter.convert(githubApiRepo);
 
             return githubUserRepo
                     .upsert(projectGithubRepo.getOwner())
@@ -171,31 +169,26 @@ public final class ProjectsHandler {
                     .switchIfEmpty(Mono.error(CreateProjectException.ALREADY_EXISTS))
                     .flatMap(repoOwner -> projectRepo.upsert(projectGithubRepo, currentUser))
                     .flatMap(project -> saveProjectPulls(project, githubApiPulls)
-                            .map(openPullCount -> converter.convert(project, openPullCount)));
+                            .map(openPullCount -> modelToDtoConverter.convert(project, openPullCount)));
         });
     }
 
     private Mono<Integer> saveProjectPulls(final Project project, final GithubApiPull[] githubApiPulls) {
         return Mono
                 .defer(() -> {
-                    Set<GithubUser> users = new HashSet<>();
-                    Set<GithubRepo> repos = new HashSet<>();
-                    Set<Commit> commits = new HashSet<>();
-                    Set<Pull> pulls = new HashSet<>();
-
+                    final var users = new HashSet<GithubUser>();
+                    final var repos = new HashSet<GithubRepo>();
+                    final var commits = new HashSet<Commit>();
+                    final var pulls = new HashSet<Pull>();
                     int openPullCount = 0;
 
                     for (final var githubApiPull : githubApiPulls) {
-                        final var isPullOpen = githubApiPull.getState() == State.OPEN;
-                        if (isPullOpen) {
-                            ++openPullCount;
+                        if (!githubApiPull.isValid()) {
+                            continue;
                         }
 
-                        final var pullAuthor = converter.convert(githubApiPull.getUser());
-                        users.add(pullAuthor);
-
                         final var head = githubApiPull.getHead();
-                        final var headRepo = converter.convert(head.getRepo());
+                        final var headRepo = githubToModelConverter.convert(head.getRepo());
                         repos.add(headRepo);
                         users.add(headRepo.getOwner());
                         final var headCommit = new Commit(head.getSha());
@@ -204,6 +197,10 @@ public final class ProjectsHandler {
                         final var base = githubApiPull.getBase();
                         final var baseCommit = new Commit(base.getSha());
                         commits.add(baseCommit);
+
+                        final var isPullOpen = githubApiPull.getState() == State.OPEN;
+                        final var pullAuthor = githubToModelConverter.convert(githubApiPull.getUser());
+                        users.add(pullAuthor);
 
                         pulls.add(Pull.builder()
                                 .id(githubApiPull.getId())
@@ -217,6 +214,10 @@ public final class ProjectsHandler {
                                 .projectId(project.getId())
                                 .author(pullAuthor)
                                 .build());
+
+                        if (isPullOpen) {
+                            ++openPullCount;
+                        }
                     }
 
                     return githubUserRepo.upsert(users)

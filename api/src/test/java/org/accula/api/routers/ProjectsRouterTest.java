@@ -2,7 +2,7 @@ package org.accula.api.routers;
 
 import lombok.SneakyThrows;
 import org.accula.api.config.WebhookProperties;
-import org.accula.api.converter.DataConverter;
+import org.accula.api.converter.GithubApiToModelConverter;
 import org.accula.api.db.CommitRepository;
 import org.accula.api.db.PullRepository;
 import org.accula.api.db.model.CommitOld;
@@ -44,7 +44,7 @@ import static java.lang.Boolean.TRUE;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 @WebFluxTest
-@ContextConfiguration(classes = {ProjectsHandler.class, ProjectsRouter.class, DataConverter.class})
+@ContextConfiguration(classes = {ProjectsHandler.class, ProjectsRouter.class, GithubApiToModelConverter.class})
 public class ProjectsRouterTest {
     private static final String REPO_URL = "https://github.com/accula/accula";
     private static final String REPO_NAME = "accula";
@@ -86,7 +86,7 @@ public class ProjectsRouterTest {
     @MockBean
     private WebhookProperties webhookProperties;
     @Autowired
-    private DataConverter converter;
+    private GithubApiToModelConverter converter;
     @Autowired
     private RouterFunction<ServerResponse> projectsRoute;
     private WebTestClient client;

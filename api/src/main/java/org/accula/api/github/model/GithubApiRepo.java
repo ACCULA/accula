@@ -2,22 +2,24 @@ package org.accula.api.github.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.Value;
 import org.jetbrains.annotations.Nullable;
+
+import static lombok.AccessLevel.PRIVATE;
 
 /**
  * @author Anton Lamtev
  */
-@Data
-@NoArgsConstructor
+@Value
+@NoArgsConstructor(force = true, access = PRIVATE)
 @AllArgsConstructor
-public final class GithubApiRepo {
-    private Long id;
+public class GithubApiRepo {
+    Long id;
     @JsonProperty("html_url")
-    private String htmlUrl;
-    private String name;
+    String htmlUrl;
+    String name;
     @Nullable
-    private String description;
-    private GithubApiUser owner;
+    String description;
+    GithubApiUser owner;
 }

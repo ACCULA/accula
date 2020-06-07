@@ -37,6 +37,10 @@ public final class PullRepoImpl implements PullRepo {
 
     @Override
     public Flux<Pull> upsert(final Collection<Pull> pulls) {
+        if (pulls.isEmpty()) {
+            return Flux.empty();
+        }
+
         return connectionPool
                 .create()
                 .flatMapMany(connection -> {
@@ -111,8 +115,7 @@ public final class PullRepoImpl implements PullRepo {
                             .add());
                     statement.fetchSize(projectIds.size());
 
-                    return statement.execute()
-                            .flatMap(result -> Repos.column(result, "count", Integer.class, connection));
+                    return Repos.convertMany(statement.execute(), connection, row -> Converters.value(row, "count", Integer.class));
                 });
     }
 

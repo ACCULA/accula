@@ -27,7 +27,6 @@ public final class CommitRepoImpl implements CommitRepo {
                 .create()
                 .flatMap(connection -> Mono
                         .from(insertStatement(connection)
-                                //@formatter:on
                                 .bind("$1", commit.getSha())
                                 .execute())
                         .flatMap(PostgresqlResult::getRowsUpdated)
@@ -37,12 +36,14 @@ public final class CommitRepoImpl implements CommitRepo {
 
     @Override
     public Flux<Commit> upsert(final Collection<Commit> commits) {
+        if (commits.isEmpty()) {
+            return Flux.empty();
+        }
+
         return connectionPool
                 .create()
                 .flatMapMany(connection -> {
-                    //@formatter:off
                     final var statement = insertStatement(connection);
-                    //@formatter:on
                     commits.forEach(commit -> statement
                             .bind("$1", commit.getSha())
                             .add());

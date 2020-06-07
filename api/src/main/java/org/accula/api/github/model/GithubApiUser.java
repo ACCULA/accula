@@ -3,28 +3,35 @@ package org.accula.api.github.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.Value;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
 
+import static lombok.AccessLevel.PRIVATE;
+
 /**
  * @author Anton Lamtev
  */
-@Data
-@NoArgsConstructor
+@Value
+@NoArgsConstructor(force = true, access = PRIVATE)
 @AllArgsConstructor
-public final class GithubApiUser {
-    private Long id;
-    private String login;
+public class GithubApiUser {
+    Long id;
+    String login;
     @JsonProperty("avatar_url")
-    private String avatarUrl;
+    String avatarUrl;
     @JsonProperty("html_url")
-    private String htmlUrl;
+    String htmlUrl;
     @Nullable
-    private String name;
-    private Type type;
+    String name;
+    Type type;
+
+    public boolean didDeleteAccount() {
+        // Github sets the Ghost user instead of any user that deleted its account
+        return "ghost" .equals(login) || Long.valueOf(10137L).equals(id);
+    }
 
     public enum Type {
         USER,

@@ -3,7 +3,7 @@ package org.accula.api.auth.oauth2;
 import lombok.RequiredArgsConstructor;
 import org.accula.api.auth.jwt.JwtAccessTokenResponseProducer;
 import org.accula.api.auth.jwt.crypto.Jwt;
-import org.accula.api.converter.DataConverter;
+import org.accula.api.converter.GithubApiToModelConverter;
 import org.accula.api.db.RefreshTokenRepository;
 import org.accula.api.db.model.RefreshToken;
 import org.accula.api.db.repo.UserRepo;
@@ -40,7 +40,7 @@ public final class OAuth2LoginSuccessHandler implements ServerAuthenticationSucc
     private final ReactiveOAuth2AuthorizedClientService authorizedClientService;
     private final UserRepo userRepo;
     private final RefreshTokenRepository refreshTokens;
-    private final DataConverter converter;
+    private final GithubApiToModelConverter converter;
 
     @Override
     public Mono<Void> onAuthenticationSuccess(final WebFilterExchange exchange, final Authentication authentication) {
