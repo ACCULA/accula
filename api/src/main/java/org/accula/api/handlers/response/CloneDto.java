@@ -6,9 +6,8 @@ import lombok.Value;
 /**
  * @author Anton Lamtev
  */
-//TODO: convert to dto, refactor
 @Value
-public class GetCloneResponseBody implements ResponseBody {
+public class CloneDto {
     Long id;
     FlatCodeSnippet target;
     FlatCodeSnippet source;
@@ -16,8 +15,6 @@ public class GetCloneResponseBody implements ResponseBody {
     @Builder
     @Value
     public static class FlatCodeSnippet {
-        Long projectId;
-        Integer pullNumber;
         String owner;
         String repo;
         String sha;

@@ -1,6 +1,5 @@
 package org.accula.api.code;
 
-import org.accula.api.db.model.CommitOld;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;

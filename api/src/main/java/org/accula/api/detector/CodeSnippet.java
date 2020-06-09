@@ -3,6 +3,9 @@ package org.accula.api.detector;
 import lombok.Value;
 import org.accula.api.db.model.CommitSnapshot;
 
+/**
+ * @author Vadim Dyachkov
+ */
 @Value
 public class CodeSnippet {
     CommitSnapshot commitSnapshot;

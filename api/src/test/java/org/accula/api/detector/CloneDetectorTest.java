@@ -2,7 +2,6 @@ package org.accula.api.detector;
 
 import org.accula.api.code.*;
 import org.accula.api.db.model.Commit;
-import org.accula.api.db.model.CommitOld;
 import org.accula.api.db.model.CommitSnapshot;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
