@@ -17,8 +17,8 @@ import java.util.Objects;
 /**
  * @author Anton Lamtev
  */
-@SuppressWarnings("PMD.ConfusingTernary")
 @Component
+@SuppressWarnings("PMD.ConfusingTernary")
 @RequiredArgsConstructor
 public final class GithubUserRepoImpl implements GithubUserRepo {
     private final ConnectionPool connectionPool;

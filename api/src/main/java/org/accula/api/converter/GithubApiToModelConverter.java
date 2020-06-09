@@ -19,6 +19,7 @@ import java.util.Objects;
  * @author Anton Lamtev
  */
 @Component
+@SuppressWarnings("PMD.ConfusingTernary")
 public final class GithubApiToModelConverter {
     private static final String EMPTY = "";
 

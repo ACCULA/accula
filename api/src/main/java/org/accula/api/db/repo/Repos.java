@@ -55,10 +55,4 @@ final class Repos {
                 .cache();
         return results.thenMany(closeAndReturn(connection, results));
     }
-
-    static void assertThat(final boolean condition, final String message) {
-        if (!condition) {
-            throw new IllegalArgumentException(message);
-        }
-    }
 }
