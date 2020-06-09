@@ -17,6 +17,7 @@ import java.util.Objects;
 /**
  * @author Anton Lamtev
  */
+@SuppressWarnings("PMD.ConfusingTernary")
 @Component
 @RequiredArgsConstructor
 public final class GithubUserRepoImpl implements GithubUserRepo {

@@ -14,6 +14,7 @@ import java.util.Objects;
 /**
  * @author Anton Lamtev
  */
+@SuppressWarnings({"PMD.ConfusingTernary", "PMD.UseObjectForClearerAPI", "PMD.ExcessiveParameterList"})
 final class Converters {
     public static final String NOTHING = "";
 
