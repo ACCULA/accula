@@ -19,6 +19,7 @@ import org.accula.api.github.api.GithubClientException;
 import org.accula.api.github.model.GithubApiPull;
 import org.accula.api.github.model.GithubApiPull.State;
 import org.accula.api.github.model.GithubApiRepo;
+import org.accula.api.github.model.GithubApiCommitSnapshot;
 import org.accula.api.github.model.GithubApiUser;
 import org.accula.api.handlers.ProjectsHandler;
 import org.accula.api.handlers.request.CreateProjectRequestBody;
@@ -60,7 +61,7 @@ public class ProjectsRouterTest {
     private static final User CURRENT_USER = new User(0L, GITHUB_USER, "token");
     private static final GithubApiUser GH_OWNER = new GithubApiUser(1L, REPO_OWNER, EMPTY, EMPTY, EMPTY, GithubApiUser.Type.USER);
     private static final GithubApiRepo GH_REPO = new GithubApiRepo(1L, REPO_URL, REPO_NAME, EMPTY, GH_OWNER);
-    private static final GithubApiPull.Marker MARKER = new GithubApiPull.Marker("", "", GH_REPO, "");
+    private static final GithubApiCommitSnapshot MARKER = new GithubApiCommitSnapshot("", "", GH_REPO, "");
     private static final GithubApiPull PULL = new GithubApiPull(null, MARKER, MARKER, GH_OWNER, 0, "", State.OPEN, Instant.now(), Instant.now());
     private static final GithubApiPull[] OPEN_PULLS = new GithubApiPull[]{PULL, PULL, PULL};
     private static final GithubRepo REPO = new GithubRepo(1L, "name", GITHUB_USER, "description");

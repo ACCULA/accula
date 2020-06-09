@@ -2,28 +2,21 @@ package org.accula.api.handlers;
 
 import lombok.RequiredArgsConstructor;
 import org.accula.api.code.CodeLoader;
-import org.accula.api.code.FileEntity;
 import org.accula.api.code.FileFilter;
 import org.accula.api.db.CloneRepository;
-import org.accula.api.db.CommitRepository;
-import org.accula.api.db.ProjectRepository;
-import org.accula.api.db.PullRepository;
 import org.accula.api.db.model.Clone;
-import org.accula.api.db.model.CommitOld;
-import org.accula.api.db.model.ProjectOld;
-import org.accula.api.db.model.PullOld;
-import org.accula.api.db.repo.CommitRepo;
-import org.accula.api.db.repo.GithubRepoRepo;
-import org.accula.api.db.repo.GithubUserRepo;
+import org.accula.api.db.model.Pull;
+import org.accula.api.db.repo.ProjectRepo;
 import org.accula.api.db.repo.PullRepo;
 import org.accula.api.detector.CloneDetector;
 import org.accula.api.detector.CodeSnippet;
 import org.accula.api.github.model.GithubApiHookPayload;
+import org.accula.api.handlers.util.ProjectUpdater;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 import reactor.util.function.Tuple2;
 
@@ -37,14 +30,10 @@ public final class GithubWebhookHandler {
     private static final String GITHUB_EVENT = "X-GitHub-Event";
     private static final String GITHUB_EVENT_PING = "ping";
 
+    private final Scheduler processingScheduler = Schedulers.boundedElastic();
+    private final ProjectRepo projectRepo;
+    private final ProjectUpdater projectUpdater;
     private final PullRepo pullRepo;
-    private final GithubUserRepo githubUserRepo;
-    private final GithubRepoRepo githubRepoRepo;
-    private final CommitRepo commitRepo;
-
-    private final ProjectRepository projectRepository;
-    private final PullRepository pullRepository;
-    private final CommitRepository commitRepository;
     private final CloneRepository cloneRepository;
     private final CloneDetector detector;
     private final CodeLoader loader;
@@ -61,69 +50,39 @@ public final class GithubWebhookHandler {
     }
 
     public Mono<Void> processPayload(final GithubApiHookPayload payload) {
-        final var projectOwner = payload.getRepo().getOwner().getLogin();
-        final var projectRepo = payload.getRepo().getName();
-        final var number = payload.getPull().getNumber();
-        final var pullOwner = payload.getPull().getHead().getRepo().getOwner().getLogin();
-        final var pullRepo = payload.getPull().getHead().getRepo().getName();
-        final var headSha = payload.getPull().getHead().getSha();
-        final var updatedAt = payload.getPull().getUpdatedAt();
-        final var base = payload.getPull().getBase();
+        final var githubApiPull = payload.getPull();
 
-        // save to commit table & get commit with id
-        final Mono<CommitOld> headCommit = commitRepository
-                .findBySha(headSha)
-                .switchIfEmpty(commitRepository.save(new CommitOld(null, pullOwner, pullRepo, headSha)))
+        final var savedPull = projectRepo
+                .idByRepoId(payload.getRepo().getId())
+                .flatMap(projectId -> projectUpdater.update(projectId, githubApiPull))
                 .cache();
 
-        // update pull table
-        final Mono<Long> projectId = projectRepository
-                .findByRepoOwnerAndRepoName(projectOwner, projectRepo)
-                .map(ProjectOld::getId)
-                .cache();
-        final Mono<PullOld> updatedPull = headCommit.flatMap(head -> projectId
-                .flatMap(id -> pullRepository
-                        .findByProjectIdAndNumber(id, number)
-                        .switchIfEmpty(pullRepository.save(new PullOld(null, id, number, head.getId(), base.getSha(), updatedAt))))
-                .flatMap(pull -> {
-                    pull.setHeadLastCommitId(head.getId());
-                    pull.setBaseLastCommitSha(base.getSha());
-                    pull.setUpdatedAt(updatedAt);
-                    return pullRepository.save(pull);
-                }));
+        final var targetFiles = savedPull
+                .map(Pull::getHead)
+                .flatMapMany(head -> loader.getFiles(head, FileFilter.ALL));
 
-        // get previous commits
-        final Flux<CommitOld> source = commitRepository.findAllById(projectId
-                .flatMapMany(id -> pullRepository.findAllByProjectIdAndUpdatedAtBeforeAndNumberIsNot(id, updatedAt, number))
-                .map(PullOld::getHeadLastCommitId));
+        final var sourceFiles = savedPull
+                .flatMapMany(pull -> pullRepo.findUpdatedEarlierThan(pull.getProjectId(), pull.getNumber()))
+                .map(Pull::getHead)
+                .flatMap(head -> loader.getFiles(head, FileFilter.ALL));
 
-        // get files by commits
-        final Flux<FileEntity> targetFiles = headCommit
-                .flatMapMany(commit -> loader.getFiles(commit, FileFilter.ALL));
-        final Flux<FileEntity> sourceFiles = source
-                .flatMap(commit -> loader.getFiles(commit, FileFilter.ALL));
-
-        // find clones & save to db
-        final Flux<Clone> clones = detector
+        final var clones = detector
                 .findClones(targetFiles, sourceFiles)
-                .map(this::convert);
-        final Mono<Void> savedClones = cloneRepository
-                .saveAll(clones)
-                .then();
+                .map(this::convert)
+                .subscribeOn(processingScheduler);
 
-        return Mono.when(updatedPull, savedClones)
-                .subscribeOn(Schedulers.boundedElastic());
+        return cloneRepository.saveAll(clones).then();
     }
 
     private Clone convert(final Tuple2<CodeSnippet, CodeSnippet> clone) {
         final CodeSnippet target = clone.getT1();
         final CodeSnippet source = clone.getT2();
         return Clone.builder()
-                .targetCommitId(target.getCommit().getId())
+                .targetCommitSha(target.getCommitSnapshot().getCommit().getSha())
                 .targetFile(target.getFile())
                 .targetFromLine(target.getFromLine())
                 .targetToLine(target.getToLine())
-                .sourceCommitId(source.getCommit().getId())
+                .sourceCommitSha(source.getCommitSnapshot().getCommit().getSha())
                 .sourceFile(source.getFile())
                 .sourceFromLine(source.getFromLine())
                 .sourceToLine(source.getToLine())

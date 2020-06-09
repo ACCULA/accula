@@ -33,7 +33,7 @@ final class Repos {
                 .map(((row, metadata) -> Objects.requireNonNull(row.get(name, clazz)))));
     }
 
-    static <T> Mono<T> column(final Result result, final String name, final Class<T> clazz, final Connection connection) {
+    static <T> Mono<T> closeAndGet(final Connection connection, final Result result, final String name, final Class<T> clazz) {
         return column(result, name, clazz)
                 .flatMap(column -> closeAndReturn(connection, column));
     }

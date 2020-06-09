@@ -158,7 +158,7 @@ public final class ProjectsHandler {
                     .filterWhen(repoOwner -> projectRepo.notExists(projectGithubRepo.getId()))
                     .switchIfEmpty(Mono.error(CreateProjectException.ALREADY_EXISTS))
                     .flatMap(repoOwner -> projectRepo.upsert(projectGithubRepo, currentUser))
-                    .flatMap(project -> projectUpdater.update(project, githubApiPulls)
+                    .flatMap(project -> projectUpdater.update(project.getId(), githubApiPulls)
                             .map(openPullCount -> modelToDtoConverter.convert(project, openPullCount)));
         });
     }

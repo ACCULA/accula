@@ -2,9 +2,9 @@ package org.accula.api.db.repo;
 
 import io.r2dbc.spi.Row;
 import org.accula.api.db.model.Commit;
+import org.accula.api.db.model.CommitSnapshot;
 import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.GithubUser;
-import org.accula.api.db.model.Pull;
 import org.accula.api.db.model.User;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,18 +49,18 @@ final class Converters {
         );
     }
 
-    static Pull.Marker convertPullMarker(final Row row,
-                                         final String sha,
-                                         final String branch,
-                                         final String repoId,
-                                         final String repoName,
-                                         final String repoDescription,
-                                         final String repoOwnerId,
-                                         final String repoOwnerLogin,
-                                         final String repoOwnerName,
-                                         final String repoOwnerAvatar,
-                                         final String repoOwnerOrganization) {
-        return new Pull.Marker(
+    static CommitSnapshot convertCommitSnapshot(final Row row,
+                                                final String sha,
+                                                final String branch,
+                                                final String repoId,
+                                                final String repoName,
+                                                final String repoDescription,
+                                                final String repoOwnerId,
+                                                final String repoOwnerLogin,
+                                                final String repoOwnerName,
+                                                final String repoOwnerAvatar,
+                                                final String repoOwnerOrganization) {
+        return new CommitSnapshot(
                 convertCommit(row, sha),
                 value(row, branch, String.class),
                 convertRepo(row,

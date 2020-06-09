@@ -1,19 +1,19 @@
 package org.accula.api.code;
 
 import lombok.Value;
-import org.accula.api.db.model.CommitOld;
+import org.accula.api.db.model.CommitSnapshot;
 
 /**
  * @author Vadim Dyachkov
  */
 @Value
 public class FileEntity {
-    CommitOld commit;
+    CommitSnapshot commitSnapshot;
     String name;
     String content;
 
     @Override
     public String toString() {
-        return commit.toString() + ":" + name;
+        return commitSnapshot.toString() + ":" + name;
     }
 }

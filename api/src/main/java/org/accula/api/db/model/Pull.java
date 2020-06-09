@@ -17,15 +17,8 @@ public class Pull {
     boolean open;
     Instant createdAt;
     Instant updatedAt;
-    Marker head;
-    Marker base;
+    CommitSnapshot head;
+    CommitSnapshot base;
     GithubUser author;
     Long projectId;
-
-    @Value
-    public static class Marker {
-        Commit commit;
-        String branch;
-        GithubRepo repo;
-    }
 }

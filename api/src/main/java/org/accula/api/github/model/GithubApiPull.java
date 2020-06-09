@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.Value;
-import org.jetbrains.annotations.Nullable;
 
 import java.time.Instant;
 import java.util.Locale;
@@ -22,8 +21,8 @@ public class GithubApiPull {
     Long id;
     @JsonProperty("html_url")
     String htmlUrl;
-    Marker head;
-    Marker base;
+    GithubApiCommitSnapshot head;
+    GithubApiCommitSnapshot base;
     GithubApiUser user;
     Integer number;
     String title;
@@ -34,7 +33,7 @@ public class GithubApiPull {
     Instant updatedAt;
 
     public boolean isValid() {
-        return head.repo != null && head.user != null && !head.user.didDeleteAccount();
+        return head.getRepo() != null && head.getUser() != null && !head.getUser().didDeleteAccount();
     }
 
     public enum State {
@@ -47,19 +46,5 @@ public class GithubApiPull {
         public String value() {
             return name().toLowerCase(Locale.US);
         }
-    }
-
-    @Value
-    @NoArgsConstructor(force = true, access = PRIVATE)
-    @AllArgsConstructor
-    public static class Marker {
-        @Nullable
-        String label;
-        String ref;
-        @Nullable
-        GithubApiUser user;
-        @Nullable
-        GithubApiRepo repo;
-        String sha;
     }
 }

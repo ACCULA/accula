@@ -19,6 +19,8 @@ public interface ProjectRepo {
 
     Mono<Project> findById(Long id);
 
+    Mono<Long> idByRepoId(Long repoId);
+
     Flux<Project> getTop(int count);
 
     Mono<Boolean> delete(Long id, Long creatorId);

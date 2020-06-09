@@ -14,12 +14,14 @@ public class Clone {
     @Id
     @Nullable
     private Long id;
-    private Long targetCommitId;
+    private String targetCommitSha;
     private String targetFile;
     private Integer targetFromLine;
     private Integer targetToLine;
-    private Long sourceCommitId;
+    private String sourceCommitSha;
     private String sourceFile;
     private Integer sourceFromLine;
     private Integer sourceToLine;
+    @Builder.Default
+    private Boolean suppressed = Boolean.FALSE;
 }

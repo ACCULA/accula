@@ -4,10 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.accula.api.code.CodeLoader;
 import org.accula.api.code.FileEntity;
 import org.accula.api.code.FileFilter;
-import org.accula.api.db.CommitRepository;
-import org.accula.api.db.ProjectRepository;
-import org.accula.api.db.PullRepository;
-import org.accula.api.db.model.CommitOld;
+import org.accula.api.db.model.Pull;
+import org.accula.api.db.repo.PullRepo;
 import org.accula.api.handlers.response.GetDiffResponseBody;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Component;
@@ -32,9 +30,7 @@ public final class DiffHandler {
 
     private static final Base64.Encoder base64 = Base64.getEncoder(); // NOPMD
 
-    private final ProjectRepository projectRepository;
-    private final CommitRepository commitRepo;
-    private final PullRepository pullRepository;
+    private final PullRepo pullRepo;
     private final CodeLoader codeLoader;
 
     public Mono<ServerResponse> getDiff(final ServerRequest request) {
@@ -49,16 +45,11 @@ public final class DiffHandler {
     }
 
     private Mono<ServerResponse> getDiff(final long projectId, final int pullNumber) {
-        final var pullMono = pullRepository
-                .findByProjectIdAndNumber(projectId, pullNumber)
+        final var pullMono = pullRepo
+                .findByNumber(projectId, pullNumber)
                 .cache();
-        final var base = pullMono.flatMap(pull -> projectRepository
-                .findById(projectId)
-                .map(project -> new CommitOld(-1L, project.getRepoOwner(), project.getRepoName(), pull.getBaseLastCommitSha())));
-
-        final var head = pullMono
-                .map(pull -> Mono.justOrEmpty(pull.getHeadLastCommitId()))
-                .flatMap(commitRepo::findById);
+        final var base = pullMono.map(Pull::getBase);
+        final var head = pullMono.map(Pull::getHead);
 
         return Mono.zip(base, head)
                 .flatMapMany(baseHead -> codeLoader.getDiff(baseHead.getT1(), baseHead.getT2(), FileFilter.JAVA))

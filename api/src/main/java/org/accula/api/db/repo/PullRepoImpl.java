@@ -66,6 +66,7 @@ public final class PullRepoImpl implements PullRepo {
                         .flatMap(result -> Repos.convert(result, connection, this::convert)));
     }
 
+    //FIXME: will not work
     @Override
     public Flux<Pull> findById(final Collection<Long> ids) {
         return connectionPool
@@ -95,6 +96,18 @@ public final class PullRepoImpl implements PullRepo {
     }
 
     @Override
+    public Flux<Pull> findUpdatedEarlierThan(final Long projectId, final Integer number) {
+        return connectionPool
+                .create()
+                .flatMapMany(connection -> Mono
+                        .from(selectUpdatedEarlierStatement(connection)
+                                .bind("$1", projectId)
+                                .bind("$2", number)
+                                .execute())
+                        .flatMapMany(result -> Repos.convertMany(result, connection, this::convert)));
+    }
+
+    @Override
     public Flux<Pull> findByProjectId(final Long projectId) {
         return connectionPool
                 .create()
@@ -114,22 +127,19 @@ public final class PullRepoImpl implements PullRepo {
                                  "                  open," +
                                  "                  created_at," +
                                  "                  updated_at," +
-                                 "                  head_last_commit_sha," +
-                                 "                  head_branch," +
-                                 "                  head_repo_id," +
-                                 "                  base_last_commit_sha," +
-                                 "                  base_branch," +
-                                 "                  base_repo_id, " +
+                                 "                  head_commit_snapshot_sha," +
+                                 "                  head_commit_snapshot_repo_id," +
+                                 "                  base_commit_snapshot_sha," +
+                                 "                  base_commit_snapshot_repo_id," +
                                  "                  project_id," +
                                  "                  author_github_id) " +
-                                 "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) " +
+                                 "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) " +
                                  "ON CONFLICT (id) DO UPDATE " +
                                  "   SET title = $3," +
                                  "       open = $4," +
                                  "       updated_at = $6," +
-                                 "       head_last_commit_sha = $7," +
-                                 "       base_last_commit_sha = $10," +
-                                 "       base_branch = $11");
+                                 "       head_commit_snapshot_sha = $7," +
+                                 "       base_commit_snapshot_sha = $9");
         //@formatter:on
     }
 
@@ -142,13 +152,11 @@ public final class PullRepoImpl implements PullRepo {
                 .bind("$5", pull.getCreatedAt())
                 .bind("$6", pull.getUpdatedAt())
                 .bind("$7", pull.getHead().getCommit().getSha())
-                .bind("$8", pull.getHead().getBranch())
-                .bind("$9", pull.getHead().getRepo().getId())
-                .bind("$10", pull.getBase().getCommit().getSha())
-                .bind("$11", pull.getBase().getBranch())
-                .bind("$12", pull.getBase().getRepo().getId())
-                .bind("$13", pull.getProjectId())
-                .bind("$14", pull.getAuthor().getId());
+                .bind("$8", pull.getHead().getRepo().getId())
+                .bind("$9", pull.getBase().getCommit().getSha())
+                .bind("$10", pull.getBase().getRepo().getId())
+                .bind("$11", pull.getProjectId())
+                .bind("$12", pull.getAuthor().getId());
     }
 
     private static PostgresqlStatement selectByIdStatement(final Connection connection) {
@@ -163,48 +171,63 @@ public final class PullRepoImpl implements PullRepo {
         return selectStatement(connection, "WHERE pull.project_id = $1 AND pull.number = $2");
     }
 
+    private static PostgresqlStatement selectUpdatedEarlierStatement(final Connection connection) {
+        //@formatter:off
+        return selectStatement(connection,
+                "WHERE pull.project_id = $1 AND " +
+                "      pull.number != $2 AND " +
+                "      pull.updated_at <= (SELECT updated_at" +
+                "                          FROM pull " +
+                "                          WHERE project_id = $1 AND number = $2)");
+        //@formatter:on
+    }
+
     private static PostgresqlStatement selectStatement(final Connection connection, final String whereClause) {
         //@formatter:off
         @Language("SQL")
-        final var sql = "SELECT pull.id                   AS id," +
-                        "       pull.number               AS number," +
-                        "       pull.title                AS title," +
-                        "       pull.open                 AS open," +
-                        "       pull.created_at           AS created_at," +
-                        "       pull.updated_at           AS updated_at," +
-                        "       pull.project_id           AS project_id," +
-                        "       pull.head_last_commit_sha AS head_last_commit_sha," +
-                        "       pull.head_branch          AS head_branch," +
-                        "       head_repo.id              AS head_repo_id," +
-                        "       head_repo.name            AS head_repo_name," +
-                        "       head_repo.description     AS head_repo_description," +
-                        "       head_repo_owner.id        AS head_repo_owner_id," +
-                        "       head_repo_owner.login     AS head_repo_owner_login," +
-                        "       head_repo_owner.name      AS head_repo_owner_name," +
-                        "       head_repo_owner.avatar    AS head_repo_owner_avatar," +
-                        "       head_repo_owner.is_org    AS head_repo_owner_is_org," +
-                        "       pull.base_last_commit_sha AS base_last_commit_sha," +
-                        "       pull.base_branch          AS base_branch," +
-                        "       base_repo.id              AS base_repo_id," +
-                        "       base_repo.name            AS base_repo_name," +
-                        "       base_repo.description     AS base_repo_description," +
-                        "       base_repo_owner.id        AS base_repo_owner_id," +
-                        "       base_repo_owner.login     AS base_repo_owner_login," +
-                        "       base_repo_owner.name      AS base_repo_owner_name," +
-                        "       base_repo_owner.avatar    AS base_repo_owner_avatar," +
-                        "       base_repo_owner.is_org    AS base_repo_owner_is_org," +
-                        "       author.id                 AS author_id," +
-                        "       author.login              AS author_login," +
-                        "       author.name               AS author_name," +
-                        "       author.avatar             AS author_avatar," +
-                        "       author.is_org             AS author_is_org " +
+        final var sql = "SELECT pull.id                AS id," +
+                        "       pull.number            AS number," +
+                        "       pull.title             AS title," +
+                        "       pull.open              AS open," +
+                        "       pull.created_at        AS created_at," +
+                        "       pull.updated_at        AS updated_at," +
+                        "       pull.project_id        AS project_id," +
+                        "       head_snap.sha          AS head_snap_sha," +
+                        "       head_snap.branch       AS head_snap_branch," +
+                        "       head_repo.id           AS head_repo_id," +
+                        "       head_repo.name         AS head_repo_name," +
+                        "       head_repo.description  AS head_repo_description," +
+                        "       head_repo_owner.id     AS head_repo_owner_id," +
+                        "       head_repo_owner.login  AS head_repo_owner_login," +
+                        "       head_repo_owner.name   AS head_repo_owner_name," +
+                        "       head_repo_owner.avatar AS head_repo_owner_avatar," +
+                        "       head_repo_owner.is_org AS head_repo_owner_is_org," +
+                        "       base_snap.sha          AS base_snap_sha," +
+                        "       base_snap.branch       AS base_snap_branch," +
+                        "       base_repo.id           AS base_repo_id," +
+                        "       base_repo.name         AS base_repo_name," +
+                        "       base_repo.description  AS base_repo_description," +
+                        "       base_repo_owner.id     AS base_repo_owner_id," +
+                        "       base_repo_owner.login  AS base_repo_owner_login," +
+                        "       base_repo_owner.name   AS base_repo_owner_name," +
+                        "       base_repo_owner.avatar AS base_repo_owner_avatar," +
+                        "       base_repo_owner.is_org AS base_repo_owner_is_org," +
+                        "       author.id              AS author_id," +
+                        "       author.login           AS author_login," +
+                        "       author.name            AS author_name," +
+                        "       author.avatar          AS author_avatar," +
+                        "       author.is_org          AS author_is_org " +
                         "FROM pull" +
+                        "   JOIN commit_snapshot head_snap" +
+                        "       ON pull.head_commit_snapshot_sha = head_snap.sha " +
                         "   JOIN repo_github base_repo" +
-                        "       ON pull.base_repo_id = base_repo.id" +
+                        "       ON pull.base_commit_snapshot_repo_id = base_repo.id" +
                         "   JOIN user_github base_repo_owner" +
                         "       ON base_repo.owner_id = base_repo_owner.id" +
+                        "   JOIN commit_snapshot base_snap" +
+                        "       ON pull.base_commit_snapshot_sha = base_snap.sha" +
                         "   JOIN repo_github head_repo" +
-                        "       ON pull.head_repo_id = head_repo.id" +
+                        "       ON pull.head_commit_snapshot_repo_id = head_repo.id" +
                         "   JOIN user_github head_repo_owner" +
                         "       ON head_repo.owner_id = head_repo_owner.id" +
                         "   JOIN user_github author" +
@@ -221,9 +244,9 @@ public final class PullRepoImpl implements PullRepo {
                 .open(Converters.value(row, "open", Boolean.class))
                 .createdAt(Converters.value(row, "created_at", Instant.class))
                 .updatedAt(Converters.value(row, "updated_at", Instant.class))
-                .head(Converters.convertPullMarker(row,
-                        "head_last_commit_sha",
-                        "head_branch",
+                .head(Converters.convertCommitSnapshot(row,
+                        "head_snap_sha",
+                        "head_snap_branch",
                         "head_repo_id",
                         "head_repo_name",
                         "head_repo_description",
@@ -232,9 +255,9 @@ public final class PullRepoImpl implements PullRepo {
                         "head_repo_owner_name",
                         "head_repo_owner_avatar",
                         "head_repo_owner_is_org"))
-                .base(Converters.convertPullMarker(row,
-                        "base_last_commit_sha",
-                        "base_branch",
+                .base(Converters.convertCommitSnapshot(row,
+                        "base_snap_sha",
+                        "base_snap_branch",
                         "base_repo_id",
                         "base_repo_name",
                         "base_repo_description",

@@ -30,7 +30,7 @@ public final class ProjectRepoImpl implements ProjectRepo {
                         .createStatement("SELECT NOT exists(SELECT 0 FROM project WHERE github_repo_id = $1) AS not_exists")
                         .bind("$1", githubRepoId)
                         .execute())
-                        .flatMap(result -> Repos.column(result, "not_exists", Boolean.class, connection)));
+                        .flatMap(result -> Repos.closeAndGet(connection, result, "not_exists", Boolean.class)));
     }
 
     @Override
@@ -62,12 +62,13 @@ public final class ProjectRepoImpl implements ProjectRepo {
                                 .bind("$4", githubRepo.getDescription())
                                 .bind("$5", creator.getId())
                                 .execute())
-                        .flatMap(result -> Repos.convert(result, connection, row -> Project.builder()
-                                .id(Converters.value(row, "id", Long.class))
-                                .githubRepo(githubRepo)
-                                .creator(creator)
-                                .build()
-                        )));
+                        .flatMap(result -> Repos
+                                .convert(result, connection, row -> Project.builder()
+                                        .id(Converters.value(row, "id", Long.class))
+                                        .githubRepo(githubRepo)
+                                        .creator(creator)
+                                        .build()
+                                )));
     }
 
     @Override
@@ -82,6 +83,22 @@ public final class ProjectRepoImpl implements ProjectRepo {
     }
 
     @Override
+    public Mono<Long> idByRepoId(final Long repoId) {
+        return connectionPool
+                .create()
+                .flatMap(connection -> Mono
+                        .from(connection
+                                //@formatter:off
+                                .createStatement("SELECT id " +
+                                                 "FROM project" +
+                                                 " WHERE github_repo_id = $1")
+                                //@formatter:on
+                                .bind("$1", repoId)
+                                .execute())
+                        .flatMap(result -> Repos.closeAndGet(connection, result, "id", Long.class)));
+    }
+
+    @Override
     public Flux<Project> getTop(final int count) {
         return connectionPool
                 .create()
@@ -89,8 +106,7 @@ public final class ProjectRepoImpl implements ProjectRepo {
                         .from(selectTopStatement(connection)
                                 .bind("$1", count)
                                 .execute())
-                        .flatMapMany(result -> Repos.convertMany(result, connection, this::convert)))
-                .map(it -> it);
+                        .flatMapMany(result -> Repos.convertMany(result, connection, this::convert)));
     }
 
     @Override

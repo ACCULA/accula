@@ -1,7 +1,9 @@
 package org.accula.api.detector;
 
 import org.accula.api.code.*;
+import org.accula.api.db.model.Commit;
 import org.accula.api.db.model.CommitOld;
+import org.accula.api.db.model.CommitSnapshot;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import reactor.core.publisher.Flux;
@@ -29,6 +31,7 @@ class CloneDetectorTest {
 
         // target file
         CommitOld commit = new CommitOld(0L, "owner", "repo", "sha");
+        CommitSnapshot commitSnapshot = new CommitSnapshot(new Commit("sha"), "branch", )
         FileEntity target1 = new FileEntity(commit, "01.txt", "4\n6\n7\n8\n9\n\n\n");
         FileEntity target2 = new FileEntity(commit, "02.txt", "10\n11\n1\n2\n");
 
@@ -69,7 +72,7 @@ class CloneDetectorTest {
     private void printClone(CodeLoader codeLoader, Tuple2<CodeSnippet, CodeSnippet> clone) {
         CodeSnippet into = clone.getT1();
         CodeSnippet from = clone.getT2();
-        FileEntity fromCode = codeLoader.getFileSnippet(from.getCommit(), from.getFile(), from.getFromLine(), from.getToLine()).block();
+        FileEntity fromCode = codeLoader.getFileSnippet(from.getCommitSnapshot(), from.getFile(), from.getFromLine(), from.getToLine()).block();
         assertNotNull(fromCode);
         System.out.println(into + " -> " + from);
         System.out.println(fromCode.getContent());

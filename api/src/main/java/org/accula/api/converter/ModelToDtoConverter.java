@@ -4,6 +4,7 @@ import com.nimbusds.jose.util.StandardCharset;
 import org.accula.api.db.model.GithubUser;
 import org.accula.api.db.model.Project;
 import org.accula.api.db.model.Pull;
+import org.accula.api.db.model.CommitSnapshot;
 import org.accula.api.db.model.User;
 import org.accula.api.handlers.dto.GithubUserDto;
 import org.accula.api.handlers.dto.ProjectDto;
@@ -62,15 +63,15 @@ public final class ModelToDtoConverter {
                 .build();
     }
 
-    public PullDto.Marker convert(final Pull.Marker marker) {
+    public PullDto.Marker convert(final CommitSnapshot snapshot) {
         return new PullDto.Marker(
                 String.format(
                         GITHUB_REPO_URL_FORMAT + "/tree/%s",
-                        marker.getRepo().getOwner().getLogin(),
-                        marker.getRepo().getName(),
-                        URLEncoder.encode(marker.getBranch(), StandardCharset.UTF_8)
+                        snapshot.getRepo().getOwner().getLogin(),
+                        snapshot.getRepo().getName(),
+                        URLEncoder.encode(snapshot.getBranch(), StandardCharset.UTF_8)
                 ),
-                String.format("%s:%s", marker.getRepo().getOwner().getLogin(), marker.getBranch())
+                String.format("%s:%s", snapshot.getRepo().getOwner().getLogin(), snapshot.getBranch())
         );
     }
 

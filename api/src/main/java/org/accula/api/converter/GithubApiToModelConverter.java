@@ -1,13 +1,19 @@
 package org.accula.api.converter;
 
+import org.accula.api.db.model.Commit;
+import org.accula.api.db.model.CommitSnapshot;
 import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.GithubUser;
+import org.accula.api.db.model.Pull;
+import org.accula.api.github.model.GithubApiCommitSnapshot;
+import org.accula.api.github.model.GithubApiPull;
 import org.accula.api.github.model.GithubApiRepo;
 import org.accula.api.github.model.GithubApiUser;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author Anton Lamtev
@@ -41,6 +47,29 @@ public final class GithubApiToModelConverter {
         final var name = (String) attributes.get("name");
         final var avatar = (String) attributes.get("avatar_url");
         return new GithubUser(id, login, name, avatar, false);
+    }
+
+    public CommitSnapshot convert(final GithubApiCommitSnapshot snapshot) {
+        return new CommitSnapshot(
+                new Commit(snapshot.getSha()),
+                snapshot.getRef(),
+                convert(Objects.requireNonNull(snapshot.getRepo()))
+        );
+    }
+
+    public Pull convert(final GithubApiPull pull, final Long projectId) {
+        return Pull.builder()
+                .id(pull.getId())
+                .number(pull.getNumber())
+                .title(pull.getTitle())
+                .open(pull.getState() == GithubApiPull.State.OPEN)
+                .createdAt(pull.getCreatedAt())
+                .updatedAt(pull.getUpdatedAt())
+                .head(convert(pull.getHead()))
+                .base(convert(pull.getBase()))
+                .author(convert(pull.getUser()))
+                .projectId(projectId)
+                .build();
     }
 
     private static String orEmpty(@Nullable final String s) {

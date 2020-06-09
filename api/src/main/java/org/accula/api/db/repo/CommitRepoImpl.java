@@ -66,6 +66,7 @@ public final class CommitRepoImpl implements CommitRepo {
                         .flatMap(result -> Repos.convert(result, connection, this::convert)));
     }
 
+    //FIXME: will not work
     @Override
     public Flux<Commit> findBySha(final Collection<String> shas) {
         return connectionPool

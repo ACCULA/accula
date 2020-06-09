@@ -20,5 +20,7 @@ public interface PullRepo {
 
     Mono<Pull> findByNumber(Long projectId, Integer number);
 
+    Flux<Pull> findUpdatedEarlierThan(Long projectId, Integer number);
+
     Flux<Pull> findByProjectId(Long projectId);
 }

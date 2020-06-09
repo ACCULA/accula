@@ -9,5 +9,5 @@ import reactor.core.publisher.Flux;
  * @author Anton Lamtev
  */
 public interface CloneRepository extends ReactiveCrudRepository<Clone, Long> {
-    Flux<Clone> findAllByTargetCommitId(Long targetCommitId);
+    Flux<Clone> findAllByTargetCommitSha(String targetCommitSha);
 }

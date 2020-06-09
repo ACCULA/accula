@@ -3,7 +3,7 @@ package org.accula.api.code;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.accula.api.db.model.CommitOld;
+import org.accula.api.db.model.CommitSnapshot;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.errors.MissingObjectException;
@@ -53,60 +53,64 @@ public class CodeLoaderImpl implements CodeLoader {
     private final RepositoryProvider repositoryProvider;
 
     @Override
-    public Flux<FileEntity> getFiles(final CommitOld commit) {
-        return getFiles(commit, FileFilter.ALL);
+    public Flux<FileEntity> getFiles(final CommitSnapshot snapshot) {
+        return getFiles(snapshot, FileFilter.ALL);
     }
 
     @Override
-    public Flux<FileEntity> getFiles(final CommitOld commit, final FileFilter filter) {
-        return getRepository(commit)
+    public Flux<FileEntity> getFiles(final CommitSnapshot snapshot, final FileFilter filter) {
+        return getRepository(snapshot)
                 .switchIfEmpty(Mono.error(REPO_NOT_FOUND))
-                .flatMapMany(repo -> Flux.fromIterable(getObjectLoaders(repo, commit.getSha())))
+                .flatMapMany(repo -> Flux.fromIterable(getObjectLoaders(repo, snapshot.getCommit().getSha())))
                 .filter(filenameAndLoader -> filter.test(filenameAndLoader.getT1()))
-                .map(filenameAndLoader -> new FileEntity(commit, filenameAndLoader.getT1(), getFileContent(filenameAndLoader.getT2())))
+                .map(filenameAndLoader -> new FileEntity(snapshot, filenameAndLoader.getT1(), getFileContent(filenameAndLoader.getT2())))
                 .switchIfEmpty(Mono.error(CUT_ERROR))
+                .onErrorResume(e -> e instanceof MissingObjectException, e -> {
+                    log.info("Most probably branch with the commit {} has been deleted: {}", snapshot.toString(), e);
+                    return Flux.empty();
+                })
                 .subscribeOn(scheduler);
     }
 
     @Override
-    public Mono<FileEntity> getFile(final CommitOld commit, final String filename) {
-        return getRepository(commit)
+    public Mono<FileEntity> getFile(final CommitSnapshot snapshot, final String filename) {
+        return getRepository(snapshot)
                 .switchIfEmpty(Mono.error(REPO_NOT_FOUND))
-                .flatMap(repo -> Mono.justOrEmpty(getObjectLoader(repo, commit.getSha(), filename)))
+                .flatMap(repo -> Mono.justOrEmpty(getObjectLoader(repo, snapshot.getCommit().getSha(), filename)))
                 .switchIfEmpty(Mono.error(FILE_NOT_FOUND))
-                .map(loader -> new FileEntity(commit, filename, getFileContent(loader)))
+                .map(loader -> new FileEntity(snapshot, filename, getFileContent(loader)))
                 .switchIfEmpty(Mono.error(CUT_ERROR))
-                .doOnSuccess(f -> log.info("Finished {}/{}", f.getCommit(), f.getName()))
+                .doOnSuccess(f -> log.info("Finished {}/{}", f.getCommitSnapshot(), f.getName()))
                 .subscribeOn(scheduler);
     }
 
     @Override
-    public Mono<FileEntity> getFileSnippet(final CommitOld commit, final String filename, final int fromLine, final int toLine) {
+    public Mono<FileEntity> getFileSnippet(final CommitSnapshot snapshot, final String filename, final int fromLine, final int toLine) {
         if (fromLine > toLine) {
             return Mono.error(RANGE_ERROR);
         }
-        return getRepository(commit)
+        return getRepository(snapshot)
                 .switchIfEmpty(Mono.error(REPO_NOT_FOUND))
-                .flatMap(repo -> Mono.justOrEmpty(getObjectLoader(repo, commit.getSha(), filename)))
+                .flatMap(repo -> Mono.justOrEmpty(getObjectLoader(repo, snapshot.getCommit().getSha(), filename)))
                 .switchIfEmpty(Mono.error(FILE_NOT_FOUND))
-                .map(loader -> new FileEntity(commit, filename, cutFileContent(loader, fromLine, toLine)))
-                .doOnSuccess(f -> log.debug("Loaded file entity: {}/{}", f.getCommit(), f.getName()))
+                .map(loader -> new FileEntity(snapshot, filename, cutFileContent(loader, fromLine, toLine)))
+                .doOnSuccess(f -> log.debug("Loaded file entity: {}/{}", f.getCommitSnapshot(), f.getName()))
                 .switchIfEmpty(Mono.error(CUT_ERROR));
     }
 
-    public Flux<Tuple2<FileEntity, FileEntity>> getDiff(final CommitOld base, final CommitOld head) {
+    public Flux<Tuple2<FileEntity, FileEntity>> getDiff(final CommitSnapshot base, final CommitSnapshot head) {
         return getDiff(base, head, FileFilter.ALL);
     }
 
     @Override
-    public Flux<Tuple2<FileEntity, FileEntity>> getDiff(final CommitOld base, final CommitOld head, final FileFilter filter) {
+    public Flux<Tuple2<FileEntity, FileEntity>> getDiff(final CommitSnapshot base, final CommitSnapshot head, final FileFilter filter) {
         final Mono<AbstractTreeIterator> baseTree = getRepository(base)
-                .map(repo -> getTreeIterator(repo, base.getSha()))
+                .map(repo -> getTreeIterator(repo, base.getCommit().getSha()))
                 .doOnError(e -> log.error("Cannot get tree iterator for base {}: {}", base, e.getMessage()));
 
         final Mono<Repository> headRepo = getRepository(head).cache();
         final Mono<AbstractTreeIterator> headTree = headRepo
-                .map(repo -> getTreeIterator(repo, head.getSha()))
+                .map(repo -> getTreeIterator(repo, head.getCommit().getSha()))
                 .doOnError(e -> log.error("Cannot get tree iterator for head {}: {}", head, e.getMessage()));
 
         return Mono.zip(headRepo, baseTree, headTree)
@@ -125,8 +129,8 @@ public class CodeLoaderImpl implements CodeLoader {
                 .onErrorResume(MissingObjectException.class, e -> Flux.empty());
     }
 
-    private Mono<Repository> getRepository(final CommitOld commit) {
-        return repositoryProvider.getRepository(commit.getOwner(), commit.getRepo());
+    private Mono<Repository> getRepository(final CommitSnapshot snapshot) {
+        return repositoryProvider.getRepository(snapshot.getRepo().getOwner().getLogin(), snapshot.getRepo().getName());
     }
 
     @SneakyThrows
@@ -151,11 +155,11 @@ public class CodeLoaderImpl implements CodeLoader {
         return tree;
     }
 
-    private Mono<FileEntity> getFileNullable(final CommitOld commit, final String filename) {
+    private Mono<FileEntity> getFileNullable(final CommitSnapshot snapshot, final String filename) {
         if (DELETED_FILE.equals(filename)) {
-            return Mono.just(new FileEntity(commit, null, null));
+            return Mono.just(new FileEntity(snapshot, null, null));
         }
-        return getFile(commit, filename);
+        return getFile(snapshot, filename);
     }
 
     @SneakyThrows
