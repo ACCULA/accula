@@ -19,8 +19,8 @@ const ProjectsRoutes = ({ auth }: ProjectsRoutesProps) => {
   return (
     <Switch>
       <Route path="/projects" exact component={Projects} />
-      <PrivateRoute path="/projects/:prId" exact component={Project} auth={auth} />
-      <PrivateRoute path="/projects/:prId/pulls/:plId/:tab?" exact component={Pull} auth={auth} />
+      <Route path="/projects/:prId" exact component={Project} auth={auth} />
+      <Route path="/projects/:prId/pulls/:plId/:tab?" exact component={Pull} auth={auth} />
     </Switch>
   )
 }

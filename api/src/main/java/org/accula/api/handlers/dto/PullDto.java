@@ -25,6 +25,8 @@ public class PullDto {
     @Builder.Default
     Integer cloneCount = 0;
     GithubUserDto author;
+    @Builder.Default
+    PullDto[] previousPulls = new PullDto[0];
 
     @Value
     public static class Marker {
