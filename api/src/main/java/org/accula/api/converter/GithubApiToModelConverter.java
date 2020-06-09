@@ -50,11 +50,11 @@ public final class GithubApiToModelConverter {
     }
 
     public CommitSnapshot convert(final GithubApiCommitSnapshot snapshot) {
-        return new CommitSnapshot(
-                new Commit(snapshot.getSha()),
-                snapshot.getRef(),
-                convert(Objects.requireNonNull(snapshot.getRepo()))
-        );
+        return CommitSnapshot.builder()
+                .commit(new Commit(snapshot.getSha()))
+                .branch(snapshot.getRef())
+                .repo(convert(Objects.requireNonNull(snapshot.getRepo())))
+                .build();
     }
 
     public Pull convert(final GithubApiPull pull, final Long projectId) {

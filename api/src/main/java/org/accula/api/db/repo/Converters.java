@@ -61,10 +61,10 @@ final class Converters {
                                                 final String repoOwnerName,
                                                 final String repoOwnerAvatar,
                                                 final String repoOwnerOrganization) {
-        return new CommitSnapshot(
-                convertCommit(row, sha),
-                value(row, branch, String.class),
-                convertRepo(row,
+        return CommitSnapshot.builder()
+                .commit(convertCommit(row, sha))
+                .branch(value(row, branch, String.class))
+                .repo(convertRepo(row,
                         repoId,
                         repoName,
                         repoDescription,
@@ -72,8 +72,8 @@ final class Converters {
                         repoOwnerLogin,
                         repoOwnerName,
                         repoOwnerAvatar,
-                        repoOwnerOrganization)
-        );
+                        repoOwnerOrganization))
+                .build();
     }
 
     static Commit convertCommit(final Row row, final String sha) {

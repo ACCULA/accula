@@ -90,14 +90,14 @@ public final class CloneRepoImpl implements CloneRepo {
                                                  "FROM clone " +
                                                  "  JOIN commit_snapshot target" +
                                                  "      ON clone.target_commit_sha = target.sha" +
-                                                 "          AND clone.target_commit_repo_id = target.repo_id" +
+                                                 "          AND clone.target_repo_id = target.repo_id" +
                                                  "  JOIN repo_github target_repo" +
                                                  "      ON target.repo_id = target_repo.id" +
                                                  "  JOIN user_github target_repo_owner" +
                                                  "      ON target_repo.owner_id = target_repo_owner.id" +
                                                  "  JOIN commit_snapshot source" +
                                                  "      ON clone.source_commit_sha = source.sha" +
-                                                 "          AND clone.source_commit_repo_id = source.repo_id" +
+                                                 "          AND clone.source_repo_id = source.repo_id" +
                                                  "  JOIN repo_github source_repo" +
                                                  "      ON source.repo_id = source_repo.id" +
                                                  "  JOIN user_github source_repo_owner" +
@@ -114,12 +114,12 @@ public final class CloneRepoImpl implements CloneRepo {
         return (PostgresqlStatement) connection
                 .createStatement("INSERT INTO clone (pull_id," +
                                  "                   target_commit_sha," +
-                                 "                   target_commit_repo_id," +
+                                 "                   target_repo_id," +
                                  "                   target_file," +
                                  "                   target_from_line," +
                                  "                   target_to_line," +
                                  "                   source_commit_sha," +
-                                 "                   source_commit_repo_id," +
+                                 "                   source_repo_id," +
                                  "                   source_file," +
                                  "                   source_from_line," +
                                  "                   source_to_line) " +

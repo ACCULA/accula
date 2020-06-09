@@ -98,23 +98,24 @@ CREATE TABLE IF NOT EXISTS pull
     FOREIGN KEY (author_github_id) REFERENCES user_github (id)
 );
 
+--  TODO: extract (target | source)_ ... into separate table
 CREATE TABLE IF NOT EXISTS clone
 (
-    id                             BIGSERIAL PRIMARY KEY,
-    pull_id                        BIGINT       NOT NULL,
-    target_commit_sha     CHAR(40)     NOT NULL,
-    target_commit_repo_id BIGINT       NOT NULL,
-    target_file                    VARCHAR(256) NOT NULL,
-    target_from_line               INT          NOT NULL,
-    target_to_line                 INT          NOT NULL,
-    source_commit_sha     CHAR(40)     NOT NULL,
-    source_commit_repo_id BIGINT       NOT NULL,
-    source_file                    VARCHAR(256) NOT NULL,
-    source_from_line               INT          NOT NULL,
-    source_to_line                 INT          NOT NULL,
-    suppressed                     BOOLEAN      NOT NULL DEFAULT FALSE,
+    id                BIGSERIAL PRIMARY KEY,
+    pull_id           BIGINT       NOT NULL,
+    target_commit_sha CHAR(40)     NOT NULL,
+    target_repo_id    BIGINT       NOT NULL,
+    target_file       VARCHAR(256) NOT NULL,
+    target_from_line  INT          NOT NULL,
+    target_to_line    INT          NOT NULL,
+    source_commit_sha CHAR(40)     NOT NULL,
+    source_repo_id    BIGINT       NOT NULL,
+    source_file       VARCHAR(256) NOT NULL,
+    source_from_line  INT          NOT NULL,
+    source_to_line    INT          NOT NULL,
+    suppressed        BOOLEAN      NOT NULL DEFAULT FALSE,
 
     FOREIGN KEY (pull_id) REFERENCES pull (id),
-    FOREIGN KEY (target_commit_sha, target_commit_repo_id) REFERENCES commit_snapshot (sha, repo_id),
-    FOREIGN KEY (source_commit_sha, source_commit_repo_id) REFERENCES commit_snapshot (sha, repo_id)
+    FOREIGN KEY (target_commit_sha, target_repo_id) REFERENCES commit_snapshot (sha, repo_id),
+    FOREIGN KEY (source_commit_sha, source_repo_id) REFERENCES commit_snapshot (sha, repo_id)
 );
