@@ -59,9 +59,6 @@ plugins:
         enabled: false
 
 checks:
-  argument-count:
-    config:
-      threshold: 5
   complex-logic:
     config:
       threshold: 10

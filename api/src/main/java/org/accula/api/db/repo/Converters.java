@@ -16,6 +16,7 @@ import java.util.Objects;
  */
 final class Converters {
     public static final String NOTHING = "";
+
     private Converters() {
     }
 
@@ -42,7 +43,7 @@ final class Converters {
                                   final String ownerLogin,
                                   final String ownerName,
                                   final String ownerAvatar,
-                                  final String ownerOrganization) { // NOPMD
+                                  final String ownerOrganization) {
         return new GithubRepo(
                 value(row, id, Long.class),
                 value(row, name, String.class),
@@ -62,7 +63,7 @@ final class Converters {
                                                 final String repoOwnerLogin,
                                                 final String repoOwnerName,
                                                 final String repoOwnerAvatar,
-                                                final String repoOwnerOrganization) { // NOPMD
+                                                final String repoOwnerOrganization) {
         return CommitSnapshot.builder()
                 .commit(convertCommit(row, sha))
                 .branch(value(row, branch, String.class))
@@ -90,7 +91,7 @@ final class Converters {
                             final String githubLogin,
                             final String githubName,
                             final String githubAvatar,
-                            final String githubOrganization) { // NOPMD
+                            final String githubOrganization) {
         return new User(
                 value(row, id, Long.class),
                 value(row, accessToken, String.class),
@@ -127,7 +128,7 @@ final class Converters {
                               final String sourceRepoOwnerIsOrg,
                               final String sourceFile,
                               final String sourceFromLine,
-                              final String sourceToLine) { // NOPMD
+                              final String sourceToLine) {
         return Clone.builder()
                 .id(value(row, id, Long.class))
                 .targetSnapshot(convertCommitSnapshot(row,
