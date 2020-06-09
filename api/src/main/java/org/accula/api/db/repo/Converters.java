@@ -42,7 +42,7 @@ final class Converters {
                                   final String ownerLogin,
                                   final String ownerName,
                                   final String ownerAvatar,
-                                  final String ownerOrganization) {
+                                  final String ownerOrganization) { // NOPMD
         return new GithubRepo(
                 value(row, id, Long.class),
                 value(row, name, String.class),
@@ -62,7 +62,7 @@ final class Converters {
                                                 final String repoOwnerLogin,
                                                 final String repoOwnerName,
                                                 final String repoOwnerAvatar,
-                                                final String repoOwnerOrganization) {
+                                                final String repoOwnerOrganization) { // NOPMD
         return CommitSnapshot.builder()
                 .commit(convertCommit(row, sha))
                 .branch(value(row, branch, String.class))
@@ -90,7 +90,7 @@ final class Converters {
                             final String githubLogin,
                             final String githubName,
                             final String githubAvatar,
-                            final String githubOrganization) {
+                            final String githubOrganization) { // NOPMD
         return new User(
                 value(row, id, Long.class),
                 value(row, accessToken, String.class),
@@ -127,7 +127,7 @@ final class Converters {
                               final String sourceRepoOwnerIsOrg,
                               final String sourceFile,
                               final String sourceFromLine,
-                              final String sourceToLine) {
+                              final String sourceToLine) { // NOPMD
         return Clone.builder()
                 .id(value(row, id, Long.class))
                 .targetSnapshot(convertCommitSnapshot(row,
