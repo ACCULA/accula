@@ -29,6 +29,7 @@ public class CommitSnapshot {
         return repo.getOwner().getLogin() + "/" + repo.getName() + "/" + commit.getSha();
     }
 
+    @SuppressWarnings("PMD.ShortClassName")
     @Value
     public static class Id {
         String sha;

@@ -30,7 +30,7 @@ final class Repos {
 
     static <T> Mono<T> column(final Result result, final String name, final Class<T> clazz) {
         return Mono.from(result
-                .map(((row, metadata) -> Objects.requireNonNull(row.get(name, clazz)))));
+                .map((row, metadata) -> Objects.requireNonNull(row.get(name, clazz))));
     }
 
     static <T> Mono<T> closeAndGet(final Connection connection, final Result result, final String name, final Class<T> clazz) {
@@ -39,7 +39,7 @@ final class Repos {
     }
 
     static <T> Mono<T> convert(final Result result, final Connection connection, final Function<Row, T> transform) {
-        return Mono.from(result.map(((row, metadata) -> transform.apply(row))))
+        return Mono.from(result.map((row, metadata) -> transform.apply(row)))
                 .flatMap(res -> closeAndReturn(connection, res));
     }
 

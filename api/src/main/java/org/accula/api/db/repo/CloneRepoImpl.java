@@ -32,7 +32,7 @@ public final class CloneRepoImpl implements CloneRepo {
         if (clones.isEmpty()) {
             return Flux.empty();
         }
-        final var cloneList = clones instanceof ArrayList ? (ArrayList<Clone>) clones : new ArrayList<>((clones));
+        final var cloneList = clones instanceof ArrayList ? (ArrayList<Clone>) clones : new ArrayList<>(clones);
 
         return connectionPool
                 .create()

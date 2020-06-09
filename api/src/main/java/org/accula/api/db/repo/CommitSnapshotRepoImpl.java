@@ -147,7 +147,7 @@ public final class CommitSnapshotRepoImpl implements CommitSnapshotRepo {
         //@formatter:on
     }
 
-    private static PostgresqlStatement applySelectBindings(final CommitSnapshot.Id id, PostgresqlStatement statement) {
+    private static PostgresqlStatement applySelectBindings(final CommitSnapshot.Id id, final PostgresqlStatement statement) {
         return statement
                 .bind("$1", id.getSha())
                 .bind("$2", id.getRepoId());

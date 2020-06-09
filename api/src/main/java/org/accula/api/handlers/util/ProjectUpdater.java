@@ -35,7 +35,7 @@ public final class ProjectUpdater {
     private final CommitSnapshotRepo commitSnapshotRepo;
     private final PullRepo pullRepo;
 
-    public Mono<Integer> update(final Long projectId, final GithubApiPull[] githubApiPulls) {
+    public Mono<Integer> update(final Long projectId, final GithubApiPull[] githubApiPulls) { // NOPMD
         if (githubApiPulls.length == 0) {
             return Mono.just(0);
         }

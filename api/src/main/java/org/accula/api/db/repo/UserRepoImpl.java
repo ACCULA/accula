@@ -57,7 +57,7 @@ public final class UserRepoImpl implements UserRepo {
     }
 
     @Override
-    public Mono<User> findById(Long id) {
+    public Mono<User> findById(final Long id) {
         return connectionPool
                 .create()
                 .flatMap(connection -> Mono

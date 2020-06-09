@@ -34,7 +34,9 @@ public final class ModelToDtoConverter {
                 .repoName(project.getGithubRepo().getName())
                 .repoDescription(project.getGithubRepo().getDescription())
                 .repoOwnerAvatar(project.getGithubRepo().getOwner().getAvatar())
-                .repoUrl(String.format(GITHUB_REPO_URL_FORMAT, project.getGithubRepo().getOwner().getLogin(), project.getGithubRepo().getName()))
+                .repoUrl(String.format(GITHUB_REPO_URL_FORMAT,
+                        project.getGithubRepo().getOwner().getLogin(),
+                        project.getGithubRepo().getName()))
                 .repoOpenPullCount(openPullCount)
                 .creatorId(project.getCreator().getId())
                 .build();
