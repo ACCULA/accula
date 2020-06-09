@@ -1,6 +1,7 @@
 package org.accula.api.db.repo;
 
 import io.r2dbc.spi.Row;
+import org.accula.api.db.model.Clone;
 import org.accula.api.db.model.Commit;
 import org.accula.api.db.model.CommitSnapshot;
 import org.accula.api.db.model.GithubRepo;
@@ -92,6 +93,69 @@ final class Converters {
                 value(row, accessToken, String.class),
                 convertUser(row, githubId, githubLogin, githubName, githubAvatar, githubOrganization)
         );
+    }
+
+    static Clone convertClone(final Row row,
+                              final String id,
+                              final String pullId,
+                              final String targetSha,
+                              final String targetBranch,
+                              final String targetRepoId,
+                              final String targetRepoName,
+                              final String targetRepoDescription,
+                              final String targetRepoOwnerId,
+                              final String targetRepoOwnerLogin,
+                              final String targetRepoOwnerName,
+                              final String targetRepoOwnerAvatar,
+                              final String targetRepoOwnerIsOrg,
+                              final String targetFile,
+                              final String targetFromLine,
+                              final String targetToLine,
+                              final String sourceSha,
+                              final String sourceBranch,
+                              final String sourceRepoId,
+                              final String sourceRepoName,
+                              final String sourceRepoDescription,
+                              final String sourceRepoOwnerId,
+                              final String sourceRepoOwnerLogin,
+                              final String sourceRepoOwnerName,
+                              final String sourceRepoOwnerAvatar,
+                              final String sourceRepoOwnerIsOrg,
+                              final String sourceFile,
+                              final String sourceFromLine,
+                              final String sourceToLine) {
+        return Clone.builder()
+                .id(value(row, id, Long.class))
+                .pullId(value(row, pullId, Long.class))
+                .targetSnapshot(convertCommitSnapshot(row,
+                        targetSha,
+                        targetBranch,
+                        targetRepoId,
+                        targetRepoName,
+                        targetRepoDescription,
+                        targetRepoOwnerId,
+                        targetRepoOwnerLogin,
+                        targetRepoOwnerName,
+                        targetRepoOwnerAvatar,
+                        targetRepoOwnerIsOrg))
+                .targetFile(value(row, targetFile, String.class))
+                .targetFromLine(value(row, targetFromLine, Integer.class))
+                .targetToLine(value(row, targetToLine, Integer.class))
+                .sourceSnapshot(convertCommitSnapshot(row,
+                        sourceSha,
+                        sourceBranch,
+                        sourceRepoId,
+                        sourceRepoName,
+                        sourceRepoDescription,
+                        sourceRepoOwnerId,
+                        sourceRepoOwnerLogin,
+                        sourceRepoOwnerName,
+                        sourceRepoOwnerAvatar,
+                        sourceRepoOwnerIsOrg))
+                .sourceFile(value(row, sourceFile, String.class))
+                .sourceFromLine(value(row, sourceFromLine, Integer.class))
+                .sourceToLine(value(row, sourceToLine, Integer.class))
+                .build();
     }
 
     static <T> T value(final Row row, final String name, final Class<T> clazz) {

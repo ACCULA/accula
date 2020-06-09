@@ -101,18 +101,20 @@ CREATE TABLE IF NOT EXISTS pull
 CREATE TABLE IF NOT EXISTS clone
 (
     id                             BIGSERIAL PRIMARY KEY,
-    target_commit_snapshot_sha     CHAR(40)     NOT NULL,
-    target_commit_snapshot_repo_id BIGINT       NOT NULL,
+    pull_id                        BIGINT       NOT NULL,
+    target_commit_sha     CHAR(40)     NOT NULL,
+    target_commit_repo_id BIGINT       NOT NULL,
     target_file                    VARCHAR(256) NOT NULL,
     target_from_line               INT          NOT NULL,
     target_to_line                 INT          NOT NULL,
-    source_commit_snapshot_sha     CHAR(40)     NOT NULL,
-    source_commit_snapshot_repo_id BIGINT       NOT NULL,
+    source_commit_sha     CHAR(40)     NOT NULL,
+    source_commit_repo_id BIGINT       NOT NULL,
     source_file                    VARCHAR(256) NOT NULL,
     source_from_line               INT          NOT NULL,
     source_to_line                 INT          NOT NULL,
     suppressed                     BOOLEAN      NOT NULL DEFAULT FALSE,
 
-    FOREIGN KEY (target_commit_snapshot_sha, target_commit_snapshot_repo_id) REFERENCES commit_snapshot (sha, repo_id),
-    FOREIGN KEY (source_commit_snapshot_sha, source_commit_snapshot_repo_id) REFERENCES commit_snapshot (sha, repo_id)
+    FOREIGN KEY (pull_id) REFERENCES pull (id),
+    FOREIGN KEY (target_commit_sha, target_commit_repo_id) REFERENCES commit_snapshot (sha, repo_id),
+    FOREIGN KEY (source_commit_sha, source_commit_repo_id) REFERENCES commit_snapshot (sha, repo_id)
 );

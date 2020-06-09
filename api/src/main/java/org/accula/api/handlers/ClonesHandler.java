@@ -4,13 +4,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.Value;
 import org.accula.api.code.CodeLoader;
 import org.accula.api.code.FileEntity;
-import org.accula.api.db.CloneRepository;
 import org.accula.api.db.CommitRepository;
 import org.accula.api.db.PullRepository;
 import org.accula.api.db.model.Clone;
 import org.accula.api.db.model.CommitOld;
 import org.accula.api.db.model.CommitSnapshot;
 import org.accula.api.db.model.Pull;
+import org.accula.api.db.repo.CloneRepo;
 import org.accula.api.db.repo.PullRepo;
 import org.accula.api.handlers.response.GetCloneResponseBody;
 import org.accula.api.handlers.response.GetCloneResponseBody.FlatCodeSnippet.FlatCodeSnippetBuilder;
@@ -40,7 +40,7 @@ public final class ClonesHandler {
     private final PullRepo pullRepo;
     private final PullRepository pullRepository;
     private final CommitRepository commitRepository;
-    private final CloneRepository cloneRepo;
+    private final CloneRepo cloneRepo;
     private final CodeLoader codeLoader;
     private final Scheduler codeLoadingScheduler = Schedulers.boundedElastic();
 
@@ -58,8 +58,8 @@ public final class ClonesHandler {
                 .map(Pull::getHead)
                 .cache();
 
-        final var clones = pullHead
-                .flatMapMany(head -> cloneRepo.findAllByTargetCommitSha(head.getCommit().getSha()));
+//        final var clones = pullHead
+//                .flatMapMany(head -> cloneRepoRepository.findAllByTargetCommitSha(head.getCommit().getSha()));
 
 //        final var clones = pullRepository
 //                .findByProjectIdAndNumber(projectId, pullNumber)

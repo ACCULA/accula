@@ -3,9 +3,9 @@ package org.accula.api.handlers;
 import lombok.RequiredArgsConstructor;
 import org.accula.api.code.CodeLoader;
 import org.accula.api.code.FileFilter;
-import org.accula.api.db.CloneRepository;
 import org.accula.api.db.model.Clone;
 import org.accula.api.db.model.Pull;
+import org.accula.api.db.repo.CloneRepo;
 import org.accula.api.db.repo.ProjectRepo;
 import org.accula.api.db.repo.PullRepo;
 import org.accula.api.detector.CloneDetector;
@@ -34,7 +34,7 @@ public final class GithubWebhookHandler {
     private final ProjectRepo projectRepo;
     private final ProjectUpdater projectUpdater;
     private final PullRepo pullRepo;
-    private final CloneRepository cloneRepository;
+    private final CloneRepo cloneRepo;
     private final CloneDetector detector;
     private final CodeLoader loader;
 
@@ -66,23 +66,25 @@ public final class GithubWebhookHandler {
                 .map(Pull::getHead)
                 .flatMap(head -> loader.getFiles(head, FileFilter.ALL));
 
-        final var clones = detector
+        final var cloneFlux = detector
                 .findClones(targetFiles, sourceFiles)
-                .map(this::convert)
+                .map(clone -> convert(clone, githubApiPull.getId()))
                 .subscribeOn(processingScheduler);
 
-        return cloneRepository.saveAll(clones).then();
+        return cloneFlux.collectList()
+                .flatMap(clones -> cloneRepo.insert(clones).then());
     }
 
-    private Clone convert(final Tuple2<CodeSnippet, CodeSnippet> clone) {
+    private Clone convert(final Tuple2<CodeSnippet, CodeSnippet> clone, final Long pullId) {
         final CodeSnippet target = clone.getT1();
         final CodeSnippet source = clone.getT2();
         return Clone.builder()
-                .targetCommitSha(target.getCommitSnapshot().getCommit().getSha())
+                .pullId(pullId)
+                .targetSnapshot(target.getCommitSnapshot())
                 .targetFile(target.getFile())
                 .targetFromLine(target.getFromLine())
                 .targetToLine(target.getToLine())
-                .sourceCommitSha(source.getCommitSnapshot().getCommit().getSha())
+                .sourceSnapshot(source.getCommitSnapshot())
                 .sourceFile(source.getFile())
                 .sourceFromLine(source.getFromLine())
                 .sourceToLine(source.getToLine())
