@@ -50,7 +50,6 @@ public final class PullRepoImpl implements PullRepo {
 
                     return statement.execute()
                             .flatMap(PostgresqlResult::getRowsUpdated)
-                            .filter(Integer.valueOf(pulls.size())::equals)
                             .thenMany(Repos.closeAndReturn(connection, pulls));
                 });
     }
@@ -66,7 +65,6 @@ public final class PullRepoImpl implements PullRepo {
                         .flatMap(result -> Repos.convert(result, connection, this::convert)));
     }
 
-    //FIXME: will not work
     @Override
     public Flux<Pull> findById(final Collection<Long> ids) {
         return connectionPool
@@ -78,8 +76,7 @@ public final class PullRepoImpl implements PullRepo {
                             .add());
                     statement.fetchSize(ids.size());
 
-                    return statement.execute()
-                            .flatMap(result -> Repos.convert(result, connection, this::convert));
+                    return Repos.convertMany(statement.execute(), connection, this::convert);
                 });
     }
 
@@ -247,6 +244,7 @@ public final class PullRepoImpl implements PullRepo {
                 .head(Converters.convertCommitSnapshot(row,
                         "head_snap_sha",
                         "head_snap_branch",
+                        Converters.NOTHING,
                         "head_repo_id",
                         "head_repo_name",
                         "head_repo_description",
@@ -258,6 +256,7 @@ public final class PullRepoImpl implements PullRepo {
                 .base(Converters.convertCommitSnapshot(row,
                         "base_snap_sha",
                         "base_snap_branch",
+                        Converters.NOTHING,
                         "base_repo_id",
                         "base_repo_name",
                         "base_repo_description",

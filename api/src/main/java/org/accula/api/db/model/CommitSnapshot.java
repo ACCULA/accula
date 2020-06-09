@@ -3,6 +3,7 @@ package org.accula.api.db.model;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Anton Lamtev
@@ -14,6 +15,8 @@ public class CommitSnapshot {
     @EqualsAndHashCode.Include
     Commit commit;
     String branch;
+    @Nullable
+    Long pullId;
     @EqualsAndHashCode.Include
     GithubRepo repo;
 

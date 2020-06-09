@@ -15,6 +15,8 @@ public class CloneDto {
     @Builder
     @Value
     public static class FlatCodeSnippet {
+        Long projectId;
+        Integer pullNumber;
         String owner;
         String repo;
         String sha;

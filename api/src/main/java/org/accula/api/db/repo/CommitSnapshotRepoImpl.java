@@ -12,6 +12,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Collection;
+import java.util.Objects;
 
 /**
  * @author Anton Lamtev
@@ -46,7 +47,41 @@ public final class CommitSnapshotRepoImpl implements CommitSnapshotRepo {
                     return statement
                             .execute()
                             .flatMap(PostgresqlResult::getRowsUpdated)
-                            .filter(Integer.valueOf(commitSnapshots.size())::equals)
+                            .thenMany(Repos.closeAndReturn(connection, commitSnapshots));
+                });
+    }
+
+    @Override
+    public Flux<CommitSnapshot> mapToPulls(final Collection<CommitSnapshot> commitSnapshots) {
+        if (commitSnapshots.isEmpty()) {
+            return Flux.empty();
+        }
+
+        if (commitSnapshots.stream().anyMatch(commitSnapshot -> commitSnapshot.getPullId() == null)) {
+            return Flux.empty();
+        }
+
+        return connectionPool
+                .create()
+                .flatMapMany(connection -> {
+                    //@formatter:off
+                    final var statement = (PostgresqlStatement) connection.createStatement(
+                            "INSERT INTO commit_snapshot_pull (" +
+                            "commit_snapshot_sha, commit_snapshot_repo_id, pull_id) " +
+                            "VALUES ($1, $2, $3) " +
+                            "ON CONFLICT (commit_snapshot_sha, commit_snapshot_repo_id, pull_id) DO NOTHING");
+                    //@formatter:on
+                    commitSnapshots.forEach(commitSnapshot -> {
+                        final var snapId = commitSnapshot.getId();
+                        statement.bind("$1", snapId.getSha())
+                                .bind("$2", snapId.getRepoId())
+                                .bind("$3", Objects.requireNonNull(commitSnapshot.getPullId()))
+                                .add();
+                    });
+                    statement.fetchSize(commitSnapshots.size());
+
+                    return statement.execute()
+                            .flatMap(PostgresqlResult::getRowsUpdated)
                             .thenMany(Repos.closeAndReturn(connection, commitSnapshots));
                 });
     }
@@ -122,6 +157,7 @@ public final class CommitSnapshotRepoImpl implements CommitSnapshotRepo {
         return Converters.convertCommitSnapshot(row,
                 "snap_sha",
                 "snap_branch",
+                Converters.NOTHING,
                 "repo_id",
                 "repo_name",
                 "repo_description",

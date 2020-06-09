@@ -15,7 +15,6 @@ public class Clone {
     @EqualsAndHashCode.Include
     @Builder.Default
     Long id = -1L;
-    Long pullId;
     CommitSnapshot targetSnapshot;
     String targetFile;
     Integer targetFromLine;

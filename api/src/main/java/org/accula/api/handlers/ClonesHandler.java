@@ -18,9 +18,10 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
-import reactor.util.function.Tuple3;
+import reactor.util.function.Tuple4;
 
 import java.util.Base64;
+import java.util.Objects;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
@@ -67,6 +68,11 @@ public final class ClonesHandler {
                         clone.getTargetToLine()
                 ));
 
+        final var sourcePulls = clones
+                .map(clone -> Objects.requireNonNull(clone.getSourceSnapshot().getPullId()))
+                .collectList()
+                .flatMapMany(pullRepo::findById);
+
         final var sourceFileSnippetMarkers = clones
                 .map(clone -> new FileSnippetMarker(
                         clone.getSourceSnapshot(),
@@ -75,10 +81,12 @@ public final class ClonesHandler {
                         clone.getSourceToLine()
                 ));
 
-        final var responseClones = Flux.zip(clones,
-                getFileSnippets(targetFileSnippetMarkers),
-                getFileSnippets(sourceFileSnippetMarkers))
-                .map(this::toResponseBody);
+        final var responseClones = Flux
+                .zip(clones,
+                        getFileSnippets(targetFileSnippetMarkers),
+                        getFileSnippets(sourceFileSnippetMarkers),
+                        sourcePulls)
+                .map(tuple -> toCloneDto(tuple, projectId, pullNumber));
 
         return ServerResponse
                 .ok()
@@ -86,18 +94,25 @@ public final class ClonesHandler {
                 .body(responseClones, CloneDto.class);
     }
 
-    private CloneDto toResponseBody(final Tuple3<Clone, FileEntity, FileEntity> tuple) {
+    private CloneDto toCloneDto(final Tuple4<Clone, FileEntity, FileEntity, Pull> tuple,
+                                final long targetProjectId,
+                                final int targetPullNumber) {
         final var clone = tuple.getT1();
 
         final var targetFile = tuple.getT2();
         final var target = codeSnippetWith(targetFile.getCommitSnapshot(), targetFile.getContent())
+                .projectId(targetProjectId)
+                .pullNumber(targetPullNumber)
                 .file(clone.getTargetFile())
                 .fromLine(clone.getTargetFromLine())
                 .toLine(clone.getTargetToLine())
                 .build();
 
         final var sourceFile = tuple.getT3();
+        final var sourcePull = tuple.getT4();
         final var source = codeSnippetWith(sourceFile.getCommitSnapshot(), sourceFile.getContent())
+                .projectId(sourcePull.getProjectId())
+                .pullNumber(sourcePull.getNumber())
                 .file(clone.getSourceFile())
                 .fromLine(clone.getSourceFromLine())
                 .toLine(clone.getSourceToLine())

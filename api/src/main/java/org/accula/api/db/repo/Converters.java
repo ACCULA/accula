@@ -15,6 +15,7 @@ import java.util.Objects;
  * @author Anton Lamtev
  */
 final class Converters {
+    public static final String NOTHING = "";
     private Converters() {
     }
 
@@ -53,6 +54,7 @@ final class Converters {
     static CommitSnapshot convertCommitSnapshot(final Row row,
                                                 final String sha,
                                                 final String branch,
+                                                final String pullId,
                                                 final String repoId,
                                                 final String repoName,
                                                 final String repoDescription,
@@ -64,6 +66,7 @@ final class Converters {
         return CommitSnapshot.builder()
                 .commit(convertCommit(row, sha))
                 .branch(value(row, branch, String.class))
+                .pullId(nullable(row, pullId, Long.class))
                 .repo(convertRepo(row,
                         repoId,
                         repoName,
@@ -97,9 +100,9 @@ final class Converters {
 
     static Clone convertClone(final Row row,
                               final String id,
-                              final String pullId,
                               final String targetSha,
                               final String targetBranch,
+                              final String targetPullId,
                               final String targetRepoId,
                               final String targetRepoName,
                               final String targetRepoDescription,
@@ -113,6 +116,7 @@ final class Converters {
                               final String targetToLine,
                               final String sourceSha,
                               final String sourceBranch,
+                              final String sourcePullId,
                               final String sourceRepoId,
                               final String sourceRepoName,
                               final String sourceRepoDescription,
@@ -126,10 +130,10 @@ final class Converters {
                               final String sourceToLine) {
         return Clone.builder()
                 .id(value(row, id, Long.class))
-                .pullId(value(row, pullId, Long.class))
                 .targetSnapshot(convertCommitSnapshot(row,
                         targetSha,
                         targetBranch,
+                        targetPullId,
                         targetRepoId,
                         targetRepoName,
                         targetRepoDescription,
@@ -144,6 +148,7 @@ final class Converters {
                 .sourceSnapshot(convertCommitSnapshot(row,
                         sourceSha,
                         sourceBranch,
+                        sourcePullId,
                         sourceRepoId,
                         sourceRepoName,
                         sourceRepoDescription,
@@ -160,6 +165,14 @@ final class Converters {
 
     static <T> T value(final Row row, final String name, final Class<T> clazz) {
         return Objects.requireNonNull(row.get(name, clazz));
+    }
+
+    @Nullable
+    static <T> T nullable(final Row row, @Nullable final String name, final Class<T> clazz) {
+        if (name == null || NOTHING.equals(name)) {
+            return null;
+        }
+        return row.get(name, clazz);
     }
 
     static Integer integer(final Row row, final String name) {

@@ -68,18 +68,17 @@ public final class GithubWebhookHandler {
 
         final var cloneFlux = detector
                 .findClones(targetFiles, sourceFiles)
-                .map(clone -> convert(clone, githubApiPull.getId()))
+                .map(this::convert)
                 .subscribeOn(processingScheduler);
 
         return cloneFlux.collectList()
                 .flatMap(clones -> cloneRepo.insert(clones).then());
     }
 
-    private Clone convert(final Tuple2<CodeSnippet, CodeSnippet> clone, final Long pullId) {
+    private Clone convert(final Tuple2<CodeSnippet, CodeSnippet> clone) {
         final CodeSnippet target = clone.getT1();
         final CodeSnippet source = clone.getT2();
         return Clone.builder()
-                .pullId(pullId)
                 .targetSnapshot(target.getCommitSnapshot())
                 .targetFile(target.getFile())
                 .targetFromLine(target.getFromLine())

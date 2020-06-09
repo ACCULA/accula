@@ -67,6 +67,7 @@ public final class ProjectUpdater {
                             .thenMany(commitRepo.upsert(commits))
                             .thenMany(commitSnapshotRepo.insert(commitSnapshots))
                             .thenMany(pullRepo.upsert(pulls))
+                            .thenMany(commitSnapshotRepo.mapToPulls(commitSnapshots))
                             .then(Mono.just(openPullCount));
                 })
                 .subscribeOn(processingScheduler);
@@ -90,7 +91,9 @@ public final class ProjectUpdater {
                             .thenMany(githubRepoRepo.upsert(repos))
                             .thenMany(commitRepo.upsert(commits))
                             .thenMany(commitSnapshotRepo.insert(commitSnapshots))
-                            .then(pullRepo.upsert(pull));
+                            .then(pullRepo.upsert(pull))
+                            .thenMany(commitSnapshotRepo.mapToPulls(commitSnapshots))
+                            .then(Mono.just(pull));
                 })
                 .subscribeOn(processingScheduler);
     }

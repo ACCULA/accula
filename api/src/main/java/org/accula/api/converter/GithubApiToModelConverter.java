@@ -49,10 +49,11 @@ public final class GithubApiToModelConverter {
         return new GithubUser(id, login, name, avatar, false);
     }
 
-    public CommitSnapshot convert(final GithubApiCommitSnapshot snapshot) {
+    public CommitSnapshot convert(final GithubApiCommitSnapshot snapshot, final Long pullId) {
         return CommitSnapshot.builder()
                 .commit(new Commit(snapshot.getSha()))
                 .branch(snapshot.getRef())
+                .pullId(pullId)
                 .repo(convert(Objects.requireNonNull(snapshot.getRepo())))
                 .build();
     }
@@ -65,8 +66,8 @@ public final class GithubApiToModelConverter {
                 .open(pull.getState() == GithubApiPull.State.OPEN)
                 .createdAt(pull.getCreatedAt())
                 .updatedAt(pull.getUpdatedAt())
-                .head(convert(pull.getHead()))
-                .base(convert(pull.getBase()))
+                .head(convert(pull.getHead(), pull.getId()))
+                .base(convert(pull.getBase(), pull.getId()))
                 .author(convert(pull.getUser()))
                 .projectId(projectId)
                 .build();

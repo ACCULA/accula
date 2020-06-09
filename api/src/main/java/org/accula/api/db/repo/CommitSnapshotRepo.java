@@ -14,6 +14,8 @@ public interface CommitSnapshotRepo {
 
     Flux<CommitSnapshot> insert(Collection<CommitSnapshot> commitSnapshots);
 
+    Flux<CommitSnapshot> mapToPulls(Collection<CommitSnapshot> commitSnapshots);
+
     Mono<CommitSnapshot> findById(CommitSnapshot.Id id);
 
     Flux<CommitSnapshot> findById(Collection<CommitSnapshot.Id> ids);

@@ -57,7 +57,6 @@ public final class GithubRepoRepoImpl implements GithubRepoRepo {
 
                     return statement.execute()
                             .flatMap(PostgresqlResult::getRowsUpdated)
-                            .filter(Integer.valueOf(repos.size())::equals)
                             .thenMany(Repos.closeAndReturn(connection, repos));
                 });
     }
