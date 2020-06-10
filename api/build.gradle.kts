@@ -13,6 +13,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-security")
     testImplementation("org.springframework.security:spring-security-test")
 
+    testImplementation("io.projectreactor:reactor-test:3.3.6.RELEASE")
+
     implementation("org.springframework.boot:spring-boot-starter-actuator")
 
     implementation("org.springframework.boot:spring-boot-starter-oauth2-client")

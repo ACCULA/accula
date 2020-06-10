@@ -3,6 +3,7 @@ package org.accula.api.routers;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.accula.api.converter.ModelToDtoConverter;
 import org.accula.api.db.model.GithubUser;
 import org.accula.api.db.model.User;
 import org.accula.api.db.repo.UserRepo;
@@ -23,10 +24,10 @@ import reactor.core.publisher.Mono;
  * @author Anton Lamtev
  */
 @WebFluxTest
-@ContextConfiguration(classes = {UsersRouter.class, UsersHandler.class})
+@ContextConfiguration(classes = {UsersRouter.class, UsersHandler.class, ModelToDtoConverter.class})
 public class UsersRouterTest {
     private static final GithubUser GITHUB_USER = new GithubUser(1L, "login", "name", "ava", false);
-    private static final User STUB_USER = new User(1L, GITHUB_USER, "token");
+    private static final User STUB_USER = new User(1L, "token", GITHUB_USER);
     private static final ResponseUser RESPONSE_USER =
             new ResponseUser(STUB_USER.getId(), GITHUB_USER.getLogin(), GITHUB_USER.getName());
 
