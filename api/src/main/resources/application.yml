@@ -36,8 +36,8 @@ server:
 accula:
   jwt:
     signature:
-      publicKey: accula.public.der
-      privateKey: accula.private.der
+      publicKey: ${JWT_SIGNATURE_PUBLIC_KEY}
+      privateKey: ${JWT_SIGNATURE_PRIVATE_KEY}
     issuer: accula
     expiresIn:
       access: 1m

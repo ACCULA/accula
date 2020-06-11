@@ -2,6 +2,8 @@ package org.accula.api.auth.jwt.crypto;
 
 import lombok.SneakyThrows;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.Key;
 import java.security.KeyFactory;
 import java.security.interfaces.ECPrivateKey;
@@ -21,9 +23,10 @@ public final class EcKeys {
     }
 
     @SneakyThrows
-    private static <T extends Key, U extends KeySpec> T key(final byte[] keyBytes,
+    private static <T extends Key, U extends KeySpec> T key(final Path keyPath,
                                                             final Function<byte[], U> specProducer,
                                                             final BiFunction<KeyFactory, U, T> keyProducer) {
+        final var keyBytes = Files.readAllBytes(keyPath);
         final var spec = specProducer.apply(keyBytes);
         final var factory = KeyFactory.getInstance("EC");
 
@@ -31,13 +34,13 @@ public final class EcKeys {
     }
 
     @SuppressWarnings("NullableProblems")
-    public static ECPrivateKey privateKey(final byte[] keyBytes) {
-        return (ECPrivateKey) key(keyBytes, PKCS8EncodedKeySpec::new, KeyFactory::generatePrivate);
+    public static ECPrivateKey privateKey(final Path keyPath) {
+        return (ECPrivateKey) key(keyPath, PKCS8EncodedKeySpec::new, KeyFactory::generatePrivate);
     }
 
     @SuppressWarnings("NullableProblems")
-    public static ECPublicKey publicKey(final byte[] keyBytes) {
-        return (ECPublicKey) key(keyBytes, X509EncodedKeySpec::new, KeyFactory::generatePublic);
+    public static ECPublicKey publicKey(final Path keyPath) {
+        return (ECPublicKey) key(keyPath, X509EncodedKeySpec::new, KeyFactory::generatePublic);
     }
 
     @FunctionalInterface
