@@ -6,3 +6,5 @@
 *.der
 *.pem
 application-secrets.*
+/keys
+/repos

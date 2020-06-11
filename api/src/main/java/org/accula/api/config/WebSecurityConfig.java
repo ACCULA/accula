@@ -16,7 +16,6 @@ import org.accula.api.db.repo.UserRepo;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.oauth2.client.ReactiveOAuth2AuthorizedClientService;
@@ -33,7 +32,6 @@ import org.springframework.web.cors.reactive.CorsWebFilter;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 import org.springframework.web.server.WebFilter;
 
-import java.io.IOException;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
 import java.util.Collections;
@@ -101,17 +99,13 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    public ECPublicKey publicKey() throws IOException {
-        final var resource = new ClassPathResource(jwtProperties.getSignature().getPublicKey());
-        final var bytes = resource.getInputStream().readAllBytes();
-        return EcKeys.publicKey(bytes);
+    public ECPublicKey publicKey() {
+        return EcKeys.publicKey(jwtProperties.getSignature().getPublicKey());
     }
 
     @Bean
-    public ECPrivateKey privateKey() throws IOException {
-        final var resource = new ClassPathResource(jwtProperties.getSignature().getPrivateKey());
-        final var bytes = resource.getInputStream().readAllBytes();
-        return EcKeys.privateKey(bytes);
+    public ECPrivateKey privateKey() {
+        return EcKeys.privateKey(jwtProperties.getSignature().getPrivateKey());
     }
 
     @Bean

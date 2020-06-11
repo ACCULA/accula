@@ -1,7 +1,7 @@
 version: '3'
 services:
   web:
-    build: web
+    image: vaddya/accula_web
     expose:
       - 80
     depends_on:
@@ -30,12 +30,12 @@ services:
       - DB_PASS=postgres
       - DB_NAME=accula
       - REPOS_PATH=/app/repos/
+      - JWT_SIGNATURE_PUBLIC_KEY=/app/keys/accula.public.der
+      - JWT_SIGNATURE_PRIVATE_KEY=/app/keys/accula.private.der
     volumes:
       - ./repos:/app/repos
   postgres:
     image: postgres:11
-    ports:
-      - "5432:5432"
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres

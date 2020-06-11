@@ -3,6 +3,7 @@ package org.accula.api.config;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+import java.nio.file.Path;
 import java.time.Duration;
 
 @ConfigurationProperties("accula.jwt")
@@ -14,8 +15,8 @@ public final class JwtProperties {
 
     @Data
     public static final class Signature {
-        private String publicKey;
-        private String privateKey;
+        private Path publicKey;
+        private Path privateKey;
     }
 
     @Data
