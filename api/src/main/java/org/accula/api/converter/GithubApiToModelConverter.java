@@ -51,7 +51,7 @@ public final class GithubApiToModelConverter {
 
     public CommitSnapshot convert(final GithubApiCommitSnapshot snapshot, final Long pullId) {
         return CommitSnapshot.builder()
-                .commitSha(snapshot.getSha())
+                .sha(snapshot.getSha())
                 .branch(snapshot.getRef())
                 .pullId(pullId)
                 .repo(convert(Objects.requireNonNull(snapshot.getRepo())))

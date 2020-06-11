@@ -65,7 +65,7 @@ final class Converters {
                                                 final String repoOwnerAvatar,
                                                 final String repoOwnerOrganization) {
         return CommitSnapshot.builder()
-                .commitSha(value(row, sha, String.class))
+                .sha(value(row, sha, String.class))
                 .branch(value(row, branch, String.class))
                 .pullId(nullable(row, pullId, Long.class))
                 .repo(convertRepo(row,

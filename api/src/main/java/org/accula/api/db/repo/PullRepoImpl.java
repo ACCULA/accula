@@ -148,9 +148,9 @@ public final class PullRepoImpl implements PullRepo {
                 .bind("$4", pull.isOpen())
                 .bind("$5", pull.getCreatedAt())
                 .bind("$6", pull.getUpdatedAt())
-                .bind("$7", pull.getHead().getCommitSha())
+                .bind("$7", pull.getHead().getSha())
                 .bind("$8", pull.getHead().getRepo().getId())
-                .bind("$9", pull.getBase().getCommitSha())
+                .bind("$9", pull.getBase().getSha())
                 .bind("$10", pull.getBase().getRepo().getId())
                 .bind("$11", pull.getProjectId())
                 .bind("$12", pull.getAuthor().getId());

@@ -30,7 +30,7 @@ class CodeLoaderTest {
     public static final GithubUser USER = new GithubUser(0L, "polis-mail-ru", "name", "ava", true);
     public static final GithubRepo REPO = new GithubRepo(0L, "2019-highload-dht", "descr", USER);
     public static final CommitSnapshot COMMIT = CommitSnapshot.builder()
-            .commitSha("720cefb3f361895e9e23524c2b4025f9a949d5d2")
+            .sha("720cefb3f361895e9e23524c2b4025f9a949d5d2")
             .branch("branch")
             .repo(REPO)
             .build();
@@ -99,8 +99,8 @@ class CodeLoaderTest {
     void testDiff() {
         var headOwner = new GithubUser(1L, "vaddya", "owner", "ava", false);
         var headRepo = new GithubRepo(1L, "2019-highload-dht", "descr", headOwner);
-        var head = CommitSnapshot.builder().commitSha("a1c28a1b500701819cf9919246f15f3f900bb609").branch("branch").repo(headRepo).build();
-        var base = CommitSnapshot.builder().commitSha("d6357dccc16c7d5c001fd2a2203298c36fe96b63").branch("branch").repo(REPO).build();
+        var head = CommitSnapshot.builder().sha("a1c28a1b500701819cf9919246f15f3f900bb609").branch("branch").repo(headRepo).build();
+        var base = CommitSnapshot.builder().sha("d6357dccc16c7d5c001fd2a2203298c36fe96b63").branch("branch").repo(REPO).build();
         List<Tuple2<FileEntity, FileEntity>> diff = codeLoader.getDiff(base, head).collectList().block();
         assertNotNull(diff);
         assertEquals(18, diff.size());

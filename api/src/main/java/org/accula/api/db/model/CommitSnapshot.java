@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class CommitSnapshot {
     @EqualsAndHashCode.Include
-    String commitSha;
+    String sha;
     String branch;
     @Nullable
     Long pullId;
@@ -22,12 +22,12 @@ public class CommitSnapshot {
     GithubRepo repo;
 
     public Id getId() {
-        return new Id(commitSha, repo.getId());
+        return new Id(sha, repo.getId());
     }
 
     @Override
     public String toString() {
-        return repo.getOwner().getLogin() + "/" + repo.getName() + "/" + commitSha;
+        return repo.getOwner().getLogin() + "/" + repo.getName() + "/" + sha;
     }
 
     @SuppressWarnings("PMD.ShortClassName")

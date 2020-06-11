@@ -136,12 +136,12 @@ public final class CloneRepoImpl implements CloneRepo {
 
     private static PostgresqlStatement applyInsertBindings(final Clone clone, final PostgresqlStatement statement) {
         return statement
-                .bind("$1", clone.getTargetSnapshot().getCommitSha())
+                .bind("$1", clone.getTargetSnapshot().getSha())
                 .bind("$2", clone.getTargetSnapshot().getRepo().getId())
                 .bind("$3", clone.getTargetFile())
                 .bind("$4", clone.getTargetFromLine())
                 .bind("$5", clone.getTargetToLine())
-                .bind("$6", clone.getSourceSnapshot().getCommitSha())
+                .bind("$6", clone.getSourceSnapshot().getSha())
                 .bind("$7", clone.getSourceSnapshot().getRepo().getId())
                 .bind("$8", clone.getSourceFile())
                 .bind("$9", clone.getSourceFromLine())

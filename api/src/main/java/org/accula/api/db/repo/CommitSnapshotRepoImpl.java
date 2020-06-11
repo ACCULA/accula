@@ -119,7 +119,7 @@ public final class CommitSnapshotRepoImpl implements CommitSnapshotRepo {
 
     private static PostgresqlStatement applyInsertBindings(final CommitSnapshot commitSnapshot, final PostgresqlStatement statement) {
         return statement
-                .bind("$1", commitSnapshot.getCommitSha())
+                .bind("$1", commitSnapshot.getSha())
                 .bind("$2", commitSnapshot.getRepo().getId())
                 .bind("$3", commitSnapshot.getBranch());
     }

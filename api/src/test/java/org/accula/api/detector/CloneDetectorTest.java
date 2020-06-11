@@ -37,19 +37,19 @@ class CloneDetectorTest {
         // target file
         var repoOwner = new GithubUser(1L, "owner", "owner", "ava", false);
         GithubRepo repo = new GithubRepo(1L, "repo", "descr", repoOwner);
-        CommitSnapshot commitSnapshot = CommitSnapshot.builder().commitSha("sha").branch("branch").repo(repo).build();
+        CommitSnapshot commitSnapshot = CommitSnapshot.builder().sha("sha").branch("branch").repo(repo).build();
         FileEntity target1 = new FileEntity(commitSnapshot, "01.txt", "4\n6\n7\n8\n9\n\n\n");
         FileEntity target2 = new FileEntity(commitSnapshot, "02.txt", "10\n11\n1\n2\n");
 
         // source files
         var repoOwner1 = new GithubUser(2L, "owner1", "owner", "ava", false);
         GithubRepo repo1 = new GithubRepo(2L, "repo1", "descr", repoOwner1);
-        CommitSnapshot commitSnapshot1 = CommitSnapshot.builder().commitSha("sha1").branch("branch").repo(repo1).build();
+        CommitSnapshot commitSnapshot1 = CommitSnapshot.builder().sha("sha1").branch("branch").repo(repo1).build();
         FileEntity source1 = new FileEntity(commitSnapshot1, "1.txt", "1\n2\n3\n4\n9\n");
 
         var repoOwner2 = new GithubUser(3L, "owner2", "owner", "ava", false);
         GithubRepo repo2 = new GithubRepo(3L, "repo2", "descr", repoOwner2);
-        CommitSnapshot commitSnapshot2 = CommitSnapshot.builder().commitSha("sha2").branch("branch").repo(repo2).build();
+        CommitSnapshot commitSnapshot2 = CommitSnapshot.builder().sha("sha2").branch("branch").repo(repo2).build();
         FileEntity source2 = new FileEntity(commitSnapshot2, "2.txt", target1.getContent());
 
         // find clones
@@ -68,12 +68,12 @@ class CloneDetectorTest {
 
         var repoOwner = new GithubUser(1L, "vaddya", "owner", "ava", false);
         GithubRepo repo = new GithubRepo(1L, "2017-highload-kv", "descr", repoOwner);
-        CommitSnapshot commitSnapshot = CommitSnapshot.builder().commitSha("076c99d7bbb06b31c27a9c3164f152d5c18c5010").branch("branch").repo(repo).build();
+        CommitSnapshot commitSnapshot = CommitSnapshot.builder().sha("076c99d7bbb06b31c27a9c3164f152d5c18c5010").branch("branch").repo(repo).build();
         Flux<FileEntity> targetFiles = codeLoader.getFiles(commitSnapshot, FileFilter.SRC_JAVA);
 
         var repoOwner1 = new GithubUser(2L, "lamtev", "owner", "ava", false);
         GithubRepo repo1 = new GithubRepo(2L, "2017-highload-kv", "descr", repoOwner1);
-        CommitSnapshot commitSnapshot1 = CommitSnapshot.builder().commitSha("8ad07b914c0c2cee8b5a47993061b79c611db65d").branch("branch").repo(repo1).build();
+        CommitSnapshot commitSnapshot1 = CommitSnapshot.builder().sha("8ad07b914c0c2cee8b5a47993061b79c611db65d").branch("branch").repo(repo1).build();
         Flux<FileEntity> sourceFiles = codeLoader.getFiles(commitSnapshot1, FileFilter.SRC_JAVA);
 
         CloneDetector detector = new PrimitiveCloneDetector(10, 5);
