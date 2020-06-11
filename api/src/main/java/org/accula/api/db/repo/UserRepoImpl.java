@@ -27,24 +27,24 @@ public final class UserRepoImpl implements UserRepo {
                 .create()
                 .flatMap(connection -> Mono
                         .from(applyInsertBindings(githubUser, githubAccessToken, connection
-                                //@formatter:off
-                                .createStatement("WITH upserted_gh_user AS (" +
-                                                 "INSERT INTO user_github (id, login, name, avatar, is_org) " +
-                                                 "VALUES ($1, $2, $3, $4, $5)" +
-                                                 "ON CONFLICT (id) DO UPDATE" +
-                                                 "   SET login = $2," +
-                                                 "       name = COALESCE($3, user_github.name)," +
-                                                 "       avatar = $4," +
-                                                 "       is_org = $5 " +
-                                                 "RETURNING id" +
-                                                 ")" +
-                                                 "INSERT INTO user_ (github_id, github_access_token) " +
-                                                 "SELECT id, $6 " +
-                                                 "FROM upserted_gh_user " +
-                                                 "ON CONFLICT (github_id) DO UPDATE" +
-                                                 "  SET github_access_token = $6 " +
-                                                 "RETURNING id"))
-                                //@formatter:on
+                                .createStatement("""
+                                        WITH upserted_gh_user AS (
+                                        INSERT INTO user_github (id, login, name, avatar, is_org)
+                                        VALUES ($1, $2, $3, $4, $5)
+                                        ON CONFLICT (id) DO UPDATE
+                                           SET login = $2,
+                                               name = COALESCE($3, user_github.name),
+                                               avatar = $4,
+                                               is_org = $5
+                                        RETURNING id
+                                        )
+                                        INSERT INTO user_ (github_id, github_access_token)
+                                        SELECT id, $6
+                                        FROM upserted_gh_user
+                                        ON CONFLICT (github_id) DO UPDATE
+                                          SET github_access_token = $6
+                                        RETURNING id
+                                        """))
                                 .execute())
                         .flatMap(result -> Repos
                                 .convert(result, connection, row -> new User(
@@ -62,19 +62,19 @@ public final class UserRepoImpl implements UserRepo {
                 .create()
                 .flatMap(connection -> Mono
                         .from(connection
-                                //@formatter:off
-                                .createStatement("SELECT u.id," +
-                                                 "       ug.id                 AS github_id," +
-                                                 "       ug.login              AS github_login," +
-                                                 "       ug.name               AS github_name," +
-                                                 "       ug.avatar             AS github_avatar," +
-                                                 "       ug.is_org             AS github_org," +
-                                                 "       u.github_access_token " +
-                                                 "FROM user_ u" +
-                                                 "  JOIN user_github ug ON u.github_id = ug.id " +
-                                                 "WHERE u.id = $1")
+                                .createStatement("""
+                                        SELECT u.id,
+                                               ug.id                 AS github_id,
+                                               ug.login              AS github_login,
+                                               ug.name               AS github_name,
+                                               ug.avatar             AS github_avatar,
+                                               ug.is_org             AS github_org,
+                                               u.github_access_token
+                                        FROM user_ u
+                                          JOIN user_github ug ON u.github_id = ug.id
+                                        WHERE u.id = $1
+                                        """)
                                 .bind("$1", id)
-                                //@formatter:on
                                 .execute())
                         .flatMap(result -> Repos
                                 .convert(result, connection, this::convert)));

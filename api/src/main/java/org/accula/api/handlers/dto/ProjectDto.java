@@ -1,6 +1,5 @@
 package org.accula.api.handlers.dto;
 
-import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;

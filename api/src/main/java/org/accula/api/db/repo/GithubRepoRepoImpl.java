@@ -73,33 +73,33 @@ public final class GithubRepoRepoImpl implements GithubRepoRepo {
     }
 
     private static PostgresqlStatement insertStatement(final Connection connection) {
-        //@formatter:off
         return (PostgresqlStatement) connection
-                .createStatement("INSERT INTO repo_github (id, name, owner_id, description) " +
-                                 "VALUES ($1, $2, $3, $4) " +
-                                 "ON CONFLICT (id) DO UPDATE " +
-                                 "   SET name = $2," +
-                                 "       owner_id = $3," +
-                                 "       description = $4");
-        //@formatter:on
+                .createStatement("""
+                        INSERT INTO repo_github (id, name, owner_id, description)
+                        VALUES ($1, $2, $3, $4)
+                        ON CONFLICT (id) DO UPDATE
+                           SET name = $2,
+                               owner_id = $3,
+                               description = $4
+                        """);
     }
 
     private static PostgresqlStatement selectStatement(final Connection connection) {
-        //@formatter:off
         return (PostgresqlStatement) connection
-                .createStatement("SELECT repo.id          AS repo_id," +
-                                 "       repo.name        AS repo_name," +
-                                 "       repo.description AS repo_description," +
-                                 "       usr.id           AS repo_owner_id," +
-                                 "       usr.login        AS repo_owner_login," +
-                                 "       usr.name         AS repo_owner_name," +
-                                 "       usr.avatar       AS repo_owner_avatar," +
-                                 "       usr.is_org       AS repo_owner_is_org " +
-                                 "FROM repo_github repo " +
-                                 "   JOIN user_github usr " +
-                                 "       ON repo.owner_id = usr.id " +
-                                 "WHERE repo.id = $1");
-        //@formatter:on
+                .createStatement("""
+                        SELECT repo.id          AS repo_id,
+                               repo.name        AS repo_name,
+                               repo.description AS repo_description,
+                               usr.id           AS repo_owner_id,
+                               usr.login        AS repo_owner_login,
+                               usr.name         AS repo_owner_name,
+                               usr.avatar       AS repo_owner_avatar,
+                               usr.is_org       AS repo_owner_is_org
+                        FROM repo_github repo
+                           JOIN user_github usr
+                               ON repo.owner_id = usr.id
+                        WHERE repo.id = $1
+                        """);
     }
 
     private GithubRepo convert(final Row row) {

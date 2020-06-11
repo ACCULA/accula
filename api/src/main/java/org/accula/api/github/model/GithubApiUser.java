@@ -30,7 +30,7 @@ public class GithubApiUser {
 
     public boolean didDeleteAccount() {
         // Github sets the Ghost user instead of any user that deleted its account
-        return "ghost" .equals(login) || Long.valueOf(10137L).equals(id);
+        return "ghost".equals(login) || Long.valueOf(10137L).equals(id);
     }
 
     public enum Type {

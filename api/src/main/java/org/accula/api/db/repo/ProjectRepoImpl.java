@@ -27,7 +27,11 @@ public final class ProjectRepoImpl implements ProjectRepo {
         return connectionPool
                 .create()
                 .flatMap(connection -> Mono.from(connection
-                        .createStatement("SELECT NOT exists(SELECT 0 FROM project WHERE github_repo_id = $1) AS not_exists")
+                        .createStatement("""
+                                SELECT NOT exists(SELECT 0 
+                                                  FROM project 
+                                                  WHERE github_repo_id = $1) AS not_exists
+                                """)
                         .bind("$1", githubRepoId)
                         .execute())
                         .flatMap(result -> Repos.closeAndGet(connection, result, "not_exists", Boolean.class)));
@@ -39,23 +43,23 @@ public final class ProjectRepoImpl implements ProjectRepo {
                 .create()
                 .flatMap(connection -> Mono
                         .from(connection
-                                //@formatter:off
-                                .createStatement("WITH upserted_gh_repo AS (" +
-                                                 "      INSERT INTO repo_github (id, name, owner_id, description) " +
-                                                 "      VALUES ($1, $2, $3, $4) " +
-                                                 "      ON CONFLICT (id) DO UPDATE " +
-                                                 "          SET name = $2," +
-                                                 "              owner_id = $3," +
-                                                 "              description = $4 " +
-                                                 "      RETURNING id" +
-                                                 ")" +
-                                                 "INSERT INTO project (github_repo_id, creator_id) " +
-                                                 "SELECT id, $5 " +
-                                                 "FROM upserted_gh_repo " +
-                                                 "ON CONFLICT (github_repo_id) DO UPDATE " +
-                                                 "    SET creator_id = $5 " +
-                                                 "RETURNING id")
-                                //@formatter:on
+                                .createStatement("""
+                                        WITH upserted_gh_repo AS (
+                                              INSERT INTO repo_github (id, name, owner_id, description)
+                                              VALUES ($1, $2, $3, $4)
+                                              ON CONFLICT (id) DO UPDATE
+                                                  SET name = $2,
+                                                      owner_id = $3,
+                                                      description = $4
+                                              RETURNING id
+                                        )
+                                        INSERT INTO project (github_repo_id, creator_id)
+                                        SELECT id, $5
+                                        FROM upserted_gh_repo
+                                        ON CONFLICT (github_repo_id) DO UPDATE
+                                            SET creator_id = $5
+                                        RETURNING id
+                                        """)
                                 .bind("$1", githubRepo.getId())
                                 .bind("$2", githubRepo.getName())
                                 .bind("$3", githubRepo.getOwner().getId())
@@ -88,11 +92,11 @@ public final class ProjectRepoImpl implements ProjectRepo {
                 .create()
                 .flatMap(connection -> Mono
                         .from(connection
-                                //@formatter:off
-                                .createStatement("SELECT id " +
-                                                 "FROM project" +
-                                                 " WHERE github_repo_id = $1")
-                                //@formatter:on
+                                .createStatement("""
+                                        SELECT id
+                                        FROM project
+                                        WHERE github_repo_id = $1
+                                        """)
                                 .bind("$1", repoId)
                                 .execute())
                         .flatMap(result -> Repos.closeAndGet(connection, result, "id", Long.class)));
@@ -115,10 +119,10 @@ public final class ProjectRepoImpl implements ProjectRepo {
                 .create()
                 .flatMap(connection -> Mono
                         .from(((PostgresqlStatement) connection
-                                //@formatter:off
-                                .createStatement("DELETE FROM project " +
-                                                 "WHERE id = $1 AND creator_id = $2"))
-                                //@formatter:on
+                                .createStatement("""
+                                        DELETE FROM project
+                                        WHERE id = $1 AND creator_id = $2
+                                        """))
                                 .bind("$1", id)
                                 .bind("$2", creatorId)
                                 .execute())
@@ -127,57 +131,54 @@ public final class ProjectRepoImpl implements ProjectRepo {
     }
 
     private static PostgresqlStatement selectByIdStatement(final Connection connection) {
-        //@formatter:off
-        return selectStatement(connection,
-                "WHERE p.id = $1 " +
-                "GROUP BY p.id, project_repo.id, project_repo_owner.id, project_creator.id, project_creator_github_user.id, pulls.count");
-        //@formatter:on
+        return selectStatement(connection, """
+                WHERE p.id = $1
+                GROUP BY p.id, project_repo.id, project_repo_owner.id, project_creator.id, project_creator_github_user.id, pulls.count
+                """);
     }
 
     private static PostgresqlStatement selectTopStatement(final Connection connection) {
-        //@formatter:off
-        return selectStatement(connection,
-                "GROUP BY p.id, project_repo.id, project_repo_owner.id, project_creator.id, project_creator_github_user.id, pulls.count " +
-                "LIMIT $1");
-        //@formatter:on
+        return selectStatement(connection, """
+                GROUP BY p.id, project_repo.id, project_repo_owner.id, project_creator.id, project_creator_github_user.id, pulls.count
+                LIMIT $1
+                """);
     }
 
     private static PostgresqlStatement selectStatement(final Connection connection, final String terminatingCondition) {
-        //@formatter:off
-        @Language("SQL") final var sql =
-                "SELECT p.id                                AS project_id," +
-                "       project_repo.id                     AS project_repo_id," +
-                "       project_repo.name                   AS project_repo_name," +
-                "       project_repo.description            AS project_repo_description," +
-                "       project_repo_owner.id               AS project_repo_owner_id," +
-                "       project_repo_owner.login            AS project_repo_owner_login," +
-                "       project_repo_owner.name             AS project_repo_owner_name," +
-                "       project_repo_owner.avatar           AS project_repo_owner_avatar," +
-                "       project_repo_owner.is_org           AS project_repo_owner_is_org," +
-                "       project_creator.id                  AS project_creator_id," +
-                "       project_creator.github_access_token AS project_creator_github_access_token," +
-                "       project_creator_github_user.id      AS project_creator_github_user_id," +
-                "       project_creator_github_user.login   AS project_creator_github_user_login," +
-                "       project_creator_github_user.name    AS project_creator_github_user_name," +
-                "       project_creator_github_user.avatar  AS project_creator_github_user_avatar," +
-                "       project_creator_github_user.is_org  AS project_creator_github_user_is_org," +
-                "       pulls.count                         AS project_open_pull_count " +
+        @Language("SQL") final var sql = """
+                SELECT p.id                                AS project_id,
+                       project_repo.id                     AS project_repo_id,
+                       project_repo.name                   AS project_repo_name,
+                       project_repo.description            AS project_repo_description,
+                       project_repo_owner.id               AS project_repo_owner_id,
+                       project_repo_owner.login            AS project_repo_owner_login,
+                       project_repo_owner.name             AS project_repo_owner_name,
+                       project_repo_owner.avatar           AS project_repo_owner_avatar,
+                       project_repo_owner.is_org           AS project_repo_owner_is_org,
+                       project_creator.id                  AS project_creator_id,
+                       project_creator.github_access_token AS project_creator_github_access_token,
+                       project_creator_github_user.id      AS project_creator_github_user_id,
+                       project_creator_github_user.login   AS project_creator_github_user_login,
+                       project_creator_github_user.name    AS project_creator_github_user_name,
+                       project_creator_github_user.avatar  AS project_creator_github_user_avatar,
+                       project_creator_github_user.is_org  AS project_creator_github_user_is_org,
+                       pulls.count                         AS project_open_pull_count
 
-                "FROM project p " +
-                "         JOIN repo_github project_repo " +
-                "              ON p.github_repo_id = project_repo.id " +
-                "         JOIN user_github project_repo_owner " +
-                "              ON project_repo.owner_id = project_repo_owner.id " +
-                "         JOIN user_ project_creator " +
-                "              ON p.creator_id = project_creator.id " +
-                "         JOIN user_github project_creator_github_user " +
-                "              ON project_creator.github_id = project_creator_github_user.id" +
-                "         LEFT JOIN (SELECT count(*) FILTER ( WHERE open )," +
-                "                      project_id" +
-                "               FROM pull" +
-                "               GROUP BY project_id) pulls " +
-                "              ON p.id = pulls.project_id";
-        //@formatter:on
+                FROM project p
+                         JOIN repo_github project_repo
+                              ON p.github_repo_id = project_repo.id
+                         JOIN user_github project_repo_owner
+                              ON project_repo.owner_id = project_repo_owner.id
+                         JOIN user_ project_creator
+                              ON p.creator_id = project_creator.id
+                         JOIN user_github project_creator_github_user
+                              ON project_creator.github_id = project_creator_github_user.id
+                         LEFT JOIN (SELECT count(*) FILTER ( WHERE open ),
+                                           project_id
+                               FROM pull
+                               GROUP BY project_id) pulls
+                              ON p.id = pulls.project_id
+                """;
         return (PostgresqlStatement) connection.createStatement(String.format("%s %s", sql, terminatingCondition));
     }
 
