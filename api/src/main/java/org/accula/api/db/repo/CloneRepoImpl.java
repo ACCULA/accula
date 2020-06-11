@@ -6,6 +6,7 @@ import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.Row;
 import lombok.RequiredArgsConstructor;
 import org.accula.api.db.model.Clone;
+import org.intellij.lang.annotations.Language;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -181,5 +182,13 @@ public final class CloneRepoImpl implements CloneRepo {
                 "source_from_line",
                 "source_to_line"
         );
+    }
+
+    private static void testNewStringLiteral() {
+        @Language("SQL") final var sql =
+                """ 
+                SELECT * FROM clone
+                WHERE target_to_line = 5
+                """;
     }
 }
