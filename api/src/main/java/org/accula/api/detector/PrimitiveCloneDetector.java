@@ -6,7 +6,11 @@ import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -27,8 +31,7 @@ public class PrimitiveCloneDetector implements CloneDetector {
         final Mono<Map<String, Collection<CodeSnippet>>> target = targetFiles
                 .map(this::lineToSnippetsMap)
                 .collectList()
-                .map(PrimitiveCloneDetector::reduceMaps)
-                .cache();
+                .map(PrimitiveCloneDetector::reduceMaps);
         return sourceFiles
                 .flatMap(source -> target.zipWith(Mono.just(source)))
                 .flatMap(targetAndSource -> Flux.fromIterable(findClonesInFile(targetAndSource.getT1(), targetAndSource.getT2())))
@@ -43,7 +46,7 @@ public class PrimitiveCloneDetector implements CloneDetector {
             if (line.length() < minLineLength) {
                 continue;
             }
-            final CodeSnippet snippet = new CodeSnippet(file.getCommit(), file.getName(), i, i);
+            final CodeSnippet snippet = new CodeSnippet(file.getCommitSnapshot(), file.getName(), i, i);
             add(source, line, snippet);
         }
         return source;
@@ -59,7 +62,7 @@ public class PrimitiveCloneDetector implements CloneDetector {
                 continue;
             }
             if (target.containsKey(line)) {
-                final CodeSnippet source = new CodeSnippet(file.getCommit(), file.getName(), i, i);
+                final CodeSnippet source = new CodeSnippet(file.getCommitSnapshot(), file.getName(), i, i);
                 final Collection<CodeSnippet> snippets = target.get(line);
                 assert snippets != null;
                 snippets.forEach(s -> clones.add(Tuples.of(s, source)));
@@ -105,15 +108,15 @@ public class PrimitiveCloneDetector implements CloneDetector {
     }
 
     private static boolean isMergeable(final CodeSnippet first, final CodeSnippet second) {
-        return first.getCommit().equals(second.getCommit())
+        return first.getCommitSnapshot().equals(second.getCommitSnapshot())
                 && first.getFile().equals(second.getFile())
                 && first.getToLine() + 1 == second.getFromLine();
     }
 
     private static CodeSnippet merge(final CodeSnippet first, final CodeSnippet second) {
-        assert first.getCommit().equals(second.getCommit());
+        assert first.getCommitSnapshot().equals(second.getCommitSnapshot());
         assert first.getFile().equals(second.getFile());
-        return new CodeSnippet(first.getCommit(), first.getFile(), first.getFromLine(), second.getToLine());
+        return new CodeSnippet(first.getCommitSnapshot(), first.getFile(), first.getFromLine(), second.getToLine());
     }
 
     private static <K, V> Map<K, Collection<V>> reduceMaps(final List<Map<K, Collection<V>>> maps) {

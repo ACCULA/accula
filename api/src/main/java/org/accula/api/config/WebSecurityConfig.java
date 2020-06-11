@@ -10,8 +10,9 @@ import org.accula.api.auth.jwt.refresh.JwtRefreshFilter;
 import org.accula.api.auth.oauth2.OAuth2LoginFailureHandler;
 import org.accula.api.auth.oauth2.OAuth2LoginSuccessHandler;
 import org.accula.api.auth.util.CookieRefreshTokenHelper;
+import org.accula.api.converter.GithubApiToModelConverter;
 import org.accula.api.db.RefreshTokenRepository;
-import org.accula.api.db.UserRepository;
+import org.accula.api.db.repo.UserRepo;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -81,8 +82,6 @@ public class WebSecurityConfig {
                         .accessDeniedHandler(new HttpStatusServerAccessDeniedHandler(FORBIDDEN)))
 
                 .authorizeExchange(exchanges -> exchanges
-                        .pathMatchers(GET, "/api/projects/*/pulls/*/*").permitAll()
-                        .pathMatchers("/api/projects/*/pulls/**").authenticated()
                         .pathMatchers(GET, "/api/projects/**").permitAll()
                         .pathMatchers("/api/projects/**").authenticated()
                         .anyExchange().permitAll())
@@ -148,16 +147,17 @@ public class WebSecurityConfig {
             final JwtAccessTokenResponseProducer accessTokenResponseProducer,
             final Jwt jwt,
             final ReactiveOAuth2AuthorizedClientService authorizedClientService,
-            final UserRepository users,
-            final RefreshTokenRepository refreshTokens) {
-
+            final UserRepo users,
+            final RefreshTokenRepository refreshTokens,
+            final GithubApiToModelConverter converter) {
         return new OAuth2LoginSuccessHandler(
                 accessTokenResponseProducer,
                 jwt,
                 jwtProperties.getExpiresIn().getRefresh(),
                 authorizedClientService,
                 users,
-                refreshTokens
+                refreshTokens,
+                converter
         );
     }
 

@@ -1,11 +1,14 @@
 package org.accula.api.detector;
 
 import lombok.Value;
-import org.accula.api.db.model.Commit;
+import org.accula.api.db.model.CommitSnapshot;
 
+/**
+ * @author Vadim Dyachkov
+ */
 @Value
 public class CodeSnippet {
-    Commit commit;
+    CommitSnapshot commitSnapshot;
     String file;
     int fromLine;
     int toLine;
@@ -16,6 +19,6 @@ public class CodeSnippet {
 
     @Override
     public String toString() {
-        return commit.toString() + ":" + file + "[" + fromLine + ":" + toLine + "]";
+        return commitSnapshot.toString() + ":" + file + "[" + fromLine + ":" + toLine + "]";
     }
 }

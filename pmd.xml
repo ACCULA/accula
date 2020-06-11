@@ -74,6 +74,12 @@
         </properties>
     </rule>
 
+    <rule ref="category/java/codestyle.xml/ConfusingTernary">
+        <properties>
+            <property name="ignoreElseIf" value="true" />
+        </properties>
+    </rule>
+
     <rule ref="category/java/bestpractices.xml"/>
     <rule ref="category/java/codestyle.xml"/>
     <rule ref="category/java/design.xml"/>

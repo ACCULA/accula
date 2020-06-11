@@ -1,8 +1,8 @@
 package org.accula.api.github.api;
 
-import org.accula.api.github.model.GithubHook;
-import org.accula.api.github.model.GithubPull;
-import org.accula.api.github.model.GithubRepo;
+import org.accula.api.github.model.GithubApiHook;
+import org.accula.api.github.model.GithubApiPull;
+import org.accula.api.github.model.GithubApiRepo;
 import reactor.core.publisher.Mono;
 
 /**
@@ -11,13 +11,13 @@ import reactor.core.publisher.Mono;
 public interface GithubClient {
     Mono<Boolean> hasAdminPermission(String owner, String repo);
 
-    Mono<GithubRepo> getRepo(String owner, String repo);
+    Mono<GithubApiRepo> getRepo(String owner, String repo);
 
-    Mono<GithubPull[]> getRepositoryPulls(String owner, String repo, GithubPull.State state);
+    Mono<GithubApiPull[]> getRepositoryPulls(String owner, String repo, GithubApiPull.State state);
 
-    Mono<GithubPull> getRepositoryPull(String owner, String repo, Integer pullNumber);
+    Mono<GithubApiPull> getRepositoryPull(String owner, String repo, Integer pullNumber);
 
-    Mono<Void> createHook(String owner, String repo, GithubHook hook);
+    Mono<Void> createHook(String owner, String repo, GithubApiHook hook);
 
     interface LoginProvider {
         Mono<String> login();

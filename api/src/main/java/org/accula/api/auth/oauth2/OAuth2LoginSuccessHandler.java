@@ -3,11 +3,10 @@ package org.accula.api.auth.oauth2;
 import lombok.RequiredArgsConstructor;
 import org.accula.api.auth.jwt.JwtAccessTokenResponseProducer;
 import org.accula.api.auth.jwt.crypto.Jwt;
-import org.accula.api.auth.oauth2.github.GithubUserInfoExtractor;
+import org.accula.api.converter.GithubApiToModelConverter;
 import org.accula.api.db.RefreshTokenRepository;
-import org.accula.api.db.UserRepository;
 import org.accula.api.db.model.RefreshToken;
-import org.accula.api.db.model.User;
+import org.accula.api.db.repo.UserRepo;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.ReactiveOAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
@@ -17,14 +16,12 @@ import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 
-import static java.util.Objects.requireNonNull;
-
 /**
  * This class completes login with Github OAuth2 by signing-in or signing-up to our service.
  * It forms a response with our own access token, its expiration date, and refresh token:
- * <p>1. If DB ({@link UserRepository}) contains a user with obtained Github id and differ Github access token,
+ * <p>1. If DB ({@link UserRepo}) contains a user with obtained Github id and differ Github access token,
  * then Github access token is updated.
- * <p>2. If DB ({@link UserRepository}) doesn't contain a user with obtained Github id,
+ * <p>2. If DB ({@link UserRepo}) doesn't contain a user with obtained Github id,
  * then new user with provided Github id is created.
  * <p>3. We generate our own access token (JWT with user id sub and short lifetime) which is then included
  * in response Location header URI using {@link JwtAccessTokenResponseProducer#formSuccessRedirect}.
@@ -41,8 +38,9 @@ public final class OAuth2LoginSuccessHandler implements ServerAuthenticationSucc
     private final Jwt jwt;
     private final Duration refreshExpiresIn;
     private final ReactiveOAuth2AuthorizedClientService authorizedClientService;
-    private final UserRepository users;
+    private final UserRepo userRepo;
     private final RefreshTokenRepository refreshTokens;
+    private final GithubApiToModelConverter converter;
 
     @Override
     public Mono<Void> onAuthenticationSuccess(final WebFilterExchange exchange, final Authentication authentication) {
@@ -52,24 +50,14 @@ public final class OAuth2LoginSuccessHandler implements ServerAuthenticationSucc
             }
 
             final var authenticationToken = (OAuth2AuthenticationToken) authentication;
-            final var githubUser = GithubUserInfoExtractor.extractUser(authenticationToken.getPrincipal().getAttributes());
-            final var githubId = githubUser.getId();
-            final var githubLogin = githubUser.getLogin();
-            final var githubName = githubUser.getName();
+            final var githubUser = converter.convert(authenticationToken.getPrincipal().getAttributes());
 
             return authorizedClientService
                     .loadAuthorizedClient(authenticationToken.getAuthorizedClientRegistrationId(), authenticationToken.getName())
                     .map(authorizedClient -> authorizedClient.getAccessToken().getTokenValue())
-                    .flatMap(githubAccessToken -> users
-                            .findByGithubId(githubId)
-                            .filter(user -> user.shouldUpdateLoginOrAccessToken(githubLogin, githubAccessToken))
-                            .flatMap(user -> users
-                                    .updateGithubLoginAndAccessToken(githubId, githubLogin, githubAccessToken)
-                                    .thenReturn(requireNonNull(user.getId())))
-                            .switchIfEmpty(users
-                                    .save(User.of(githubName, githubId, githubLogin, githubAccessToken))
-                                    .map(user -> requireNonNull(user.getId()))))
-                    .flatMap(userId -> {
+                    .flatMap(githubAccessToken -> userRepo.upsert(githubUser, githubAccessToken))
+                    .flatMap(user -> {
+                        final var userId = user.getId();
                         final var refreshJwtDetails = jwt.generate(userId.toString(), refreshExpiresIn);
                         final var refreshToken = refreshJwtDetails.getToken();
 

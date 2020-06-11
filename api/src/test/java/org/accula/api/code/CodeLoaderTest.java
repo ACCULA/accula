@@ -1,9 +1,12 @@
 package org.accula.api.code;
 
-import org.accula.api.db.model.Commit;
+import org.accula.api.db.model.CommitSnapshot;
+import org.accula.api.db.model.GithubRepo;
+import org.accula.api.db.model.GithubUser;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import reactor.test.StepVerifier;
 import reactor.util.function.Tuple2;
 
 import java.io.File;
@@ -11,7 +14,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * FIXME: replace block with StepVerifier
@@ -19,11 +26,14 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Vadim Dyachkov
  */
 class CodeLoaderTest {
-    public static final String OWNER = "polis-mail-ru";
-    public static final String REPO = "2019-highload-dht";
-    public static final String SHA = "720cefb3f361895e9e23524c2b4025f9a949d5d2";
     public static final String README = "README.md";
-    public static final Commit COMMIT = new Commit(0L, OWNER, REPO, SHA);
+    public static final GithubUser USER = new GithubUser(0L, "polis-mail-ru", "name", "ava", true);
+    public static final GithubRepo REPO = new GithubRepo(0L, "2019-highload-dht", "descr", USER);
+    public static final CommitSnapshot COMMIT = CommitSnapshot.builder()
+            .sha("720cefb3f361895e9e23524c2b4025f9a949d5d2")
+            .branch("branch")
+            .repo(REPO)
+            .build();
 
     private static CodeLoader codeLoader;
 
@@ -73,22 +83,24 @@ class CodeLoaderTest {
 
     @Test
     void testGetFileSnippetMultiplyLines() {
-        FileEntity snippet = codeLoader.getFileSnippet(COMMIT, README, 4, 5).block();
-        assertNotNull(snippet);
-        assertEquals("## Этап 1. HTTP + storage (deadline 2019-10-05)\n### Fork", snippet.getContent());
+        StepVerifier.create(codeLoader.getFileSnippet(COMMIT, README, 4, 5)
+                .map(FileEntity::getContent))
+                .expectNextMatches(content -> content.equals("## Этап 1. HTTP + storage (deadline 2019-10-05)\n### Fork"))
+                .expectComplete()
+                .verify();
     }
 
     @Test
     void testGetFileSnippetWrongRange() {
-        assertThrows(Exception.class, () -> {
-            codeLoader.getFileSnippet(COMMIT, README, 5, 4).block();
-        });
+        assertThrows(Exception.class, () -> codeLoader.getFileSnippet(COMMIT, README, 5, 4).block());
     }
 
     @Test
     void testDiff() {
-        Commit base = new Commit(0L, OWNER, REPO, "d6357dccc16c7d5c001fd2a2203298c36fe96b63");
-        Commit head = new Commit(1L, "vaddya", REPO, "a1c28a1b500701819cf9919246f15f3f900bb609");
+        var headOwner = new GithubUser(1L, "vaddya", "owner", "ava", false);
+        var headRepo = new GithubRepo(1L, "2019-highload-dht", "descr", headOwner);
+        var head = CommitSnapshot.builder().sha("a1c28a1b500701819cf9919246f15f3f900bb609").branch("branch").repo(headRepo).build();
+        var base = CommitSnapshot.builder().sha("d6357dccc16c7d5c001fd2a2203298c36fe96b63").branch("branch").repo(REPO).build();
         List<Tuple2<FileEntity, FileEntity>> diff = codeLoader.getDiff(base, head).collectList().block();
         assertNotNull(diff);
         assertEquals(18, diff.size());

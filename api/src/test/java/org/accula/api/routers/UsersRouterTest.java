@@ -3,8 +3,10 @@ package org.accula.api.routers;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.accula.api.db.UserRepository;
+import org.accula.api.converter.ModelToDtoConverter;
+import org.accula.api.db.model.GithubUser;
 import org.accula.api.db.model.User;
+import org.accula.api.db.repo.UserRepo;
 import org.accula.api.handlers.UsersHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,14 +24,15 @@ import reactor.core.publisher.Mono;
  * @author Anton Lamtev
  */
 @WebFluxTest
-@ContextConfiguration(classes = {UsersRouter.class, UsersHandler.class})
+@ContextConfiguration(classes = {UsersRouter.class, UsersHandler.class, ModelToDtoConverter.class})
 public class UsersRouterTest {
-    private static final User STUB_USER = new User(1L, "name", 123L, "login", null);
+    private static final GithubUser GITHUB_USER = new GithubUser(1L, "login", "name", "ava", false);
+    private static final User STUB_USER = new User(1L, "token", GITHUB_USER);
     private static final ResponseUser RESPONSE_USER =
-            new ResponseUser(STUB_USER.getId(), STUB_USER.getGithubLogin(), STUB_USER.getName());
+            new ResponseUser(STUB_USER.getId(), GITHUB_USER.getLogin(), GITHUB_USER.getName());
 
     @MockBean
-    private UserRepository repository;
+    private UserRepo repository;
     @Autowired
     private RouterFunction<ServerResponse> usersRoute;
     private WebTestClient client;
@@ -43,7 +46,7 @@ public class UsersRouterTest {
 
     @Test
     public void testGetUserByIdOk() {
-        Mockito.when(repository.findById(RESPONSE_USER.id))
+        Mockito.when(repository.findById(Mockito.anyLong()))
                 .thenReturn(Mono.just(STUB_USER));
 
         client.get().uri("/api/users/{id}", RESPONSE_USER.id)
@@ -54,7 +57,7 @@ public class UsersRouterTest {
 
     @Test
     public void testGetUserByIdNotFoundInRepo() {
-        Mockito.when(repository.findById(RESPONSE_USER.id))
+        Mockito.when(repository.findById(Mockito.anyLong()))
                 .thenReturn(Mono.empty());
 
         client.get().uri("/api/users/{id}", RESPONSE_USER.id)
