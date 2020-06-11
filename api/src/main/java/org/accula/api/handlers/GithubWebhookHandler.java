@@ -59,12 +59,14 @@ public final class GithubWebhookHandler {
 
         final var targetFiles = savedPull
                 .map(Pull::getHead)
-                .flatMapMany(head -> loader.getFiles(head, FileFilter.ALL));
+                .flatMapMany(head -> loader.getFiles(head, FileFilter.SRC_JAVA))
+                .cache();
 
         final var sourceFiles = savedPull
                 .flatMapMany(pull -> pullRepo.findUpdatedEarlierThan(pull.getProjectId(), pull.getNumber()))
                 .map(Pull::getHead)
-                .flatMap(head -> loader.getFiles(head, FileFilter.ALL));
+                .flatMap(head -> loader.getFiles(head, FileFilter.SRC_JAVA))
+                .cache();
 
         final var cloneFlux = detector
                 .findClones(targetFiles, sourceFiles)

@@ -60,6 +60,7 @@ public class CodeLoaderImpl implements CodeLoader {
     @Override
     public Flux<FileEntity> getFiles(final CommitSnapshot snapshot, final FileFilter filter) {
         return getRepository(snapshot)
+                .publishOn(scheduler)
                 .switchIfEmpty(Mono.error(REPO_NOT_FOUND))
                 .flatMapMany(repo -> Flux.fromIterable(getObjectLoaders(repo, snapshot.getCommit().getSha())))
                 .filter(filenameAndLoader -> filter.test(filenameAndLoader.getT1()))
@@ -68,20 +69,19 @@ public class CodeLoaderImpl implements CodeLoader {
                 .onErrorResume(e -> e instanceof MissingObjectException, e -> {
                     log.info("Most probably branch with the commit {} has been deleted: {}", snapshot.toString(), e);
                     return Flux.empty();
-                })
-                .subscribeOn(scheduler);
+                });
     }
 
     @Override
     public Mono<FileEntity> getFile(final CommitSnapshot snapshot, final String filename) {
         return getRepository(snapshot)
+                .publishOn(scheduler)
                 .switchIfEmpty(Mono.error(REPO_NOT_FOUND))
                 .flatMap(repo -> Mono.justOrEmpty(getObjectLoader(repo, snapshot.getCommit().getSha(), filename)))
                 .switchIfEmpty(Mono.error(FILE_NOT_FOUND))
                 .map(loader -> new FileEntity(snapshot, filename, getFileContent(loader)))
                 .switchIfEmpty(Mono.error(CUT_ERROR))
-                .doOnSuccess(f -> log.info("Finished {}/{}", f.getCommitSnapshot(), f.getName()))
-                .subscribeOn(scheduler);
+                .doOnSuccess(f -> log.info("Finished {}/{}", f.getCommitSnapshot(), f.getName()));
     }
 
     @Override

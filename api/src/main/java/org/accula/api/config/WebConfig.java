@@ -54,6 +54,6 @@ public class WebConfig implements WebFluxConfigurer {
 
     @Bean
     public CloneDetector cloneDetector() {
-        return new PrimitiveCloneDetector(1, 2);
+        return new PrimitiveCloneDetector(5, 7);
     }
 }
