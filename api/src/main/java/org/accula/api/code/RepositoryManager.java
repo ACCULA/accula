@@ -45,6 +45,7 @@ public class RepositoryManager implements RepositoryProvider {
 
     //FIXME: this is a temporary solution which guarantees no race conditions
     @RequiredArgsConstructor
+    @SuppressWarnings("PMD.RedundantFieldInitializer")
     private static class RemoteCall {
         final Scheduler scheduler;
         boolean isCloned = false;
