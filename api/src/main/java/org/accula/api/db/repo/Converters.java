@@ -2,7 +2,6 @@ package org.accula.api.db.repo;
 
 import io.r2dbc.spi.Row;
 import org.accula.api.db.model.Clone;
-import org.accula.api.db.model.Commit;
 import org.accula.api.db.model.CommitSnapshot;
 import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.GithubUser;
@@ -66,7 +65,7 @@ final class Converters {
                                                 final String repoOwnerAvatar,
                                                 final String repoOwnerOrganization) {
         return CommitSnapshot.builder()
-                .commit(convertCommit(row, sha))
+                .commitSha(value(row, sha, String.class))
                 .branch(value(row, branch, String.class))
                 .pullId(nullable(row, pullId, Long.class))
                 .repo(convertRepo(row,
@@ -79,10 +78,6 @@ final class Converters {
                         repoOwnerAvatar,
                         repoOwnerOrganization))
                 .build();
-    }
-
-    static Commit convertCommit(final Row row, final String sha) {
-        return new Commit(value(row, sha, String.class));
     }
 
     static User convertUser(final Row row,

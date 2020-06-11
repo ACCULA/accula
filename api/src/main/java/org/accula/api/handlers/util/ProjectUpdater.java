@@ -2,12 +2,10 @@ package org.accula.api.handlers.util;
 
 import lombok.RequiredArgsConstructor;
 import org.accula.api.converter.GithubApiToModelConverter;
-import org.accula.api.db.model.Commit;
 import org.accula.api.db.model.CommitSnapshot;
 import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.GithubUser;
 import org.accula.api.db.model.Pull;
-import org.accula.api.db.repo.CommitRepo;
 import org.accula.api.db.repo.CommitSnapshotRepo;
 import org.accula.api.db.repo.GithubRepoRepo;
 import org.accula.api.db.repo.GithubUserRepo;
@@ -31,7 +29,6 @@ public final class ProjectUpdater {
     private final GithubApiToModelConverter converter;
     private final GithubUserRepo githubUserRepo;
     private final GithubRepoRepo githubRepoRepo;
-    private final CommitRepo commitRepo;
     private final CommitSnapshotRepo commitSnapshotRepo;
     private final PullRepo pullRepo;
 
@@ -44,7 +41,6 @@ public final class ProjectUpdater {
                 .defer(() -> {
                     final var users = new HashSet<GithubUser>();
                     final var repos = new HashSet<GithubRepo>();
-                    final var commits = new HashSet<Commit>();
                     final var commitSnapshots = new HashSet<CommitSnapshot>();
                     final var pulls = new HashSet<Pull>();
                     int openPullCount = 0;
@@ -54,7 +50,7 @@ public final class ProjectUpdater {
                             continue;
                         }
 
-                        final var pull = processGithubApiPull(projectId, githubApiPull, users, repos, commits, commitSnapshots);
+                        final var pull = processGithubApiPull(projectId, githubApiPull, users, repos, commitSnapshots);
                         pulls.add(pull);
 
                         if (pull.isOpen()) {
@@ -64,7 +60,6 @@ public final class ProjectUpdater {
 
                     return githubUserRepo.upsert(users)
                             .thenMany(githubRepoRepo.upsert(repos))
-                            .thenMany(commitRepo.upsert(commits))
                             .thenMany(commitSnapshotRepo.insert(commitSnapshots))
                             .thenMany(pullRepo.upsert(pulls))
                             .thenMany(commitSnapshotRepo.mapToPulls(commitSnapshots))
@@ -82,14 +77,12 @@ public final class ProjectUpdater {
 
                     final var users = new HashSet<GithubUser>();
                     final var repos = new HashSet<GithubRepo>();
-                    final var commits = new HashSet<Commit>();
                     final var commitSnapshots = new HashSet<CommitSnapshot>();
 
-                    final var pull = processGithubApiPull(projectId, githubApiPull, users, repos, commits, commitSnapshots);
+                    final var pull = processGithubApiPull(projectId, githubApiPull, users, repos, commitSnapshots);
 
                     return githubUserRepo.upsert(users)
                             .thenMany(githubRepoRepo.upsert(repos))
-                            .thenMany(commitRepo.upsert(commits))
                             .thenMany(commitSnapshotRepo.insert(commitSnapshots))
                             .then(pullRepo.upsert(pull))
                             .thenMany(commitSnapshotRepo.mapToPulls(commitSnapshots))
@@ -102,20 +95,17 @@ public final class ProjectUpdater {
                                       final GithubApiPull githubApiPull,
                                       final Set<GithubUser> users,
                                       final Set<GithubRepo> repos,
-                                      final Set<Commit> commits,
                                       final Set<CommitSnapshot> commitSnapshots) {
         final var pull = converter.convert(githubApiPull, projectId);
 
         final var head = pull.getHead();
         users.add(head.getRepo().getOwner());
         repos.add(head.getRepo());
-        commits.add(head.getCommit());
         commitSnapshots.add(head);
 
         final var base = pull.getBase();
         users.add(base.getRepo().getOwner());
         repos.add(base.getRepo());
-        commits.add(base.getCommit());
         commitSnapshots.add(base);
 
         users.add(pull.getAuthor());

@@ -4,14 +4,12 @@ import lombok.SneakyThrows;
 import org.accula.api.config.WebhookProperties;
 import org.accula.api.converter.GithubApiToModelConverter;
 import org.accula.api.converter.ModelToDtoConverter;
-import org.accula.api.db.model.Commit;
 import org.accula.api.db.model.CommitSnapshot;
 import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.GithubUser;
 import org.accula.api.db.model.Project;
 import org.accula.api.db.model.Pull;
 import org.accula.api.db.model.User;
-import org.accula.api.db.repo.CommitRepo;
 import org.accula.api.db.repo.CurrentUserRepo;
 import org.accula.api.db.repo.GithubUserRepo;
 import org.accula.api.db.repo.ProjectRepo;
@@ -49,13 +47,12 @@ import static java.lang.Boolean.TRUE;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 @WebFluxTest
-@ContextConfiguration(classes = {ProjectsHandler.class, ProjectsRouter.class, GithubApiToModelConverter.class, ModelToDtoConverter.class})
+@ContextConfiguration(classes = {ProjectsHandler.class, ProjectsRouter.class, GithubApiToModelConverter.class, ModelToDtoConverter.class, WebhookProperties.class})
 public class ProjectsRouterTest {
     private static final String REPO_URL = "https://github.com/accula/accula";
     private static final String REPO_NAME = "accula";
     private static final String REPO_OWNER = "accula";
 
-    private static final List<Commit> COMMITS = List.of(new Commit("sha1"), new Commit("sha2"), new Commit("sha3"));
     private static final Pull PULL = Pull.builder()
             .id(1L)
             .projectId(1L)
@@ -92,21 +89,12 @@ public class ProjectsRouterTest {
     @MockBean
     private PullRepo pullRepo;
     @MockBean
-    private CommitRepo commitRepo;
-    @MockBean
     private GithubClient githubClient;
-    @MockBean
-    private WebhookProperties webhookProperties;
     @Autowired
-    private GithubApiToModelConverter converter;
+    private ModelToDtoConverter converter;
     @Autowired
     private RouterFunction<ServerResponse> projectsRoute;
     private WebTestClient client;
-
-//    @BeforeAll
-//    public static void setup() {
-//        projectUpdater = Mockito.mock(ProjectUpdater.class);
-//    }
 
     @BeforeEach
     public void setUp() {
@@ -119,9 +107,6 @@ public class ProjectsRouterTest {
     public void testCreateProjectSuccess() {
         Mockito.when(currentUser.get())
                 .thenReturn(Mono.just(CURRENT_USER));
-
-        Mockito.when(commitRepo.upsert(Mockito.anyCollection()))
-                .thenReturn(Flux.fromIterable(COMMITS));
 
         Mockito.when(githubUserRepo.upsert(Mockito.any(GithubUser.class)))
                 .thenReturn(Mono.just(GITHUB_USER));
@@ -153,7 +138,7 @@ public class ProjectsRouterTest {
         Mockito.when(githubClient.createHook(Mockito.any(), Mockito.any(), Mockito.any()))
                 .thenReturn(Mono.empty());
 
-        final var expectedBody = new ModelToDtoConverter().convert(PROJECT);
+        final var expectedBody = converter.convert(PROJECT);
 
         client.post().uri("/api/projects")
                 .contentType(APPLICATION_JSON)
@@ -277,7 +262,7 @@ public class ProjectsRouterTest {
         Mockito.when(projectRepo.findById(Mockito.anyLong()))
                 .thenReturn(Mono.just(PROJECT));
 
-        final var expectedBody = new ModelToDtoConverter().convert(PROJECT);
+        final var expectedBody = converter.convert(PROJECT);
 
         client.get().uri("/api/projects/{id}", PROJECT.getId())
                 .exchange()
@@ -300,7 +285,7 @@ public class ProjectsRouterTest {
         Mockito.when(projectRepo.getTop(Mockito.anyInt()))
                 .thenReturn(Flux.fromArray(new Project[]{PROJECT, PROJECT}));
 
-        final var expectedBody = new ModelToDtoConverter().convert(PROJECT);
+        final var expectedBody = converter.convert(PROJECT);
 
         client.get().uri("/api/projects?count={count}", 2L)
                 .exchange()

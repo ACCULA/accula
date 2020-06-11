@@ -57,7 +57,7 @@ public final class ClonesHandler {
                 .cache();
 
         final var clones = pullHead.flatMapMany(head -> cloneRepo
-                .findByTargetCommitSnapshotSha(head.getCommit().getSha()))
+                .findByTargetCommitSnapshotSha(head.getCommitSha()))
                 .cache();
 
         final var targetFileSnippetMarkers = clones
@@ -125,7 +125,7 @@ public final class ClonesHandler {
         return CloneDto.FlatCodeSnippet.builder()
                 .owner(commitSnapshot.getRepo().getOwner().getLogin())
                 .repo(commitSnapshot.getRepo().getName())
-                .sha(commitSnapshot.getCommit().getSha())
+                .sha(commitSnapshot.getCommitSha())
                 .content(base64.encodeToString(content.getBytes()));
     }
 

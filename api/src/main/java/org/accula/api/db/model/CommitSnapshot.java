@@ -6,6 +6,7 @@ import lombok.Value;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * @author Vadim Dyachkov
  * @author Anton Lamtev
  */
 @Builder
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class CommitSnapshot {
     @EqualsAndHashCode.Include
-    Commit commit;
+    String commitSha;
     String branch;
     @Nullable
     Long pullId;
@@ -21,12 +22,12 @@ public class CommitSnapshot {
     GithubRepo repo;
 
     public Id getId() {
-        return new Id(commit.getSha(), repo.getId());
+        return new Id(commitSha, repo.getId());
     }
 
     @Override
     public String toString() {
-        return repo.getOwner().getLogin() + "/" + repo.getName() + "/" + commit.getSha();
+        return repo.getOwner().getLogin() + "/" + repo.getName() + "/" + commitSha;
     }
 
     @SuppressWarnings("PMD.ShortClassName")

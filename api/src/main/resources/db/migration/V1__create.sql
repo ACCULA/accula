@@ -58,18 +58,12 @@ CREATE TABLE IF NOT EXISTS project_admin
     CONSTRAINT project_admin_pk PRIMARY KEY (project_id, admin_id)
 );
 
-CREATE TABLE IF NOT EXISTS commit
-(
-    sha CHAR(40) PRIMARY KEY
-);
-
 CREATE TABLE IF NOT EXISTS commit_snapshot
 (
     sha     CHAR(40)     NOT NULL,
     repo_id BIGINT       NOT NULL,
     branch  VARCHAR(256) NOT NULL,
 
-    FOREIGN KEY (sha) REFERENCES commit (sha),
     FOREIGN KEY (repo_id) REFERENCES repo_github (id),
     CONSTRAINT commit_snapshot_pk PRIMARY KEY (sha, repo_id)
 );

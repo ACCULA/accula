@@ -62,7 +62,7 @@ public class CodeLoaderImpl implements CodeLoader {
         return getRepository(snapshot)
                 .publishOn(scheduler)
                 .switchIfEmpty(Mono.error(REPO_NOT_FOUND))
-                .flatMapMany(repo -> Flux.fromIterable(getObjectLoaders(repo, snapshot.getCommit().getSha())))
+                .flatMapMany(repo -> Flux.fromIterable(getObjectLoaders(repo, snapshot.getCommitSha())))
                 .filter(filenameAndLoader -> filter.test(filenameAndLoader.getT1()))
                 .map(filenameAndLoader -> new FileEntity(snapshot, filenameAndLoader.getT1(), getFileContent(filenameAndLoader.getT2())))
                 .switchIfEmpty(Mono.error(CUT_ERROR))
@@ -77,7 +77,7 @@ public class CodeLoaderImpl implements CodeLoader {
         return getRepository(snapshot)
                 .publishOn(scheduler)
                 .switchIfEmpty(Mono.error(REPO_NOT_FOUND))
-                .flatMap(repo -> Mono.justOrEmpty(getObjectLoader(repo, snapshot.getCommit().getSha(), filename)))
+                .flatMap(repo -> Mono.justOrEmpty(getObjectLoader(repo, snapshot.getCommitSha(), filename)))
                 .switchIfEmpty(Mono.error(FILE_NOT_FOUND))
                 .map(loader -> new FileEntity(snapshot, filename, getFileContent(loader)))
                 .switchIfEmpty(Mono.error(CUT_ERROR))
@@ -91,7 +91,7 @@ public class CodeLoaderImpl implements CodeLoader {
         }
         return getRepository(snapshot)
                 .switchIfEmpty(Mono.error(REPO_NOT_FOUND))
-                .flatMap(repo -> Mono.justOrEmpty(getObjectLoader(repo, snapshot.getCommit().getSha(), filename)))
+                .flatMap(repo -> Mono.justOrEmpty(getObjectLoader(repo, snapshot.getCommitSha(), filename)))
                 .switchIfEmpty(Mono.error(FILE_NOT_FOUND))
                 .map(loader -> new FileEntity(snapshot, filename, cutFileContent(loader, fromLine, toLine)))
                 .doOnSuccess(f -> log.debug("Loaded file entity: {}/{}", f.getCommitSnapshot(), f.getName()))
@@ -105,12 +105,12 @@ public class CodeLoaderImpl implements CodeLoader {
     @Override
     public Flux<Tuple2<FileEntity, FileEntity>> getDiff(final CommitSnapshot base, final CommitSnapshot head, final FileFilter filter) {
         final Mono<AbstractTreeIterator> baseTree = getRepository(base)
-                .map(repo -> getTreeIterator(repo, base.getCommit().getSha()))
+                .map(repo -> getTreeIterator(repo, base.getCommitSha()))
                 .doOnError(e -> log.error("Cannot get tree iterator for base {}: {}", base, e.getMessage()));
 
         final Mono<Repository> headRepo = getRepository(head).cache();
         final Mono<AbstractTreeIterator> headTree = headRepo
-                .map(repo -> getTreeIterator(repo, head.getCommit().getSha()))
+                .map(repo -> getTreeIterator(repo, head.getCommitSha()))
                 .doOnError(e -> log.error("Cannot get tree iterator for head {}: {}", head, e.getMessage()));
 
         return Mono.zip(headRepo, baseTree, headTree)

@@ -119,7 +119,7 @@ public final class CommitSnapshotRepoImpl implements CommitSnapshotRepo {
 
     private static PostgresqlStatement applyInsertBindings(final CommitSnapshot commitSnapshot, final PostgresqlStatement statement) {
         return statement
-                .bind("$1", commitSnapshot.getCommit().getSha())
+                .bind("$1", commitSnapshot.getCommitSha())
                 .bind("$2", commitSnapshot.getRepo().getId())
                 .bind("$3", commitSnapshot.getBranch());
     }
@@ -142,7 +142,7 @@ public final class CommitSnapshotRepoImpl implements CommitSnapshotRepo {
                                ON snap.repo_id = repo.id
                            JOIN user_github repo_owner
                                ON repo.owner_id = repo_owner.id 
-                        WHERE snap.sha = $1 AND snap.repo_id = $
+                        WHERE snap.sha = $1 AND snap.repo_id = $2
                         """);
     }
 
