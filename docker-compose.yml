@@ -36,7 +36,7 @@ services:
       - ./repos:/app/repos
       - ./keys:/app/keys
   postgres:
-    image: postgres:12.3
+    image: postgres:12.3-alpine
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
