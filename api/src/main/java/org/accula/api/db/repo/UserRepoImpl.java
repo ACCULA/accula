@@ -1,7 +1,7 @@
 package org.accula.api.db.repo;
 
+import io.r2dbc.postgresql.api.PostgresqlStatement;
 import io.r2dbc.spi.Row;
-import io.r2dbc.spi.Statement;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.accula.api.db.model.GithubUser;
@@ -25,7 +25,7 @@ public final class UserRepoImpl implements UserRepo, ConnectionProvidedRepo {
     @Override
     public Mono<User> upsert(final GithubUser githubUser, final String githubAccessToken) {
         return withConnection(connection -> Mono
-                .from(applyInsertBindings(githubUser, githubAccessToken, connection
+                .from(applyInsertBindings(githubUser, githubAccessToken, (PostgresqlStatement) connection
                         .createStatement("""
                                 WITH upserted_gh_user AS (
                                 INSERT INTO user_github (id, login, name, avatar, is_org)
@@ -53,7 +53,6 @@ public final class UserRepoImpl implements UserRepo, ConnectionProvidedRepo {
                         ))))
                 .doOnSuccess(user -> onUpserts
                         .forEach(onUpsert -> onUpsert.onUpsert(user.getId())));
-
     }
 
     @Override
@@ -82,9 +81,9 @@ public final class UserRepoImpl implements UserRepo, ConnectionProvidedRepo {
         onUpserts.add(onUpsert);
     }
 
-    private static Statement applyInsertBindings(final GithubUser githubUser,
-                                                 final String githubAccessToken,
-                                                 final Statement statement) {
+    private static PostgresqlStatement applyInsertBindings(final GithubUser githubUser,
+                                                           final String githubAccessToken,
+                                                           final PostgresqlStatement statement) {
         return GithubUserRepoImpl
                 .applyInsertBindings(githubUser, statement)
                 .bind("$6", githubAccessToken);

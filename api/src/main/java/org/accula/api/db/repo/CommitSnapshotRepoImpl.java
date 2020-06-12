@@ -25,10 +25,10 @@ public final class CommitSnapshotRepoImpl implements CommitSnapshotRepo, Connect
 
     @Override
     public Mono<CommitSnapshot> insert(final CommitSnapshot commitSnapshot) {
-        return withConnection(connection -> Mono
-                .from(applyInsertBindings(commitSnapshot, insertStatement(connection))
-                        .execute())
-                .thenReturn(commitSnapshot));
+        return withConnection(connection -> applyInsertBindings(commitSnapshot, insertStatement(connection))
+                .execute()
+                .flatMap(PostgresqlResult::getRowsUpdated)
+                .then(Mono.just(commitSnapshot)));
     }
 
     @Override

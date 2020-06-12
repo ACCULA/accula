@@ -26,12 +26,10 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
 
     @Override
     public Mono<Pull> upsert(final Pull pull) {
-        return withConnection(connection -> Mono
-                .from(applyInsertBindings(insertStatement(connection), pull)
-                        .execute())
+        return withConnection(connection -> applyInsertBindings(insertStatement(connection), pull)
+                .execute()
                 .flatMap(PostgresqlResult::getRowsUpdated)
-                .filter(Integer.valueOf(1)::equals)
-                .thenReturn(pull));
+                .then(Mono.just(pull)));
     }
 
     @Override

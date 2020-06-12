@@ -3,7 +3,6 @@ package org.accula.api.db.repo;
 import io.r2dbc.postgresql.api.PostgresqlResult;
 import io.r2dbc.postgresql.api.PostgresqlStatement;
 import io.r2dbc.spi.Connection;
-import io.r2dbc.spi.Statement;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.accula.api.db.model.GithubUser;
@@ -26,12 +25,9 @@ public final class GithubUserRepoImpl implements GithubUserRepo, ConnectionProvi
 
     @Override
     public Mono<GithubUser> upsert(final GithubUser user) {
-        return withConnection(connection -> Mono
-                .from(applyInsertBindings(user, insertStatement(connection))
-                        .execute())
-                .flatMap(result -> Mono.from(result.getRowsUpdated()))
-                .filter(Integer.valueOf(1)::equals)
-                .map(rowsUpdated -> user));
+        return withConnection(connection -> applyInsertBindings(user, insertStatement(connection)).execute()
+                .flatMap(PostgresqlResult::getRowsUpdated)
+                .then(Mono.just(user)));
     }
 
     @Override
@@ -87,7 +83,7 @@ public final class GithubUserRepoImpl implements GithubUserRepo, ConnectionProvi
                         """);
     }
 
-    static Statement applyInsertBindings(final GithubUser user, final Statement statement) {
+    static PostgresqlStatement applyInsertBindings(final GithubUser user, final PostgresqlStatement statement) {
         statement.bind("$1", user.getId());
         statement.bind("$2", user.getLogin());
         if (user.getName() != null && !user.getName().isBlank()) {
