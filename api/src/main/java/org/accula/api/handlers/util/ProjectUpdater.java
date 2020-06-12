@@ -1,6 +1,7 @@
 package org.accula.api.handlers.util;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.accula.api.converter.GithubApiToModelConverter;
 import org.accula.api.db.model.CommitSnapshot;
 import org.accula.api.db.model.GithubRepo;
@@ -23,6 +24,7 @@ import java.util.Set;
  * @author Anton Lamtev
  */
 @Component
+@Slf4j
 @RequiredArgsConstructor
 public final class ProjectUpdater {
     private final Scheduler processingScheduler = Schedulers.boundedElastic();
@@ -59,10 +61,15 @@ public final class ProjectUpdater {
                     }
 
                     return githubUserRepo.upsert(users)
-                            .thenMany(githubRepoRepo.upsert(repos))
-                            .thenMany(commitSnapshotRepo.insert(commitSnapshots))
-                            .thenMany(pullRepo.upsert(pulls))
-                            .thenMany(commitSnapshotRepo.mapToPulls(commitSnapshots))
+                            .doOnError(e -> log.error("Error saving users: {}", users, e))
+                            .thenMany(githubRepoRepo.upsert(repos)
+                                    .doOnError(e -> log.error("Error saving repos: {}", repos, e)))
+                            .thenMany(commitSnapshotRepo.insert(commitSnapshots)
+                                    .doOnError(e -> log.error("Error saving commits: {}", commitSnapshots, e)))
+                            .thenMany(pullRepo.upsert(pulls)
+                                    .doOnError(e -> log.error("Error saving pulls: {}", pulls, e)))
+                            .thenMany(commitSnapshotRepo.mapToPulls(commitSnapshots)
+                                    .doOnError(e -> log.error("Error mapping pulls: {}", commitSnapshots, e)))
                             .then(Mono.just(openPullCount));
                 })
                 .subscribeOn(processingScheduler);
