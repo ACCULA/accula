@@ -41,7 +41,7 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
         return manyWithConnection(connection -> {
             final var statement = insertStatement(connection);
             pulls.forEach(pull -> applyInsertBindings(statement, pull).add());
-            statement.fetchSize(pulls.size());
+//            statement.fetchSize(pulls.size());
 
             return statement.execute()
                     .flatMap(PostgresqlResult::getRowsUpdated)
@@ -69,7 +69,7 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
             ids.forEach(id -> statement
                     .bind("$1", id)
                     .add());
-            statement.fetchSize(ids.size());
+//            statement.fetchSize(ids.size());
 
             return statement
                     .execute()

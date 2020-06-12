@@ -40,7 +40,7 @@ public final class CommitSnapshotRepoImpl implements CommitSnapshotRepo, Connect
         return manyWithConnection(connection -> {
             final var statement = insertStatement(connection);
             commitSnapshots.forEach(snapshot -> applyInsertBindings(snapshot, statement).add());
-            statement.fetchSize(commitSnapshots.size());
+//            statement.fetchSize(commitSnapshots.size());
 
             return statement
                     .execute()
@@ -71,7 +71,7 @@ public final class CommitSnapshotRepoImpl implements CommitSnapshotRepo, Connect
                         .bind("$3", Objects.requireNonNull(commitSnapshot.getPullId()))
                         .add();
             });
-            statement.fetchSize(commitSnapshots.size());
+//            statement.fetchSize(commitSnapshots.size());
 
             return statement.execute()
                     .flatMap(PostgresqlResult::getRowsUpdated)
@@ -92,7 +92,7 @@ public final class CommitSnapshotRepoImpl implements CommitSnapshotRepo, Connect
         return manyWithConnection(connection -> {
             final var statement = selectStatement(connection);
             ids.forEach(id -> applySelectBindings(id, statement).add());
-            statement.fetchSize(ids.size());
+//            statement.fetchSize(ids.size());
 
             return statement
                     .execute()
