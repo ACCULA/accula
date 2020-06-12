@@ -1,10 +1,10 @@
 package org.accula.api.db.repo;
 
-import io.r2dbc.pool.ConnectionPool;
 import io.r2dbc.postgresql.api.PostgresqlResult;
 import io.r2dbc.postgresql.api.PostgresqlStatement;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.Row;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.accula.api.db.model.GithubRepo;
 import org.springframework.stereotype.Component;
@@ -18,23 +18,22 @@ import java.util.Collection;
  */
 @Component
 @RequiredArgsConstructor
-public final class GithubRepoRepoImpl implements GithubRepoRepo {
-    private final ConnectionPool connectionPool;
+public final class GithubRepoRepoImpl implements GithubRepoRepo, ConnectionProvidedRepo {
+    @Getter
+    private final ConnectionProvider connectionProvider;
 
     @Override
     public Mono<GithubRepo> upsert(final GithubRepo repo) {
-        return connectionPool
-                .create()
-                .flatMap(connection -> Mono
-                        .from(insertStatement(connection)
-                                .bind("$1", repo.getId())
-                                .bind("$2", repo.getName())
-                                .bind("$3", repo.getOwner().getId())
-                                .bind("$4", repo.getDescription())
-                                .execute())
-                        .flatMap(result -> Mono.from(result.getRowsUpdated()))
-                        .filter(Integer.valueOf(1)::equals)
-                        .flatMap(rowsUpdated -> Repos.closeAndReturn(connection, repo)));
+        return withConnection(connection -> Mono
+                .from(insertStatement(connection)
+                        .bind("$1", repo.getId())
+                        .bind("$2", repo.getName())
+                        .bind("$3", repo.getOwner().getId())
+                        .bind("$4", repo.getDescription())
+                        .execute())
+                .flatMap(result -> Mono.from(result.getRowsUpdated()))
+                .filter(Integer.valueOf(1)::equals)
+                .map(rowsUpdated -> repo));
     }
 
     @Override
@@ -43,33 +42,29 @@ public final class GithubRepoRepoImpl implements GithubRepoRepo {
             return Flux.empty();
         }
 
-        return connectionPool
-                .create()
-                .flatMapMany(connection -> {
-                    final var statement = insertStatement(connection);
-                    repos.forEach(repo -> statement
-                            .bind("$1", repo.getId())
-                            .bind("$2", repo.getName())
-                            .bind("$3", repo.getOwner().getId())
-                            .bind("$4", repo.getDescription())
-                            .add());
-                    statement.fetchSize(repos.size());
+        return manyWithConnection(connection -> {
+            final var statement = insertStatement(connection);
+            repos.forEach(repo -> statement
+                    .bind("$1", repo.getId())
+                    .bind("$2", repo.getName())
+                    .bind("$3", repo.getOwner().getId())
+                    .bind("$4", repo.getDescription())
+                    .add());
+            statement.fetchSize(repos.size());
 
-                    return statement.execute()
-                            .flatMap(PostgresqlResult::getRowsUpdated)
-                            .thenMany(Repos.closeAndReturn(connection, repos));
-                });
+            return statement.execute()
+                    .flatMap(PostgresqlResult::getRowsUpdated)
+                    .thenMany(Flux.fromIterable(repos));
+        });
     }
 
     @Override
     public Mono<GithubRepo> findById(final Long id) {
-        return connectionPool
-                .create()
-                .flatMap(connection -> Mono
-                        .from(selectStatement(connection)
-                                .bind("$1", id)
-                                .execute())
-                        .flatMap(result -> Repos.convert(result, connection, this::convert)));
+        return withConnection(connection -> Mono
+                .from(selectStatement(connection)
+                        .bind("$1", id)
+                        .execute())
+                .flatMap(result -> ConnectionProvidedRepo.convert(result, this::convert)));
     }
 
     private static PostgresqlStatement insertStatement(final Connection connection) {

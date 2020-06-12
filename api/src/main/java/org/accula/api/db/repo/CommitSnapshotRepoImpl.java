@@ -1,10 +1,10 @@
 package org.accula.api.db.repo;
 
-import io.r2dbc.pool.ConnectionPool;
 import io.r2dbc.postgresql.api.PostgresqlResult;
 import io.r2dbc.postgresql.api.PostgresqlStatement;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.Row;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.accula.api.db.model.CommitSnapshot;
 import org.springframework.stereotype.Component;
@@ -19,17 +19,16 @@ import java.util.Objects;
  */
 @Component
 @RequiredArgsConstructor
-public final class CommitSnapshotRepoImpl implements CommitSnapshotRepo {
-    private final ConnectionPool connectionPool;
+public final class CommitSnapshotRepoImpl implements CommitSnapshotRepo, ConnectionProvidedRepo {
+    @Getter
+    private final ConnectionProvider connectionProvider;
 
     @Override
     public Mono<CommitSnapshot> insert(final CommitSnapshot commitSnapshot) {
-        return connectionPool
-                .create()
-                .flatMap(connection -> Mono
-                        .from(applyInsertBindings(commitSnapshot, insertStatement(connection))
-                                .execute())
-                        .flatMap(result -> Repos.closeAndReturn(connection, commitSnapshot)));
+        return withConnection(connection -> Mono
+                .from(applyInsertBindings(commitSnapshot, insertStatement(connection))
+                        .execute())
+                .thenReturn(commitSnapshot));
     }
 
     @Override
@@ -37,18 +36,17 @@ public final class CommitSnapshotRepoImpl implements CommitSnapshotRepo {
         if (commitSnapshots.isEmpty()) {
             return Flux.empty();
         }
-        return connectionPool
-                .create()
-                .flatMapMany(connection -> {
-                    final var statement = insertStatement(connection);
-                    commitSnapshots.forEach(snapshot -> applyInsertBindings(snapshot, statement).add());
-                    statement.fetchSize(commitSnapshots.size());
 
-                    return statement
-                            .execute()
-                            .flatMap(PostgresqlResult::getRowsUpdated)
-                            .thenMany(Repos.closeAndReturn(connection, commitSnapshots));
-                });
+        return manyWithConnection(connection -> {
+            final var statement = insertStatement(connection);
+            commitSnapshots.forEach(snapshot -> applyInsertBindings(snapshot, statement).add());
+            statement.fetchSize(commitSnapshots.size());
+
+            return statement
+                    .execute()
+                    .flatMap(PostgresqlResult::getRowsUpdated)
+                    .thenMany(Flux.fromIterable(commitSnapshots));
+        });
     }
 
     @Override
@@ -61,51 +59,47 @@ public final class CommitSnapshotRepoImpl implements CommitSnapshotRepo {
             return Flux.empty();
         }
 
-        return connectionPool
-                .create()
-                .flatMapMany(connection -> {
-                    final var statement = (PostgresqlStatement) connection.createStatement("""
-                            INSERT INTO commit_snapshot_pull (
-                            commit_snapshot_sha, commit_snapshot_repo_id, pull_id)
-                            VALUES ($1, $2, $3)
-                            ON CONFLICT (commit_snapshot_sha, commit_snapshot_repo_id, pull_id) DO NOTHING
-                            """);
-                    commitSnapshots.forEach(commitSnapshot -> {
-                        final var snapId = commitSnapshot.getId();
-                        statement.bind("$1", snapId.getSha())
-                                .bind("$2", snapId.getRepoId())
-                                .bind("$3", Objects.requireNonNull(commitSnapshot.getPullId()))
-                                .add();
-                    });
-                    statement.fetchSize(commitSnapshots.size());
+        return manyWithConnection(connection -> {
+            final var statement = (PostgresqlStatement) connection.createStatement("""
+                    INSERT INTO commit_snapshot_pull (
+                    commit_snapshot_sha, commit_snapshot_repo_id, pull_id)
+                    VALUES ($1, $2, $3)
+                    ON CONFLICT (commit_snapshot_sha, commit_snapshot_repo_id, pull_id) DO NOTHING
+                    """);
+            commitSnapshots.forEach(commitSnapshot -> {
+                final var snapId = commitSnapshot.getId();
+                statement.bind("$1", snapId.getSha())
+                        .bind("$2", snapId.getRepoId())
+                        .bind("$3", Objects.requireNonNull(commitSnapshot.getPullId()))
+                        .add();
+            });
+            statement.fetchSize(commitSnapshots.size());
 
-                    return statement.execute()
-                            .flatMap(PostgresqlResult::getRowsUpdated)
-                            .thenMany(Repos.closeAndReturn(connection, commitSnapshots));
-                });
+            return statement.execute()
+                    .flatMap(PostgresqlResult::getRowsUpdated)
+                    .thenMany(Flux.fromIterable(commitSnapshots));
+        });
     }
 
     @Override
     public Mono<CommitSnapshot> findById(final CommitSnapshot.Id id) {
-        return connectionPool
-                .create()
-                .flatMap(connection -> Mono
-                        .from(applySelectBindings(id, selectStatement(connection))
-                                .execute())
-                        .flatMap(result -> Repos.convert(result, connection, this::convert)));
+        return withConnection(connection -> Mono
+                .from(applySelectBindings(id, selectStatement(connection))
+                        .execute())
+                .flatMap(result -> ConnectionProvidedRepo.convert(result, this::convert)));
     }
 
     @Override
     public Flux<CommitSnapshot> findById(final Collection<CommitSnapshot.Id> ids) {
-        return connectionPool
-                .create()
-                .flatMapMany(connection -> {
-                    final var statement = selectStatement(connection);
-                    ids.forEach(id -> applySelectBindings(id, statement).add());
-                    statement.fetchSize(ids.size());
+        return manyWithConnection(connection -> {
+            final var statement = selectStatement(connection);
+            ids.forEach(id -> applySelectBindings(id, statement).add());
+            statement.fetchSize(ids.size());
 
-                    return Repos.convertMany(statement.execute(), connection, this::convert);
-                });
+            return statement
+                    .execute()
+                    .flatMap(result -> ConnectionProvidedRepo.convert(result, this::convert));
+        });
     }
 
     private static PostgresqlStatement insertStatement(final Connection connection) {
