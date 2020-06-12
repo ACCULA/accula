@@ -67,6 +67,10 @@ public final class PullRepoImpl implements PullRepo {
 
     @Override
     public Flux<Pull> findById(final Collection<Long> ids) {
+        if (ids.isEmpty()) {
+            return Flux.empty();
+        }
+
         return connectionPool
                 .create()
                 .flatMapMany(connection -> {

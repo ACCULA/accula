@@ -34,8 +34,9 @@ services:
       - JWT_SIGNATURE_PRIVATE_KEY=/app/keys/accula.private.der
     volumes:
       - ./repos:/app/repos
+      - ./keys:/app/keys
   postgres:
-    image: postgres:11
+    image: postgres:12
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres

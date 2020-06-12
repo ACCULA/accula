@@ -31,7 +31,8 @@ public class PrimitiveCloneDetector implements CloneDetector {
         final Mono<Map<String, Collection<CodeSnippet>>> target = targetFiles
                 .map(this::lineToSnippetsMap)
                 .collectList()
-                .map(PrimitiveCloneDetector::reduceMaps);
+                .map(PrimitiveCloneDetector::reduceMaps)
+                .cache();
         return sourceFiles
                 .flatMap(source -> target.zipWith(Mono.just(source)))
                 .flatMap(targetAndSource -> Flux.fromIterable(findClonesInFile(targetAndSource.getT1(), targetAndSource.getT2())))

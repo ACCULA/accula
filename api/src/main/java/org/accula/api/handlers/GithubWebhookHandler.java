@@ -1,6 +1,7 @@
 package org.accula.api.handlers;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.accula.api.code.CodeLoader;
 import org.accula.api.code.FileFilter;
 import org.accula.api.db.model.Clone;
@@ -25,6 +26,7 @@ import reactor.util.function.Tuple2;
  * @author Vadim Dyachkov
  */
 @Component
+@Slf4j
 @RequiredArgsConstructor
 public final class GithubWebhookHandler {
     private static final String GITHUB_EVENT = "X-GitHub-Event";
@@ -46,6 +48,10 @@ public final class GithubWebhookHandler {
         return request
                 .bodyToMono(GithubApiHookPayload.class)
                 .flatMap(this::processPayload)
+                .onErrorResume(e -> {
+                    log.error("Error: ", e);
+                    return Mono.empty();
+                })
                 .flatMap(p -> ServerResponse.ok().build());
     }
 
@@ -59,22 +65,22 @@ public final class GithubWebhookHandler {
 
         final var targetFiles = savedPull
                 .map(Pull::getHead)
-                .flatMapMany(head -> loader.getFiles(head, FileFilter.SRC_JAVA))
-                .cache();
+                .flatMapMany(head -> loader.getFiles(head, FileFilter.JAVA));
 
         final var sourceFiles = savedPull
                 .flatMapMany(pull -> pullRepo.findUpdatedEarlierThan(pull.getProjectId(), pull.getNumber()))
                 .map(Pull::getHead)
-                .flatMap(head -> loader.getFiles(head, FileFilter.SRC_JAVA))
+                .flatMap(head -> loader.getFiles(head, FileFilter.JAVA))
                 .cache();
 
         final var cloneFlux = detector
                 .findClones(targetFiles, sourceFiles)
-                .map(this::convert)
-                .subscribeOn(processingScheduler);
+                .map(this::convert);
 
-        return cloneFlux.collectList()
+        final var saveClones =  cloneFlux.collectList()
                 .flatMap(clones -> cloneRepo.insert(clones).then());
+
+        return Mono.when(savedPull, saveClones);
     }
 
     private Clone convert(final Tuple2<CodeSnippet, CodeSnippet> clone) {
