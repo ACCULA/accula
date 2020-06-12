@@ -65,23 +65,19 @@ public final class GithubUserRepoImpl implements GithubUserRepo, ConnectionProvi
 
     private static PostgresqlStatement insertStatement(final Connection connection) {
         return (PostgresqlStatement) connection
-                .createStatement("""
-                        INSERT INTO user_github (id, login, name, avatar, is_org)
-                        VALUES ($1, $2, $3, $4, $5)
-                        ON CONFLICT (id) DO UPDATE
-                           SET login = $2,
-                               name = COALESCE($3, user_github.name),
-                               avatar = $4
-                        """);
+                .createStatement("INSERT INTO user_github (id, login, name, avatar, is_org)\n" +
+                                 "VALUES ($1, $2, $3, $4, $5)\n" +
+                                 "ON CONFLICT (id) DO UPDATE\n" +
+                                 "   SET login = $2,\n" +
+                                 "       name = COALESCE($3, user_github.name),\n" +
+                                 "       avatar = $4\n");
     }
 
     private static PostgresqlStatement selectStatement(final Connection connection) {
         return (PostgresqlStatement) connection
-                .createStatement("""
-                        SELECT *
-                        FROM user_github
-                        WHERE id = $1
-                        """);
+                .createStatement("SELECT *\n" +
+                                 "FROM user_github\n" +
+                                 "WHERE id = $1\n");
     }
 
     static PostgresqlStatement applyInsertBindings(final GithubUser user, final PostgresqlStatement statement) {

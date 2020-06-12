@@ -108,27 +108,25 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
 
     private static PostgresqlStatement insertStatement(final Connection connection) {
         return (PostgresqlStatement) connection
-                .createStatement("""
-                        INSERT INTO pull (id,
-                                          number,
-                                          title,
-                                          open,
-                                          created_at,
-                                          updated_at,
-                                          head_commit_snapshot_sha,
-                                          head_commit_snapshot_repo_id,
-                                          base_commit_snapshot_sha,
-                                          base_commit_snapshot_repo_id,
-                                          project_id,
-                                          author_github_id)
-                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-                        ON CONFLICT (id) DO UPDATE
-                           SET title = $3,
-                               open = $4,
-                               updated_at = $6,
-                               head_commit_snapshot_sha = $7,
-                               base_commit_snapshot_sha = $9
-                        """);
+                .createStatement("INSERT INTO pull (id,\n" +
+                                 "                  number,\n" +
+                                 "                  title,\n" +
+                                 "                  open,\n" +
+                                 "                  created_at,\n" +
+                                 "                  updated_at,\n" +
+                                 "                  head_commit_snapshot_sha,\n" +
+                                 "                  head_commit_snapshot_repo_id,\n" +
+                                 "                  base_commit_snapshot_sha,\n" +
+                                 "                  base_commit_snapshot_repo_id,\n" +
+                                 "                  project_id,\n" +
+                                 "                  author_github_id)\n" +
+                                 "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)\n" +
+                                 "ON CONFLICT (id) DO UPDATE\n" +
+                                 "   SET title = $3,\n" +
+                                 "       open = $4,\n" +
+                                 "       updated_at = $6,\n" +
+                                 "       head_commit_snapshot_sha = $7,\n" +
+                                 "       base_commit_snapshot_sha = $9\n");
     }
 
     private static PostgresqlStatement applyInsertBindings(final PostgresqlStatement statement, final Pull pull) {
@@ -152,10 +150,8 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
     }
 
     private static PostgresqlStatement selectByProjectIdStatement(final Connection connection) {
-        return selectStatement(connection, """
-                WHERE pull.project_id = $1
-                ORDER BY pull.updated_at DESC
-                """);
+        return selectStatement(connection, "WHERE pull.project_id = $1\n" +
+                                           "ORDER BY pull.updated_at DESC\n");
     }
 
     private static PostgresqlStatement selectByNumberStatement(final Connection connection) {
@@ -163,65 +159,61 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
     }
 
     private static PostgresqlStatement selectUpdatedEarlierStatement(final Connection connection) {
-        return selectStatement(connection, """
-                WHERE pull.project_id = $1 AND
-                      pull.number != $2 AND
-                      pull.updated_at <= (SELECT updated_at
-                                          FROM pull
-                                          WHERE project_id = $1 AND number = $2)
-                """);
+        return selectStatement(connection, "WHERE pull.project_id = $1 AND\n" +
+                                           "      pull.number != $2 AND\n" +
+                                           "      pull.updated_at <= (SELECT updated_at\n" +
+                                           "                          FROM pull\n" +
+                                           "                          WHERE project_id = $1 AND number = $2)\n");
     }
 
     private static PostgresqlStatement selectStatement(final Connection connection, final String whereClause) {
-        @Language("SQL") final var sql = """
-                SELECT pull.id                AS id,
-                       pull.number            AS number,
-                       pull.title             AS title,
-                       pull.open              AS open,
-                       pull.created_at        AS created_at,
-                       pull.updated_at        AS updated_at,
-                       pull.project_id        AS project_id,
-                       head_snap.sha          AS head_snap_sha,
-                       head_snap.branch       AS head_snap_branch,
-                       head_repo.id           AS head_repo_id,
-                       head_repo.name         AS head_repo_name,
-                       head_repo.description  AS head_repo_description,
-                       head_repo_owner.id     AS head_repo_owner_id,
-                       head_repo_owner.login  AS head_repo_owner_login,
-                       head_repo_owner.name   AS head_repo_owner_name,
-                       head_repo_owner.avatar AS head_repo_owner_avatar,
-                       head_repo_owner.is_org AS head_repo_owner_is_org,
-                       base_snap.sha          AS base_snap_sha,
-                       base_snap.branch       AS base_snap_branch,
-                       base_repo.id           AS base_repo_id,
-                       base_repo.name         AS base_repo_name,
-                       base_repo.description  AS base_repo_description,
-                       base_repo_owner.id     AS base_repo_owner_id,
-                       base_repo_owner.login  AS base_repo_owner_login,
-                       base_repo_owner.name   AS base_repo_owner_name,
-                       base_repo_owner.avatar AS base_repo_owner_avatar,
-                       base_repo_owner.is_org AS base_repo_owner_is_org,
-                       author.id              AS author_id,
-                       author.login           AS author_login,
-                       author.name            AS author_name,
-                       author.avatar          AS author_avatar,
-                       author.is_org          AS author_is_org
-                FROM pull
-                   JOIN commit_snapshot head_snap
-                       ON pull.head_commit_snapshot_sha = head_snap.sha
-                   JOIN repo_github base_repo
-                       ON pull.base_commit_snapshot_repo_id = base_repo.id
-                   JOIN user_github base_repo_owner
-                       ON base_repo.owner_id = base_repo_owner.id
-                   JOIN commit_snapshot base_snap
-                       ON pull.base_commit_snapshot_sha = base_snap.sha
-                   JOIN repo_github head_repo
-                       ON pull.head_commit_snapshot_repo_id = head_repo.id
-                   JOIN user_github head_repo_owner
-                       ON head_repo.owner_id = head_repo_owner.id
-                   JOIN user_github author
-                       ON pull.author_github_id = author.id
-                """;
+        @Language("SQL") final var sql = "SELECT pull.id                AS id,\n" +
+                                         "       pull.number            AS number,\n" +
+                                         "       pull.title             AS title,\n" +
+                                         "       pull.open              AS open,\n" +
+                                         "       pull.created_at        AS created_at,\n" +
+                                         "       pull.updated_at        AS updated_at,\n" +
+                                         "       pull.project_id        AS project_id,\n" +
+                                         "       head_snap.sha          AS head_snap_sha,\n" +
+                                         "       head_snap.branch       AS head_snap_branch,\n" +
+                                         "       head_repo.id           AS head_repo_id,\n" +
+                                         "       head_repo.name         AS head_repo_name,\n" +
+                                         "       head_repo.description  AS head_repo_description,\n" +
+                                         "       head_repo_owner.id     AS head_repo_owner_id,\n" +
+                                         "       head_repo_owner.login  AS head_repo_owner_login,\n" +
+                                         "       head_repo_owner.name   AS head_repo_owner_name,\n" +
+                                         "       head_repo_owner.avatar AS head_repo_owner_avatar,\n" +
+                                         "       head_repo_owner.is_org AS head_repo_owner_is_org,\n" +
+                                         "       base_snap.sha          AS base_snap_sha,\n" +
+                                         "       base_snap.branch       AS base_snap_branch,\n" +
+                                         "       base_repo.id           AS base_repo_id,\n" +
+                                         "       base_repo.name         AS base_repo_name,\n" +
+                                         "       base_repo.description  AS base_repo_description,\n" +
+                                         "       base_repo_owner.id     AS base_repo_owner_id,\n" +
+                                         "       base_repo_owner.login  AS base_repo_owner_login,\n" +
+                                         "       base_repo_owner.name   AS base_repo_owner_name,\n" +
+                                         "       base_repo_owner.avatar AS base_repo_owner_avatar,\n" +
+                                         "       base_repo_owner.is_org AS base_repo_owner_is_org,\n" +
+                                         "       author.id              AS author_id,\n" +
+                                         "       author.login           AS author_login,\n" +
+                                         "       author.name            AS author_name,\n" +
+                                         "       author.avatar          AS author_avatar,\n" +
+                                         "       author.is_org          AS author_is_org\n" +
+                                         "FROM pull\n" +
+                                         "   JOIN commit_snapshot head_snap\n" +
+                                         "       ON pull.head_commit_snapshot_sha = head_snap.sha\n" +
+                                         "   JOIN repo_github base_repo\n" +
+                                         "       ON pull.base_commit_snapshot_repo_id = base_repo.id\n" +
+                                         "   JOIN user_github base_repo_owner\n" +
+                                         "       ON base_repo.owner_id = base_repo_owner.id\n" +
+                                         "   JOIN commit_snapshot base_snap\n" +
+                                         "       ON pull.base_commit_snapshot_sha = base_snap.sha\n" +
+                                         "   JOIN repo_github head_repo\n" +
+                                         "       ON pull.head_commit_snapshot_repo_id = head_repo.id\n" +
+                                         "   JOIN user_github head_repo_owner\n" +
+                                         "       ON head_repo.owner_id = head_repo_owner.id\n" +
+                                         "   JOIN user_github author\n" +
+                                         "       ON pull.author_github_id = author.id\n";
         return (PostgresqlStatement) connection.createStatement(String.format("%s %s", sql, whereClause));
     }
 

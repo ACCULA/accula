@@ -1,9 +1,16 @@
 plugins {
     id("org.springframework.boot") version "2.3.0.RELEASE"
     id("io.spring.dependency-management") version "1.0.9.RELEASE"
+//    id("net.bytebuddy.byte-buddy-gradle-plugin") version "1.10.11"
 }
 
 version = "1.0-SNAPSHOT"
+
+//val byteBuddyPlugin by configurations.creating
+//
+//configurations {
+//    byteBuddyPlugin
+//}
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-webflux")
@@ -13,7 +20,10 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-security")
     testImplementation("org.springframework.security:spring-security-test")
 
-    implementation("io.projectreactor:reactor-tools:3.3.6.RELEASE")
+//    implementation("net.bytebuddy:byte-buddy:1.10.11")
+//    implementation("io.projectreactor:reactor-tools:3.3.6.RELEASE")
+//    byteBuddyPlugin(group = "io.projectreactor", name = "reactor-tools", classifier = "original")
+
     testImplementation("io.projectreactor:reactor-test:3.3.6.RELEASE")
 
     implementation("org.springframework.boot:spring-boot-starter-actuator")
@@ -41,3 +51,12 @@ dependencies {
 
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 }
+
+//byteBuddy {
+//    transformation(closureOf<net.bytebuddy.build.gradle.Transformation> {
+//        net.bytebuddy.build.gradle.Transformation(project).apply {
+//            plugin = "reactor.tools.agent.ReactorDebugByteBuddyPlugin"
+//            setClassPath(byteBuddyPlugin)
+//        }
+//    })
+//}

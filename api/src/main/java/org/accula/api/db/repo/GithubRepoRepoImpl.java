@@ -69,32 +69,28 @@ public final class GithubRepoRepoImpl implements GithubRepoRepo, ConnectionProvi
 
     private static PostgresqlStatement insertStatement(final Connection connection) {
         return (PostgresqlStatement) connection
-                .createStatement("""
-                        INSERT INTO repo_github (id, name, owner_id, description)
-                        VALUES ($1, $2, $3, $4)
-                        ON CONFLICT (id) DO UPDATE
-                           SET name = $2,
-                               owner_id = $3,
-                               description = $4
-                        """);
+                .createStatement("INSERT INTO repo_github (id, name, owner_id, description)\n" +
+                                 "VALUES ($1, $2, $3, $4)\n" +
+                                 "ON CONFLICT (id) DO UPDATE\n" +
+                                 "   SET name = $2,\n" +
+                                 "       owner_id = $3,\n" +
+                                 "       description = $4\n");
     }
 
     private static PostgresqlStatement selectStatement(final Connection connection) {
         return (PostgresqlStatement) connection
-                .createStatement("""
-                        SELECT repo.id          AS repo_id,
-                               repo.name        AS repo_name,
-                               repo.description AS repo_description,
-                               usr.id           AS repo_owner_id,
-                               usr.login        AS repo_owner_login,
-                               usr.name         AS repo_owner_name,
-                               usr.avatar       AS repo_owner_avatar,
-                               usr.is_org       AS repo_owner_is_org
-                        FROM repo_github repo
-                           JOIN user_github usr
-                               ON repo.owner_id = usr.id
-                        WHERE repo.id = $1
-                        """);
+                .createStatement("SELECT repo.id          AS repo_id,\n" +
+                                 "       repo.name        AS repo_name,\n" +
+                                 "       repo.description AS repo_description,\n" +
+                                 "       usr.id           AS repo_owner_id,\n" +
+                                 "       usr.login        AS repo_owner_login,\n" +
+                                 "       usr.name         AS repo_owner_name,\n" +
+                                 "       usr.avatar       AS repo_owner_avatar,\n" +
+                                 "       usr.is_org       AS repo_owner_is_org\n" +
+                                 "FROM repo_github repo\n" +
+                                 "   JOIN user_github usr\n" +
+                                 "       ON repo.owner_id = usr.id\n" +
+                                 "WHERE repo.id = $1\n");
     }
 
     private GithubRepo convert(final Row row) {
