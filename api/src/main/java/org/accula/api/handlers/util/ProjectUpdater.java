@@ -72,6 +72,7 @@ public final class ProjectUpdater {
                                     .doOnError(e -> log.error("Error mapping pulls: {}", commitSnapshots, e)))
                             .then(Mono.just(openPullCount));
                 })
+                .doOnSuccess(result -> log.info("Successfully update project: {} open pulls", result))
                 .subscribeOn(processingScheduler);
     }
 
@@ -89,12 +90,18 @@ public final class ProjectUpdater {
                     final var pull = processGithubApiPull(projectId, githubApiPull, users, repos, commitSnapshots);
 
                     return githubUserRepo.upsert(users)
-                            .thenMany(githubRepoRepo.upsert(repos))
-                            .thenMany(commitSnapshotRepo.insert(commitSnapshots))
-                            .then(pullRepo.upsert(pull))
-                            .thenMany(commitSnapshotRepo.mapToPulls(commitSnapshots))
+                            .doOnError(e -> log.error("Error saving users: {}", users, e))
+                            .thenMany(githubRepoRepo.upsert(repos)
+                                    .doOnError(e -> log.error("Error saving repos: {}", repos, e)))
+                            .thenMany(commitSnapshotRepo.insert(commitSnapshots)
+                                    .doOnError(e -> log.error("Error saving commits: {}", commitSnapshots, e)))
+                            .then(pullRepo.upsert(pull)
+                                    .doOnError(e -> log.error("Error saving pull: {}", pull, e)))
+                            .thenMany(commitSnapshotRepo.mapToPulls(commitSnapshots)
+                                    .doOnError(e -> log.error("Error mapping pulls: {}", commitSnapshots, e)))
                             .then(Mono.just(pull));
                 })
+                .doOnSuccess(result -> log.info("Successfully update project: {}", result))
                 .subscribeOn(processingScheduler);
     }
 

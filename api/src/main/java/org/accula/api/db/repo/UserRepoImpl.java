@@ -50,9 +50,9 @@ public final class UserRepoImpl implements UserRepo, ConnectionProvidedRepo {
                                 Converters.value(row, "id", Long.class),
                                 githubAccessToken,
                                 githubUser
-                        )))
+                        ))))
                 .doOnSuccess(user -> onUpserts
-                        .forEach(onUpsert -> onUpsert.onUpsert(user.getId()))));
+                        .forEach(onUpsert -> onUpsert.onUpsert(user.getId())));
 
     }
 
