@@ -56,7 +56,7 @@ accula:
     pool:
       maxIdleTime: 5s
       minSize: 2
-      maxSize: 20
+      maxSize: 100
 
   reposPath: ${REPOS_PATH}
   

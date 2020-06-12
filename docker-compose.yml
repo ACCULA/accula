@@ -37,9 +37,12 @@ services:
       - ./keys:/app/keys
   postgres:
     image: postgres:12.3
+    ports:
+    - "5432:5432"
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=accula
+    command: postgres -c 'max_connections=100' -c 'shared_buffers=1GB'
     volumes:
       - ./data/postgres:/var/lib/postgresql/data

@@ -25,7 +25,8 @@ public final class GithubUserRepoImpl implements GithubUserRepo, ConnectionProvi
 
     @Override
     public Mono<GithubUser> upsert(final GithubUser user) {
-        return withConnection(connection -> applyInsertBindings(user, insertStatement(connection)).execute()
+        return withConnection(connection -> applyInsertBindings(user, insertStatement(connection))
+                .execute()
                 .flatMap(PostgresqlResult::getRowsUpdated)
                 .then(Mono.just(user)));
     }
