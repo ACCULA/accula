@@ -60,10 +60,12 @@ public final class CommitSnapshotRepoImpl implements CommitSnapshotRepo, Connect
         }
 
         return manyWithConnection(connection -> {
-            final var statement = (PostgresqlStatement) connection.createStatement("INSERT INTO commit_snapshot_pull (\n" +
-                                                                                   "commit_snapshot_sha, commit_snapshot_repo_id, pull_id)\n" +
-                                                                                   "VALUES ($1, $2, $3)\n" +
-                                                                                   "ON CONFLICT (commit_snapshot_sha, commit_snapshot_repo_id, pull_id) DO NOTHING\n");
+            final var statement = (PostgresqlStatement) connection.createStatement("""
+                    INSERT INTO commit_snapshot_pull (
+                    commit_snapshot_sha, commit_snapshot_repo_id, pull_id)
+                    VALUES ($1, $2, $3)
+                    ON CONFLICT (commit_snapshot_sha, commit_snapshot_repo_id, pull_id) DO NOTHING
+                    """);
             commitSnapshots.forEach(commitSnapshot -> {
                 final var snapId = commitSnapshot.getId();
                 statement.bind("$1", snapId.getSha())
@@ -102,9 +104,11 @@ public final class CommitSnapshotRepoImpl implements CommitSnapshotRepo, Connect
 
     private static PostgresqlStatement insertStatement(final Connection connection) {
         return (PostgresqlStatement) connection
-                .createStatement("INSERT INTO commit_snapshot (sha, repo_id, branch)\n" +
-                                 "VALUES ($1, $2, $3)\n" +
-                                 "ON CONFLICT (sha, repo_id) DO NOTHING\n");
+                .createStatement("""
+                        INSERT INTO commit_snapshot (sha, repo_id, branch)
+                        VALUES ($1, $2, $3)
+                        ON CONFLICT (sha, repo_id) DO NOTHING
+                        """);
     }
 
     private static PostgresqlStatement applyInsertBindings(final CommitSnapshot commitSnapshot, final PostgresqlStatement statement) {
@@ -116,22 +120,24 @@ public final class CommitSnapshotRepoImpl implements CommitSnapshotRepo, Connect
 
     private static PostgresqlStatement selectStatement(final Connection connection) {
         return (PostgresqlStatement) connection
-                .createStatement("SELECT snap.sha            AS snap_sha,\n" +
-                                 "       snap.branch         AS snap_branch,\n" +
-                                 "       repo.id             AS repo_id,\n" +
-                                 "       repo.name           AS repo_name,\n" +
-                                 "       repo.description    AS repo_description,\n" +
-                                 "       repo_owner.id       AS repo_owner_id,\n" +
-                                 "       repo_owner.login    AS repo_owner_login,\n" +
-                                 "       repo_owner.name     AS repo_owner_name,\n" +
-                                 "       repo_owner.avatar   AS repo_owner_avatar,\n" +
-                                 "       repo_owner.is_org   AS repo_owner_is_org\n" +
-                                 "FROM commit_snapshot snap\n" +
-                                 "   JOIN repo_github repo\n" +
-                                 "       ON snap.repo_id = repo.id\n" +
-                                 "   JOIN user_github repo_owner\n" +
-                                 "       ON repo.owner_id = repo_owner.id\n" +
-                                 "WHERE snap.sha = $1 AND snap.repo_id = $2\n");
+                .createStatement("""
+                        SELECT snap.sha            AS snap_sha,
+                               snap.branch         AS snap_branch,
+                               repo.id             AS repo_id,
+                               repo.name           AS repo_name,
+                               repo.description    AS repo_description,
+                               repo_owner.id       AS repo_owner_id,
+                               repo_owner.login    AS repo_owner_login,
+                               repo_owner.name     AS repo_owner_name,
+                               repo_owner.avatar   AS repo_owner_avatar,
+                               repo_owner.is_org   AS repo_owner_is_org
+                        FROM commit_snapshot snap
+                           JOIN repo_github repo
+                               ON snap.repo_id = repo.id
+                           JOIN user_github repo_owner
+                               ON repo.owner_id = repo_owner.id 
+                        WHERE snap.sha = $1 AND snap.repo_id = $2
+                        """);
     }
 
     private static PostgresqlStatement applySelectBindings(final CommitSnapshot.Id id, final PostgresqlStatement statement) {

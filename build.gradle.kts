@@ -70,13 +70,13 @@ configure(subprojects.filterNot(project(":web")::equals)) {
         }
     }
 
-//    tasks.withType<JavaCompile> {
-//        options.compilerArgs.add("--enable-preview")
-//    }
-//    tasks.withType<Test> {
-//        jvmArgs("--enable-preview")
-//    }
-//    tasks.withType<JavaExec> {
-//        jvmArgs("--enable-preview")
-//    }
+    tasks.withType<JavaCompile> {
+        options.compilerArgs.add("--enable-preview")
+    }
+    tasks.withType<Test> {
+        jvmArgs("--enable-preview")
+    }
+    tasks.withType<JavaExec> {
+        jvmArgs("--enable-preview")
+    }
 }
