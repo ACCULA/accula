@@ -1,4 +1,4 @@
-package org.accula.api.db;
+package org.accula.api.db.repo;
 
 import org.accula.api.db.model.RefreshToken;
 import org.springframework.data.r2dbc.repository.Modifying;
@@ -11,12 +11,12 @@ import java.time.Instant;
 /**
  * @author Anton Lamtev
  */
-public interface RefreshTokenRepository extends ReactiveCrudRepository<RefreshToken, Long> {
-    //@formatter:off
+public interface RefreshTokenRepo extends ReactiveCrudRepository<RefreshToken, Long> {
     @Modifying
-    @Query("UPDATE refresh_token " +
-           "SET token = :newToken, expiration_date = :newExpirationDate " +
-           "WHERE user_id = :userId AND token = :oldToken")
+    @Query("""
+            UPDATE refresh_token
+            SET token = :newToken, expiration_date = :newExpirationDate
+            WHERE user_id = :userId AND token = :oldToken
+            """)
     Mono<Void> replaceRefreshToken(Long userId, String oldToken, String newToken, Instant newExpirationDate);
-    //@formatter:on
 }
