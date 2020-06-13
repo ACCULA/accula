@@ -31,6 +31,7 @@ import reactor.util.function.Tuples;
 
 import java.util.Arrays;
 
+import static java.util.function.Predicate.isEqual;
 import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.toList;
 import static org.springframework.http.HttpStatus.FORBIDDEN;
@@ -153,13 +154,14 @@ public final class ProjectsHandler {
 
             final var projectGithubRepo = githubToModelConverter.convert(githubApiRepo);
 
-            return githubUserRepo
-                    .upsert(projectGithubRepo.getOwner())
-                    .doOnError(e -> log.error("Error saving github user: {}", projectGithubRepo.getOwner(), e))
-                    .filterWhen(repoOwner -> projectRepo.notExists(projectGithubRepo.getId()))
+            return projectRepo
+                    .notExists(projectGithubRepo.getId())
+                    .filter(isEqual(true))
                     .switchIfEmpty(Mono.error(CreateProjectException.ALREADY_EXISTS))
-                    .flatMap(repoOwner -> projectRepo.upsert(projectGithubRepo, currentUser))
-                    .doOnError(e -> log.error("Error saving Project: {}-{}", projectGithubRepo.getOwner(), currentUser, e))
+                    .flatMap(ok -> githubUserRepo.upsert(projectGithubRepo.getOwner())
+                            .doOnError(e -> log.error("Error saving github user: {}", projectGithubRepo.getOwner(), e)))
+                    .flatMap(repoOwner -> projectRepo.upsert(projectGithubRepo, currentUser)
+                            .doOnError(e -> log.error("Error saving Project: {}-{}", projectGithubRepo.getOwner(), currentUser, e)))
                     .flatMap(project -> projectUpdater.update(project.getId(), githubApiPulls)
                             .map(openPullCount -> modelToDtoConverter.convert(project, openPullCount)));
         });
