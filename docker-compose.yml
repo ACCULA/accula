@@ -34,11 +34,13 @@ services:
       - JWT_SIGNATURE_PRIVATE_KEY=/app/keys/accula.private.der
     volumes:
       - ./repos:/app/repos
+      - ./keys:/app/keys
   postgres:
-    image: postgres:11
+    image: postgres:12.3-alpine
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=accula
+    command: postgres -c 'max_connections=200' -c 'shared_buffers=1GB'
     volumes:
       - ./data/postgres:/var/lib/postgresql/data

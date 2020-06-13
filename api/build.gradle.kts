@@ -1,9 +1,12 @@
 plugins {
     id("org.springframework.boot") version "2.3.0.RELEASE"
     id("io.spring.dependency-management") version "1.0.9.RELEASE"
+    id("net.bytebuddy.byte-buddy-gradle-plugin") version "1.10.11"
 }
 
 version = "1.0-SNAPSHOT"
+
+val byteBuddyPlugin: Configuration by configurations.creating
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-webflux")
@@ -13,7 +16,11 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-security")
     testImplementation("org.springframework.security:spring-security-test")
 
-    testImplementation("io.projectreactor:reactor-test:3.3.6.RELEASE")
+    implementation("net.bytebuddy:byte-buddy:1.10.11")
+    implementation("io.projectreactor:reactor-tools")
+    byteBuddyPlugin(group = "io.projectreactor", name = "reactor-tools", classifier = "original")
+
+    testImplementation("io.projectreactor:reactor-test")
 
     implementation("org.springframework.boot:spring-boot-starter-actuator")
 
@@ -25,7 +32,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
     implementation("io.r2dbc:r2dbc-postgresql:0.8.2.RELEASE")
     implementation("io.r2dbc:r2dbc-pool:0.8.2.RELEASE")
-    implementation("io.r2dbc:r2dbc-spi:0.8.1.RELEASE")
+    implementation("io.r2dbc:r2dbc-spi:0.8.2.RELEASE")
 
     implementation("org.slf4j:slf4j-api:2.0.0-alpha1")
     implementation("org.slf4j:slf4j-log4j12:2.0.0-alpha1")
@@ -39,4 +46,11 @@ dependencies {
     }
 
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
+}
+
+byteBuddy {
+    transformation(closureOf<net.bytebuddy.build.gradle.Transformation> {
+        plugin = "reactor.tools.agent.ReactorDebugByteBuddyPlugin"
+        setClassPath(byteBuddyPlugin)
+    })
 }

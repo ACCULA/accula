@@ -15,7 +15,8 @@ public interface FileFilter extends Predicate<String> {
     FileFilter TESTS = file -> file.contains("Test");
     FileFilter SRC_JAVA = JAVA.and(TESTS.negate());
 
-    default FileFilter and(FileFilter other) {
+    @Override
+    default FileFilter and(Predicate<? super String> other) {
         return f -> test(f) && other.test(f);
     }
 

@@ -1,10 +1,9 @@
 package org.accula.api.db.repo;
 
-import io.r2dbc.pool.ConnectionPool;
 import io.r2dbc.postgresql.api.PostgresqlResult;
 import io.r2dbc.postgresql.api.PostgresqlStatement;
 import io.r2dbc.spi.Connection;
-import io.r2dbc.spi.Statement;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.accula.api.db.model.GithubUser;
 import org.springframework.stereotype.Component;
@@ -20,19 +19,16 @@ import java.util.Objects;
 @Component
 @SuppressWarnings("PMD.ConfusingTernary")
 @RequiredArgsConstructor
-public final class GithubUserRepoImpl implements GithubUserRepo {
-    private final ConnectionPool connectionPool;
+public final class GithubUserRepoImpl implements GithubUserRepo, ConnectionProvidedRepo {
+    @Getter
+    private final ConnectionProvidedRepo.ConnectionProvider connectionProvider;
 
     @Override
     public Mono<GithubUser> upsert(final GithubUser user) {
-        return connectionPool
-                .create()
-                .flatMap(connection -> Mono
-                        .from(applyInsertBindings(user, insertStatement(connection))
-                                .execute())
-                        .flatMap(result -> Mono.from(result.getRowsUpdated()))
-                        .filter(Integer.valueOf(1)::equals)
-                        .flatMap(rowsUpdated -> Repos.closeAndReturn(connection, user)));
+        return withConnection(connection -> applyInsertBindings(user, insertStatement(connection))
+                .execute()
+                .flatMap(PostgresqlResult::getRowsUpdated)
+                .then(Mono.just(user)));
     }
 
     @Override
@@ -41,35 +37,29 @@ public final class GithubUserRepoImpl implements GithubUserRepo {
             return Flux.empty();
         }
 
-        return connectionPool
-                .create()
-                .flatMapMany(connection -> {
-                    final var statement = insertStatement(connection);
-                    users.forEach(user -> applyInsertBindings(user, statement).add());
-                    statement.fetchSize(users.size());
+        return manyWithConnection(connection -> {
+            final var statement = insertStatement(connection);
+            users.forEach(user -> applyInsertBindings(user, statement).add());
 
-                    return statement.execute()
-                            .flatMap(PostgresqlResult::getRowsUpdated)
-                            .thenMany(Repos.closeAndReturn(connection, users));
-                });
+            return statement.execute()
+                    .flatMap(PostgresqlResult::getRowsUpdated)
+                    .thenMany(Flux.fromIterable(users));
+        });
     }
 
     @Override
     public Mono<GithubUser> findById(final Long id) {
-        return connectionPool
-                .create()
-                .flatMap(connection -> Mono
-                        .from(selectStatement(connection)
-                                .bind("$1", id)
-                                .execute())
-                        .flatMap(result -> Repos
-                                .convert(result, connection, row -> new GithubUser(
-                                        Objects.requireNonNull(row.get("id", Long.class)),
-                                        Objects.requireNonNull(row.get("login", String.class)),
-                                        Objects.requireNonNull(row.get("name", String.class)),
-                                        Objects.requireNonNull(row.get("avatar", String.class)),
-                                        Objects.requireNonNull(row.get("is_org", Boolean.class))
-                                ))));
+        return withConnection(connection -> Mono
+                .from(selectStatement(connection)
+                        .bind("$1", id)
+                        .execute())
+                .flatMap(result -> ConnectionProvidedRepo.convert(result, row -> new GithubUser(
+                        Objects.requireNonNull(row.get("id", Long.class)),
+                        Objects.requireNonNull(row.get("login", String.class)),
+                        Objects.requireNonNull(row.get("name", String.class)),
+                        Objects.requireNonNull(row.get("avatar", String.class)),
+                        Objects.requireNonNull(row.get("is_org", Boolean.class))
+                ))));
     }
 
     private static PostgresqlStatement insertStatement(final Connection connection) {
@@ -93,7 +83,7 @@ public final class GithubUserRepoImpl implements GithubUserRepo {
                         """);
     }
 
-    static Statement applyInsertBindings(final GithubUser user, final Statement statement) {
+    static PostgresqlStatement applyInsertBindings(final GithubUser user, final PostgresqlStatement statement) {
         statement.bind("$1", user.getId());
         statement.bind("$2", user.getLogin());
         if (user.getName() != null && !user.getName().isBlank()) {

@@ -99,7 +99,7 @@ public final class ProjectsHandler {
                         .contentType(APPLICATION_JSON)
                         .bodyValue(project))
                 .doOnSuccess(response -> log.debug("{}: {}", request, response.statusCode()))
-                .doOnError(t -> log.error("{}: {}", request, t))
+                .doOnError(t -> log.error("{}: ", request, t))
                 .onErrorResume(e -> e instanceof CreateProjectException,
                         e -> switch (CreateProjectException.error(e)) {
                             case BAD_FORMAT, INVALID_URL, WRONG_URL, ALREADY_EXISTS -> ServerResponse
@@ -155,9 +155,11 @@ public final class ProjectsHandler {
 
             return githubUserRepo
                     .upsert(projectGithubRepo.getOwner())
+                    .doOnError(e -> log.error("Error saving github user: {}", projectGithubRepo.getOwner(), e))
                     .filterWhen(repoOwner -> projectRepo.notExists(projectGithubRepo.getId()))
                     .switchIfEmpty(Mono.error(CreateProjectException.ALREADY_EXISTS))
                     .flatMap(repoOwner -> projectRepo.upsert(projectGithubRepo, currentUser))
+                    .doOnError(e -> log.error("Error saving Project: {}-{}", projectGithubRepo.getOwner(), currentUser, e))
                     .flatMap(project -> projectUpdater.update(project.getId(), githubApiPulls)
                             .map(openPullCount -> modelToDtoConverter.convert(project, openPullCount)));
         });

@@ -1,10 +1,10 @@
 package org.accula.api.db.repo;
 
-import io.r2dbc.pool.ConnectionPool;
 import io.r2dbc.postgresql.api.PostgresqlResult;
 import io.r2dbc.postgresql.api.PostgresqlStatement;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.Row;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.Project;
@@ -19,14 +19,14 @@ import reactor.core.publisher.Mono;
  */
 @Component
 @RequiredArgsConstructor
-public final class ProjectRepoImpl implements ProjectRepo {
-    private final ConnectionPool connectionPool;
+public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRepo {
+    @Getter
+    private final ConnectionProvider connectionProvider;
 
     @Override
     public Mono<Boolean> notExists(final Long githubRepoId) {
-        return connectionPool
-                .create()
-                .flatMap(connection -> Mono.from(connection
+        return withConnection(connection -> Mono
+                .from(connection
                         .createStatement("""
                                 SELECT NOT exists(SELECT 0 
                                                   FROM project 
@@ -34,100 +34,90 @@ public final class ProjectRepoImpl implements ProjectRepo {
                                 """)
                         .bind("$1", githubRepoId)
                         .execute())
-                        .flatMap(result -> Repos.closeAndGet(connection, result, "not_exists", Boolean.class)));
+                .flatMap(result -> ConnectionProvidedRepo.column(result, "not_exists", Boolean.class)));
     }
 
     @Override
     public Mono<Project> upsert(final GithubRepo githubRepo, final User creator) {
-        return connectionPool
-                .create()
-                .flatMap(connection -> Mono
-                        .from(connection
-                                .createStatement("""
-                                        WITH upserted_gh_repo AS (
-                                              INSERT INTO repo_github (id, name, owner_id, description)
-                                              VALUES ($1, $2, $3, $4)
-                                              ON CONFLICT (id) DO UPDATE
-                                                  SET name = $2,
-                                                      owner_id = $3,
-                                                      description = $4
-                                              RETURNING id
-                                        )
-                                        INSERT INTO project (github_repo_id, creator_id)
-                                        SELECT id, $5
-                                        FROM upserted_gh_repo
-                                        ON CONFLICT (github_repo_id) DO UPDATE
-                                            SET creator_id = $5
-                                        RETURNING id
-                                        """)
-                                .bind("$1", githubRepo.getId())
-                                .bind("$2", githubRepo.getName())
-                                .bind("$3", githubRepo.getOwner().getId())
-                                .bind("$4", githubRepo.getDescription())
-                                .bind("$5", creator.getId())
-                                .execute())
-                        .flatMap(result -> Repos
-                                .convert(result, connection, row -> Project.builder()
-                                        .id(Converters.value(row, "id", Long.class))
-                                        .githubRepo(githubRepo)
-                                        .creator(creator)
-                                        .build()
-                                )));
+        return withConnection(connection -> Mono
+                .from(connection
+                        .createStatement("""
+                                WITH upserted_gh_repo AS (
+                                      INSERT INTO repo_github (id, name, owner_id, description)
+                                      VALUES ($1, $2, $3, $4)
+                                      ON CONFLICT (id) DO UPDATE
+                                          SET name = $2,
+                                              owner_id = $3,
+                                              description = $4
+                                      RETURNING id
+                                )
+                                INSERT INTO project (github_repo_id, creator_id)
+                                SELECT id, $5
+                                FROM upserted_gh_repo
+                                ON CONFLICT (github_repo_id) DO UPDATE
+                                    SET creator_id = $5
+                                RETURNING id
+                                """)
+                        .bind("$1", githubRepo.getId())
+                        .bind("$2", githubRepo.getName())
+                        .bind("$3", githubRepo.getOwner().getId())
+                        .bind("$4", githubRepo.getDescription())
+                        .bind("$5", creator.getId())
+                        .execute())
+                .flatMap(result -> ConnectionProvidedRepo
+                        .convert(result, row -> Project.builder()
+                                .id(Converters.value(row, "id", Long.class))
+                                .githubRepo(githubRepo)
+                                .creator(creator)
+                                .build()
+                        )));
     }
 
     @Override
     public Mono<Project> findById(final Long id) {
-        return connectionPool
-                .create()
-                .flatMap(connection -> Mono
-                        .from(selectByIdStatement(connection)
-                                .bind("$1", id)
-                                .execute())
-                        .flatMap(result -> Repos.convert(result, connection, this::convert)));
+        return withConnection(connection -> Mono
+                .from(selectByIdStatement(connection)
+                        .bind("$1", id)
+                        .execute())
+                .flatMap(result -> ConnectionProvidedRepo.convert(result, this::convert)));
     }
 
     @Override
     public Mono<Long> idByRepoId(final Long repoId) {
-        return connectionPool
-                .create()
-                .flatMap(connection -> Mono
-                        .from(connection
-                                .createStatement("""
-                                        SELECT id
-                                        FROM project
-                                        WHERE github_repo_id = $1
-                                        """)
-                                .bind("$1", repoId)
-                                .execute())
-                        .flatMap(result -> Repos.closeAndGet(connection, result, "id", Long.class)));
+        return withConnection(connection -> Mono
+                .from(connection
+                        .createStatement("""
+                                SELECT id
+                                FROM project
+                                WHERE github_repo_id = $1
+                                """)
+                        .bind("$1", repoId)
+                        .execute())
+                .flatMap(result -> ConnectionProvidedRepo.column(result, "id", Long.class)));
     }
 
     @Override
     public Flux<Project> getTop(final int count) {
-        return connectionPool
-                .create()
-                .flatMapMany(connection -> Mono
-                        .from(selectTopStatement(connection)
-                                .bind("$1", count)
-                                .execute())
-                        .flatMapMany(result -> Repos.convertMany(result, connection, this::convert)));
+        return manyWithConnection(connection -> Mono
+                .from(selectTopStatement(connection)
+                        .bind("$1", count)
+                        .execute())
+                .flatMapMany(result -> ConnectionProvidedRepo.convertMany(result, this::convert)));
     }
 
     @Override
     public Mono<Boolean> delete(final Long id, final Long creatorId) {
-        return connectionPool
-                .create()
-                .flatMap(connection -> Mono
-                        .from(((PostgresqlStatement) connection
-                                .createStatement("""
-                                        DELETE FROM project
-                                        WHERE id = $1 AND creator_id = $2
-                                        """))
-                                .bind("$1", id)
-                                .bind("$2", creatorId)
-                                .execute())
-                        .flatMap(PostgresqlResult::getRowsUpdated)
-                        .flatMap(rowsUpdated -> Repos.closeAndReturn(connection, rowsUpdated.equals(1))));
+        return withConnection(connection -> Mono
+                .from(((PostgresqlStatement) connection
+                        .createStatement("""
+                                DELETE FROM project
+                                WHERE id = $1 AND creator_id = $2
+                                """))
+                        .bind("$1", id)
+                        .bind("$2", creatorId)
+                        .execute())
+                .flatMap(PostgresqlResult::getRowsUpdated)
+                .map(Integer.valueOf(1)::equals));
     }
 
     private static PostgresqlStatement selectByIdStatement(final Connection connection) {

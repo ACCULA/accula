@@ -1,10 +1,10 @@
 package org.accula.api.db.repo;
 
-import io.r2dbc.pool.ConnectionPool;
 import io.r2dbc.postgresql.api.PostgresqlResult;
 import io.r2dbc.postgresql.api.PostgresqlStatement;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.Row;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.accula.api.db.model.Pull;
 import org.intellij.lang.annotations.Language;
@@ -20,19 +20,16 @@ import java.util.Collection;
  */
 @Component
 @RequiredArgsConstructor
-public final class PullRepoImpl implements PullRepo {
-    private final ConnectionPool connectionPool;
+public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
+    @Getter
+    private final ConnectionProvider connectionProvider;
 
     @Override
     public Mono<Pull> upsert(final Pull pull) {
-        return connectionPool
-                .create()
-                .flatMap(connection -> Mono
-                        .from(applyInsertBindings(insertStatement(connection), pull)
-                                .execute())
-                        .flatMap(PostgresqlResult::getRowsUpdated)
-                        .filter(Integer.valueOf(1)::equals)
-                        .flatMap(rowsUpdated -> Repos.closeAndReturn(connection, pull)));
+        return withConnection(connection -> applyInsertBindings(insertStatement(connection), pull)
+                .execute()
+                .flatMap(PostgresqlResult::getRowsUpdated)
+                .then(Mono.just(pull)));
     }
 
     @Override
@@ -41,78 +38,70 @@ public final class PullRepoImpl implements PullRepo {
             return Flux.empty();
         }
 
-        return connectionPool
-                .create()
-                .flatMapMany(connection -> {
-                    final var statement = insertStatement(connection);
-                    pulls.forEach(pull -> applyInsertBindings(statement, pull).add());
-                    statement.fetchSize(pulls.size());
+        return manyWithConnection(connection -> {
+            final var statement = insertStatement(connection);
+            pulls.forEach(pull -> applyInsertBindings(statement, pull).add());
 
-                    return statement.execute()
-                            .flatMap(PostgresqlResult::getRowsUpdated)
-                            .thenMany(Repos.closeAndReturn(connection, pulls));
-                });
+            return statement.execute()
+                    .flatMap(PostgresqlResult::getRowsUpdated)
+                    .thenMany(Flux.fromIterable(pulls));
+        });
     }
 
     @Override
     public Mono<Pull> findById(final Long id) {
-        return connectionPool
-                .create()
-                .flatMap(connection -> Mono
-                        .from(selectByIdStatement(connection)
-                                .bind("$1", id)
-                                .execute())
-                        .flatMap(result -> Repos.convert(result, connection, this::convert)));
+        return withConnection(connection -> Mono
+                .from(selectByIdStatement(connection)
+                        .bind("$1", id)
+                        .execute())
+                .flatMap(result -> ConnectionProvidedRepo.convert(result, this::convert)));
     }
 
     @Override
     public Flux<Pull> findById(final Collection<Long> ids) {
-        return connectionPool
-                .create()
-                .flatMapMany(connection -> {
-                    final var statement = selectByIdStatement(connection);
-                    ids.forEach(id -> statement
-                            .bind("$1", id)
-                            .add());
-                    statement.fetchSize(ids.size());
+        if (ids.isEmpty()) {
+            return Flux.empty();
+        }
 
-                    return Repos.convertMany(statement.execute(), connection, this::convert);
-                });
+        return manyWithConnection(connection -> {
+            final var statement = selectByIdStatement(connection);
+            ids.forEach(id -> statement
+                    .bind("$1", id)
+                    .add());
+
+            return statement
+                    .execute()
+                    .flatMap(result -> ConnectionProvidedRepo.convert(result, this::convert));
+        });
     }
 
     @Override
     public Mono<Pull> findByNumber(final Long projectId, final Integer number) {
-        return connectionPool
-                .create()
-                .flatMap(connection -> Mono
-                        .from(selectByNumberStatement(connection)
-                                .bind("$1", projectId)
-                                .bind("$2", number)
-                                .execute())
-                        .flatMap(result -> Repos.convert(result, connection, this::convert)));
+        return withConnection(connection -> Mono
+                .from(selectByNumberStatement(connection)
+                        .bind("$1", projectId)
+                        .bind("$2", number)
+                        .execute())
+                .flatMap(result -> ConnectionProvidedRepo.convert(result, this::convert)));
     }
 
     @Override
     public Flux<Pull> findUpdatedEarlierThan(final Long projectId, final Integer number) {
-        return connectionPool
-                .create()
-                .flatMapMany(connection -> Mono
-                        .from(selectUpdatedEarlierStatement(connection)
-                                .bind("$1", projectId)
-                                .bind("$2", number)
-                                .execute())
-                        .flatMapMany(result -> Repos.convertMany(result, connection, this::convert)));
+        return manyWithConnection(connection -> Mono
+                .from(selectUpdatedEarlierStatement(connection)
+                        .bind("$1", projectId)
+                        .bind("$2", number)
+                        .execute())
+                .flatMapMany(result -> ConnectionProvidedRepo.convertMany(result, this::convert)));
     }
 
     @Override
     public Flux<Pull> findByProjectId(final Long projectId) {
-        return connectionPool
-                .create()
-                .flatMapMany(connection -> Mono
-                        .from(selectByProjectIdStatement(connection)
-                                .bind("$1", projectId)
-                                .execute())
-                        .flatMapMany(result -> Repos.convertMany(result, connection, this::convert)));
+        return manyWithConnection(connection -> Mono
+                .from(selectByProjectIdStatement(connection)
+                        .bind("$1", projectId)
+                        .execute())
+                .flatMapMany(result -> ConnectionProvidedRepo.convertMany(result, this::convert)));
     }
 
     private static PostgresqlStatement insertStatement(final Connection connection) {

@@ -5,6 +5,7 @@ import io.r2dbc.pool.ConnectionPoolConfiguration;
 import io.r2dbc.spi.ConnectionFactories;
 import io.r2dbc.spi.ConnectionFactoryOptions;
 import lombok.RequiredArgsConstructor;
+import org.accula.api.db.repo.ConnectionProvidedRepo;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -53,5 +54,10 @@ public class DbConfig extends AbstractR2dbcConfiguration {
                 .build();
 
         return new ConnectionPool(poolConfig);
+    }
+
+    @Bean
+    public ConnectionProvidedRepo.ConnectionProvider connectionProvider(final ConnectionPool connectionPool) {
+        return connectionPool::create;
     }
 }

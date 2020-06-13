@@ -80,7 +80,7 @@ class CloneDetectorTest {
         List<Tuple2<CodeSnippet, CodeSnippet>> clones = detector.findClones(targetFiles, sourceFiles).collectList().block();
         assertNotNull(clones);
         clones.forEach(t -> printClone(codeLoader, t));
-        assertEquals(5, clones.size());
+        assertEquals(6, clones.size());
     }
 
     private void printClone(CodeLoader codeLoader, Tuple2<CodeSnippet, CodeSnippet> clone) {

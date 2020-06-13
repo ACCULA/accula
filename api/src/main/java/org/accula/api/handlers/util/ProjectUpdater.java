@@ -1,6 +1,7 @@
 package org.accula.api.handlers.util;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.accula.api.converter.GithubApiToModelConverter;
 import org.accula.api.db.model.CommitSnapshot;
 import org.accula.api.db.model.GithubRepo;
@@ -16,6 +17,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -23,6 +25,7 @@ import java.util.Set;
  * @author Anton Lamtev
  */
 @Component
+@Slf4j
 @RequiredArgsConstructor
 public final class ProjectUpdater {
     private final Scheduler processingScheduler = Schedulers.boundedElastic();
@@ -65,6 +68,8 @@ public final class ProjectUpdater {
                             .thenMany(commitSnapshotRepo.mapToPulls(commitSnapshots))
                             .then(Mono.just(openPullCount));
                 })
+                .doOnSuccess(success -> log.info("Project has been updated successfully with pulls={}", Arrays.toString(githubApiPulls)))
+                .doOnError(e -> log.error("Failed to update project with pulls={}", Arrays.toString(githubApiPulls), e))
                 .subscribeOn(processingScheduler);
     }
 
@@ -88,6 +93,8 @@ public final class ProjectUpdater {
                             .thenMany(commitSnapshotRepo.mapToPulls(commitSnapshots))
                             .then(Mono.just(pull));
                 })
+                .doOnSuccess(success -> log.info("Project has been updated successfully with pull={}", githubApiPull))
+                .doOnError(e -> log.error("Failed to update project with pull={}", githubApiPull, e))
                 .subscribeOn(processingScheduler);
     }
 
