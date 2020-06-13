@@ -50,7 +50,6 @@ public final class GithubRepoRepoImpl implements GithubRepoRepo, ConnectionProvi
                     .bind("$3", repo.getOwner().getId())
                     .bind("$4", repo.getDescription())
                     .add());
-//            statement.fetchSize(repos.size());
 
             return statement.execute()
                     .flatMap(PostgresqlResult::getRowsUpdated)

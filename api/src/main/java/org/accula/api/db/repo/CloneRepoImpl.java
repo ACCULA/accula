@@ -39,7 +39,6 @@ public final class CloneRepoImpl implements CloneRepo, ConnectionProvidedRepo {
         return manyWithConnection(connection -> {
             final var statement = insertStatement(connection);
             cloneList.forEach(clone -> applyInsertBindings(clone, statement).add());
-//            statement.fetchSize(cloneList.size());
 
             return statement
                     .execute()

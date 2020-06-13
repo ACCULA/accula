@@ -40,7 +40,6 @@ public final class GithubUserRepoImpl implements GithubUserRepo, ConnectionProvi
         return manyWithConnection(connection -> {
             final var statement = insertStatement(connection);
             users.forEach(user -> applyInsertBindings(user, statement).add());
-//            statement.fetchSize(users.size());
 
             return statement.execute()
                     .flatMap(PostgresqlResult::getRowsUpdated)
