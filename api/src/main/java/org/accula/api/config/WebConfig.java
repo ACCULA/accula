@@ -25,7 +25,7 @@ import java.io.File;
 @RequiredArgsConstructor
 @EnableConfigurationProperties(WebhookProperties.class)
 public class WebConfig implements WebFluxConfigurer {
-    private final CurrentUserRepo currentUserRepository;
+    private final CurrentUserRepo currentUserRepo;
 
     @Bean
     public WebClient webClient() {
@@ -34,14 +34,14 @@ public class WebConfig implements WebFluxConfigurer {
 
     @Bean
     public GithubClient.AccessTokenProvider githubAccessTokenProvider() {
-        return () -> currentUserRepository
+        return () -> currentUserRepo
                 .get()
-                .flatMap(user -> Mono.justOrEmpty(user.getGithubAccessToken()));
+                .flatMap(user -> Mono.just(user.getGithubAccessToken()));
     }
 
     @Bean
     public GithubClient.LoginProvider githubLoginProvider() {
-        return () -> currentUserRepository
+        return () -> currentUserRepo
                 .get()
                 .flatMap(user -> Mono.just(user.getGithubUser().getLogin()));
     }
@@ -54,6 +54,6 @@ public class WebConfig implements WebFluxConfigurer {
 
     @Bean
     public CloneDetector cloneDetector() {
-        return new PrimitiveCloneDetector(1, 3);
+        return new PrimitiveCloneDetector(3, 8);
     }
 }

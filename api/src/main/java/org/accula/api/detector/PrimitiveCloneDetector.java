@@ -8,6 +8,7 @@ import reactor.util.function.Tuples;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -69,7 +70,11 @@ public class PrimitiveCloneDetector implements CloneDetector {
                 snippets.forEach(s -> clones.add(Tuples.of(s, source)));
             }
         }
-        return tryMerge(clones);
+
+        final var sorted = clones.stream()
+                .sorted(Comparator.comparing(t -> t.getT1().toString()))
+                .collect(Collectors.toList());
+        return tryMerge(sorted);
     }
 
     private List<Tuple2<CodeSnippet, CodeSnippet>> tryMerge(final List<Tuple2<CodeSnippet, CodeSnippet>> clones) {

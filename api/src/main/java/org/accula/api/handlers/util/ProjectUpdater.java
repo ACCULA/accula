@@ -17,6 +17,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -61,18 +62,14 @@ public final class ProjectUpdater {
                     }
 
                     return githubUserRepo.upsert(users)
-                            .doOnError(e -> log.error("Error saving users: {}", users, e))
-                            .thenMany(githubRepoRepo.upsert(repos)
-                                    .doOnError(e -> log.error("Error saving repos: {}", repos, e)))
-                            .thenMany(commitSnapshotRepo.insert(commitSnapshots)
-                                    .doOnError(e -> log.error("Error saving commits: {}", commitSnapshots, e)))
-                            .thenMany(pullRepo.upsert(pulls)
-                                    .doOnError(e -> log.error("Error saving pulls: {}", pulls, e)))
-                            .thenMany(commitSnapshotRepo.mapToPulls(commitSnapshots)
-                                    .doOnError(e -> log.error("Error mapping pulls: {}", commitSnapshots, e)))
+                            .thenMany(githubRepoRepo.upsert(repos))
+                            .thenMany(commitSnapshotRepo.insert(commitSnapshots))
+                            .thenMany(pullRepo.upsert(pulls))
+                            .thenMany(commitSnapshotRepo.mapToPulls(commitSnapshots))
                             .then(Mono.just(openPullCount));
                 })
-                .doOnSuccess(result -> log.info("Successfully update project: {} open pulls", result))
+                .doOnSuccess(success -> log.info("Project has been updated successfully with pulls={}", Arrays.toString(githubApiPulls)))
+                .doOnError(e -> log.error("Failed to update project with pulls={}", Arrays.toString(githubApiPulls), e))
                 .subscribeOn(processingScheduler);
     }
 
@@ -90,18 +87,14 @@ public final class ProjectUpdater {
                     final var pull = processGithubApiPull(projectId, githubApiPull, users, repos, commitSnapshots);
 
                     return githubUserRepo.upsert(users)
-                            .doOnError(e -> log.error("Error saving users: {}", users, e))
-                            .thenMany(githubRepoRepo.upsert(repos)
-                                    .doOnError(e -> log.error("Error saving repos: {}", repos, e)))
-                            .thenMany(commitSnapshotRepo.insert(commitSnapshots)
-                                    .doOnError(e -> log.error("Error saving commits: {}", commitSnapshots, e)))
-                            .then(pullRepo.upsert(pull)
-                                    .doOnError(e -> log.error("Error saving pull: {}", pull, e)))
-                            .thenMany(commitSnapshotRepo.mapToPulls(commitSnapshots)
-                                    .doOnError(e -> log.error("Error mapping pulls: {}", commitSnapshots, e)))
+                            .thenMany(githubRepoRepo.upsert(repos))
+                            .thenMany(commitSnapshotRepo.insert(commitSnapshots))
+                            .then(pullRepo.upsert(pull))
+                            .thenMany(commitSnapshotRepo.mapToPulls(commitSnapshots))
                             .then(Mono.just(pull));
                 })
-                .doOnSuccess(result -> log.info("Successfully update project: {}", result))
+                .doOnSuccess(success -> log.info("Project has been updated successfully with pull={}", githubApiPull))
+                .doOnError(e -> log.error("Failed to update project with pull={}", githubApiPull, e))
                 .subscribeOn(processingScheduler);
     }
 
