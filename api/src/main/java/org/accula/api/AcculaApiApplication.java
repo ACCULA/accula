@@ -5,6 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import reactor.tools.agent.ReactorDebugAgent;
 
 @SpringBootApplication
+@SuppressWarnings("PMD.UseUtilityClass")
 public class AcculaApiApplication {
     public static void main(final String[] args) {
         ReactorDebugAgent.init();
