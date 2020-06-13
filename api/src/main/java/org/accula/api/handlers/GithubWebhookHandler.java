@@ -49,7 +49,7 @@ public final class GithubWebhookHandler {
                 .bodyToMono(GithubApiHookPayload.class)
                 .flatMap(this::processPayload)
                 .onErrorResume(e -> {
-                    log.error("Error: ", e);
+                    log.error("Error during payload processing: ", e);
                     return Mono.empty();
                 })
                 .flatMap(p -> ServerResponse.ok().build());
