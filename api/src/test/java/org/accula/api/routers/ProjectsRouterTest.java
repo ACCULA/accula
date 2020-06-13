@@ -211,15 +211,6 @@ public class ProjectsRouterTest {
         Mockito.when(currentUser.get())
                 .thenReturn(Mono.just(CURRENT_USER));
 
-        Mockito.when(githubUserRepo.upsert(Mockito.any(GithubUser.class)))
-                .thenReturn(Mono.just(GITHUB_USER));
-
-        Mockito.when(projectRepo.upsert(Mockito.any(GithubRepo.class), Mockito.any(User.class)))
-                .thenReturn(Mono.just(PROJECT));
-
-        Mockito.when(projectRepo.notExists(Mockito.anyLong()))
-                .thenReturn(Mono.just(TRUE));
-
         // disable admin permission
         Mockito.when(githubClient.hasAdminPermission(Mockito.anyString(), Mockito.anyString()))
                 .thenReturn(Mono.just(FALSE));
