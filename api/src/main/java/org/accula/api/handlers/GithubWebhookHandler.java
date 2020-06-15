@@ -75,9 +75,10 @@ public final class GithubWebhookHandler {
 
         final var cloneFlux = detector
                 .findClones(targetFiles, sourceFiles)
+                .subscribeOn(processingScheduler)
                 .map(this::convert);
 
-        final var saveClones =  cloneFlux.collectList()
+        final var saveClones = cloneFlux.collectList()
                 .flatMap(clones -> cloneRepo.insert(clones).then());
 
         return Mono.when(savedPull, saveClones);

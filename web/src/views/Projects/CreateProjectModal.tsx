@@ -13,7 +13,7 @@ const validateRepoUrl = (url: string) => {
 const messageFromError = (error: string): string => {
   switch (error) {
     case 'NO_PERMISSION':
-      return 'Only the owner of the repository can create a project for it!'
+      return 'Only the admin of the repository can create a project for it!'
     case 'WRONG_URL':
       return 'URL to the repository is wrong!'
     case 'ALREADY_EXISTS':

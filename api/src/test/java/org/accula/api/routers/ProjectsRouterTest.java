@@ -117,9 +117,6 @@ public class ProjectsRouterTest {
         Mockito.when(projectRepo.notExists(Mockito.anyLong()))
                 .thenReturn(Mono.just(TRUE));
 
-        Mockito.when(pullRepo.upsert(Mockito.any(Pull.class)))
-                .thenReturn(Mono.just(PULL));
-
         Mockito.when(pullRepo.upsert(Mockito.anyCollection()))
                 .thenReturn(Flux.fromIterable(PULLS));
 
@@ -164,12 +161,6 @@ public class ProjectsRouterTest {
         Mockito.when(currentUser.get())
                 .thenReturn(Mono.just(CURRENT_USER));
 
-        Mockito.when(githubUserRepo.upsert(Mockito.any(GithubUser.class)))
-                .thenReturn(Mono.just(GITHUB_USER));
-
-        Mockito.when(projectRepo.notExists(Mockito.anyLong()))
-                .thenReturn(Mono.just(TRUE));
-
         // simulate github client error that is usually caused by wrong url
         Mockito.when(githubClient.hasAdminPermission(Mockito.anyString(), Mockito.anyString()))
                 .thenReturn(Mono.error(GH_EXCEPTION));
@@ -192,12 +183,6 @@ public class ProjectsRouterTest {
     public void testCreateProjectFailureAlreadyExists() {
         Mockito.when(currentUser.get())
                 .thenReturn(Mono.just(CURRENT_USER));
-
-        Mockito.when(githubUserRepo.upsert(Mockito.any(GithubUser.class)))
-                .thenReturn(Mono.just(GITHUB_USER));
-
-        Mockito.when(projectRepo.upsert(Mockito.any(GithubRepo.class), Mockito.any(User.class)))
-                .thenReturn(Mono.just(PROJECT));
 
         // make repo existing
         Mockito.when(projectRepo.notExists(Mockito.anyLong()))
@@ -225,15 +210,6 @@ public class ProjectsRouterTest {
     public void testCreateProjectFailureNoPermission() {
         Mockito.when(currentUser.get())
                 .thenReturn(Mono.just(CURRENT_USER));
-
-        Mockito.when(githubUserRepo.upsert(Mockito.any(GithubUser.class)))
-                .thenReturn(Mono.just(GITHUB_USER));
-
-        Mockito.when(projectRepo.upsert(Mockito.any(GithubRepo.class), Mockito.any(User.class)))
-                .thenReturn(Mono.just(PROJECT));
-
-        Mockito.when(projectRepo.notExists(Mockito.anyLong()))
-                .thenReturn(Mono.just(TRUE));
 
         // disable admin permission
         Mockito.when(githubClient.hasAdminPermission(Mockito.anyString(), Mockito.anyString()))

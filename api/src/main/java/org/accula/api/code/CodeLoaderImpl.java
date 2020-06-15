@@ -51,6 +51,7 @@ public class CodeLoaderImpl implements CodeLoader {
     private final Scheduler scheduler = Schedulers.boundedElastic();
 
     private final RepositoryProvider repositoryProvider;
+    private final RepositoryUpdater repositoryUpdater;
 
     @Override
     public Flux<FileEntity> getFiles(final CommitSnapshot snapshot) {
@@ -59,7 +60,7 @@ public class CodeLoaderImpl implements CodeLoader {
 
     @Override
     public Flux<FileEntity> getFiles(final CommitSnapshot snapshot, final FileFilter filter) {
-        return getRepository(snapshot)
+        return repositoryProvider.getRepository(snapshot)
                 .switchIfEmpty(Mono.error(REPO_NOT_FOUND))
                 .publishOn(scheduler)
                 .flatMapMany(repo -> Flux.fromIterable(getObjectLoaders(repo, snapshot.getSha())))
@@ -73,7 +74,7 @@ public class CodeLoaderImpl implements CodeLoader {
 
     @Override
     public Mono<FileEntity> getFile(final CommitSnapshot snapshot, final String filename) {
-        return getRepository(snapshot)
+        return repositoryProvider.getRepository(snapshot)
                 .switchIfEmpty(Mono.error(REPO_NOT_FOUND))
                 .publishOn(scheduler)
                 .flatMap(repo -> Mono.justOrEmpty(getObjectLoader(repo, snapshot.getSha(), filename)))
@@ -88,7 +89,7 @@ public class CodeLoaderImpl implements CodeLoader {
         if (fromLine > toLine) {
             return Mono.error(RANGE_ERROR);
         }
-        return getRepository(snapshot)
+        return repositoryProvider.getRepository(snapshot)
                 .switchIfEmpty(Mono.error(REPO_NOT_FOUND))
                 .flatMap(repo -> Mono.justOrEmpty(getObjectLoader(repo, snapshot.getSha(), filename)))
                 .switchIfEmpty(Mono.error(FILE_NOT_FOUND))
@@ -104,11 +105,16 @@ public class CodeLoaderImpl implements CodeLoader {
 
     @Override
     public Flux<Tuple2<FileEntity, FileEntity>> getDiff(final CommitSnapshot base, final CommitSnapshot head, final FileFilter filter) {
-        final Mono<AbstractTreeIterator> baseTree = getRepository(base)
+        var repository = repositoryProvider.getRepository(base).cache();
+        if (!base.getRepo().getOwner().equals(head.getRepo().getOwner())) {
+            repository = repository.flatMap(repo -> repositoryUpdater.addAndFetchRemote(base, head));
+        }
+
+        final Mono<AbstractTreeIterator> baseTree = repository
                 .map(repo -> getTreeIterator(repo, base.getSha()))
                 .doOnError(e -> log.error("Cannot get tree iterator for base {}: {}", base, e.getMessage()));
 
-        final Mono<Repository> headRepo = getRepository(head).cache();
+        final Mono<Repository> headRepo = repositoryProvider.getRepository(head).cache();
         final Mono<AbstractTreeIterator> headTree = headRepo
                 .map(repo -> getTreeIterator(repo, head.getSha()))
                 .doOnError(e -> log.error("Cannot get tree iterator for head {}: {}", head, e.getMessage()));
@@ -127,10 +133,6 @@ public class CodeLoaderImpl implements CodeLoader {
                 .flatMap(diff -> Mono.zip(getFileNullable(base, diff.getOldPath()), getFileNullable(head, diff.getNewPath())))
                 .sequential()
                 .onErrorResume(MissingObjectException.class, e -> Flux.empty());
-    }
-
-    private Mono<Repository> getRepository(final CommitSnapshot snapshot) {
-        return repositoryProvider.getRepository(snapshot.getRepo().getOwner().getLogin(), snapshot.getRepo().getName());
     }
 
     @SneakyThrows

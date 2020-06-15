@@ -4,8 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.accula.api.auth.jwt.JwtAccessTokenResponseProducer;
 import org.accula.api.auth.jwt.crypto.Jwt;
 import org.accula.api.converter.GithubApiToModelConverter;
-import org.accula.api.db.RefreshTokenRepository;
 import org.accula.api.db.model.RefreshToken;
+import org.accula.api.db.repo.RefreshTokenRepo;
 import org.accula.api.db.repo.UserRepo;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.ReactiveOAuth2AuthorizedClientService;
@@ -27,7 +27,7 @@ import java.time.Duration;
  * in response Location header URI using {@link JwtAccessTokenResponseProducer#formSuccessRedirect}.
  * We suppose client will store it in memory.
  * <p>4. We generate our own refresh token (also JWT with user id sub but longer lifetime)
- * which is then saved in DB ({@link RefreshTokenRepository}) and included in response http-only cookie.
+ * which is then saved in DB ({@link RefreshTokenRepo}) and included in response http-only cookie.
  *
  * @author Anton Lamtev
  * @author Vadim Dyachkov
@@ -39,7 +39,7 @@ public final class OAuth2LoginSuccessHandler implements ServerAuthenticationSucc
     private final Duration refreshExpiresIn;
     private final ReactiveOAuth2AuthorizedClientService authorizedClientService;
     private final UserRepo userRepo;
-    private final RefreshTokenRepository refreshTokens;
+    private final RefreshTokenRepo refreshTokenRepo;
     private final GithubApiToModelConverter converter;
 
     @Override
@@ -61,7 +61,7 @@ public final class OAuth2LoginSuccessHandler implements ServerAuthenticationSucc
                         final var refreshJwtDetails = jwt.generate(userId.toString(), refreshExpiresIn);
                         final var refreshToken = refreshJwtDetails.getToken();
 
-                        return refreshTokens
+                        return refreshTokenRepo
                                 .save(RefreshToken.of(userId, refreshToken, refreshJwtDetails.getExpirationDate()))
                                 .thenReturn(userId)
                                 .zipWith(Mono.just(refreshToken));

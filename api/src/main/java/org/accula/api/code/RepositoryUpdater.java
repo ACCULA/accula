@@ -5,8 +5,8 @@ import org.eclipse.jgit.lib.Repository;
 import reactor.core.publisher.Mono;
 
 /**
- * @author Vadim Dyachkov
+ * @author Anton Lamtev
  */
-public interface RepositoryProvider {
-    Mono<Repository> getRepository(CommitSnapshot snapshot);
+public interface RepositoryUpdater {
+    Mono<Repository> addAndFetchRemote(CommitSnapshot repoOrigin, CommitSnapshot remote);
 }

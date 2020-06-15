@@ -20,7 +20,9 @@ public final class DiffRouter {
     public RouterFunction<ServerResponse> diffRoute() {
         return RouterFunctions
                 .route()
-                .GET("/api/projects/{projectId}/pulls/{pullNumber}/diff", diffHandler::getDiff)
+                .path("/api/projects/{projectId}/pulls", b -> b
+                        .GET("/{pullNumber}/diff", diffHandler::diff)
+                        .GET("/diff", diffHandler::diffBetweenPulls))
                 .build();
     }
 }

@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.accula.api.auth.jwt.JwtAccessTokenResponseProducer;
 import org.accula.api.auth.jwt.crypto.Jwt;
 import org.accula.api.auth.util.CookieRefreshTokenHelper;
-import org.accula.api.db.RefreshTokenRepository;
+import org.accula.api.db.repo.RefreshTokenRepo;
 import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatcher;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
@@ -24,7 +24,7 @@ import static org.springframework.http.HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN;
 /**
  * Web filter that refreshes an access token using refresh token provided in cookies.
  * <p>New refresh token replaces the previous one in DB
- * ({@link RefreshTokenRepository}) as well as in client cookies.
+ * ({@link RefreshTokenRepo}) as well as in client cookies.
  * <p>Response is constructed using {@link JwtAccessTokenResponseProducer}.
  *
  * @author Anton Lamtev
@@ -42,7 +42,7 @@ public final class JwtRefreshFilter implements WebFilter {
     private final JwtAccessTokenResponseProducer responseProducer;
     private final Jwt jwt;
     private final Duration refreshExpiresIn;
-    private final RefreshTokenRepository refreshTokens;
+    private final RefreshTokenRepo refreshTokens;
     private final String webUrl;
 
     @Override
