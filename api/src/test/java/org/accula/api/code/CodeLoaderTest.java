@@ -39,8 +39,8 @@ class CodeLoaderTest {
 
     @BeforeAll
     static void beforeAll(@TempDir final File tempDir) {
-        RepositoryProvider repositoryProvider = new RepositoryManager(tempDir);
-        codeLoader = new CodeLoaderImpl(repositoryProvider);
+        final var repositoryManager = new RepositoryManager(tempDir);
+        codeLoader = new CodeLoaderImpl(repositoryManager, repositoryManager);
     }
 
     @Test

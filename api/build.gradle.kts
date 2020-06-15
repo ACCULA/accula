@@ -1,5 +1,5 @@
 plugins {
-    id("org.springframework.boot") version "2.3.0.RELEASE"
+    id("org.springframework.boot") version "2.3.1.RELEASE"
     id("io.spring.dependency-management") version "1.0.9.RELEASE"
     id("net.bytebuddy.byte-buddy-gradle-plugin") version "1.10.11"
 }
@@ -16,8 +16,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-security")
     testImplementation("org.springframework.security:spring-security-test")
 
-    implementation("net.bytebuddy:byte-buddy:1.10.11")
-    implementation("io.projectreactor:reactor-tools")
+    compileOnly("io.projectreactor:reactor-tools:3.3.5.RELEASE")
+//    compileOnly("io.projectreactor:reactor-tools")
     byteBuddyPlugin(group = "io.projectreactor", name = "reactor-tools", classifier = "original")
 
     testImplementation("io.projectreactor:reactor-test")
@@ -30,9 +30,9 @@ dependencies {
     implementation("com.auth0:java-jwt:3.10.2")
 
     implementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
-    implementation("io.r2dbc:r2dbc-postgresql:0.8.2.RELEASE")
-    implementation("io.r2dbc:r2dbc-pool:0.8.2.RELEASE")
-    implementation("io.r2dbc:r2dbc-spi:0.8.2.RELEASE")
+    implementation("io.r2dbc:r2dbc-postgresql")
+    implementation("io.r2dbc:r2dbc-pool")
+    implementation("io.r2dbc:r2dbc-spi")
 
     implementation("org.slf4j:slf4j-api:2.0.0-alpha1")
     implementation("org.slf4j:slf4j-log4j12:2.0.0-alpha1")
