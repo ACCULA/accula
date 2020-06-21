@@ -4,7 +4,10 @@ import { API_URL, DEBUG } from 'utils'
 import { IClone, IDiff, IPull, IToken } from 'types'
 import { pulls, clones } from 'stubs'
 
-export const getPulls = async (token: IToken, projectId: number): Promise<IPull[]> => {
+export const getPulls = async (
+  token: IToken, //
+  projectId: number
+): Promise<IPull[]> => {
   if (DEBUG) {
     return Promise.resolve(pulls)
   }
@@ -19,7 +22,11 @@ export const getPulls = async (token: IToken, projectId: number): Promise<IPull[
     .then(resp => resp.data as IPull[])
 }
 
-export const getPull = async (token: IToken, projectId: number, pullId: number): Promise<IPull> => {
+export const getPull = async (
+  token: IToken, //
+  projectId: number,
+  pullId: number
+): Promise<IPull> => {
   if (DEBUG) {
     return Promise.resolve(pulls.find(p => p.number === pullId))
   }
@@ -34,7 +41,11 @@ export const getPull = async (token: IToken, projectId: number, pullId: number):
     .then(resp => resp.data as IPull)
 }
 
-export const getDiff = async (token: IToken, projectId: number, pullId: number): Promise<IDiff[]> => {
+export const getDiffs = async (
+  token: IToken,
+  projectId: number,
+  pullId: number
+): Promise<IDiff[]> => {
   if (DEBUG) {
     return Promise.resolve([])
   }
@@ -49,7 +60,35 @@ export const getDiff = async (token: IToken, projectId: number, pullId: number):
     .then(resp => resp.data as IDiff[])
 }
 
-export const getClones = async (token: IToken, projectId: number, pullId: number): Promise<IClone[]> => {
+export const getCompares = async (
+  token: IToken,
+  projectId: number,
+  target: number,
+  source: number
+): Promise<IDiff[]> => {
+  if (DEBUG) {
+    return Promise.resolve([])
+  }
+  return axios
+    .get(`${API_URL}/api/projects/${projectId}/pulls/diff?source=${source}&target=${target}`, {
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token.accessToken}`
+      },
+      withCredentials: true
+    })
+    .then(resp => {
+      console.log(resp)
+      return resp
+    })
+    .then(resp => resp.data as IDiff[])
+}
+
+export const getClones = async (
+  token: IToken,
+  projectId: number,
+  pullId: number
+): Promise<IClone[]> => {
   if (DEBUG) {
     return Promise.resolve(clones)
   }

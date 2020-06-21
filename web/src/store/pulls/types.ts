@@ -1,16 +1,22 @@
-import { IClone, IDiff, IPull, IPullRef } from 'types'
+import { IClone, ICompareRef, IDiff, IPull, IPullRef } from 'types'
 import { Wrapper } from 'store/wrapper'
 
 export const SET_PULLS = 'SET_PULLS'
 export const SET_PULL = 'SET_PULL'
-export const SET_DIFFS = 'SET_DIFF'
+export const SET_DIFFS = 'SET_DIFFS'
+export const SET_COMPARES = 'SET_COMPARES'
 export const SET_CLONES = 'SET_CLONES'
+
+export type IPullDiffsState = Wrapper<IDiff[]> & IPullRef
+export type IPullComparesState = Wrapper<IDiff[]> & ICompareRef
+export type IPullClonesState = Wrapper<IClone[]> & IPullRef
 
 export interface PullsState {
   pulls: Wrapper<IPull[]>
   pull: Wrapper<IPull>
-  diff: Wrapper<IDiff[]> & IPullRef
-  clones: Wrapper<IClone[]> & IPullRef
+  diffs: IPullDiffsState
+  compares: IPullComparesState
+  clones: IPullClonesState
 }
 
 export interface SetPulls {
@@ -28,6 +34,11 @@ export interface SetDiffs {
   payload: Wrapper<IDiff[]> & IPullRef
 }
 
+export interface SetCompares {
+  type: typeof SET_COMPARES
+  payload: Wrapper<IDiff[]> & IPullRef
+}
+
 export interface SetClones {
   type: typeof SET_CLONES
   payload: Wrapper<IClone[]> & IPullRef
@@ -36,5 +47,6 @@ export interface SetClones {
 export type PullsActionTypes =
   | SetPulls //
   | SetPull
-  | SetClones
   | SetDiffs
+  | SetCompares
+  | SetClones

@@ -74,6 +74,12 @@ export interface IPullRef {
   pullNumber?: number
 }
 
+export interface ICompareRef {
+  projectId?: number
+  target?: number
+  source?: number
+}
+
 export interface ICodeSnippet {
   projectId: number
   pullNumber: number
