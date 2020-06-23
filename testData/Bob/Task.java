@@ -6,11 +6,11 @@ public class Task {
         return puts();
     }
 
-    public static String puts(String text) {
-        var a = 0;
-        var b = 0;
-        var c = 0;
-        var text = "Hello, world";
-        return text;
-    }
+//    public static String puts(String text) {
+//        var a = 0;
+//        var b = 0;
+//        var c = 0;
+//        var text = "Hello, world";
+//        return text;
+//    }
 }

@@ -10,6 +10,7 @@ import com.suhininalex.clones.core.structures.Token;
 
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 public class Parser {
@@ -49,12 +50,12 @@ public class Parser {
         return str
                 .chars()
                 .mapToObj(i -> new Token(
-                        0,
+                        ThreadLocalRandom.current().nextInt(),
                         String.valueOf((char) i),
-                        1,
-                        "None",
-                        "None",
-                        "None")
+                        ThreadLocalRandom.current().nextInt(),
+                        "None" + ThreadLocalRandom.current().nextInt(),
+                        "None" + ThreadLocalRandom.current().nextInt(),
+                        "None" + ThreadLocalRandom.current().nextInt())
                 )
                 .collect(Collectors.toUnmodifiableList());
     }
