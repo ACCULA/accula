@@ -3,6 +3,7 @@ package org.accula.analyzer;
 import com.suhininalex.clones.core.CloneIndexer;
 import com.suhininalex.clones.core.structures.Token;
 import com.suhininalex.suffixtree.SuffixTree;
+import generated.org.accula.parser.Java9Lexer;
 import org.accula.parser.File;
 import org.accula.parser.Parser;
 
@@ -50,12 +51,31 @@ public class Analyzer {
                         Parser.getFunctionsAsTokens(file)
                                 .forEach(suffixTree::addSequence));
 
-        CloneIndexer.INSTANCE.getAllSequenceCloneClasses(3, 3).forEach(treeCloneClass -> {
+        final int sequenceId = 3;
+
+//        CloneIndexer.INSTANCE.getTree().getSequence(sequenceId).forEach(token ->
+//                System.out.println(token + ":" +
+//                        token.getType() + ":" +
+//                        Java9Lexer.VOCABULARY.getSymbolicName(token.getType()))
+//        );
+
+        System.out.println(CloneIndexer.INSTANCE.getTree().getSequence(sequenceId));
+
+//        CloneIndexer.INSTANCE.getAllSequenceCloneClasses(sequenceId, 3).forEach(treeCloneClass -> {
+//            for (int j = 0; j <= treeCloneClass.getSize(); j++) {
+//                Token begin = treeCloneClass.getClones().iterator().next().getFirstElement();
+//                Token end = treeCloneClass.getClones().iterator().next().getLastElement();
+//                System.out.print("Begin: " + begin + " | line: " + begin.getLine() + " | file: " + begin.getFilename() + "\t");
+//                System.out.println(" || End: " + end + " | line: " + end.getLine() + " | file: " + end.getFilename());
+//            }
+//        });
+
+        CloneIndexer.INSTANCE.getAllCloneClasses(3).forEach(treeCloneClass -> {
             for (int j = 0; j <= treeCloneClass.getSize(); j++) {
                 Token begin = treeCloneClass.getClones().iterator().next().getFirstElement();
                 Token end = treeCloneClass.getClones().iterator().next().getLastElement();
-                System.out.print("Begin: " + begin + "line: " + begin.getLine() + "file: " + begin.getFilename() + "\t");
-                System.out.println("End: " + end + "line: " + end.getLine() + "file: " + end.getFilename());
+                System.out.print("Begin: " + begin + " | line: " + begin.getLine() + " | file: " + begin.getFilename() + "\t");
+                System.out.println(" || End: " + end + " | line: " + end.getLine() + " | file: " + end.getFilename());
             }
         });
     }
