@@ -10,11 +10,11 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class DataProvider {
-    public static List<File> getFiles(final String dir, final String fileExtension) throws IOException {
+    public static Stream<File> getFiles(final String dir, final String fileExtension) throws IOException {
         final var files = new LinkedList<File>();
         Files.walkFileTree(Path.of(dir), new SimpleFileVisitor<>() {
             @Override
@@ -34,6 +34,6 @@ public class DataProvider {
                 return FileVisitResult.CONTINUE;
             }
         });
-        return files;
+        return files.stream();
     }
 }

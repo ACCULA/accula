@@ -10,9 +10,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Parser {
-    public static List<List<Token>> getFunctionsAsTokens(@NotNull final File file) {
+    public static Stream<List<Token>> getFunctionsAsTokens(@NotNull final File file) {
         final var lexer = new Java9Lexer(CharStreams.fromString(file.getContent()));
         final var tokens = new CommonTokenStream(lexer);
         final var parser = new Java9Parser(tokens);
@@ -22,15 +23,11 @@ public class Parser {
         final var listener = new JavaListener(tokens);
         walker.walk(listener, parseTree);
 
-        // Exclude braces, semicolons, whitespaces, comments, ...
-        final var excludeTokens = Set.of(68, 69, 70, 71, 74, 116, 117, 118);
-
         return listener
                 .getFunctions()
-                .stream()
                 .map(func -> func
                         .stream()
-                        .filter(token -> !excludeTokens.contains(token.getType()))
+                        .filter(token -> isAllowedToken(token, listener.getTypeArgs()))
                         .map(token -> new Token(
                                 token.getType(),
                                 token.getText(),
@@ -39,22 +36,36 @@ public class Parser {
                                 file.getOwner(),
                                 file.getPath())
                         )
+                        .map(Parser::anonymize)
                         .collect(Collectors.toUnmodifiableList())
-                )
-                .collect(Collectors.toUnmodifiableList());
+                );
     }
 
-    public static List<Token> getTokenizedString(@NotNull final String str) {
-        return str
-                .chars()
-                .mapToObj(i -> new Token(
-                        0,
-                        String.valueOf((char) i),
-                        1,
-                        "None",
-                        "None",
-                        "None")
-                )
-                .collect(Collectors.toUnmodifiableList());
+    private static boolean isAllowedToken(@NotNull final org.antlr.v4.runtime.Token token,
+                                          @NotNull final Set<org.antlr.v4.runtime.Token> typeArgs) {
+        final var excludeTokens = Set.of(
+                Java9Lexer.LPAREN,
+                Java9Lexer.RPAREN,
+                Java9Lexer.LBRACE,
+                Java9Lexer.RBRACE,
+                Java9Lexer.SEMI,
+                Java9Lexer.WS,
+                Java9Lexer.COMMENT,
+                Java9Lexer.LINE_COMMENT,
+                Java9Lexer.FINAL
+        );
+        return !excludeTokens.contains(token.getType()) && !typeArgs.contains(token);
+    }
+
+    private static Token anonymize(@NotNull final Token token) {
+        switch (token.getType()) {
+            case Java9Lexer.Identifier -> token.setText("id");
+            case Java9Lexer.IntegerLiteral -> token.setText("int");
+            case Java9Lexer.FloatingPointLiteral -> token.setText("float");
+            case Java9Lexer.BooleanLiteral -> token.setText("bool");
+            case Java9Lexer.CharacterLiteral -> token.setText("char");
+            case Java9Lexer.StringLiteral -> token.setText("string");
+        }
+        return token;
     }
 }
