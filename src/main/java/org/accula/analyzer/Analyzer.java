@@ -1,14 +1,57 @@
 package org.accula.analyzer;
 
+import com.suhininalex.clones.core.CloneIndexer;
+import com.suhininalex.clones.core.structures.Token;
 import com.suhininalex.suffixtree.SuffixTree;
+import generated.org.accula.parser.Java9Lexer;
+import org.accula.parser.File;
 import org.accula.parser.Parser;
 import org.accula.parser.Token;
 
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 public class Analyzer {
     public static void main(String[] args) throws IOException {
+//        SuffixTree<com.suhininalex.clones.core.structures.Token> suffixTree = CloneIndexer.INSTANCE.getTree();
+
+//        DataProvider
+//                .getFiles("testData", "java")
+//                .forEach(file ->
+//                        Parser.getFunctionsAsTokens(file)
+//                                .forEach(suffixTree::addSequence));
+//
+//        final int sequenceId = 3;
+
+//        CloneIndexer.INSTANCE.getTree().getSequence(sequenceId).forEach(token ->
+//                System.out.println(token + ":" +
+//                        token.getType() + ":" +
+//                        Java9Lexer.VOCABULARY.getSymbolicName(token.getType()))
+//        );
+
+//        System.out.println(CloneIndexer.INSTANCE.getTree().getSequence(sequenceId));
+
+//        CloneIndexer.INSTANCE.getAllSequenceCloneClasses(sequenceId, 3).forEach(treeCloneClass -> {
+//            for (int j = 0; j <= treeCloneClass.getSize(); j++) {
+//                Token begin = treeCloneClass.getClones().iterator().next().getFirstElement();
+//                Token end = treeCloneClass.getClones().iterator().next().getLastElement();
+//                System.out.print("Begin: " + begin + " | line: " + begin.getLine() + " | file: " + begin.getFilename() + "\t");
+//                System.out.println(" || End: " + end + " | line: " + end.getLine() + " | file: " + end.getFilename());
+//            }
+//        });
+
+//        CloneIndexer.INSTANCE.getAllCloneClasses(3).forEach(treeCloneClass -> {
+//            for (int j = 0; j <= treeCloneClass.getSize(); j++) {
+//                Token begin = treeCloneClass.getClones().iterator().next().getFirstElement();
+//                Token end = treeCloneClass.getClones().iterator().next().getLastElement();
+//                System.out.print("Begin: " + begin + " | line: " + begin.getLine() + " | file: " + begin.getFilename() + "\t");
+//                System.out.println(" || End: " + end + " | line: " + end.getLine() + " | file: " + end.getFilename());
+//            }
+//        });
+
+
         final var tree = new SuffixTree<Token>();
         DataProvider
                 .getFiles("testData", "java")
