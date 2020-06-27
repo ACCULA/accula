@@ -1,17 +1,14 @@
 package org.accula.analyzer;
 
-import com.suhininalex.clones.core.CloneIndexer;
-import com.suhininalex.clones.core.structures.Token;
+//import com.suhininalex.clones.core.CloneIndexer;
+//import com.suhininalex.clones.core.structures.Token;
+
 import com.suhininalex.suffixtree.SuffixTree;
-import generated.org.accula.parser.Java9Lexer;
-import org.accula.parser.File;
 import org.accula.parser.Parser;
 import org.accula.parser.Token;
 
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.Objects;
-import java.util.stream.Stream;
 
 public class Analyzer {
     public static void main(String[] args) throws IOException {
@@ -51,6 +48,7 @@ public class Analyzer {
 //            }
 //        });
 
+        //TODO: Clones from Alice/Main.java file not found (BUG!!!);
 
         final var tree = new SuffixTree<Token>();
         DataProvider
