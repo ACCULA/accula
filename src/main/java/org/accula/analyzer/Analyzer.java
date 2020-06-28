@@ -2,56 +2,34 @@ package org.accula.analyzer;
 
 import com.suhininalex.clones.core.CloneIndexer;
 import com.suhininalex.clones.core.structures.Token;
+import com.suhininalex.clones.core.structures.TreeCloneClass;
 import com.suhininalex.suffixtree.SuffixTree;
-import generated.org.accula.parser.Java9Lexer;
-import org.accula.parser.File;
 import org.accula.parser.Parser;
-import org.accula.postprocessing.TokenizedFile;
-import org.accula.postprocessing.TokenizedMethod;
+import org.accula.suffixtree.util.Clone;
+import org.accula.suffixtree.util.ReferenceClone;
+import org.accula.suffixtree.util.TokenizedFile;
+import org.accula.suffixtree.util.TokenizedMethod;
 
 import java.io.IOException;
-import java.nio.file.Paths;
+import java.lang.ref.Reference;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Stream;
+import java.util.Map;
+
+import static org.accula.suffixtree.postprocessing.CloneToFileMapper.mapToMethod;
+
 
 public class Analyzer {
     public static void main(String[] args) throws IOException {
-        SuffixTree<com.suhininalex.clones.core.structures.Token> suffixTree = CloneIndexer.INSTANCE.getTree();
-//        Stream.of("abcdefgh", "123cdeabc", "xyz", "6789xy0-")
-//                .map(Parser::getTokenizedString)
-//                .forEach(suffixTree::addSequence);
-//        CloneIndexer.INSTANCE.getAllCloneClasses(0).forEach(treeCloneClass -> {
-//            for (int j = 0; j <= treeCloneClass.getSize(); j++) {
-//                System.out.println(treeCloneClass.getClones().iterator().next().getFirstElement() + " " +
-//                                   treeCloneClass.getClones().iterator().next().getLastElement());
-//            }
-//        });
-//        System.out.println("+++++++++++++++++++++++++++++++++++");
-//        CloneIndexer.INSTANCE.getAllSequenceCloneClasses(2, 0).forEach(treeCloneClass -> {
-//            for (int j = 0; j <= treeCloneClass.getSize(); j++) {
-//                System.out.println(treeCloneClass.getClones().iterator().next().getFirstElement() + " " +
-//                        treeCloneClass.getClones().iterator().next().getLastElement());
-//            }
-//        });
-//        System.out.println("+++++++++++++++++++++++++++++++++++");
-//        CloneIndexer.INSTANCE.getAllSequenceCloneClasses(3, 0).forEach(treeCloneClass -> {
-//            for (int j = 0; j <= treeCloneClass.getSize(); j++) {
-//                System.out.println(treeCloneClass.getClones().iterator().next().getFirstElement() + " " +
-//                        treeCloneClass.getClones().iterator().next().getLastElement());
-//            }
-//        });
-//        System.out.println("+++++++++++++++++++++++++++++++++++");
-//        CloneIndexer.INSTANCE.getAllSequenceCloneClasses(4, 0).forEach(treeCloneClass -> {
-//            for (int j = 0; j <= treeCloneClass.getSize(); j++) {
-//                System.out.println(treeCloneClass.getClones().iterator().next().getFirstElement() + " " +
-//                        treeCloneClass.getClones().iterator().next().getLastElement());
-//            }
-//        });
-        List<TokenizedFile> tokenizedFiles = new ArrayList<>();
 
-        DataProvider
-                .getFiles("testData", "java")
+        CloneIndexer cloneFinder = CloneIndexer.INSTANCE;
+        SuffixTree<Token> suffixTree = cloneFinder.getTree();
+        List<TokenizedFile> tokenizedFiles = new ArrayList<>();
+        Map<ReferenceClone, List<Clone>> clones = new HashMap<>();
+        int minCloneLength = 10;
+
+        DataProvider.getFiles("testData", "java")
                 .forEach(file -> {
                     ArrayList<TokenizedMethod> methods = new ArrayList<>();
                     List<List<Token>> tokenizedMethods = Parser.getFunctionsAsTokens(file);
@@ -61,8 +39,27 @@ public class Analyzer {
                     tokenizedFiles.add(new TokenizedFile(file.getName(), file.getOwner(), methods));
                 });
 
+        tokenizedFiles.forEach(tokenizedFile -> {
+            findClones(tokenizedFile, clones, cloneFinder, minCloneLength);
+        });
+
+        clones.keySet().forEach(referenceClone -> {
+            List<Clone> clones1 = clones.get(referenceClone);
+            System.out.println("Key: " + referenceClone + " value: ");
+            clones1.forEach(clone -> {
+                printCloneInfo(clone.getFromToken(), clone.getToToken());
+            });
+            System.out.println("\t ________________________________ \t");
+        });
+
+
+        System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+        System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+        System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+
+
         final int sequenceId = 3;
-        tokenizedFiles.forEach(System.out::println);
+        //tokenizedFiles.forEach(System.out::println);
 
 //        CloneIndexer.INSTANCE.getTree().getSequence(sequenceId).forEach(token ->
 //                System.out.println(token + ":" +
@@ -70,16 +67,17 @@ public class Analyzer {
 //                        Java9Lexer.VOCABULARY.getSymbolicName(token.getType()))
 //        );
 
-        System.out.println(CloneIndexer.INSTANCE.getTree().getSequence(sequenceId));
+        //System.out.println(suffixTree.getSequence(sequenceId));
 
-        CloneIndexer.INSTANCE.getAllSequenceCloneClasses(sequenceId, 3).forEach(treeCloneClass -> {
-            for (int j = 0; j <= treeCloneClass.getSize(); j++) {
-                Token begin = treeCloneClass.getClones().iterator().next().getFirstElement();
-                Token end = treeCloneClass.getClones().iterator().next().getLastElement();
-                System.out.print("Begin: " + begin + " | line: " + begin.getLine() + " | file: " + begin.getFilename() + "\t");
-                System.out.println(" || End: " + end + " | line: " + end.getLine() + " | file: " + end.getFilename());
-            }
-        });
+        for (int i = 2; i < 15; i++) {
+            cloneFinder.getAllSequenceCloneClasses(i, minCloneLength).forEach(treeCloneClass -> {
+                for (int j = 0; j <= treeCloneClass.getSize(); j++) {
+                    Token begin = treeCloneClass.getClones().iterator().next().getFirstElement();
+                    Token end = treeCloneClass.getClones().iterator().next().getLastElement();
+                    printCloneInfo(begin, end);
+                }
+            });
+        }
 
 //        CloneIndexer.INSTANCE.getAllCloneClasses(5).forEach(treeCloneClass -> {
 //            for (int j = 0; j <= treeCloneClass.getSize(); j++) {
@@ -89,5 +87,47 @@ public class Analyzer {
 //                System.out.println(" || End: " + end + " | line: " + end.getLine() + " | file: " + end.getFilename());
 //            }
 //        });
+    }
+
+    public static void printCloneInfo(Token begin, Token end) {
+        System.out.print("Begin: " + begin + " | line: " + begin.getLine() + " | file: " + begin.getFilename() + "\t");
+        System.out.println(" || End: " + end + " | line: " + end.getLine() + " | file: " + end.getFilename());
+    }
+
+    private static Token extractBeginToken(TreeCloneClass treeCloneClass) {
+        return treeCloneClass.getClones().iterator().next().getFirstElement();
+    }
+
+    private static Token extractEndToken(TreeCloneClass treeCloneClass) {
+        return treeCloneClass.getClones().iterator().next().getLastElement();
+    }
+
+    private static void findClones(TokenizedFile file, Map<ReferenceClone, List<Clone>> clones,
+                                   CloneIndexer cloneFinder, int minCloneLength) {
+        file.getMethods().forEach(tokenizedMethod -> {
+            cloneFinder.getAllSequenceCloneClasses(tokenizedMethod.getSequenceId(), minCloneLength).forEach(
+                    treeCloneClass -> {
+                        Token fromToken = extractBeginToken(treeCloneClass);
+                        Token toToken = extractEndToken(treeCloneClass);
+                        //TODO add check for general token info equality (owner, file)
+                        ReferenceClone referenceClone = new ReferenceClone(fromToken.getFilename(),
+                                                         fromToken.getOwner(),
+                                                         fromToken.getLine(),
+                                                         toToken.getLine());
+                        Clone clone = new Clone(fromToken.getFilename(),
+                                fromToken.getOwner(),
+                                fromToken,
+                                toToken);
+                        try {
+                            clones.computeIfAbsent(referenceClone, k -> new ArrayList<>()) //TODO add mapping logic and
+                                  .add( (file.getName().equalsIgnoreCase(fromToken.getFilename()) &&
+                                          file.getOwner().equalsIgnoreCase(fromToken.getOwner()))
+                                          ? clone
+                                          : mapToMethod(clone, tokenizedMethod, file.getName(), file.getOwner()));
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    });
+        });
     }
 }

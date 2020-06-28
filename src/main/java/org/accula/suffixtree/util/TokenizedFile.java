@@ -1,4 +1,4 @@
-package org.accula.postprocessing;
+package org.accula.suffixtree.util;
 
 import lombok.Value;
 

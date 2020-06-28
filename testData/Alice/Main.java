@@ -20,11 +20,6 @@ public class Main {
         var c = 0;
         var text = "Hello, clone!";
 
-        for (int i = 0; i < 10; i++) {
-            a = b;
-            b = c;
-        }
-
         return text;
     }
 
