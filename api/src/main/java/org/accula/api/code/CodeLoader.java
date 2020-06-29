@@ -21,11 +21,6 @@ public interface CodeLoader {
     Flux<FileEntity> getFiles(CommitSnapshot snapshot, FileFilter filter);
 
     /**
-     * Get the file content by the commit snapshot and the file name
-     */
-    Mono<FileEntity> getFile(CommitSnapshot snapshot, String filename);
-
-    /**
      * Get the file snippet (file entity with content from the specified line range)
      * by the commit snapshot, the file name and the line range
      */
@@ -48,4 +43,11 @@ public interface CodeLoader {
      * If file was removed in {@code head}, then second tuple element values are equal to {@code null}.
      */
     Flux<Tuple2<FileEntity, FileEntity>> getDiff(CommitSnapshot base, CommitSnapshot head, FileFilter filter);
+
+    /**
+     * Get diff between two commits of remote repositories.
+     *
+     * @see #getDiff(CommitSnapshot, CommitSnapshot, FileFilter)
+     */
+    Flux<Tuple2<FileEntity, FileEntity>> getRemoteDiff(CommitSnapshot origin, CommitSnapshot remote, FileFilter filter);
 }

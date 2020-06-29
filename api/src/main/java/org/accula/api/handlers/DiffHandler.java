@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.accula.api.code.CodeLoader;
 import org.accula.api.code.FileEntity;
 import org.accula.api.code.FileFilter;
-import org.accula.api.db.model.CommitSnapshot;
 import org.accula.api.db.model.Pull;
 import org.accula.api.db.repo.PullRepo;
 import org.accula.api.handlers.response.GetDiffResponseBody;
@@ -21,6 +20,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 /**
  * @author Vadim Dyachkov
+ * @author Anton Lamtev
  */
 @Component
 @RequiredArgsConstructor
@@ -70,7 +70,14 @@ public final class DiffHandler {
         final var base = pullMono.map(Pull::getBase);
         final var head = pullMono.map(Pull::getHead);
 
-        return diff(base, head);
+        return Mono.zip(base, head)
+                .flatMapMany(baseAndHead -> codeLoader.getDiff(baseAndHead.getT1(), baseAndHead.getT2(), FileFilter.JAVA))
+                .map(DiffHandler::toResponseBody)
+                .collectList()
+                .flatMap(diffs -> ServerResponse
+                        .ok()
+                        .contentType(APPLICATION_JSON)
+                        .bodyValue(diffs));
     }
 
     private Mono<ServerResponse> diffBetweenPulls(final long projectId, final int sourcePullNumber, final int targetPullNumber) {
@@ -81,12 +88,8 @@ public final class DiffHandler {
                 .findByNumber(projectId, targetPullNumber)
                 .map(Pull::getHead);
 
-        return diff(sourcePull, targetPull);
-    }
-
-    private Mono<ServerResponse> diff(final Mono<CommitSnapshot> base, final Mono<CommitSnapshot> head) {
-        return Mono.zip(base, head)
-                .flatMapMany(baseAndHead -> codeLoader.getDiff(baseAndHead.getT1(), baseAndHead.getT2(), FileFilter.JAVA))
+        return Mono.zip(sourcePull, targetPull)
+                .flatMapMany(baseAndHead -> codeLoader.getRemoteDiff(baseAndHead.getT1(), baseAndHead.getT2(), FileFilter.JAVA))
                 .map(DiffHandler::toResponseBody)
                 .collectList()
                 .flatMap(diffs -> ServerResponse

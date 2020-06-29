@@ -99,18 +99,12 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    public ECPublicKey publicKey() {
-        return EcKeys.publicKey(jwtProperties.getSignature().getPublicKey());
-    }
-
-    @Bean
-    public ECPrivateKey privateKey() {
-        return EcKeys.privateKey(jwtProperties.getSignature().getPrivateKey());
-    }
-
-    @Bean
-    public Jwt jwt(final ECPrivateKey privateEcKey, final ECPublicKey publicEcKey) {
-        return new Jwt(privateEcKey, publicEcKey, jwtProperties.getIssuer());
+    public Jwt jwt() {
+        return new Jwt(
+                EcKeys.privateKey(jwtProperties.getSignature().getPrivateKey()),
+                EcKeys.publicKey(jwtProperties.getSignature().getPublicKey()),
+                jwtProperties.getIssuer()
+        );
     }
 
     @Bean

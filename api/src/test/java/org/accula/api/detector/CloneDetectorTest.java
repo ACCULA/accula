@@ -1,10 +1,9 @@
 package org.accula.api.detector;
 
 import org.accula.api.code.CodeLoader;
-import org.accula.api.code.CodeLoaderImpl;
 import org.accula.api.code.FileEntity;
 import org.accula.api.code.FileFilter;
-import org.accula.api.code.RepositoryManager;
+import org.accula.api.code.JGitCodeLoader;
 import org.accula.api.db.model.CommitSnapshot;
 import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.GithubUser;
@@ -62,8 +61,7 @@ class CloneDetectorTest {
 
     @Test
     void testReal(@TempDir final File tempDir) {
-        final var repositoryManager = new RepositoryManager(tempDir);
-        CodeLoader codeLoader = new CodeLoaderImpl(repositoryManager, repositoryManager);
+        CodeLoader codeLoader = new JGitCodeLoader(tempDir);
 
         var repoOwner = new GithubUser(1L, "vaddya", "owner", "ava", false);
         GithubRepo repo = new GithubRepo(1L, "2017-highload-kv", "descr", repoOwner);
