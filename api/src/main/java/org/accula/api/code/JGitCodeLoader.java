@@ -83,6 +83,7 @@ public class JGitCodeLoader implements CodeLoader {
     private static class AccessSync {
         final ReadWriteLock lock = new ReentrantReadWriteLock();
 
+        @SuppressWarnings("unused")
         static <Any> AccessSync newOne(final Any any) {
             return new AccessSync();
         }
