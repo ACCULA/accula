@@ -5,8 +5,6 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
-import java.util.Objects;
-
 @RequiredArgsConstructor
 @Getter
 @EqualsAndHashCode
@@ -18,7 +16,7 @@ public class ReferenceClone {
     private final int fromLine;
     private final int toLine;
 
-    public int getCloneLenght() {
+    public int getCloneLengthInLines() {
         return toLine - fromLine + 1;
     }
 }

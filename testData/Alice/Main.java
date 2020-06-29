@@ -15,10 +15,10 @@ public class Main {
         var c = 0;
         var text = "Hello, clone!";
 
-        var a = 0;
-        var b = 0;
-        var c = 0;
-        var text = "Hello, clone!";
+//        var a = 0;
+//        var b = 0;
+//        var c = 0;
+//        var text = "Hello, clone!";
 
         return text;
     }
