@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.accula.api.code.CodeLoader;
 import org.accula.api.code.FileEntity;
 import org.accula.api.code.FileFilter;
-import org.accula.api.db.model.CommitSnapshot;
 import org.accula.api.db.model.Pull;
 import org.accula.api.db.repo.PullRepo;
 import org.accula.api.handlers.dto.DiffDto;
@@ -74,7 +73,7 @@ public final class DiffHandler {
 
         final var diff = Mono
                 .zip(base, head)
-                .flatMapMany(baseAndHead -> codeLoader.getDiff(baseAndHead.getT1(), baseAndHead.getT2(), FileFilter.JAVA));
+                .flatMapMany(baseHead -> codeLoader.getDiff(baseHead.getT1(), baseHead.getT2(), FileFilter.JAVA));
 
         return toResponse(diff);
     }
@@ -89,7 +88,7 @@ public final class DiffHandler {
 
         final var diff = Mono
                 .zip(sourcePull, targetPull)
-                .flatMapMany(sourceAndTarget -> codeLoader.getRemoteDiff(sourceAndTarget.getT1(), sourceAndTarget.getT2(), FileFilter.JAVA));
+                .flatMapMany(sourceTarget -> codeLoader.getRemoteDiff(sourceTarget.getT1(), sourceTarget.getT2(), FileFilter.JAVA));
 
         return toResponse(diff);
     }
