@@ -21,7 +21,7 @@ import java.net.URLEncoder;
 public final class ModelToDtoConverter {
     private static final String GITHUB_USER_URL_FORMAT = "https://github.com/%s";
     private static final String GITHUB_REPO_URL_FORMAT = GITHUB_USER_URL_FORMAT + "/%s";
-    private static final String GITHUB_PULL_URL_FORMAT = GITHUB_REPO_URL_FORMAT + "/%s";
+    private static final String GITHUB_PULL_URL_FORMAT = GITHUB_REPO_URL_FORMAT + "/pull/%s";
 
     public ProjectDto convert(final Project project) {
         return convert(project, project.getOpenPullCount());
