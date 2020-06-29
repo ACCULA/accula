@@ -167,14 +167,16 @@ public class JGitCodeLoader implements CodeLoader {
     }
 
     @Override
-    public Flux<Tuple2<FileEntity, FileEntity>> getDiff(final CommitSnapshot base, final CommitSnapshot head, final FileFilter filter) {
+    public Flux<Tuple2<FileEntity, FileEntity>> getDiff(final CommitSnapshot base,
+                                                        final CommitSnapshot head,
+                                                        final FileFilter filter) {
         final var ref = RepoRef.from(head);
         final var dir = getDirectory(ref);
         final var accessSync = accessSynchronizers.computeIfAbsent(ref, AccessSync::newOne);
         return getRepo(ref, dir, accessSync)
                 .switchIfEmpty(Mono.error(REPO_NOT_FOUND))
                 .publishOn(scheduler)
-                .flatMapMany(repo -> getDiffEntries(repo, accessSync, getTreeIterator(repo, accessSync, base.getSha()), getTreeIterator(repo, accessSync, head.getSha())))
+                .flatMapMany(repo -> getDiffEntries(repo, accessSync, base, head))
                 .filter(diff -> passesFilter(diff, filter, base, head))
                 .parallel()
                 .runOn(scheduler)
@@ -184,14 +186,16 @@ public class JGitCodeLoader implements CodeLoader {
     }
 
     @Override
-    public Flux<Tuple2<FileEntity, FileEntity>> getRemoteDiff(final CommitSnapshot origin, final CommitSnapshot remote, final FileFilter filter) {
+    public Flux<Tuple2<FileEntity, FileEntity>> getRemoteDiff(final CommitSnapshot origin,
+                                                              final CommitSnapshot remote,
+                                                              final FileFilter filter) {
         final var ref = RepoRef.from(origin);
         final var dir = getDirectory(ref);
         final var accessSync = accessSynchronizers.computeIfAbsent(ref, AccessSync::newOne);
         return getRepo(ref, dir, accessSync)
                 .switchIfEmpty(Mono.error(REPO_NOT_FOUND))
                 .flatMap(repo -> addAndFetchRemote(repo, accessSync, remote))
-                .flatMapMany(repo -> getDiffEntries(repo, accessSync, getTreeIterator(repo, accessSync, origin.getSha()), getTreeIterator(repo, accessSync, remote.getSha())))
+                .flatMapMany(repo -> getDiffEntries(repo, accessSync, origin, remote))
                 .filter(diff -> passesFilter(diff, filter, origin, remote))
                 .parallel()
                 .runOn(scheduler)
@@ -200,7 +204,10 @@ public class JGitCodeLoader implements CodeLoader {
                 .onErrorResume(MissingObjectException.class, e -> Flux.empty());
     }
 
-    private static boolean passesFilter(final DiffEntry entry, final FileFilter filter, final CommitSnapshot base, final CommitSnapshot head) {
+    private static boolean passesFilter(final DiffEntry entry,
+                                        final FileFilter filter,
+                                        final CommitSnapshot base,
+                                        final CommitSnapshot head) {
         final var result = (entry.getOldPath().equals(DELETED_FILE) || filter.test(entry.getOldPath()))
                            && (entry.getNewPath().equals(DELETED_FILE) || filter.test(entry.getNewPath()));
         if (!result) {
@@ -212,18 +219,20 @@ public class JGitCodeLoader implements CodeLoader {
     @SneakyThrows
     private Flux<DiffEntry> getDiffEntries(final Repository repo,
                                            final AccessSync accessSync,
-                                           final AbstractTreeIterator base,
-                                           final AbstractTreeIterator head) {
+                                           final CommitSnapshot base,
+                                           final CommitSnapshot head) {
         return Flux.fromIterable(accessSync.withReadLock(() -> Git
                 .wrap(repo)
                 .diff()
-                .setOldTree(base)
-                .setNewTree(head)
+                .setOldTree(getTreeIterator(repo, accessSync, base.getSha()))
+                .setNewTree(getTreeIterator(repo, accessSync, head.getSha()))
                 .call()));
     }
 
     @SneakyThrows
-    private AbstractTreeIterator getTreeIterator(final Repository repository, final AccessSync accessSync, final String sha) {
+    private AbstractTreeIterator getTreeIterator(final Repository repository,
+                                                 final AccessSync accessSync,
+                                                 final String sha) {
         return accessSync.withReadLock(() -> {
             final ObjectReader reader = repository.newObjectReader();
             final RevWalk revWalk = new RevWalk(reader);
@@ -240,10 +249,6 @@ public class JGitCodeLoader implements CodeLoader {
         if (DELETED_FILE.equals(filename)) {
             return Mono.just(new FileEntity(snapshot, null, null));
         }
-        return getFile(snapshot, filename);
-    }
-
-    private Mono<FileEntity> getFile(final CommitSnapshot snapshot, final String filename) {
         final var ref = RepoRef.from(snapshot);
         final var dir = getDirectory(ref);
         final var accessSync = accessSynchronizers.computeIfAbsent(ref, AccessSync::newOne);
@@ -259,7 +264,10 @@ public class JGitCodeLoader implements CodeLoader {
 
     @SneakyThrows
     @Nullable
-    private ObjectLoader getObjectLoader(final Repository repository, final AccessSync accessSync, final String sha, final String file) {
+    private ObjectLoader getObjectLoader(final Repository repository,
+                                         final AccessSync accessSync,
+                                         final String sha,
+                                         final String file) {
         return accessSync.withReadLockNullable(() -> {
             final ObjectReader reader = repository.newObjectReader();
             final RevWalk revWalk = new RevWalk(reader);
@@ -275,7 +283,9 @@ public class JGitCodeLoader implements CodeLoader {
         });
     }
 
-    private Flux<Tuple2<String, ObjectLoader>> getObjectLoaders(final Repository repo, final AccessSync accessSync, final String sha) {
+    private Flux<Tuple2<String, ObjectLoader>> getObjectLoaders(final Repository repo,
+                                                                final AccessSync accessSync,
+                                                                final String sha) {
         return Flux.fromIterable(accessSync.withReadLock(() -> {
             final ObjectReader reader = repo.newObjectReader();
             final RevWalk revWalk = new RevWalk(reader);
@@ -302,7 +312,9 @@ public class JGitCodeLoader implements CodeLoader {
         return new String(loader.getBytes(), StandardCharsets.UTF_8);
     }
 
-    private Mono<Repository> addAndFetchRemote(final Repository originRepo, final AccessSync accessSync, final CommitSnapshot remote) {
+    private Mono<Repository> addAndFetchRemote(final Repository originRepo,
+                                               final AccessSync accessSync,
+                                               final CommitSnapshot remote) {
         return Mono
                 .fromSupplier(() -> accessSync
                         .withWriteLockNullable(() -> {
