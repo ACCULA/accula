@@ -1,4 +1,4 @@
-package org.accula.api.handlers.response;
+package org.accula.api.handlers.dto;
 
 import lombok.Builder;
 import lombok.Value;

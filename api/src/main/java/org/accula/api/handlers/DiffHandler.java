@@ -4,13 +4,15 @@ import lombok.RequiredArgsConstructor;
 import org.accula.api.code.CodeLoader;
 import org.accula.api.code.FileEntity;
 import org.accula.api.code.FileFilter;
+import org.accula.api.db.model.CommitSnapshot;
 import org.accula.api.db.model.Pull;
 import org.accula.api.db.repo.PullRepo;
-import org.accula.api.handlers.response.GetDiffResponseBody;
+import org.accula.api.handlers.dto.DiffDto;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 
@@ -70,14 +72,11 @@ public final class DiffHandler {
         final var base = pullMono.map(Pull::getBase);
         final var head = pullMono.map(Pull::getHead);
 
-        return Mono.zip(base, head)
-                .flatMapMany(baseAndHead -> codeLoader.getDiff(baseAndHead.getT1(), baseAndHead.getT2(), FileFilter.JAVA))
-                .map(DiffHandler::toResponseBody)
-                .collectList()
-                .flatMap(diffs -> ServerResponse
-                        .ok()
-                        .contentType(APPLICATION_JSON)
-                        .bodyValue(diffs));
+        final var diff = Mono
+                .zip(base, head)
+                .flatMapMany(baseAndHead -> codeLoader.getDiff(baseAndHead.getT1(), baseAndHead.getT2(), FileFilter.JAVA));
+
+        return toResponse(diff);
     }
 
     private Mono<ServerResponse> diffBetweenPulls(final long projectId, final int sourcePullNumber, final int targetPullNumber) {
@@ -88,20 +87,24 @@ public final class DiffHandler {
                 .findByNumber(projectId, targetPullNumber)
                 .map(Pull::getHead);
 
-        return Mono.zip(sourcePull, targetPull)
-                .flatMapMany(baseAndHead -> codeLoader.getRemoteDiff(baseAndHead.getT1(), baseAndHead.getT2(), FileFilter.JAVA))
-                .map(DiffHandler::toResponseBody)
-                .collectList()
-                .flatMap(diffs -> ServerResponse
-                        .ok()
-                        .contentType(APPLICATION_JSON)
-                        .bodyValue(diffs));
+        final var diff = Mono
+                .zip(sourcePull, targetPull)
+                .flatMapMany(sourceAndTarget -> codeLoader.getRemoteDiff(sourceAndTarget.getT1(), sourceAndTarget.getT2(), FileFilter.JAVA));
+
+        return toResponse(diff);
     }
 
-    private static GetDiffResponseBody toResponseBody(final Tuple2<FileEntity, FileEntity> diff) {
+    private static Mono<ServerResponse> toResponse(final Flux<Tuple2<FileEntity, FileEntity>> diff) {
+        return ServerResponse
+                .ok()
+                .contentType(APPLICATION_JSON)
+                .body(diff.map(DiffHandler::toDto), DiffDto.class);
+    }
+
+    private static DiffDto toDto(final Tuple2<FileEntity, FileEntity> diff) {
         final var base = diff.getT1();
         final var head = diff.getT2();
-        return GetDiffResponseBody.builder()
+        return DiffDto.builder()
                 .baseFilename(base.getName())
                 .baseContent(encode(base.getContent()))
                 .headFilename(head.getName())
