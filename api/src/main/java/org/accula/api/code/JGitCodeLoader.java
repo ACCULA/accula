@@ -84,7 +84,7 @@ public class JGitCodeLoader implements CodeLoader {
         final ReadWriteLock lock = new ReentrantReadWriteLock();
 
         @SuppressWarnings("unused")
-        static <Any> AccessSync newOne(final Any any) {
+        static <Any> AccessSync create(final Any any) {
             return new AccessSync();
         }
 
@@ -132,7 +132,7 @@ public class JGitCodeLoader implements CodeLoader {
     public Flux<FileEntity> getFiles(final CommitSnapshot snapshot, final FileFilter filter) {
         final var ref = RepoRef.from(snapshot);
         final var dir = getDirectory(ref);
-        final var accessSync = accessSynchronizers.computeIfAbsent(ref, AccessSync::newOne);
+        final var accessSync = accessSynchronizers.computeIfAbsent(ref, AccessSync::create);
         return getRepo(ref, dir, accessSync)
                 .publishOn(scheduler)
                 .flatMapMany(repo -> getObjectLoaders(repo, accessSync, snapshot.getSha()))
@@ -151,7 +151,7 @@ public class JGitCodeLoader implements CodeLoader {
         }
         final var ref = RepoRef.from(snapshot);
         final var dir = getDirectory(ref);
-        final var accessSync = accessSynchronizers.computeIfAbsent(ref, AccessSync::newOne);
+        final var accessSync = accessSynchronizers.computeIfAbsent(ref, AccessSync::create);
         return getRepo(ref, dir, accessSync)
                 .switchIfEmpty(Mono.error(REPO_NOT_FOUND))
                 .publishOn(scheduler)
@@ -173,7 +173,7 @@ public class JGitCodeLoader implements CodeLoader {
                                                         final FileFilter filter) {
         final var ref = RepoRef.from(head);
         final var dir = getDirectory(ref);
-        final var accessSync = accessSynchronizers.computeIfAbsent(ref, AccessSync::newOne);
+        final var accessSync = accessSynchronizers.computeIfAbsent(ref, AccessSync::create);
         return getRepo(ref, dir, accessSync)
                 .switchIfEmpty(Mono.error(REPO_NOT_FOUND))
                 .publishOn(scheduler)
@@ -192,7 +192,7 @@ public class JGitCodeLoader implements CodeLoader {
                                                               final FileFilter filter) {
         final var ref = RepoRef.from(origin);
         final var dir = getDirectory(ref);
-        final var accessSync = accessSynchronizers.computeIfAbsent(ref, AccessSync::newOne);
+        final var accessSync = accessSynchronizers.computeIfAbsent(ref, AccessSync::create);
         return getRepo(ref, dir, accessSync)
                 .switchIfEmpty(Mono.error(REPO_NOT_FOUND))
                 .flatMap(repo -> addAndFetchRemote(repo, accessSync, remote))
@@ -252,7 +252,7 @@ public class JGitCodeLoader implements CodeLoader {
         }
         final var ref = RepoRef.from(snapshot);
         final var dir = getDirectory(ref);
-        final var accessSync = accessSynchronizers.computeIfAbsent(ref, AccessSync::newOne);
+        final var accessSync = accessSynchronizers.computeIfAbsent(ref, AccessSync::create);
         return getRepo(ref, dir, accessSync)
                 .switchIfEmpty(Mono.error(REPO_NOT_FOUND))
                 .publishOn(scheduler)
