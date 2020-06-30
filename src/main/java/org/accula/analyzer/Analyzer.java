@@ -6,12 +6,12 @@ package org.accula.analyzer;
 import com.suhininalex.suffixtree.SuffixTree;
 import org.accula.parser.Parser;
 import org.accula.parser.Token;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Analyzer {
     private static final Integer minCloneLength = 5;
@@ -53,6 +53,8 @@ public class Analyzer {
 //            }
 //        });
 
+        //TODO: remove redundant clones
+
         final var tree = new SuffixTree<Token>();
         DataProvider
                 .getFiles("testData", "java")
@@ -82,7 +84,7 @@ public class Analyzer {
                 .forEach(System.out::println);
     }
 
-    private static boolean filterClones(CloneInfo cloneInfo) {
+    private static boolean filterClones(@NotNull final CloneInfo cloneInfo) {
         return !Objects.equals(cloneInfo.getClone().getOwner(), cloneInfo.getReal().getOwner())
                 && cloneInfo.getCloneLength() > minCloneLength;
     }

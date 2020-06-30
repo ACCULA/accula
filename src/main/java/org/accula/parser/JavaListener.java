@@ -30,7 +30,7 @@ public class JavaListener extends Java9BaseListener {
     }
 
     @Override
-    public void enterBlockStatements(Java9Parser.BlockStatementsContext ctx) {
+    public void enterMethodBody(Java9Parser.MethodBodyContext ctx) {
         final var tokens = new LinkedList<Token>();
         var tok = ctx.getStart();
         var idx = tok.getTokenIndex();
