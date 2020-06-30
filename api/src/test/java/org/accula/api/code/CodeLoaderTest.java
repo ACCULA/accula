@@ -12,6 +12,7 @@ import reactor.util.function.Tuple2;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -39,15 +40,15 @@ class CodeLoaderTest {
 
     @BeforeAll
     static void beforeAll(@TempDir final File tempDir) {
-        final var repositoryManager = new RepositoryManager(tempDir);
-        codeLoader = new CodeLoaderImpl(repositoryManager, repositoryManager);
+        codeLoader = new JGitCodeLoader(tempDir);
     }
 
     @Test
     void testGetSingleFile() {
-        FileEntity readme = codeLoader.getFile(COMMIT, README).block();
-        assertNotNull(readme);
-        assertTrue(readme.getContent().startsWith("# 2019-highload-dht"));
+        StepVerifier.create(codeLoader.getFiles(COMMIT, README::equals))
+                .expectNextMatches(readme -> readme.getContent().startsWith("# 2019-highload-dht"))
+                .expectComplete()
+                .verify();
     }
 
     @Test

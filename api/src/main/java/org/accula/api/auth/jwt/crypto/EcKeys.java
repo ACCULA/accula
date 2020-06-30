@@ -14,7 +14,7 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.function.Function;
 
 /**
- * This class reads EC public and private keys from bytes provided.
+ * This class reads EC public and private keys using directories provided.
  *
  * @author Anton Lamtev
  */

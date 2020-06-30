@@ -1,8 +1,8 @@
 package org.accula.api.config;
 
 import lombok.RequiredArgsConstructor;
-import org.accula.api.code.RepositoryManager;
-import org.accula.api.code.RepositoryProvider;
+import org.accula.api.code.CodeLoader;
+import org.accula.api.code.JGitCodeLoader;
 import org.accula.api.db.repo.CurrentUserRepo;
 import org.accula.api.detector.CloneDetector;
 import org.accula.api.detector.PrimitiveCloneDetector;
@@ -47,9 +47,8 @@ public class WebConfig implements WebFluxConfigurer {
     }
 
     @Bean
-    public RepositoryProvider repositoryManager(@Value("${accula.reposPath}") final String reposPath) {
-        final File root = new File(reposPath);
-        return new RepositoryManager(root);
+    public CodeLoader codeLoader(@Value("${accula.reposPath}") final String reposPath) {
+        return new JGitCodeLoader(new File(reposPath));
     }
 
     @Bean

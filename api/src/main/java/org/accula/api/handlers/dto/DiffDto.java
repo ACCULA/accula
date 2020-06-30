@@ -1,4 +1,4 @@
-package org.accula.api.handlers.response;
+package org.accula.api.handlers.dto;
 
 import lombok.Builder;
 import lombok.Value;
@@ -6,9 +6,9 @@ import lombok.Value;
 /**
  * @author Vadim Dyachkov
  */
-@Value
 @Builder
-public class GetDiffResponseBody implements ResponseBody {
+@Value
+public class DiffDto {
     String baseFilename;
     String headFilename;
     String baseContent;
