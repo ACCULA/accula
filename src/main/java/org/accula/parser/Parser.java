@@ -6,15 +6,14 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.jetbrains.annotations.NotNull;
-import com.suhininalex.clones.core.structures.Token;
 
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Parser {
-    public static List<List<Token>> getFunctionsAsTokens(@NotNull final File file) {
+    public static Stream<List<Token>> getFunctionsAsTokens(@NotNull final File file) {
         final var lexer = new Java9Lexer(CharStreams.fromString(file.getContent()));
         final var tokens = new CommonTokenStream(lexer);
         final var parser = new Java9Parser(tokens);
@@ -24,15 +23,11 @@ public class Parser {
         final var listener = new JavaListener(tokens);
         walker.walk(listener, parseTree);
 
-        // Exclude braces, semicolons, whitespaces, comments, ...
-        final var excludeTokens = Set.of(68, 69, 70, 71, 74, 116, 117, 118);
-
         return listener
                 .getFunctions()
-                .stream()
                 .map(func -> func
                         .stream()
-                        .filter(token -> !excludeTokens.contains(token.getType()))
+                        .filter(token -> isAllowedToken(token, listener.getTypeArgs()))
                         .map(token -> new Token(
                                 token.getType(),
                                 token.getText(),
@@ -41,22 +36,20 @@ public class Parser {
                                 file.getOwner(),
                                 file.getPath())
                         )
+                        .map(Parser::anonymize)
                         .collect(Collectors.toUnmodifiableList())
-                )
-                .collect(Collectors.toUnmodifiableList());
+                );
     }
 
-    public static List<Token> getTokenizedString(@NotNull final String str) {
-        return str
-                .chars()
-                .mapToObj(i -> new Token(
-                        ThreadLocalRandom.current().nextInt(),
-                        String.valueOf((char) i),
-                        ThreadLocalRandom.current().nextInt(),
-                        "None" + ThreadLocalRandom.current().nextInt(),
-                        "None" + ThreadLocalRandom.current().nextInt(),
-                        "None" + ThreadLocalRandom.current().nextInt())
-                )
-                .collect(Collectors.toUnmodifiableList());
+    private static boolean isAllowedToken(@NotNull final org.antlr.v4.runtime.Token token,
+                                          @NotNull final Set<org.antlr.v4.runtime.Token> typeArgs) {
+        return !TokenFilter.excludeTokens.contains(token.getType())
+                && !typeArgs.contains(token);
+    }
+
+    private static Token anonymize(@NotNull final Token token) {
+        if (TokenFilter.primitiveTypes.contains(token.getType()))
+            token.setType(Java9Lexer.Identifier);
+        return token;
     }
 }
