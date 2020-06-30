@@ -43,29 +43,13 @@ public class Parser {
 
     private static boolean isAllowedToken(@NotNull final org.antlr.v4.runtime.Token token,
                                           @NotNull final Set<org.antlr.v4.runtime.Token> typeArgs) {
-        final var excludeTokens = Set.of(
-                Java9Lexer.LPAREN,
-                Java9Lexer.RPAREN,
-                Java9Lexer.LBRACE,
-                Java9Lexer.RBRACE,
-                Java9Lexer.SEMI,
-                Java9Lexer.WS,
-                Java9Lexer.COMMENT,
-                Java9Lexer.LINE_COMMENT,
-                Java9Lexer.FINAL
-        );
-        return !excludeTokens.contains(token.getType()) && !typeArgs.contains(token);
+        return !TokenFilter.excludeTokens.contains(token.getType())
+                && !typeArgs.contains(token);
     }
 
     private static Token anonymize(@NotNull final Token token) {
-        switch (token.getType()) {
-            case Java9Lexer.Identifier -> token.setText("id");
-            case Java9Lexer.IntegerLiteral -> token.setText("int");
-            case Java9Lexer.FloatingPointLiteral -> token.setText("float");
-            case Java9Lexer.BooleanLiteral -> token.setText("bool");
-            case Java9Lexer.CharacterLiteral -> token.setText("char");
-            case Java9Lexer.StringLiteral -> token.setText("string");
-        }
+        if (TokenFilter.primitiveTypes.contains(token.getType()))
+            token.setType(Java9Lexer.Identifier);
         return token;
     }
 }

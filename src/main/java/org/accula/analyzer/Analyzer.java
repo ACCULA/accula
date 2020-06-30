@@ -8,9 +8,14 @@ import org.accula.parser.Parser;
 import org.accula.parser.Token;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Objects;
 
 public class Analyzer {
+    private static final Integer minCloneLength = 5;
+
     public static void main(String[] args) throws IOException {
 //        SuffixTree<com.suhininalex.clones.core.structures.Token> suffixTree = CloneIndexer.INSTANCE.getTree();
 
@@ -48,8 +53,6 @@ public class Analyzer {
 //            }
 //        });
 
-        //TODO: Clones from Alice/Main.java file not found (BUG!!!);
-
         final var tree = new SuffixTree<Token>();
         DataProvider
                 .getFiles("testData", "java")
@@ -60,13 +63,27 @@ public class Analyzer {
 
         final var terminalNodes = SuffixTreeUtils.dfs(tree.getRoot());
         final var reversedLinks = SuffixTreeUtils.reverseSuffixLink(terminalNodes);
+        final var siblings = new HashMap<Clone, List<Clone>>();
         terminalNodes
                 .stream()
                 .flatMap(SuffixTreeUtils::getClonesFromNode)
                 .filter(list -> SuffixTreeUtils.isAllowed(list.get(0).getParent(), reversedLinks))
                 .map(SuffixTreeUtils::extractCloneInfo)
-                .filter(cloneInfo ->
-                        !Objects.equals(cloneInfo.getFirstClone().getOwner(), cloneInfo.getOtherClone().getOwner()))
+                .flatMap(cloneInfo -> {
+                    siblings.putIfAbsent(cloneInfo.getReal(), new ArrayList<>());
+                    siblings.get(cloneInfo.getReal()).add(cloneInfo.getClone());
+
+                    return siblings
+                            .get(cloneInfo.getReal())
+                            .stream()
+                            .map(clone -> new CloneInfo(cloneInfo.getClone(), clone, cloneInfo.getCloneLength()));
+                })
+                .filter(Analyzer::filterClones)
                 .forEach(System.out::println);
+    }
+
+    private static boolean filterClones(CloneInfo cloneInfo) {
+        return !Objects.equals(cloneInfo.getClone().getOwner(), cloneInfo.getReal().getOwner())
+                && cloneInfo.getCloneLength() > minCloneLength;
     }
 }

@@ -5,10 +5,7 @@ import com.suhininalex.suffixtree.Node;
 import org.accula.parser.Token;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.IdentityHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Stream;
 
 public class SuffixTreeUtils {
@@ -72,12 +69,15 @@ public class SuffixTreeUtils {
                                 list.get(0).getP() == list.get(0).getK() && list.size() > 2);
     }
 
-    public static Map<Node, Node> reverseSuffixLink(@NotNull final List<Node> nodes) {
-        final var map = new IdentityHashMap<Node, Node>();
+    public static Map<Node, Long> reverseSuffixLink(@NotNull final List<Node> nodes) {
+        final var map = new IdentityHashMap<Node, Long>();
         nodes
                 .stream()
-                .filter(it -> it.getSuffixLink() != null)
-                .forEach(it -> map.put(it.getSuffixLink(), it));
+                .filter(node -> node.getSuffixLink() != null)
+                .forEach(node -> {
+                    final var numberOfClones = getClonesFromNode(node).count();
+                    map.put(node.getSuffixLink(), numberOfClones);
+                });
         return map;
     }
 
@@ -87,16 +87,23 @@ public class SuffixTreeUtils {
      *
      * @param node                parent node
      * @param reversedSuffixLinks map of reversed suffix links
-     * @return true if there are no similar clones with a greater number of tokens (?)
+     * @return true if there are no similar clones with a greater number of clones (?)
      */
     public static boolean isAllowed(@NotNull final Node node,
-                                    @NotNull final Map<Node, Node> reversedSuffixLinks) {
-        final var greaterNode = reversedSuffixLinks.get(node);
-        if (greaterNode == null) return true;
-        final var prevEdgesGreaterNode = SuffixTreeUtils.getParentEdges(greaterNode).get(0);
-        final var prevEdgesCurrentNode = SuffixTreeUtils.getParentEdges(node).get(0);
+                                    @NotNull final Map<Node, Long> reversedSuffixLinks) {
+        final var greaterNodeClones = reversedSuffixLinks.get(node);
+        if (greaterNodeClones == null) return true;
+        final var currentNodeClones = getClonesFromNode(node).count();
 
-        return prevEdgesGreaterNode.getEnd() < prevEdgesCurrentNode.getEnd();
+        return greaterNodeClones != currentNodeClones;
+    }
+
+    private static int getCloneLength(@NotNull final List<Edge> cloneEdges) {
+        return cloneEdges
+                .stream()
+                .skip(1)
+                .mapToInt(edge -> edge.getEnd() - edge.getBegin() + 1)
+                .sum();
     }
 
     /**
@@ -108,18 +115,19 @@ public class SuffixTreeUtils {
      * @return information about the clone
      */
     public static CloneInfo extractCloneInfo(@NotNull List<Edge> cloneEdges) {
-        final var firstEdgeSeq = cloneEdges.get(0).getSequence();
-        final var lastEdgeSeq = cloneEdges.get(1).getSequence();
+        final var firstEdge = cloneEdges.get(0);
+        final var secondEdge = cloneEdges.get(1);
+        final var length = getCloneLength(cloneEdges);
 
         final var clone = new Clone(
-                (Token) firstEdgeSeq.get(cloneEdges.get(cloneEdges.size() - 1).getBegin()),
-                (Token) firstEdgeSeq.get(cloneEdges.get(1).getEnd() - 1)
+                (Token) firstEdge.getSequence().get(firstEdge.getBegin() - length),
+                (Token) firstEdge.getSequence().get(firstEdge.getBegin() - 1)
         );
         final var cloneFrom = new Clone(
-                (Token) lastEdgeSeq.get(cloneEdges.get(cloneEdges.size() - 1).getBegin()),
-                (Token) lastEdgeSeq.get(cloneEdges.get(1).getEnd() - 1)
+                (Token) secondEdge.getSequence().get(secondEdge.getEnd() - length + 1),
+                (Token) secondEdge.getSequence().get(secondEdge.getEnd())
         );
 
-        return new CloneInfo(clone, cloneFrom);
+        return new CloneInfo(clone, cloneFrom, length);
     }
 }

@@ -11,9 +11,9 @@ import java.util.Objects;
 @Getter
 @AllArgsConstructor
 public class Token implements Comparable<Token> {
-    private final Integer type;
     @Setter
-    private String text;
+    private Integer type;
+    private final String text;
     private final Integer line;
     private final String filename;
     private final String owner;
@@ -24,18 +24,18 @@ public class Token implements Comparable<Token> {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Token token = (Token) o;
-        return text.equals(token.text);
+        return type.equals(token.type);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(text);
+        return Objects.hash(type);
     }
 
     @Override
     public int compareTo(@NotNull Token o) {
         return Comparator
-                .comparing(Token::getText)
+                .comparingInt(Token::getType)
                 .compare(this, o);
     }
 
