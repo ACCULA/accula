@@ -13,4 +13,18 @@ public class Task {
         var text = "Hello, world";
         return text;
     }
+
+    private static void nested2() {
+        final boolean buzz = false;
+        if (bar) {
+            double c = doWork();
+            if (c) {
+                return;
+            }
+        } else {
+            while (!bar) {
+                doSomeOtherWork();
+            }
+        }
+    }
 }

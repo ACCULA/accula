@@ -6,12 +6,10 @@ package org.accula.analyzer;
 import com.suhininalex.suffixtree.SuffixTree;
 import org.accula.parser.Parser;
 import org.accula.parser.Token;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class Analyzer {
     private static final Integer minCloneLength = 5;
@@ -66,8 +64,15 @@ public class Analyzer {
         final var siblings = new HashMap<Clone, List<Clone>>();
         terminalNodes
                 .stream()
+                .filter(node -> {
+                    final var parentEdges = SuffixTreeUtils.getParentEdges(node);
+                    if (parentEdges.size() > 0) {
+                        final var lastEdge = parentEdges.get(parentEdges.size() - 1);
+                        return lastEdge.getBegin() == 1;
+                    } else return false;
+                })
+                .filter(node -> SuffixTreeUtils.isAllowed(node, reversedLinks))
                 .flatMap(SuffixTreeUtils::getClonesFromNode)
-                .filter(list -> SuffixTreeUtils.isAllowed(list.get(0).getParent(), reversedLinks))
                 .map(SuffixTreeUtils::extractCloneInfo)
                 .flatMap(cloneInfo -> {
                     siblings.putIfAbsent(cloneInfo.getReal(), new ArrayList<>());
@@ -78,11 +83,11 @@ public class Analyzer {
                             .stream()
                             .map(clone -> new CloneInfo(cloneInfo.getClone(), clone, cloneInfo.getCloneLength()));
                 })
-                .filter(Analyzer::filterClones)
+                .filter(Analyzer::filterByOwnerAndLength)
                 .forEach(System.out::println);
     }
 
-    private static boolean filterClones(CloneInfo cloneInfo) {
+    private static boolean filterByOwnerAndLength(@NotNull final CloneInfo cloneInfo) {
         return !Objects.equals(cloneInfo.getClone().getOwner(), cloneInfo.getReal().getOwner())
                 && cloneInfo.getCloneLength() > minCloneLength;
     }

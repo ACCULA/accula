@@ -8,4 +8,18 @@ public class Main {
         final char[] text = "qwerty";
         return text.length();
     }
+
+    private static void nested() {
+        final boolean bar = true;
+        if (bar) {
+            float c = doWork();
+            if (c) {
+                return;
+            }
+        } else {
+            while (!bar) {
+                doSomeOtherWork();
+            }
+        }
+    }
 }
