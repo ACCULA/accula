@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { bindActionCreators } from 'redux'
 import { connect, ConnectedProps } from 'react-redux'
 import { useHistory, useParams } from 'react-router-dom'
@@ -17,6 +17,7 @@ import {
 } from 'store/pulls/actions'
 import { getProjectAction } from 'store/projects/actions'
 import { PullCompareTab } from 'views/Pulls/PullCompareTab'
+import { useLocation } from 'react-use'
 import { PullClonesTab } from './PullClonesTab'
 import { PullChangesTab } from './PullChangesTab'
 import { PullOverviewTab } from './PullOverviewTab'
@@ -63,9 +64,20 @@ const Pull = ({
   getClones
 }: PullsProps) => {
   const history = useHistory()
+  const location = useLocation()
+
   const { prId, plId, tab } = useParams()
   const projectId = parseInt(prId, 10)
   const pullId = parseInt(plId, 10)
+  const [compareWith, setCompareWith] = useState(0)
+
+  useEffect(() => {
+    const query = parseInt(new URLSearchParams(location.search).get('with') || '0', 10)
+    if (compareWith !== query) {
+      setCompareWith(query)
+      getCompares(projectId, pullId, query)
+    }
+  }, [compareWith, location])
 
   useEffect(() => {
     getProject(projectId)
@@ -149,7 +161,14 @@ const Pull = ({
             pullId={pullId}
             pulls={pulls}
             compares={compares}
-            onSelect={compareWith => getCompares(projectId, pullId, compareWith)}
+            compareWith={compareWith}
+            onSelect={num => {
+              if (num === 0) {
+                history.push(`/projects/${projectId}/pulls/${pullId}/compare`)
+              } else {
+                history.push(`/projects/${projectId}/pulls/${pullId}/compare?with=${num}`)
+              }
+            }}
           />
         </Tab>
         <Tab

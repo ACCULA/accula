@@ -77,10 +77,6 @@ export const getCompares = async (
       },
       withCredentials: true
     })
-    .then(resp => {
-      console.log(resp)
-      return resp
-    })
     .then(resp => resp.data as IDiff[])
 }
 

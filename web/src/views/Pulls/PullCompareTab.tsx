@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { Button, FormControl, FormGroup } from 'react-bootstrap'
 
 import { IPull } from 'types'
@@ -11,49 +11,47 @@ interface PullCompareTabProps {
   pullId: number
   pulls: IPull[]
   compares: IPullComparesState
+  compareWith: number
   onSelect: (compareWith: number) => void
 }
 
-export const PullCompareTab = ({ pullId, pulls, compares, onSelect }: PullCompareTabProps) => {
-  const [compareWith, setCompareWith] = useState(0)
+export const PullCompareTab = ({
+  pullId, //
+  pulls,
+  compares,
+  compareWith,
+  onSelect
+}: PullCompareTabProps) => {
   const [splitView, setSplitView] = useState(false)
-
-  useEffect(() => {
-    if (compareWith !== 0 || (compares.value && compareWith !== compares.source)) {
-      onSelect(compareWith)
-    }
-  }, [compares, compareWith, onSelect])
 
   return (
     <>
       <div>
         <h5 style={{ display: 'inline-block', marginRight: 15 }}>Compare with</h5>
-        <FormGroup
-          controlId="formControlsSelect"
-          style={{ display: 'inline-block' }}
-          onSubmit={e => console.log(e)}
-        >
+        <FormGroup controlId="formControlsSelect" style={{ display: 'inline-block' }}>
           <FormControl
             componentClass="select"
             placeholder="select"
-            onChange={e => setCompareWith(parseInt((e as any).target.value, 10))}
+            onChange={e => onSelect(parseInt((e as any).target.value, 10))}
+            value={compareWith}
           >
             <option value="0">...</option>
             {pulls &&
               pulls
                 .filter(p => p.number !== pullId)
+                .sort((a, b) => (a.number > b.number ? -1 : a.number === b.number ? 0 : 1))
                 .map(pull => (
                   <option key={pull.number} value={pull.number}>
-                    {`${pull.title} (${pull.head.label})`}
+                    {`#${pull.number} ${pull.title} (${pull.head.label})`}
                   </option>
                 ))}
           </FormControl>
         </FormGroup>
       </div>
-      {!compares.value || !compares.value.length ? (
-        <></>
-      ) : compares.isFetching ? (
+      {compares.isFetching ? (
         <Loader />
+      ) : !compares.value || !compares.value.length ? (
+        <></>
       ) : (
         <>
           <div className="pull-right">
