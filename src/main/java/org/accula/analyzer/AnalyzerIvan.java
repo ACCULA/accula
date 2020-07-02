@@ -3,6 +3,7 @@ package org.accula.analyzer;
 import com.suhininalex.clones.core.CloneIndexer;
 import com.suhininalex.clones.core.structures.Token;
 import com.suhininalex.clones.core.structures.TreeCloneClass;
+import com.suhininalex.suffixtree.EndToken;
 import com.suhininalex.suffixtree.SuffixTree;
 import org.accula.parser.Parser;
 import org.accula.suffixtree.util.Clone;
@@ -70,9 +71,20 @@ public class AnalyzerIvan {
 //        );
 
         //System.out.println(suffixTree.getSequence(sequenceId));
+//
+//        for (int i = 2; i < 4; i++) { //22 for all
+//            cloneFinder.getAllSequenceCloneClasses(i, minCloneLength).forEach(treeCloneClass -> {
+//                if (treeCloneClass.getSize() > 0) {
+//                    Token begin = treeCloneClass.getClones().iterator().next().getFirstElement();
+//                    Token end = treeCloneClass.getClones().iterator().next().getLastElement();
+//                    printCloneInfo(begin, end);
+//                }
+//            });
+//        }
 
-        for (int i = 2; i < 22; i++) {
-            cloneFinder.getAllSequenceCloneClasses(i, minCloneLength).forEach(treeCloneClass -> {
+
+        for (int i = 2; i < 20; i++) { //22 for all
+            cloneFinder.getAllSequenceCloneClasses(i, minCloneLength).stream().findFirst().ifPresent(treeCloneClass -> {
                 for (int j = 0; j <= treeCloneClass.getSize(); j++) {
                     Token begin = treeCloneClass.getClones().iterator().next().getFirstElement();
                     Token end = treeCloneClass.getClones().iterator().next().getLastElement();
@@ -128,35 +140,38 @@ public class AnalyzerIvan {
     private static void findClones(TokenizedFile file, Map<ReferenceClone, List<Clone>> clones,
                                    CloneIndexer cloneFinder, int minCloneLength) {
         file.getMethods().forEach(tokenizedMethod -> {
-            cloneFinder.getAllSequenceCloneClasses(tokenizedMethod.getSequenceId(), minCloneLength).forEach(
-                    treeCloneClass -> {
-                        org.accula.suffixtree.util.Token fromToken = copyToken(extractBeginToken(treeCloneClass));
-                        org.accula.suffixtree.util.Token toToken = copyToken(extractEndToken(treeCloneClass));
+            cloneFinder.getAllSequenceCloneClasses(tokenizedMethod.getSequenceId(), minCloneLength).stream().findFirst().ifPresent(treeCloneClass -> {
 
-                        int cloneLength = treeCloneClass.getLength();
-                        ReferenceClone referenceClone = new ReferenceClone(fromToken.getFilename(),
-                                fromToken.getOwner(),
-                                fromToken.getLine(),
-                                toToken.getLine());
-                        Clone clone = new Clone(fromToken.getFilename(),
-                                fromToken.getOwner(),
-                                fromToken,
-                                toToken,
-                                cloneLength);
-                                //tokenizedMethod.getRangeBetweenTokens(fromToken, toToken));
-                        try {
-                            clones.computeIfAbsent(referenceClone, k -> new ArrayList<>())
-                                    .add( (file.getName().equalsIgnoreCase(fromToken.getFilename()) && //TODO check for clone 2nd appereance in same file (see Main.java 13-16 18-21)
-                                            file.getOwner().equalsIgnoreCase(fromToken.getOwner()))
-                                            ? clone
-                                            : mapToMethod(clone.setCloneLength(cloneLength),//clones.get(referenceClone).get(0).getCloneLength()),
-                                            tokenizedMethod,
-                                            file.getName(),
-                                            file.getOwner()));
-                        } catch (Exception e) {
-                            e.printStackTrace();//System.out.println("->" + fromToken.getOwner() + fromToken.getFilename() + "||" + file+ " refClone " + referenceClone + " " + clones);
-                        }
-                    });
+                treeCloneClass.getTreeNode().getEdges().forEach(edge ->
+                        System.out.println(edge.getSequence().get(edge.getBegin()) instanceof EndToken e ? e.getIdSequence() : "pff" ));
+
+                org.accula.suffixtree.util.Token fromToken = copyToken(extractBeginToken(treeCloneClass));
+                org.accula.suffixtree.util.Token toToken = copyToken(extractEndToken(treeCloneClass));
+
+                int cloneLength = treeCloneClass.getLength();
+                ReferenceClone referenceClone = new ReferenceClone(fromToken.getFilename(),
+                        fromToken.getOwner(),
+                        fromToken.getLine(),
+                        toToken.getLine());
+                Clone clone = new Clone(fromToken.getFilename(),
+                        fromToken.getOwner(),
+                        fromToken,
+                        toToken,
+                        cloneLength);
+                //tokenizedMethod.getRangeBetweenTokens(fromToken, toToken));
+                try {
+                    clones.computeIfAbsent(referenceClone, k -> new ArrayList<>())
+                            .add( (file.getName().equalsIgnoreCase(fromToken.getFilename()) && //TODO check for clone 2nd appereance in same file (see Main.java 13-16 18-21)
+                                    file.getOwner().equalsIgnoreCase(fromToken.getOwner()))
+                                    ? clone
+                                    : mapToMethod(clone.setCloneLength(cloneLength),//clones.get(referenceClone).get(0).getCloneLength()),
+                                    tokenizedMethod,
+                                    file.getName(),
+                                    file.getOwner()));
+                } catch (Exception e) {
+                    e.printStackTrace();//System.out.println("->" + fromToken.getOwner() + fromToken.getFilename() + "||" + file+ " refClone " + referenceClone + " " + clones);
+                }
+            });
         });
     }
 }
