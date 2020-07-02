@@ -3,6 +3,7 @@ package org.accula.analyzer;
 import com.suhininalex.clones.core.CloneIndexer;
 import com.suhininalex.clones.core.structures.Token;
 import com.suhininalex.clones.core.structures.TreeCloneClass;
+import com.suhininalex.suffixtree.EndToken;
 import com.suhininalex.suffixtree.SuffixTree;
 import org.accula.parser.Parser;
 import org.accula.suffixtree.util.Clone;
@@ -96,18 +97,29 @@ public class AnalyzerIvan {
                                 fromToken.getLine(),
                                 toToken.getLine());
 
-                        if (!clones.containsKey(referenceClone)) {
+                        //if (!clones.containsKey(referenceClone)) {
+                        treeCloneClass.getTreeNode().getEdges()
+                                .stream()
+                                .filter(edge -> {
+                                    int lastElementIndex = edge.getSequence().size() - 1;
+                                    final Object element = edge.getSequence().get(lastElementIndex);
+                                    if (element instanceof EndToken endToken) {
+                                        return endToken.getIdSequence() == tokenizedMethod.getSequenceId();
+                                    } else {
+                                        return false;
+                                    }
+                                })
+                                .forEach(edge -> {
+                                    int hahActuallyEnd = edge.getBegin();
+                                    Token end = (Token) edge.getSequence().get(hahActuallyEnd - 1);
+                                    Token begin = (Token) edge.getSequence().get(hahActuallyEnd - cloneLength);
+                                    Clone clone = new Clone(end.getFilename(),
+                                            end.getOwner(), copyToken(begin),
+                                            copyToken(end), cloneLength);
+                                    clones.computeIfAbsent(referenceClone, __ -> new ArrayList<>()).add(clone);
+                                });
+                        //}
 
-                            treeCloneClass.getTreeNode().getEdges().forEach(edge -> {
-                                int hahActuallyEnd = edge.getBegin();
-                                Token end = (Token) edge.getSequence().get(hahActuallyEnd - 1);
-                                Token begin = (Token) edge.getSequence().get(hahActuallyEnd - cloneLength);
-                                Clone clone = new Clone(end.getFilename(),
-                                        end.getOwner(), copyToken(begin),
-                                        copyToken(end), cloneLength);
-                                clones.computeIfAbsent(referenceClone, __ -> new ArrayList<>()).add(clone);
-                            });
-                        }
 //                        Clone clone = new Clone(fromToken.getFilename(),
 //                                fromToken.getOwner(),
 //                                fromToken,
