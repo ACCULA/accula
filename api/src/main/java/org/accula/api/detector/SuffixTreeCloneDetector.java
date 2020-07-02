@@ -1,6 +1,7 @@
 package org.accula.api.detector;
 
 import com.suhininalex.clones.core.CloneIndexer;
+import com.suhininalex.clones.core.structures.CloneClass;
 import com.suhininalex.clones.core.structures.Token;
 import com.suhininalex.clones.core.structures.Token.InfoKey;
 import com.suhininalex.clones.core.structures.TreeCloneClass;
@@ -13,6 +14,7 @@ import org.accula.api.db.model.CommitSnapshot;
 import org.accula.api.detector.parser.Parser;
 import reactor.core.publisher.Flux;
 import reactor.util.function.Tuple2;
+import reactor.util.function.Tuples;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -47,8 +49,10 @@ public class SuffixTreeCloneDetector implements CloneDetector {
 
     private List<Tuple2<CodeSnippet, CodeSnippet>> clones(final List<FileEntity> targetFiles,
                                                           final List<FileEntity> sourceFiles) {
+
         final Map<CloneClass, List<CodeSnippet>> cloneClassCodeSnippetsMap = new HashMap<>();
         final List<Long> targetFilesMethodsIds = new ArrayList<>();
+        final List<Tuple2<CodeSnippet, CodeSnippet>> result = new ArrayList<>();
         final Map<InfoKey, CommitSnapshot> tokenCommitSnapshotMap =
                 new HashMap<>(sourceFiles.size() + targetFiles.size());
 
@@ -59,15 +63,18 @@ public class SuffixTreeCloneDetector implements CloneDetector {
             Parser.getFunctionsAsTokens(file).forEach(SUFFIX_TREE::addSequence);
         });
 
-        targetFiles.forEach(file ->
-                Parser.getFunctionsAsTokens(file)
-                        .forEach(tokens ->
-                                targetFilesMethodsIds.add(SUFFIX_TREE.addSequence(tokens)))
-        );
+        targetFiles.forEach(file -> {
+            tokenCommitSnapshotMap.put(new InfoKey(extractOwnerIdFromFileEntity(file),
+                                                   extractRepoIdFromFileEntity(file)),
+                                       file.getCommitSnapshot());
+            Parser.getFunctionsAsTokens(file)
+                    .forEach(tokens ->
+                            targetFilesMethodsIds.add(SUFFIX_TREE.addSequence(tokens)));
+        });
 
         final long lastSourceFilesSequenceId = targetFilesMethodsIds.get(0) - 1;
 
-        for (long sequenceId = 0; sequenceId <= lastSourceFilesSequenceId; sequenceId++) {
+        for (long sequenceId = 2; sequenceId <= lastSourceFilesSequenceId; sequenceId++) {
             long finalSequenceId = sequenceId;
             CLONE_DETECTOR_INSTANCE.getAllSequenceCloneClasses(sequenceId, minCloneLength)
                     .stream()
@@ -103,7 +110,7 @@ public class SuffixTreeCloneDetector implements CloneDetector {
                                 });
                     });
         }
-        //TODO add target files methods processing
+
         targetFilesMethodsIds
                 .forEach(targetMethodId -> CLONE_DETECTOR_INSTANCE
                         .getAllSequenceCloneClasses(targetMethodId, minCloneLength)
@@ -111,6 +118,8 @@ public class SuffixTreeCloneDetector implements CloneDetector {
                         .findFirst()
                         .ifPresent(treeCloneClass -> {
                             int cloneLength = treeCloneClass.getLength();
+                            CloneClass cloneClass = new CloneClass(extractBeginToken(treeCloneClass),
+                                                                   extractEndToken(treeCloneClass));
 
                             treeCloneClass.getTreeNode().getEdges()
                                     .stream()
@@ -127,11 +136,20 @@ public class SuffixTreeCloneDetector implements CloneDetector {
                                         int hahActuallyEnd = edge.getBegin();
                                         Token begin = (Token) edge.getSequence().get(hahActuallyEnd - cloneLength);
                                         Token end = (Token) edge.getSequence().get(hahActuallyEnd - 1);
+                                        CodeSnippet codeSnippetTarget =
+                                                new CodeSnippet(tokenCommitSnapshotMap.get(begin.getInfoKey()),
+                                                        begin.getFilename(),
+                                                        begin.getLine(),
+                                                        end.getLine());
+                                        cloneClassCodeSnippetsMap
+                                                .get(cloneClass)
+                                                .forEach(codeSnippetSource ->
+                                                        result.add(Tuples.of(codeSnippetTarget, codeSnippetSource)));
                                     });
                         }));
 
         // TODO: add clone mapper
-        return List.of();
+        return result;
     }
 
     private static long extractOwnerIdFromFileEntity(@NonNull FileEntity fileEntity) {
