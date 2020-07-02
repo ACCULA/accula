@@ -55,6 +55,8 @@ dependencies {
     compileOnly("org.antlr:antlr4-runtime:4.8-1")
 
     implementation("com.suhininalex:suffixtree:1.0.2")
+
+    implementation(fileTree("dir" to "libs", "include" to  "*.jar"))
 }
 
 byteBuddy {
