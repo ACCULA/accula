@@ -2,6 +2,11 @@ plugins {
     id("org.springframework.boot") version "2.3.1.RELEASE"
     id("io.spring.dependency-management") version "1.0.9.RELEASE"
     id("net.bytebuddy.byte-buddy-gradle-plugin") version "1.10.11"
+    antlr
+}
+
+repositories {
+    maven(url = "https://dl.bintray.com/vorpal-research/kotlin-maven/")
 }
 
 version = "1.0-SNAPSHOT"
@@ -45,6 +50,11 @@ dependencies {
     }
 
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
+
+    antlr("org.antlr:antlr4:4.8-1")
+    compileOnly("org.antlr:antlr4-runtime:4.8-1")
+
+    implementation("com.suhininalex:suffixtree:1.0.2")
 }
 
 byteBuddy {
@@ -52,4 +62,10 @@ byteBuddy {
         plugin = "reactor.tools.agent.ReactorDebugByteBuddyPlugin"
         setClassPath(byteBuddyPlugin)
     })
+}
+
+tasks.generateGrammarSource {
+    maxHeapSize = "64m"
+    arguments = arguments + listOf("-package", "generated")
+    outputDirectory = File("src/main/java/generated")
 }
