@@ -35,3 +35,16 @@ tasks.generateGrammarSource {
     arguments = arguments + listOf("-package", "generated.org.accula.parser")
     outputDirectory = File("src/main/java/generated")
 }
+
+
+
+tasks.withType<JavaCompile> {
+    options.compilerArgs.add("--enable-preview")
+}
+tasks.withType<Test> {
+    jvmArgs("--enable-preview")
+}
+tasks.withType<JavaExec> {
+    jvmArgs("--enable-preview")
+}
+
