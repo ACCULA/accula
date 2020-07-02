@@ -1,15 +1,14 @@
 import React, { useState } from 'react'
 import { Button } from 'react-bootstrap'
 import { CodeDiff, DiffMethod } from 'components/CodeDiff'
-import { IDiff } from 'types'
 import { Loader } from 'components/Loader'
+import { IPullDiffsState } from 'store/pulls/types'
 
 interface PullChangesTabProps {
-  isFetching: boolean
-  diffs: IDiff[]
+  diffs: IPullDiffsState
 }
 
-const getTitle = (base?: string, head?: string): JSX.Element => {
+export const getTitle = (base?: string, head?: string): JSX.Element => {
   if (base && head) {
     if (base === head) {
       return <code>{base}</code>
@@ -25,9 +24,9 @@ const getTitle = (base?: string, head?: string): JSX.Element => {
   return <code />
 }
 
-export const PullChangesTab = ({ isFetching, diffs }: PullChangesTabProps) => {
+export const PullChangesTab = ({ diffs }: PullChangesTabProps) => {
   const [splitView, setSplitView] = useState(false)
-  return isFetching || !diffs ? (
+  return diffs.isFetching || !diffs.value ? (
     <Loader />
   ) : (
     <>
@@ -36,8 +35,8 @@ export const PullChangesTab = ({ isFetching, diffs }: PullChangesTabProps) => {
           {splitView ? 'Unified view' : 'Split view'}
         </Button>
       </div>
-      <h5>{diffs.length} files changed</h5>
-      {diffs.map((diff, i) => {
+      <h5>{diffs.value.length} files changed</h5>
+      {diffs.value.map((diff, i) => {
         const { baseContent, baseFilename, headFilename, headContent } = diff
         return (
           <CodeDiff
