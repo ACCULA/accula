@@ -38,8 +38,7 @@ public class Parser {
                                 token.getText(),
                                 token.getLine(),
                                 file.getName(),
-                                new Token.InfoKey(file.getCommitSnapshot().getRepo().getOwner().getId(),
-                                                  file.getCommitSnapshot().getRepo().getId()))
+                                file.getCommitSnapshot())
                         )
                         .map(Parser::anonymize)
                         .collect(Collectors.toUnmodifiableList())
