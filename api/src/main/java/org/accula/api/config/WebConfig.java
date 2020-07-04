@@ -5,7 +5,7 @@ import org.accula.api.code.CodeLoader;
 import org.accula.api.code.JGitCodeLoader;
 import org.accula.api.db.repo.CurrentUserRepo;
 import org.accula.api.detector.CloneDetector;
-import org.accula.api.detector.PrimitiveCloneDetector;
+import org.accula.api.detector.SuffixTreeCloneDetector;
 import org.accula.api.github.api.GithubClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringBootConfiguration;
@@ -53,6 +53,6 @@ public class WebConfig implements WebFluxConfigurer {
 
     @Bean
     public CloneDetector cloneDetector() {
-        return new PrimitiveCloneDetector(3, 8);
+        return new SuffixTreeCloneDetector(5);
     }
 }

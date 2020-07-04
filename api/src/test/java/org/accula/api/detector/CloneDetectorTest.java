@@ -185,6 +185,12 @@ class CloneDetectorTest {
         List<Tuple2<CodeSnippet, CodeSnippet>> clones = detector.findClones(target, source).collectList().block();
         assert clones != null;
         clones.forEach(t -> System.out.println(t.getT1() + " -> " + t.getT2()));
+        System.out.println("Second run");
+        Flux<FileEntity> targets = Flux.just(target1);
+        Flux<FileEntity> sources = Flux.just(source1);
+        List<Tuple2<CodeSnippet, CodeSnippet>> clones1 = detector.findClones(targets, sources).collectList().block();
+        assert clones1 != null;
+        clones1.forEach(t -> System.out.println(t.getT1() + " -> " + t.getT2()));
         //assertEquals(4, clones.size());
     }
 

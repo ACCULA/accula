@@ -25,7 +25,6 @@ import java.util.Map;
 public class SuffixTreeCloneDetector implements CloneDetector {
 
     private static final CloneIndexer CLONE_DETECTOR_INSTANCE = CloneIndexer.INSTANCE;
-    private static final SuffixTree<Token> SUFFIX_TREE = CLONE_DETECTOR_INSTANCE.getTree();
 
     private final int minCloneLength;
 
@@ -50,14 +49,15 @@ public class SuffixTreeCloneDetector implements CloneDetector {
         final Map<CloneClass, List<CodeSnippet>> cloneClassCodeSnippetsMap = new HashMap<>();
         final List<Long> targetFilesMethodsIds = new ArrayList<>();
         final List<Tuple2<CodeSnippet, CodeSnippet>> result = new ArrayList<>();
+        final SuffixTree<Token> suffixTree = CLONE_DETECTOR_INSTANCE.getTree();
 
         sourceFiles.forEach(file ->
-                Parser.getFunctionsAsTokens(file).forEach(SUFFIX_TREE::addSequence));
+                Parser.getFunctionsAsTokens(file).forEach(suffixTree::addSequence));
 
         targetFiles.forEach(file ->
             Parser.getFunctionsAsTokens(file)
                     .forEach(tokens ->
-                            targetFilesMethodsIds.add(SUFFIX_TREE.addSequence(tokens))));
+                            targetFilesMethodsIds.add(suffixTree.addSequence(tokens))));
 
         final long lastSourceFilesSequenceId = targetFilesMethodsIds.get(0) - 1;
 
@@ -134,8 +134,7 @@ public class SuffixTreeCloneDetector implements CloneDetector {
                                                         result.add(Tuples.of(codeSnippetTarget, codeSnippetSource)));
                                     });
                         }));
-
-        // TODO: add clone mapper
+        CLONE_DETECTOR_INSTANCE.clear();
         return result;
     }
 
