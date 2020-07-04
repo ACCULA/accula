@@ -131,7 +131,7 @@ public final class ClonesHandler {
 
     private Flux<FileEntity> getFileSnippets(final Flux<FileSnippetMarker> markers) {
         return markers
-                .flatMap(marker -> codeLoader.getFileSnippet(marker.commitSnapshot, marker.filename, marker.fromLine, marker.toLine))
+                .flatMapSequential(marker -> codeLoader.getFileSnippet(marker.commitSnapshot, marker.filename, marker.fromLine, marker.toLine))
                 .subscribeOn(codeLoadingScheduler);
     }
 
