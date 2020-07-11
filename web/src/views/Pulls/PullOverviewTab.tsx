@@ -95,8 +95,8 @@ export const PullOverviewTab = ({ pull }: PullOverviewTabProps) => {
             <ListGroup>
               {pull.previousPulls.length > 0 ? (
                 pull.previousPulls.map(prevPull => (
-                  <ListGroupItem key={prevPull.id}>
-                    <Link to={`/projects/${prevPull.projectId}/pulls/${prevPull.id}`}>
+                  <ListGroupItem key={prevPull.number}>
+                    <Link to={`/projects/${prevPull.projectId}/pulls/${prevPull.number}`}>
                       {prevPull.title}
                     </Link>
                     {prevPull.open ? (

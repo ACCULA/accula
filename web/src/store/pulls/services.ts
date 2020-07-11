@@ -1,13 +1,13 @@
 import axios from 'axios'
 
 import { API_URL, DEBUG } from 'utils'
-import { IClone, IDiff, IPull, IToken } from 'types'
+import { IClone, IDiff, IPull, IShortPull, IToken } from 'types'
 import { pulls, clones } from 'stubs'
 
 export const getPulls = async (
   token: IToken, //
   projectId: number
-): Promise<IPull[]> => {
+): Promise<IShortPull[]> => {
   if (DEBUG) {
     return Promise.resolve(pulls)
   }
@@ -19,7 +19,7 @@ export const getPulls = async (
       },
       withCredentials: true
     })
-    .then(resp => resp.data as IPull[])
+    .then(resp => resp.data as IShortPull[])
 }
 
 export const getPull = async (

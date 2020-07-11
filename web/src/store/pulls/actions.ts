@@ -1,7 +1,7 @@
 import { AppDispatch, AppStateSupplier } from 'store'
 import { requireToken } from 'store/users/actions'
 import { failed, fetched, fetching, notFetching, Wrapper } from 'store/wrapper'
-import { IPull } from 'types'
+import { IPull, IShortPull } from 'types'
 import {
   IPullClonesState,
   IPullComparesState,
@@ -19,7 +19,7 @@ import {
 } from './types'
 import { getClones, getCompares, getDiffs, getPull, getPulls } from './services'
 
-const setPulls = (payload: Wrapper<IPull[]>): SetPulls => ({
+const setPulls = (payload: Wrapper<IShortPull[]>): SetPulls => ({
   type: SET_PULLS,
   payload
 })
@@ -74,13 +74,6 @@ export const getPullAction = (projectId: number, pullNumber: number) => async (
 ) => {
   await requireToken(dispatch, getState)
   const { pulls, users } = getState()
-  if (pulls.pulls.value) {
-    const pull = pulls.pulls.value.find(p => p.number === pullNumber && p.projectId === projectId)
-    if (pull) {
-      dispatch(setPull(fetched(pull)))
-      return
-    }
-  }
   if (pulls.pull.isFetching) {
     return
   }

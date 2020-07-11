@@ -4,6 +4,8 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 
+import java.util.List;
+
 /**
  * @author Anton Lamtev
  */
@@ -15,8 +17,7 @@ public class Project {
     Long id;
     GithubRepo githubRepo;
     User creator;
-    @Builder.Default
-    User[] admins = new User[0];
+    List<User> admins;
     @Builder.Default
     Integer openPullCount = 0;
 }

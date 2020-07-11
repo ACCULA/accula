@@ -17,7 +17,7 @@ const ProjectsRoutes = () => {
   return (
     <Switch>
       <Route path="/projects" exact component={Projects} />
-      <Route path="/projects/:prId" exact component={Project} />
+      <Route path="/projects/:prId/:tab?" exact component={Project} />
       <Route path="/projects/:prId/pulls/:plId/:tab?" exact component={Pull} />
     </Switch>
   )

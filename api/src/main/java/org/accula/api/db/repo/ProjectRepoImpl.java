@@ -14,6 +14,8 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Collections;
+
 /**
  * @author Anton Lamtev
  */
@@ -69,6 +71,7 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
                                 .id(Converters.value(row, "id", Long.class))
                                 .githubRepo(githubRepo)
                                 .creator(creator)
+                                .admins(Collections.emptyList())
                                 .build()
                         )));
     }

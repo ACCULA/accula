@@ -40,6 +40,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
 
 import static java.lang.Boolean.FALSE;
@@ -62,7 +63,7 @@ public class ProjectsRouterTest {
             .build();
     private static final List<Pull> PULLS = List.of(PULL, PULL, PULL);
     private static final String EMPTY = "";
-    private static final User[] ADMINS = new User[0];
+    private static final List<User> ADMINS = Collections.emptyList();
     private static final GithubUser GITHUB_USER = new GithubUser(1L, "login", "name", "avatar", false);
     private static final User CURRENT_USER = new User(0L, "", GITHUB_USER);
     private static final GithubApiUser GH_OWNER = new GithubApiUser(1L, REPO_OWNER, EMPTY, EMPTY, EMPTY, GithubApiUser.Type.USER);

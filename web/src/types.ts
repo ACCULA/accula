@@ -34,12 +34,18 @@ export interface IProject {
 
 export interface IProjectSettings {}
 
-export interface IPullShort {
-  id: number
+export interface IShortPull {
+  number: number
   projectId: number
+  url: string
   title: string
   open: boolean
-  cloneCount: number
+  author: {
+    url: string
+    login: string
+    name: string
+    avatar: string
+  }
 }
 
 export interface IPull {
@@ -66,7 +72,7 @@ export interface IPull {
   updatedAt: string
   status: string
   cloneCount: number
-  previousPulls: IPullShort[]
+  previousPulls: IShortPull[]
 }
 
 export interface IPullRef {

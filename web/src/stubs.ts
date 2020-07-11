@@ -84,22 +84,7 @@ export const pulls: IPull[] = [
     updatedAt: '2020-05-11T04:02:18Z',
     status: 'Processing',
     cloneCount: 0,
-    previousPulls: [
-      {
-        id: 3,
-        projectId: 1,
-        title: 'Stage 1',
-        open: false,
-        cloneCount: 3
-      },
-      {
-        id: 3,
-        projectId: 1,
-        title: 'Stage 2',
-        open: false,
-        cloneCount: 3
-      }
-    ]
+    previousPulls: []
   }
 ]
 
@@ -161,7 +146,6 @@ public interface RefreshTokenRepository extends ReactiveCrudRepository<RefreshTo
 `
 
 export const files = { oldCode, newCode }
-
 
 const oldCode2 = `
 @Modifying

@@ -77,7 +77,7 @@ const Pull = ({
       setCompareWith(query)
       getCompares(projectId, pullId, query)
     }
-  }, [compareWith, location])
+  }, [compareWith, location, getCompares, projectId, pullId])
 
   useEffect(() => {
     getProject(projectId)

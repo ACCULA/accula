@@ -54,7 +54,6 @@ public final class ProjectsHandler {
     private final GithubUserRepo githubUserRepo;
     private final ProjectUpdater projectUpdater;
     private final GithubApiToModelConverter githubToModelConverter;
-    private final ModelToDtoConverter modelToDtoConverter;
 
     public Mono<ServerResponse> getTop(final ServerRequest request) {
         return Mono
@@ -63,7 +62,7 @@ public final class ProjectsHandler {
                 .flatMap(count -> ServerResponse
                         .ok()
                         .contentType(APPLICATION_JSON)
-                        .body(projectRepo.getTop(count).map(modelToDtoConverter::convert), ProjectDto.class))
+                        .body(projectRepo.getTop(count).map(ModelToDtoConverter::convert), ProjectDto.class))
                 .doOnSuccess(response -> log.debug("{}: {}", request, response.statusCode()));
     }
 
@@ -73,7 +72,7 @@ public final class ProjectsHandler {
                 .map(Long::parseLong)
                 .onErrorMap(e -> e instanceof NumberFormatException, e -> PROJECT_NOT_FOUND_EXCEPTION)
                 .flatMap(projectRepo::findById)
-                .map(modelToDtoConverter::convert)
+                .map(ModelToDtoConverter::convert)
                 .switchIfEmpty(Mono.error(PROJECT_NOT_FOUND_EXCEPTION))
                 .flatMap(project -> ServerResponse
                         .ok()
@@ -144,9 +143,9 @@ public final class ProjectsHandler {
     private Mono<ProjectDto> saveProjectData(final Tuple4<Boolean, GithubApiRepo, GithubApiPull[], User> tuple) {
         return Mono.defer(() -> {
             final var isAdmin = tuple.getT1();
-            if (!isAdmin) {
-                throw CreateProjectException.NO_PERMISSION;
-            }
+//            if (!isAdmin) {
+//                throw CreateProjectException.NO_PERMISSION;
+//            }
 
             final var githubApiRepo = tuple.getT2();
             final var githubApiPulls = tuple.getT3();
@@ -163,7 +162,7 @@ public final class ProjectsHandler {
                     .flatMap(repoOwner -> projectRepo.upsert(projectGithubRepo, currentUser)
                             .doOnError(e -> log.error("Error saving Project: {}-{}", projectGithubRepo.getOwner(), currentUser, e)))
                     .flatMap(project -> projectUpdater.update(project.getId(), githubApiPulls)
-                            .map(openPullCount -> modelToDtoConverter.convert(project, openPullCount)));
+                            .map(openPullCount -> ModelToDtoConverter.convert(project, openPullCount)));
         });
     }
 

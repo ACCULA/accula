@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.NoArgsConstructor;
 import lombok.Value;
 
+import java.util.List;
+
 import static lombok.AccessLevel.PRIVATE;
 
 /**
@@ -23,6 +25,5 @@ public class ProjectDto {
     String repoUrl;
     Integer repoOpenPullCount;
     Long creatorId;
-    @Builder.Default
-    Long[] admins = new Long[0];
+    List<Long> admins;
 }

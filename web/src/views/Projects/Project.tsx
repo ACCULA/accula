@@ -1,8 +1,7 @@
 import React, { useEffect } from 'react'
 import { connect, ConnectedProps } from 'react-redux'
-import { Grid, Panel, Table } from 'react-bootstrap'
-import { useParams } from 'react-router-dom'
-import { LinkContainer } from 'react-router-bootstrap'
+import { Grid, Tab, Tabs } from 'react-bootstrap'
+import { useHistory, useParams } from 'react-router-dom'
 import { Helmet } from 'react-helmet'
 import { bindActionCreators } from 'redux'
 
@@ -11,16 +10,15 @@ import { Loader } from 'components/Loader'
 import { AppDispatch, AppState } from 'store'
 import { getProjectAction } from 'store/projects/actions'
 import { getPullsAction } from 'store/pulls/actions'
-import { ProjectPanelHeading } from './ProjectPanelHeading'
+import { IProject, IUser } from 'types'
+import { ProjectPullsTab } from 'views/Projects/ProjectPullsTab'
+import { ProjectConfigurationTab } from 'views/Projects/ProjectConfigurationTab'
 
 const mapStateToProps = (state: AppState) => ({
-  isFetching:
-    state.projects.project.isFetching ||
-    state.pulls.pulls.isFetching ||
-    !state.projects.project.value ||
-    !state.pulls.pulls.value,
-  project: state.projects.project.value,
-  pulls: state.pulls.pulls.value
+  isFetching: state.projects.project.isFetching || !state.projects.project.value,
+  project: state.projects.project,
+  pulls: state.pulls.pulls,
+  user: state.users.user
 })
 
 const mapDispatchToProps = (dispatch: AppDispatch) => ({
@@ -31,14 +29,22 @@ const mapDispatchToProps = (dispatch: AppDispatch) => ({
 const connector = connect(mapStateToProps, mapDispatchToProps)
 type ProjectProps = ConnectedProps<typeof connector>
 
+const showSettings = (user: IUser, project: IProject): boolean => {
+  return (
+    user && project && (project.creatorId === user.id || project.admins.indexOf(user.id) !== -1)
+  )
+}
+
 const Project = ({
   isFetching, //
   project,
   getProject,
   pulls,
+  user,
   getPulls
 }: ProjectProps) => {
-  const { prId } = useParams()
+  const history = useHistory()
+  const { prId, tab } = useParams()
   const projectId = parseInt(prId, 10)
 
   useEffect(() => {
@@ -49,48 +55,58 @@ const Project = ({
     getPulls(projectId)
   }, [getPulls, projectId])
 
-  if (isFetching || (project && project.id !== projectId)) {
-    return <Loader />
-  }
-  return (
+  return isFetching ? (
+    <Loader />
+  ) : (
     <div className="content">
       <Helmet>
-        <title>{`${project.repoName} - ACCULA`}</title>
+        <title>{`${project.value.repoName} - ACCULA`}</title>
       </Helmet>
       <Grid fluid className="tight">
         <Breadcrumbs
-          breadcrumbs={[{ text: 'Projects', to: '/projects' }, { text: project.repoName }]}
+          breadcrumbs={[{ text: 'Projects', to: '/projects' }, { text: project.value.repoName }]}
         />
-        <Panel className="project panel-project">
-          <ProjectPanelHeading project={project} />
-          <Table striped bordered hover responsive>
-            <thead>
-              <tr className="project-pull">
-                <th className="id">#</th>
-                <th>Pull Request</th>
-                <th>Author</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pulls.map(pull => (
-                <LinkContainer to={`/projects/${projectId}/pulls/${pull.number}`} key={pull.number}>
-                  <tr className="project-pull pointer">
-                    <td className="id">{pull.number}</td>
-                    <td>{pull.title}</td>
-                    <td className="avatar">
-                      <img
-                        className="border-gray"
-                        src={pull.author.avatar}
-                        alt={pull.author.login}
-                      />
-                      {pull.author.login}
-                    </td>
-                  </tr>
-                </LinkContainer>
-              ))}
-            </tbody>
-          </Table>
-        </Panel>
+        <Tabs
+          activeKey={tab || 'overview'} //
+          onSelect={key => {
+            const tabPath = key === 'overview' ? '' : `/${key}`
+            history.push(`/projects/${projectId}${tabPath}`)
+          }}
+          id="pull-tabs"
+        >
+          <Tab
+            eventKey="overview"
+            title={
+              <>
+                <i className="fas fa-fw fa-eye" /> Overview
+              </>
+            }
+          >
+            Overview
+          </Tab>
+          <Tab
+            eventKey="pulls"
+            title={
+              <>
+                <i className="fas fa-fw fa-code-branch" /> Pull requests
+              </>
+            }
+          >
+            <ProjectPullsTab project={project} pulls={pulls} />
+          </Tab>
+          {showSettings(user.value, project.value) && (
+            <Tab
+              eventKey="configuration"
+              title={
+                <>
+                  <i className="fas fa-fw fa-cog" /> Configuration
+                </>
+              }
+            >
+              <ProjectConfigurationTab project={project}/>
+            </Tab>
+          )}
+        </Tabs>
       </Grid>
     </div>
   )
