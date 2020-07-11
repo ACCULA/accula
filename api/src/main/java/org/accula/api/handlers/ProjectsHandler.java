@@ -143,9 +143,9 @@ public final class ProjectsHandler {
     private Mono<ProjectDto> saveProjectData(final Tuple4<Boolean, GithubApiRepo, GithubApiPull[], User> tuple) {
         return Mono.defer(() -> {
             final var isAdmin = tuple.getT1();
-//            if (!isAdmin) {
-//                throw CreateProjectException.NO_PERMISSION;
-//            }
+            if (!isAdmin) {
+                throw CreateProjectException.NO_PERMISSION;
+            }
 
             final var githubApiRepo = tuple.getT2();
             final var githubApiPulls = tuple.getT3();
