@@ -6,10 +6,10 @@ import org.accula.api.db.model.Project;
 import org.accula.api.db.model.Pull;
 import org.accula.api.db.model.CommitSnapshot;
 import org.accula.api.db.model.User;
-import org.accula.api.handlers.dto.GithubUserDto;
-import org.accula.api.handlers.dto.ProjectDto;
-import org.accula.api.handlers.dto.PullDto;
-import org.accula.api.handlers.dto.UserDto;
+import org.accula.api.handler.dto.GithubUserDto;
+import org.accula.api.handler.dto.ProjectDto;
+import org.accula.api.handler.dto.PullDto;
+import org.accula.api.handler.dto.UserDto;
 import org.springframework.stereotype.Component;
 
 import java.net.URLEncoder;
