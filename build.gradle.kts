@@ -79,7 +79,7 @@ configure(subprojects) {
     }
 }
 
-fun needsJaCoCo(project: Project) = !sequenceOf(":github").any { project == project(it) }
+fun needsJaCoCo(project: Project) = setOf(":github").all { project != project(it) }
 
 configure(subprojects.filter(::needsJaCoCo)) {
     apply(plugin = "jacoco")
