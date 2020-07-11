@@ -1,4 +1,4 @@
-package org.accula.api.github.api;
+package org.accula.github.api;
 
 /**
  * @author Anton Lamtev

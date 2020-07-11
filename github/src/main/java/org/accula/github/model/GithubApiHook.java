@@ -1,4 +1,4 @@
-package org.accula.api.github.model;
+package org.accula.github.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
@@ -6,8 +6,8 @@ import lombok.Value;
 
 import java.util.Locale;
 
-import static org.accula.api.github.model.GithubApiHook.Config.Insecurity.YES;
-import static org.accula.api.github.model.GithubApiHook.Event.PULL_REQUEST;
+import static org.accula.github.model.GithubApiHook.Config.Insecurity.YES;
+import static org.accula.github.model.GithubApiHook.Event.PULL_REQUEST;
 
 /**
  * @author Anton Lamtev

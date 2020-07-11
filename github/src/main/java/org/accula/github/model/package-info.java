@@ -1,4 +1,4 @@
 @NonNullApi
-package org.accula.api.github.model;
+package org.accula.github.model;
 
 import org.springframework.lang.NonNullApi;

@@ -4,10 +4,10 @@ import org.accula.api.db.model.CommitSnapshot;
 import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.GithubUser;
 import org.accula.api.db.model.Pull;
-import org.accula.api.github.model.GithubApiCommitSnapshot;
-import org.accula.api.github.model.GithubApiPull;
-import org.accula.api.github.model.GithubApiRepo;
-import org.accula.api.github.model.GithubApiUser;
+import org.accula.github.model.GithubApiCommitSnapshot;
+import org.accula.github.model.GithubApiPull;
+import org.accula.github.model.GithubApiRepo;
+import org.accula.github.model.GithubApiUser;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Component;
 

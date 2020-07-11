@@ -6,6 +6,9 @@ plugins {
     java
     jacoco
     pmd
+    id("net.bytebuddy.byte-buddy-gradle-plugin") version "1.10.11"
+    id("org.springframework.boot") version "2.3.1.RELEASE" apply false
+    id("io.spring.dependency-management") version "1.0.9.RELEASE" apply false
 }
 
 jacoco {
@@ -16,9 +19,12 @@ allprojects {
     group = "org.accula"
 }
 
-configure(subprojects.filterNot(project(":web")::equals)) {
+configure(subprojects) {
     apply(plugin = "java")
     apply(plugin = "jacoco")
+    apply(plugin = "net.bytebuddy.byte-buddy-gradle-plugin")
+
+    val byteBuddyPlugin: Configuration by configurations.creating
 
     repositories {
         jcenter()
@@ -26,6 +32,12 @@ configure(subprojects.filterNot(project(":web")::equals)) {
 
     dependencies {
         implementation("org.jetbrains:annotations:19.0.0")
+
+        implementation("org.slf4j:slf4j-api:2.0.0-alpha1")
+        implementation("org.slf4j:slf4j-log4j12:2.0.0-alpha1")
+
+        compileOnly("io.projectreactor:reactor-tools:3.3.5.RELEASE")
+        byteBuddyPlugin(group = "io.projectreactor", name = "reactor-tools", classifier = "original")
 
         val lombok = "org.projectlombok:lombok:1.18.12"
         compileOnly(lombok)
@@ -73,10 +85,19 @@ configure(subprojects.filterNot(project(":web")::equals)) {
     tasks.withType<JavaCompile> {
         options.compilerArgs.add("--enable-preview")
     }
+
     tasks.withType<Test> {
         jvmArgs("--enable-preview")
     }
+
     tasks.withType<JavaExec> {
         jvmArgs("--enable-preview")
+    }
+
+    byteBuddy {
+        transformation(closureOf<net.bytebuddy.build.gradle.Transformation> {
+            plugin = "reactor.tools.agent.ReactorDebugByteBuddyPlugin"
+            setClassPath(byteBuddyPlugin)
+        })
     }
 }

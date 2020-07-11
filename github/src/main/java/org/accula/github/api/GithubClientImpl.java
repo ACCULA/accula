@@ -1,11 +1,10 @@
-package org.accula.api.github.api;
+package org.accula.github.api;
 
 import lombok.extern.slf4j.Slf4j;
-import org.accula.api.github.model.GithubApiHook;
-import org.accula.api.github.model.GithubApiPull;
-import org.accula.api.github.model.GithubApiRepo;
-import org.accula.api.github.model.GithubApiUserPermission;
-import org.springframework.stereotype.Component;
+import org.accula.github.model.GithubApiHook;
+import org.accula.github.model.GithubApiPull;
+import org.accula.github.model.GithubApiRepo;
+import org.accula.github.model.GithubApiUserPermission;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -13,7 +12,7 @@ import reactor.core.publisher.Mono;
 import java.util.function.Function;
 
 import static java.lang.Boolean.FALSE;
-import static org.accula.api.github.model.GithubApiUserPermission.Permission.ADMIN;
+import static org.accula.github.model.GithubApiUserPermission.Permission.ADMIN;
 import static org.springframework.http.HttpStatus.OK;
 
 /**
@@ -21,7 +20,6 @@ import static org.springframework.http.HttpStatus.OK;
  * @author Vadim Dyachkov
  */
 @Slf4j
-@Component
 public final class GithubClientImpl implements GithubClient {
     private final AccessTokenProvider accessTokenProvider;
     private final LoginProvider loginProvider;

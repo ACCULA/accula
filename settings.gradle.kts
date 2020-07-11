@@ -1,6 +1,6 @@
 include(
         "api",
-        "web"
+        "github"
 )
 
 rootProject.name = "accula"

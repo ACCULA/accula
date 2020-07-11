@@ -11,7 +11,7 @@ import org.accula.api.db.repo.CommitSnapshotRepo;
 import org.accula.api.db.repo.GithubRepoRepo;
 import org.accula.api.db.repo.GithubUserRepo;
 import org.accula.api.db.repo.PullRepo;
-import org.accula.api.github.model.GithubApiPull;
+import org.accula.github.model.GithubApiPull;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;

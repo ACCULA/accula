@@ -1,4 +1,4 @@
-package org.accula.api.github.model;
+package org.accula.github.model;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.AllArgsConstructor;
