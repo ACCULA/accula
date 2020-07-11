@@ -21,7 +21,6 @@ allprojects {
 
 configure(subprojects) {
     apply(plugin = "java")
-    apply(plugin = "jacoco")
     apply(plugin = "net.bytebuddy.byte-buddy-gradle-plugin")
 
     val byteBuddyPlugin: Configuration by configurations.creating
@@ -51,6 +50,41 @@ configure(subprojects) {
     }
 
     tasks {
+        test {
+            useJUnitPlatform()
+
+            testLogging {
+                events(PASSED, SKIPPED, FAILED)
+            }
+        }
+    }
+
+    tasks.withType<JavaCompile> {
+        options.compilerArgs.add("--enable-preview")
+    }
+
+    tasks.withType<Test> {
+        jvmArgs("--enable-preview")
+    }
+
+    tasks.withType<JavaExec> {
+        jvmArgs("--enable-preview")
+    }
+
+    byteBuddy {
+        transformation(closureOf<net.bytebuddy.build.gradle.Transformation> {
+            plugin = "reactor.tools.agent.ReactorDebugByteBuddyPlugin"
+            setClassPath(byteBuddyPlugin)
+        })
+    }
+}
+
+fun needsJaCoCo(project: Project) = !sequenceOf(":github").any { project == project(it) }
+
+configure(subprojects.filter(::needsJaCoCo)) {
+    apply(plugin = "jacoco")
+
+    tasks {
         jacocoTestReport {
             executionData(fileTree(project.rootDir.absolutePath).include("**/build/jacoco/*.exec"))
 
@@ -72,32 +106,7 @@ configure(subprojects) {
         }
 
         test {
-            useJUnitPlatform()
-
-            testLogging {
-                events(PASSED, SKIPPED, FAILED)
-            }
-
             finalizedBy(jacocoTestReport)
         }
-    }
-
-    tasks.withType<JavaCompile> {
-        options.compilerArgs.add("--enable-preview")
-    }
-
-    tasks.withType<Test> {
-        jvmArgs("--enable-preview")
-    }
-
-    tasks.withType<JavaExec> {
-        jvmArgs("--enable-preview")
-    }
-
-    byteBuddy {
-        transformation(closureOf<net.bytebuddy.build.gradle.Transformation> {
-            plugin = "reactor.tools.agent.ReactorDebugByteBuddyPlugin"
-            setClassPath(byteBuddyPlugin)
-        })
     }
 }
