@@ -2,6 +2,7 @@ package org.accula.api.handlers;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.accula.api.db.model.Pull;
 import org.accula.api.db.repo.ProjectRepo;
 import org.accula.api.github.model.GithubApiHookPayload;
 import org.accula.api.handlers.util.ProjectUpdater;
@@ -33,6 +34,7 @@ public final class GithubWebhookHandler {
         // TODO: validate signature in X-Hub-Signature 
         return request
                 .bodyToMono(GithubApiHookPayload.class)
+                .onErrorResume(GithubWebhookHandler::ignoreNotSupportedAction)
                 .flatMap(this::processPayload)
                 .onErrorResume(e -> {
                     log.error("Error during payload processing: ", e);
@@ -42,17 +44,27 @@ public final class GithubWebhookHandler {
     }
 
     public Mono<Void> processPayload(final GithubApiHookPayload payload) {
+        return switch (payload.getAction()) {
+            case OPENED, SYNCHRONIZE -> updateProject(payload).transform(this::detectClones);
+            case EDITED, CLOSED -> updateProject(payload).then();
+        };
+    }
+
+    private Mono<Pull> updateProject(final GithubApiHookPayload payload) {
         final var githubApiPull = payload.getPull();
 
-        final var savedPull = projectRepo
+        return projectRepo
                 .idByRepoId(payload.getRepo().getId())
-                .flatMap(projectId -> projectUpdater.update(projectId, githubApiPull))
-                .cache();
+                .flatMap(projectId -> projectUpdater.update(projectId, githubApiPull));
+    }
 
-        final var saveClones = savedPull
+    private Mono<Void> detectClones(final Mono<Pull> pull) {
+        return pull
                 .flatMapMany(cloneDetectionService::detectClones)
                 .then();
+    }
 
-        return Mono.when(savedPull, saveClones);
+    private static <E extends Throwable, T> Mono<T> ignoreNotSupportedAction(final E error) {
+        return Mono.empty();
     }
 }
