@@ -135,13 +135,13 @@ public final class ClonesHandler {
     }
 
     private CloneDto toCloneDto(final Tuple4<Clone, FileEntity, FileEntity, Integer> tuple,
-                                final long targetProjectId,
+                                final long projectId,
                                 final int targetPullNumber) {
         final var clone = tuple.getT1();
 
         final var targetFile = tuple.getT2();
         final var target = codeSnippetWith(targetFile.getCommitSnapshot(), targetFile.getContent())
-                .projectId(targetProjectId)
+                .projectId(projectId)
                 .pullNumber(targetPullNumber)
                 .file(clone.getTargetFile())
                 .fromLine(clone.getTargetFromLine())
@@ -151,7 +151,7 @@ public final class ClonesHandler {
         final var sourceFile = tuple.getT3();
         final var sourcePullNumber = tuple.getT4();
         final var source = codeSnippetWith(sourceFile.getCommitSnapshot(), sourceFile.getContent())
-                .projectId(targetProjectId)
+                .projectId(projectId)
                 .pullNumber(sourcePullNumber)
                 .file(clone.getSourceFile())
                 .fromLine(clone.getSourceFromLine())
