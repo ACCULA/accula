@@ -75,6 +75,10 @@ export interface IPull {
   previousPulls: IShortPull[]
 }
 
+export interface IProjectRef {
+  projectId?: number
+}
+
 export interface IPullRef {
   projectId?: number
   pullNumber?: number

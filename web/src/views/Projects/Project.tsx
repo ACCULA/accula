@@ -8,7 +8,7 @@ import { bindActionCreators } from 'redux'
 import { Breadcrumbs } from 'components/Breadcrumbs'
 import { Loader } from 'components/Loader'
 import { AppDispatch, AppState } from 'store'
-import { getProjectAction } from 'store/projects/actions'
+import { getProjectAction, getRepoAdminsAction } from 'store/projects/actions'
 import { getPullsAction } from 'store/pulls/actions'
 import { IProject, IUser } from 'types'
 import { ProjectPullsTab } from 'views/Projects/ProjectPullsTab'
@@ -17,12 +17,14 @@ import { ProjectConfigurationTab } from 'views/Projects/ProjectConfigurationTab'
 const mapStateToProps = (state: AppState) => ({
   isFetching: state.projects.project.isFetching || !state.projects.project.value,
   project: state.projects.project,
+  repoAdmins: state.projects.repoAdmins,
   pulls: state.pulls.pulls,
   user: state.users.user
 })
 
 const mapDispatchToProps = (dispatch: AppDispatch) => ({
   getProject: bindActionCreators(getProjectAction, dispatch),
+  getRepoAdmins: bindActionCreators(getRepoAdminsAction, dispatch),
   getPulls: bindActionCreators(getPullsAction, dispatch)
 })
 
@@ -38,9 +40,11 @@ const showSettings = (user: IUser, project: IProject): boolean => {
 const Project = ({
   isFetching, //
   project,
-  getProject,
+  repoAdmins,
   pulls,
   user,
+  getProject,
+  getRepoAdmins,
   getPulls
 }: ProjectProps) => {
   const history = useHistory()
@@ -50,6 +54,10 @@ const Project = ({
   useEffect(() => {
     getProject(projectId)
   }, [getProject, projectId])
+
+  useEffect(() => {
+    getRepoAdmins(projectId)
+  }, [getRepoAdmins, projectId])
 
   useEffect(() => {
     getPulls(projectId)
@@ -103,7 +111,7 @@ const Project = ({
                 </>
               }
             >
-              <ProjectConfigurationTab project={project}/>
+              <ProjectConfigurationTab project={project} repoAdmins={repoAdmins} />
             </Tab>
           )}
         </Tabs>

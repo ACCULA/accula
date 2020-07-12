@@ -4,12 +4,13 @@ import {
   ProjectsState,
   SET_CREATION_STATE,
   SET_PROJECT,
-  SET_PROJECTS
+  SET_PROJECTS, SET_REPO_ADMINS
 } from './types'
 
 const initialState: ProjectsState = {
   projects: notFetching,
   project: notFetching,
+  repoAdmins: notFetching,
   creationState: [false, null]
 }
 
@@ -28,6 +29,12 @@ export function projectsReducer(
       return {
         ...state,
         project: action.payload
+      }
+    }
+    case SET_REPO_ADMINS: {
+      return {
+        ...state,
+        repoAdmins: action.payload
       }
     }
     case SET_CREATION_STATE: {

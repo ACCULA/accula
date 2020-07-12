@@ -38,17 +38,8 @@ public final class ModelToDtoConverter {
                         project.getGithubRepo().getName()))
                 .repoOpenPullCount(openPullCount)
                 .creatorId(project.getCreator().getId())
-                .admins(convertUsersToIds(project.getAdmins()))
+                .admins(project.getAdmins())
                 .build();
-    }
-
-    private static List<Long> convertUsersToIds(List<User> admins) {
-        if (admins == null || admins.isEmpty()) {
-            return Collections.emptyList();
-        }
-        return admins.stream()
-                .map(User::getId)
-                .collect(Collectors.toList());
     }
 
     public static UserDto convert(final User user) {

@@ -9,6 +9,7 @@ import org.accula.api.db.model.User;
 import org.accula.api.db.repo.CurrentUserRepo;
 import org.accula.api.db.repo.GithubUserRepo;
 import org.accula.api.db.repo.ProjectRepo;
+import org.accula.api.db.repo.UserRepo;
 import org.accula.api.github.api.GithubClient;
 import org.accula.api.github.api.GithubClientException;
 import org.accula.api.github.model.GithubApiHook;
@@ -52,6 +53,7 @@ public final class ProjectsHandler {
     private final GithubClient githubClient;
     private final ProjectRepo projectRepo;
     private final GithubUserRepo githubUserRepo;
+    private final UserRepo userRepo;
     private final ProjectUpdater projectUpdater;
     private final GithubApiToModelConverter githubToModelConverter;
 
@@ -198,6 +200,29 @@ public final class ProjectsHandler {
         }
 
         return Tuples.of(pathComponents.get(0), pathComponents.get(1));
+    }
+
+    public Mono<ServerResponse> admins(ServerRequest request) {
+        return Mono
+                .justOrEmpty(request.pathVariable("id"))
+                .map(Long::parseLong)
+                .onErrorMap(e -> e instanceof NumberFormatException, e -> PROJECT_NOT_FOUND_EXCEPTION)
+                .flatMap(projectRepo::findById)
+                .flatMap(project -> githubClient.getRepoAdmins(project.getGithubRepo().getOwner().getLogin(), project.getGithubRepo().getName()))
+                .flatMapMany(userRepo::findByGithubIds)
+                .map(ModelToDtoConverter::convert)
+                .collectList()
+                .flatMap(admins -> ServerResponse
+                        .ok()
+                        .contentType(APPLICATION_JSON)
+                        .bodyValue(admins))
+                .switchIfEmpty(Mono.error(PROJECT_NOT_FOUND_EXCEPTION))
+                .onErrorResume(PROJECT_NOT_FOUND_EXCEPTION::equals, e -> ServerResponse.notFound().build())
+                .onErrorResume(GithubClientException.class, e -> {
+                    log.warn("Cannot fetch repository admins", e);
+                    return ServerResponse.badRequest().build();
+                });
+        
     }
 
     @RequiredArgsConstructor

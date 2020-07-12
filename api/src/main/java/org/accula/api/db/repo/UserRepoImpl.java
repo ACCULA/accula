@@ -7,10 +7,13 @@ import lombok.RequiredArgsConstructor;
 import org.accula.api.db.model.GithubUser;
 import org.accula.api.db.model.User;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * @author Anton Lamtev
@@ -74,6 +77,29 @@ public final class UserRepoImpl implements UserRepo, ConnectionProvidedRepo {
                         .bind("$1", id)
                         .execute())
                 .flatMap(result -> ConnectionProvidedRepo.convert(result, this::convert)));
+    }
+
+    @Override
+    public Flux<User> findByGithubIds(Collection<Long> ids) {
+        final var adminIds = ids.stream()
+                .map(String::valueOf)
+                .collect(Collectors.joining(","));
+        return manyWithConnection(connection -> Mono
+                .from(connection
+                        .createStatement("""
+                                SELECT u.id,
+                                       ug.id                 AS github_id,
+                                       ug.login              AS github_login,
+                                       ug.name               AS github_name,
+                                       ug.avatar             AS github_avatar,
+                                       ug.is_org             AS github_org,
+                                       u.github_access_token
+                                FROM user_ u
+                                  JOIN user_github ug ON u.github_id = ug.id
+                                WHERE u.github_id IN ($1)
+                                """.replace("$1", adminIds)) // TODO: replace with bind, now it's failing
+                        .execute())
+                .flatMapMany(result -> ConnectionProvidedRepo.convert(result, this::convert)));
     }
 
     @Override

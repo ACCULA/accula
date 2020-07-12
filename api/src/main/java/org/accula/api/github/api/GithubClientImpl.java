@@ -1,15 +1,13 @@
 package org.accula.api.github.api;
 
 import lombok.extern.slf4j.Slf4j;
-import org.accula.api.github.model.GithubApiHook;
-import org.accula.api.github.model.GithubApiPull;
-import org.accula.api.github.model.GithubApiRepo;
-import org.accula.api.github.model.GithubApiUserPermission;
+import org.accula.api.github.model.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
 import java.util.function.Function;
 
 import static java.lang.Boolean.FALSE;
@@ -71,6 +69,20 @@ public final class GithubClientImpl implements GithubClient {
                 .headers(h -> h.setBearerAuth(accessToken))
                 .retrieve()
                 .bodyToMono(GithubApiRepo.class)
+                .onErrorResume(e -> Mono.error(new GithubClientException(e))));
+    }
+
+    @Override
+    public Mono<List<Long>> getRepoAdmins(String owner, String repo) {
+        return withAccessToken(accessToken -> githubApiWebClient
+                .get()
+                .uri("/repos/{owner}/{repo}/collaborators", owner, repo)
+                .headers(h -> h.setBearerAuth(accessToken))
+                .retrieve()
+                .bodyToFlux(GithubApiCollaborator.class)
+                .filter(GithubApiCollaborator::hasAdminPermissions)
+                .map(GithubApiCollaborator::getId)
+                .collectList()
                 .onErrorResume(e -> Mono.error(new GithubClientException(e))));
     }
 

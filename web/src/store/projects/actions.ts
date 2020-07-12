@@ -2,14 +2,16 @@ import { AppDispatch, AppStateSupplier } from 'store'
 import { requireToken } from 'store/users/actions'
 import { failed, fetched, fetching } from 'store/wrapper'
 import {
-  SET_CREATION_STATE, //
+  SET_CREATION_STATE,
   SET_PROJECT,
   SET_PROJECTS,
+  SET_REPO_ADMINS,
   SetCreationState,
   SetProject,
-  SetProjects
+  SetProjects,
+  SetRepoAdmins
 } from './types'
-import { createProject, getProject, getProjects } from './services'
+import { createProject, getProject, getProjects, getRepoAdmins } from './services'
 
 const setProjects = (payload): SetProjects => ({
   type: SET_PROJECTS,
@@ -18,6 +20,11 @@ const setProjects = (payload): SetProjects => ({
 
 const setProject = (payload): SetProject => ({
   type: SET_PROJECT,
+  payload
+})
+
+const setRepoAdmins = (payload): SetRepoAdmins => ({
+  type: SET_REPO_ADMINS,
   payload
 })
 
@@ -68,6 +75,25 @@ export const getProjectAction = (id: number) => async (
     dispatch(setProject(fetched(project)))
   } catch (e) {
     dispatch(setProjects(failed(e)))
+  }
+}
+
+export const getRepoAdminsAction = (id: number) => async (
+  dispatch: AppDispatch, //
+  getState: AppStateSupplier
+) => {
+  const { projects } = getState()
+  if (projects.repoAdmins.value && projects.repoAdmins.projectId === id) {
+    return
+  }
+  await requireToken(dispatch, getState)
+  const { users } = getState()
+  try {
+    dispatch(setRepoAdmins(fetching))
+    const admins = await getRepoAdmins(id, users.token)
+    dispatch(setRepoAdmins(fetched(admins)))
+  } catch (e) {
+    dispatch(setRepoAdmins(failed(e)))
   }
 }
 
