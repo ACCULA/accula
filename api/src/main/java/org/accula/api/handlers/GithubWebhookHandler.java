@@ -34,7 +34,7 @@ public final class GithubWebhookHandler {
         // TODO: validate signature in X-Hub-Signature 
         return request
                 .bodyToMono(GithubApiHookPayload.class)
-                .onErrorResume(this::ignoreNotSupportedAction)
+                .onErrorResume(GithubWebhookHandler::ignoreNotSupportedAction)
                 .flatMap(this::processPayload)
                 .onErrorResume(e -> {
                     log.error("Error during payload processing: ", e);
@@ -64,7 +64,7 @@ public final class GithubWebhookHandler {
                 .then();
     }
 
-    private <E extends Throwable, T> Mono<T> ignoreNotSupportedAction(final E error) {
+    private static <E extends Throwable, T> Mono<T> ignoreNotSupportedAction(final E error) {
         return Mono.empty();
     }
 }
