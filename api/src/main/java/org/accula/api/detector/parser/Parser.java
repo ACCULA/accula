@@ -14,11 +14,11 @@ import java.util.stream.Stream;
 
 import com.suhininalex.clones.core.structures.Token;
 
-public class Parser {
+public final class Parser {
 
     private Parser() {}
 
-    public static Stream<List<Token>> getFunctionsAsTokens(final FileEntity file) {
+    public static Stream<List<Token>> tokenizedFunctions(final FileEntity file) {
         final var lexer = new Java9Lexer(CharStreams.fromString(file.getContent()));
         final var tokens = new CommonTokenStream(lexer);
         final var parser = new Java9Parser(tokens);

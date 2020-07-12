@@ -18,10 +18,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.LongStream;
+import java.util.stream.Stream;
 
-/**
- *
- */
+
 public class SuffixTreeCloneDetector implements CloneDetector {
 
     private static final CloneIndexer CLONE_DETECTOR_INSTANCE = CloneIndexer.INSTANCE;
@@ -47,22 +47,14 @@ public class SuffixTreeCloneDetector implements CloneDetector {
     private List<Tuple2<CodeSnippet, CodeSnippet>> clones(final List<FileEntity> targetFiles,
                                                           final List<FileEntity> sourceFiles) {
         final Map<CloneClass, List<CodeSnippet>> cloneClassCodeSnippetsMap = new HashMap<>();
-        final List<Long> targetFilesMethodsIds = new ArrayList<>();
         final List<Tuple2<CodeSnippet, CodeSnippet>> result = new ArrayList<>();
         final SuffixTree<Token> suffixTree = CLONE_DETECTOR_INSTANCE.getTree();
+        final long sourceFilesFirstSequenceId = 2;
+        final long sourceFilesLastSequenceId = addFilesIntoTree(sourceFiles, suffixTree);
+        final long targetFilesFirstSequenceId = sourceFilesLastSequenceId + 1;
+        final long targetFilesLastSequenceId = addFilesIntoTree(targetFiles, suffixTree);
 
-        sourceFiles.forEach(file ->
-                Parser.getFunctionsAsTokens(file).forEach(suffixTree::addSequence));
-
-        targetFiles.forEach(file ->
-            Parser.getFunctionsAsTokens(file)
-                    .forEach(tokens ->
-                            targetFilesMethodsIds.add(suffixTree.addSequence(tokens))));
-
-        final long lastSourceFilesSequenceId = targetFilesMethodsIds.get(0) - 1;
-
-        for (long sequenceId = 2; sequenceId <= lastSourceFilesSequenceId; sequenceId++) {
-            long finalSequenceId = sequenceId;
+        LongStream.rangeClosed(sourceFilesFirstSequenceId, sourceFilesLastSequenceId).forEach(sequenceId ->
             CLONE_DETECTOR_INSTANCE.getAllSequenceCloneClasses(sequenceId, minCloneLength)
                     .stream()
                     .findFirst()
@@ -77,7 +69,7 @@ public class SuffixTreeCloneDetector implements CloneDetector {
                                     int lastElementIndex = edge.getSequence().size() - 1;
                                     final Object element = edge.getSequence().get(lastElementIndex);
                                     if (element instanceof EndToken endToken) {
-                                        return endToken.getIdSequence() == finalSequenceId;
+                                        return endToken.getIdSequence() == sequenceId;
                                     } else {
                                         return false;
                                     }
@@ -85,7 +77,7 @@ public class SuffixTreeCloneDetector implements CloneDetector {
                                 .forEach(edge -> {
                                     int hahActuallyEnd = edge.getBegin();
                                     Token begin = (Token) edge.getSequence().get(hahActuallyEnd - cloneLength);
-                                    Token end = (Token) edge.getSequence().get(hahActuallyEnd - 1);
+                                    Token end   = (Token) edge.getSequence().get(hahActuallyEnd - 1);
                                     CodeSnippet codeSnippet =
                                             new CodeSnippet((CommitSnapshot) begin.getCommitSnapshot(),
                                                             begin.getFilename(),
@@ -95,10 +87,9 @@ public class SuffixTreeCloneDetector implements CloneDetector {
                                             .computeIfAbsent(cloneClass, __ -> new ArrayList<>())
                                             .add(codeSnippet);
                                 });
-                    });
-        }
+                    }));
 
-        targetFilesMethodsIds
+        LongStream.rangeClosed(targetFilesFirstSequenceId, targetFilesLastSequenceId)
                 .forEach(targetMethodId -> CLONE_DETECTOR_INSTANCE
                         .getAllSequenceCloneClasses(targetMethodId, minCloneLength)
                         .stream()
@@ -138,12 +129,28 @@ public class SuffixTreeCloneDetector implements CloneDetector {
         return result;
     }
 
-    private static long extractOwnerIdFromFileEntity(@NonNull FileEntity fileEntity) {
-        return fileEntity.getCommitSnapshot().getRepo().getOwner().getId();
+    /**
+     * Utility method to insert list of FileEntities into SuffixTree
+     * @param files - list of FileEntities
+     * @param suffixTree - tree object reference
+     * @return index of the last sequence (last tokenized method of the last FileEntity) inserted into the tree
+     */
+    private static long addFilesIntoTree(@NonNull final List<FileEntity> files, @NonNull final SuffixTree<Token> suffixTree) {
+        return files.stream()
+                .map(file -> addFileIntoTree(file, suffixTree))
+                .max(Long::compareTo).orElseThrow();
     }
 
-    private static long extractRepoIdFromFileEntity(@NonNull FileEntity fileEntity) {
-        return fileEntity.getCommitSnapshot().getRepo().getId();
+    /**
+     * Utility method to insert parsed FileEntity's methods into SuffixTree
+     * @param file - FileEntity object to parse into tokenized methods and then insert into tree
+     * @param suffixTree - tree object reference
+     * @return - index of the last sequence (tokenized method) inserted into the tree
+     */
+    private static long addFileIntoTree(@NonNull final FileEntity file, @NonNull final SuffixTree<Token> suffixTree) {
+        return Parser.tokenizedFunctions(file)
+                .map(suffixTree::addSequence)
+                .max(Long::compareTo).orElseThrow();
     }
 
     private static Token extractBeginToken(TreeCloneClass treeCloneClass) {
