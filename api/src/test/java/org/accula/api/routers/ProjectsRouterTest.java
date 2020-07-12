@@ -14,6 +14,7 @@ import org.accula.api.db.repo.CurrentUserRepo;
 import org.accula.api.db.repo.GithubUserRepo;
 import org.accula.api.db.repo.ProjectRepo;
 import org.accula.api.db.repo.PullRepo;
+import org.accula.api.db.repo.UserRepo;
 import org.accula.api.github.api.GithubClient;
 import org.accula.api.github.api.GithubClientException;
 import org.accula.api.github.model.GithubApiCommitSnapshot;
@@ -63,7 +64,7 @@ public class ProjectsRouterTest {
             .build();
     private static final List<Pull> PULLS = List.of(PULL, PULL, PULL);
     private static final String EMPTY = "";
-    private static final List<User> ADMINS = Collections.emptyList();
+    private static final List<Long> ADMINS = Collections.emptyList();
     private static final GithubUser GITHUB_USER = new GithubUser(1L, "login", "name", "avatar", false);
     private static final User CURRENT_USER = new User(0L, "", GITHUB_USER);
     private static final GithubApiUser GH_OWNER = new GithubApiUser(1L, REPO_OWNER, EMPTY, EMPTY, EMPTY, GithubApiUser.Type.USER);
@@ -87,6 +88,8 @@ public class ProjectsRouterTest {
     private CurrentUserRepo currentUser;
     @MockBean
     private ProjectRepo projectRepo;
+    @MockBean
+    private UserRepo userRepo;
     @MockBean
     private PullRepo pullRepo;
     @MockBean
