@@ -57,7 +57,7 @@ public final class ClonesHandler {
                     final var pullNumber = Integer.parseInt(request.pathVariable(PULL_NUMBER));
                     return getLastCommitClones(projectId, pullNumber);
                 })
-                .onErrorResume(e -> e instanceof NumberFormatException, this::notFound);
+                .onErrorResume(NumberFormatException.class, this::notFound);
     }
 
     public Mono<ServerResponse> refreshClones(final ServerRequest request) {
@@ -75,7 +75,7 @@ public final class ClonesHandler {
                             .then(getLastCommitClones(projectId, pullNumber)))
                             .switchIfEmpty(ServerResponse.status(HttpStatus.FORBIDDEN).build());
                 })
-                .onErrorResume(e -> e instanceof NumberFormatException, this::notFound);
+                .onErrorResume(NumberFormatException.class, this::notFound);
     }
 
     private <T> Mono<T> doIfCurrentUserHasAdminPermissionInProject(final long projectId, final Mono<T> action) {
