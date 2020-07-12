@@ -7,10 +7,15 @@ import org.accula.api.code.FileEntity;
 import org.accula.api.db.model.Clone;
 import org.accula.api.db.model.CommitSnapshot;
 import org.accula.api.db.model.Pull;
+import org.accula.api.db.model.User;
 import org.accula.api.db.repo.CloneRepo;
+import org.accula.api.db.repo.CurrentUserRepo;
+import org.accula.api.db.repo.ProjectRepo;
 import org.accula.api.db.repo.PullRepo;
 import org.accula.api.handlers.dto.CloneDto;
 import org.accula.api.handlers.dto.CloneDto.FlatCodeSnippet.FlatCodeSnippetBuilder;
+import org.accula.api.service.CloneDetectionService;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
@@ -37,29 +42,64 @@ public final class ClonesHandler {
 
     private static final Base64.Encoder base64 = Base64.getEncoder(); // NOPMD
 
+    private final Scheduler codeLoadingScheduler = Schedulers.boundedElastic();
     private final PullRepo pullRepo;
     private final CloneRepo cloneRepo;
+    private final CurrentUserRepo currentUserRepo;
+    private final ProjectRepo projectRepo;
+    private final CloneDetectionService cloneDetectionService;
     private final CodeLoader codeLoader;
-    private final Scheduler codeLoadingScheduler = Schedulers.boundedElastic();
 
     public Mono<ServerResponse> getLastCommitClones(final ServerRequest request) {
-        return Mono.defer(() -> {
-            final var projectId = Long.parseLong(request.pathVariable(PROJECT_ID));
-            final var pullNumber = Integer.parseInt(request.pathVariable(PULL_NUMBER));
-            return getLastCommitClones(projectId, pullNumber);
-        });
+        return Mono
+                .defer(() -> {
+                    final var projectId = Long.parseLong(request.pathVariable(PROJECT_ID));
+                    final var pullNumber = Integer.parseInt(request.pathVariable(PULL_NUMBER));
+                    return getLastCommitClones(projectId, pullNumber);
+                })
+                .onErrorResume(e -> e instanceof NumberFormatException, this::notFound);
+    }
+
+    public Mono<ServerResponse> refreshClones(final ServerRequest request) {
+        return Mono
+                .defer(() -> {
+                    final var projectId = Long.parseLong(request.pathVariable(PROJECT_ID));
+                    final var pullNumber = Integer.parseInt(request.pathVariable(PULL_NUMBER));
+
+                    return doIfCurrentUserHasAdminPermissionInProject(projectId, cloneRepo
+                            .deleteByPullNumber(projectId, pullNumber)
+                            .then(pullRepo
+                                    .findByNumber(projectId, pullNumber)
+                                    .flatMapMany(cloneDetectionService::detectClones)
+                                    .then())
+                            .then(getLastCommitClones(projectId, pullNumber)))
+                            .switchIfEmpty(ServerResponse.status(HttpStatus.FORBIDDEN).build());
+                })
+                .onErrorResume(e -> e instanceof NumberFormatException, this::notFound);
+    }
+
+    private <T> Mono<T> doIfCurrentUserHasAdminPermissionInProject(final long projectId, final Mono<T> action) {
+        return currentUserRepo
+                .get()
+                .map(User::getId)
+                .filterWhen(currentUserId -> projectRepo.hasCreatorOrAdminWithId(projectId, currentUserId))
+                .flatMap(currentUserId -> action);
     }
 
     private Mono<ServerResponse> getLastCommitClones(final long projectId, final int pullNumber) {
         final var pullHead = pullRepo
                 .findByNumber(projectId, pullNumber)
-                .map(Pull::getHead)
+                .map(Pull::getHead);
+
+        final var clones = pullHead
+                .flatMapMany(head -> cloneRepo
+                        .findByTargetCommitSnapshotSha(head.getSha()))
                 .cache();
 
-        final var clones = pullHead.flatMapMany(head -> cloneRepo
-                .findByTargetCommitSnapshotSha(head.getSha()))
-                .cache();
+        return toResponse(clones, projectId, pullNumber);
+    }
 
+    private Mono<ServerResponse> toResponse(final Flux<Clone> clones, final long projectId, final int pullNumber) {
         final var targetFileSnippetMarkers = clones
                 .map(clone -> new FileSnippetMarker(
                         clone.getTargetSnapshot(),
@@ -68,10 +108,10 @@ public final class ClonesHandler {
                         clone.getTargetToLine()
                 ));
 
-        final var sourcePulls = clones
+        final var sourcePullNumbers = clones
                 .map(clone -> Objects.requireNonNull(clone.getSourceSnapshot().getPullId()))
                 .collectList()
-                .flatMapMany(pullRepo::findById);
+                .flatMapMany(pullRepo::numbersByIds);
 
         final var sourceFileSnippetMarkers = clones
                 .map(clone -> new FileSnippetMarker(
@@ -85,7 +125,7 @@ public final class ClonesHandler {
                 .zip(clones,
                         getFileSnippets(targetFileSnippetMarkers),
                         getFileSnippets(sourceFileSnippetMarkers),
-                        sourcePulls)
+                        sourcePullNumbers)
                 .map(tuple -> toCloneDto(tuple, projectId, pullNumber));
 
         return ServerResponse
@@ -94,14 +134,14 @@ public final class ClonesHandler {
                 .body(responseClones, CloneDto.class);
     }
 
-    private CloneDto toCloneDto(final Tuple4<Clone, FileEntity, FileEntity, Pull> tuple,
-                                final long targetProjectId,
+    private CloneDto toCloneDto(final Tuple4<Clone, FileEntity, FileEntity, Integer> tuple,
+                                final long projectId,
                                 final int targetPullNumber) {
         final var clone = tuple.getT1();
 
         final var targetFile = tuple.getT2();
         final var target = codeSnippetWith(targetFile.getCommitSnapshot(), targetFile.getContent())
-                .projectId(targetProjectId)
+                .projectId(projectId)
                 .pullNumber(targetPullNumber)
                 .file(clone.getTargetFile())
                 .fromLine(clone.getTargetFromLine())
@@ -109,10 +149,10 @@ public final class ClonesHandler {
                 .build();
 
         final var sourceFile = tuple.getT3();
-        final var sourcePull = tuple.getT4();
+        final var sourcePullNumber = tuple.getT4();
         final var source = codeSnippetWith(sourceFile.getCommitSnapshot(), sourceFile.getContent())
-                .projectId(sourcePull.getProjectId())
-                .pullNumber(sourcePull.getNumber())
+                .projectId(projectId)
+                .pullNumber(sourcePullNumber)
                 .file(clone.getSourceFile())
                 .fromLine(clone.getSourceFromLine())
                 .toLine(clone.getSourceToLine())
@@ -134,6 +174,10 @@ public final class ClonesHandler {
                 .flatMapSequential(marker -> codeLoader
                         .getFileSnippet(marker.commitSnapshot, marker.filename, marker.fromLine, marker.toLine))
                 .subscribeOn(codeLoadingScheduler);
+    }
+
+    private <E extends Throwable> Mono<ServerResponse> notFound(final E ignored) {
+        return ServerResponse.notFound().build();
     }
 
     @Value
