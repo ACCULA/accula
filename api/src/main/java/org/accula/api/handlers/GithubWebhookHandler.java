@@ -31,7 +31,7 @@ public final class GithubWebhookHandler {
         if (GITHUB_EVENT_PING.equals(request.headers().firstHeader(GITHUB_EVENT))) {
             return ServerResponse.ok().build();
         }
-        // TODO: validate signature in X-Hub-Signature
+        // TODO: validate signature in X-Hub-Signature 
         return request
                 .bodyToMono(GithubApiHookPayload.class)
                 .onErrorResume(this::ignoreNotSupportedAction)
