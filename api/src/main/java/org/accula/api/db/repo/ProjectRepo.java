@@ -24,4 +24,6 @@ public interface ProjectRepo {
     Flux<Project> getTop(int count);
 
     Mono<Boolean> delete(Long id, Long creatorId);
+
+    Mono<Boolean> hasCreatorOrAdminWithId(Long projectId, Long userId);
 }

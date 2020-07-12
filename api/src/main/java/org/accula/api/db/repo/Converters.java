@@ -5,17 +5,19 @@ import org.accula.api.db.model.Clone;
 import org.accula.api.db.model.CommitSnapshot;
 import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.GithubUser;
+import org.accula.api.db.model.Pull;
 import org.accula.api.db.model.User;
 import org.jetbrains.annotations.Nullable;
 
+import java.time.Instant;
 import java.util.Objects;
 
 /**
  * @author Anton Lamtev
  */
-@SuppressWarnings({"PMD.ConfusingTernary", "PMD.UseObjectForClearerAPI", "PMD.ExcessiveParameterList"})
+@SuppressWarnings({"PMD.ConfusingTernary", "PMD.UseObjectForClearerAPI", "PMD.ExcessiveParameterList", "SameParameterValue"})
 final class Converters {
-    public static final String NOTHING = "";
+    static final String NOTHING = "";
 
     private Converters() {
     }
@@ -29,7 +31,7 @@ final class Converters {
         return new GithubUser(
                 value(row, id, Long.class),
                 value(row, login, String.class),
-                row.get(name, String.class),
+                nullable(row, name, String.class),
                 value(row, avatar, String.class),
                 value(row, organization, Boolean.class)
         );
@@ -160,13 +162,89 @@ final class Converters {
                 .build();
     }
 
+    static Pull convertPull(final Row row,
+                            final String id,
+                            final String number,
+                            final String title,
+                            final String open,
+                            final String createdAt,
+                            final String updatedAt,
+                            final String headSnapSha,
+                            final String headSnapBranch,
+                            final String headSnapPullId,
+                            final String headRepoId,
+                            final String headRepoName,
+                            final String headRepoDescription,
+                            final String headRepoOwnerId,
+                            final String headRepoOwnerLogin,
+                            final String headRepoOwnerName,
+                            final String headRepoOwnerAvatar,
+                            final String headRepoOwnerIsOrg,
+                            final String baseSnapSha,
+                            final String baseSnapBranch,
+                            final String baseSnapPullId,
+                            final String baseRepoId,
+                            final String baseRepoName,
+                            final String baseRepoDescription,
+                            final String baseRepoOwnerId,
+                            final String baseRepoOwnerLogin,
+                            final String baseRepoOwnerName,
+                            final String baseRepoOwnerAvatar,
+                            final String baseRepoOwnerOrganization,
+                            final String authorId,
+                            final String authorLogin,
+                            final String authorName,
+                            final String authorAvatar,
+                            final String authorIsOrg,
+                            final String projectId) {
+        return Pull.builder()
+                .id(Converters.value(row, id, Long.class))
+                .number(Converters.value(row, number, Integer.class))
+                .title(Converters.value(row, title, String.class))
+                .open(Converters.value(row, open, Boolean.class))
+                .createdAt(Converters.value(row, createdAt, Instant.class))
+                .updatedAt(Converters.value(row, updatedAt, Instant.class))
+                .head(Converters.convertCommitSnapshot(row,
+                        headSnapSha,
+                        headSnapBranch,
+                        headSnapPullId,
+                        headRepoId,
+                        headRepoName,
+                        headRepoDescription,
+                        headRepoOwnerId,
+                        headRepoOwnerLogin,
+                        headRepoOwnerName,
+                        headRepoOwnerAvatar,
+                        headRepoOwnerIsOrg))
+                .base(Converters.convertCommitSnapshot(row,
+                        baseSnapSha,
+                        baseSnapBranch,
+                        baseSnapPullId,
+                        baseRepoId,
+                        baseRepoName,
+                        baseRepoDescription,
+                        baseRepoOwnerId,
+                        baseRepoOwnerLogin,
+                        baseRepoOwnerName,
+                        baseRepoOwnerAvatar,
+                        baseRepoOwnerOrganization))
+                .author(Converters.convertUser(row,
+                        authorId,
+                        authorLogin,
+                        authorName,
+                        authorAvatar,
+                        authorIsOrg))
+                .projectId(Converters.value(row, projectId, Long.class))
+                .build();
+    }
+
     static <T> T value(final Row row, final String name, final Class<T> clazz) {
         return Objects.requireNonNull(row.get(name, clazz));
     }
 
     @Nullable
-    static <T> T nullable(final Row row, @Nullable final String name, final Class<T> clazz) {
-        if (name == null || NOTHING.equals(name)) {
+    static <T> T nullable(final Row row, final String name, final Class<T> clazz) {
+        if (NOTHING.equals(name)) {
             return null;
         }
         return row.get(name, clazz);

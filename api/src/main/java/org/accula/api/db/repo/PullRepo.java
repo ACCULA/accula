@@ -23,4 +23,6 @@ public interface PullRepo {
     Flux<Pull> findUpdatedEarlierThan(Long projectId, Integer number);
 
     Flux<Pull> findByProjectId(Long projectId);
+
+    Flux<Integer> numbersByIds(Collection<Long> ids);
 }

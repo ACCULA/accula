@@ -1,5 +1,6 @@
 package org.accula.api.db.repo;
 
+import io.r2dbc.postgresql.api.PostgresqlResult;
 import io.r2dbc.postgresql.api.PostgresqlStatement;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.Row;
@@ -112,6 +113,25 @@ public final class CloneRepoImpl implements CloneRepo, ConnectionProvidedRepo {
                         .bind("$1", sha)
                         .execute())
                 .flatMapMany(result -> ConnectionProvidedRepo.convertMany(result, this::convert)));
+    }
+
+    @Override
+    public Mono<Void> deleteByPullNumber(final long projectId, final int pullNumber) {
+        return withConnection(connection -> ((PostgresqlStatement) connection
+                .createStatement("""
+                        DELETE FROM clone
+                        WHERE id IN (SELECT clone.id
+                                     FROM pull
+                                        JOIN clone
+                                            ON pull.head_commit_snapshot_sha = clone.target_commit_sha 
+                                                AND pull.head_commit_snapshot_repo_id = clone.target_repo_id
+                                     WHERE pull.project_id = $1 AND pull.number = $2)
+                        """))
+                .bind("$1", projectId)
+                .bind("$2", pullNumber)
+                .execute()
+                .flatMap(PostgresqlResult::getRowsUpdated)
+                .then());
     }
 
     private static PostgresqlStatement insertStatement(final Connection connection) {
