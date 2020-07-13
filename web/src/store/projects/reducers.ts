@@ -1,17 +1,22 @@
 import { notFetching } from 'store/wrapper'
 import {
+  CREATE_PROJECT,
   ProjectsActionTypes,
   ProjectsState,
-  SET_CREATION_STATE,
   SET_PROJECT,
-  SET_PROJECTS, SET_REPO_ADMINS
+  SET_PROJECT_CONF,
+  SET_PROJECTS,
+  SET_REPO_ADMINS,
+  UPDATE_PROJECT_CONF
 } from './types'
 
 const initialState: ProjectsState = {
   projects: notFetching,
   project: notFetching,
+  projectConf: notFetching,
+  updateProjectConf: [false, null],
   repoAdmins: notFetching,
-  creationState: [false, null]
+  createProject: [false, null]
 }
 
 export function projectsReducer(
@@ -31,16 +36,28 @@ export function projectsReducer(
         project: action.payload
       }
     }
+    case SET_PROJECT_CONF: {
+      return {
+        ...state,
+        projectConf: action.payload
+      }
+    }
+    case UPDATE_PROJECT_CONF: {
+      return {
+        ...state,
+        updateProjectConf: action.payload
+      }
+    }
     case SET_REPO_ADMINS: {
       return {
         ...state,
         repoAdmins: action.payload
       }
     }
-    case SET_CREATION_STATE: {
+    case CREATE_PROJECT: {
       return {
         ...state,
-        creationState: action.creationState
+        createProject: action.payload
       }
     }
     default:

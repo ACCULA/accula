@@ -24,7 +24,6 @@ export interface IProject {
   id: number
   repoUrl: string
   creatorId: number
-  admins?: number[]
   repoOwner: string
   repoName: string
   repoDescription?: string
@@ -32,7 +31,10 @@ export interface IProject {
   repoOpenPullCount: number
 }
 
-export interface IProjectSettings {}
+export interface IProjectConf {
+  admins: number[]
+  cloneMinLineCount: number
+}
 
 export interface IShortPull {
   number: number

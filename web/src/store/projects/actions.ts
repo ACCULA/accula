@@ -1,17 +1,27 @@
 import { AppDispatch, AppStateSupplier } from 'store'
 import { requireToken } from 'store/users/actions'
 import { failed, fetched, fetching } from 'store/wrapper'
+import { IProjectConf } from 'types'
 import {
-  SET_CREATION_STATE,
+  CREATE_PROJECT,
   SET_PROJECT,
+  SET_PROJECT_CONF,
   SET_PROJECTS,
   SET_REPO_ADMINS,
-  SetCreationState,
+  CreateProject,
   SetProject,
+  SetProjectConf,
   SetProjects,
-  SetRepoAdmins
+  SetRepoAdmins, UPDATE_PROJECT_CONF, UpdateProjectConf
 } from './types'
-import { createProject, getProject, getProjects, getRepoAdmins } from './services'
+import {
+  postProject,
+  getProject,
+  getProjectConf,
+  getProjects,
+  getRepoAdmins,
+  putProjectConf
+} from './services'
 
 const setProjects = (payload): SetProjects => ({
   type: SET_PROJECTS,
@@ -23,17 +33,29 @@ const setProject = (payload): SetProject => ({
   payload
 })
 
+const setProjectConf = (payload): SetProjectConf => ({
+  type: SET_PROJECT_CONF,
+  payload
+})
+
+const updateProjectConf = (isCreating: boolean, error: string): UpdateProjectConf => ({
+  type: UPDATE_PROJECT_CONF,
+  payload: [isCreating, error]
+})
+
+export const resetUpdateProjectConf = (): UpdateProjectConf => updateProjectConf(false, '')
+
 const setRepoAdmins = (payload): SetRepoAdmins => ({
   type: SET_REPO_ADMINS,
   payload
 })
 
-const setCreationState = (isCreating: boolean, error: string): SetCreationState => ({
-  type: SET_CREATION_STATE,
-  creationState: [isCreating, error]
+const createProject = (isCreating: boolean, error: string): CreateProject => ({
+  type: CREATE_PROJECT,
+  payload: [isCreating, error]
 })
 
-export const resetCreationStateAction = (): SetCreationState => setCreationState(false, '')
+export const resetCreateProject = (): CreateProject => createProject(false, '')
 
 export const getProjectsAction = () => async (
   dispatch: AppDispatch, //
@@ -78,6 +100,44 @@ export const getProjectAction = (id: number) => async (
   }
 }
 
+export const getProjectConfAction = (id: number) => async (
+  dispatch: AppDispatch, //
+  getState: AppStateSupplier
+) => {
+  const { projects } = getState()
+  if (projects.projectConf.value && projects.projectConf.projectId === id) {
+    return
+  }
+  await requireToken(dispatch, getState)
+  const { users } = getState()
+  try {
+    dispatch(setProjectConf(fetching))
+    const conf = await getProjectConf(id, users.token)
+    dispatch(setProjectConf(fetched(conf)))
+  } catch (e) {
+    dispatch(setProjectConf(failed(e)))
+  }
+}
+
+export const updateProjectConfAction = (id: number, conf: IProjectConf) => async (
+  dispatch: AppDispatch, //
+  getState: AppStateSupplier
+) => {
+  const { projects } = getState()
+  if (projects.projectConf.value && projects.projectConf.projectId === id) {
+    return
+  }
+  await requireToken(dispatch, getState)
+  const { users } = getState()
+  try {
+    dispatch(updateProjectConf(true, null))
+    await putProjectConf(id, users.token, conf)
+    dispatch(updateProjectConf(false, null))
+  } catch (e) {
+    dispatch(updateProjectConf(false, e.message))
+  }
+}
+
 export const getRepoAdminsAction = (id: number) => async (
   dispatch: AppDispatch, //
   getState: AppStateSupplier
@@ -104,12 +164,12 @@ export const createProjectAction = (url: string) => async (
   await requireToken(dispatch, getState)
   const { users, projects } = getState()
   if (users.token.accessToken) {
-    const result = await createProject(url, users.token)
+    const result = await postProject(url, users.token)
     if (typeof result === 'string') {
-      dispatch(setCreationState(false, result))
+      dispatch(createProject(false, result))
     } else {
       dispatch(setProjects(fetched([...projects.projects.value, result])))
-      dispatch(setCreationState(false, null))
+      dispatch(createProject(false, null))
     }
   }
 }

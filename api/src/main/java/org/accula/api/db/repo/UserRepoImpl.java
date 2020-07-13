@@ -99,7 +99,7 @@ public final class UserRepoImpl implements UserRepo, ConnectionProvidedRepo {
                                 WHERE u.github_id IN ($1)
                                 """.replace("$1", adminIds)) // TODO: replace with bind, now it's failing
                         .execute())
-                .flatMapMany(result -> ConnectionProvidedRepo.convert(result, this::convert)));
+                .flatMapMany(result -> ConnectionProvidedRepo.convertMany(result, this::convert)));
     }
 
     @Override

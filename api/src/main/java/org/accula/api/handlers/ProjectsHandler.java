@@ -16,6 +16,7 @@ import org.accula.api.github.model.GithubApiHook;
 import org.accula.api.github.model.GithubApiPull;
 import org.accula.api.github.model.GithubApiPull.State;
 import org.accula.api.github.model.GithubApiRepo;
+import org.accula.api.handlers.dto.ProjectConfDto;
 import org.accula.api.handlers.dto.ProjectDto;
 import org.accula.api.handlers.request.CreateProjectRequestBody;
 import org.accula.api.handlers.response.ErrorBody;
@@ -30,7 +31,9 @@ import reactor.util.function.Tuple2;
 import reactor.util.function.Tuple4;
 import reactor.util.function.Tuples;
 
+import java.time.Duration;
 import java.util.Arrays;
+import java.util.List;
 
 import static java.util.function.Predicate.isEqual;
 import static java.util.function.Predicate.not;
@@ -69,10 +72,7 @@ public final class ProjectsHandler {
     }
 
     public Mono<ServerResponse> get(final ServerRequest request) {
-        return Mono
-                .justOrEmpty(request.pathVariable("id"))
-                .map(Long::parseLong)
-                .onErrorMap(e -> e instanceof NumberFormatException, e -> PROJECT_NOT_FOUND_EXCEPTION)
+        return withProjectId(request)
                 .flatMap(projectRepo::findById)
                 .map(ModelToDtoConverter::convert)
                 .switchIfEmpty(Mono.error(PROJECT_NOT_FOUND_EXCEPTION))
@@ -114,10 +114,7 @@ public final class ProjectsHandler {
     }
 
     public Mono<ServerResponse> delete(final ServerRequest request) {
-        return Mono
-                .justOrEmpty(request.pathVariable("id"))
-                .map(Long::parseLong)
-                .onErrorMap(e -> e instanceof NumberFormatException, e -> PROJECT_NOT_FOUND_EXCEPTION)
+        return withProjectId(request)
                 .zipWith(currentUser.get())
                 .flatMap(projectIdAndCurrentUser -> {
                     final var projectId = projectIdAndCurrentUser.getT1();
@@ -136,9 +133,9 @@ public final class ProjectsHandler {
 
         //@formatter:off
         return Mono.zip(githubClient.hasAdminPermission(owner, repo).subscribeOn(remoteCallsScheduler),
-                        githubClient.getRepo(owner, repo).subscribeOn(remoteCallsScheduler),
-                        githubClient.getRepositoryPulls(owner, repo, State.ALL).subscribeOn(remoteCallsScheduler),
-                        currentUser.get());
+                githubClient.getRepo(owner, repo).subscribeOn(remoteCallsScheduler),
+                githubClient.getRepositoryPulls(owner, repo, State.ALL).subscribeOn(remoteCallsScheduler),
+                currentUser.get());
         //@formatter:on
     }
 
@@ -202,11 +199,8 @@ public final class ProjectsHandler {
         return Tuples.of(pathComponents.get(0), pathComponents.get(1));
     }
 
-    public Mono<ServerResponse> admins(ServerRequest request) {
-        return Mono
-                .justOrEmpty(request.pathVariable("id"))
-                .map(Long::parseLong)
-                .onErrorMap(e -> e instanceof NumberFormatException, e -> PROJECT_NOT_FOUND_EXCEPTION)
+    public Mono<ServerResponse> getRepoAdmins(ServerRequest request) {
+        return withProjectId(request)
                 .flatMap(projectRepo::findById)
                 .flatMap(project -> githubClient.getRepoAdmins(project.getGithubRepo().getOwner().getLogin(), project.getGithubRepo().getName()))
                 .flatMapMany(userRepo::findByGithubIds)
@@ -222,7 +216,31 @@ public final class ProjectsHandler {
                     log.warn("Cannot fetch repository admins", e);
                     return ServerResponse.badRequest().build();
                 });
-        
+    }
+
+    public Mono<ServerResponse> getConf(ServerRequest request) {
+        return withProjectId(request)
+                .delayElement(Duration.ofMillis(100))
+                .flatMap(id -> ServerResponse
+                        .ok()
+                        .bodyValue(ProjectConfDto.builder()
+                                .admins(List.of(1L, 2L))
+                                .cloneMinLineCount(10)
+                                .build())); // TODO
+    }
+
+    public Mono<ServerResponse> updateConf(ServerRequest request) {
+        return withProjectId(request)
+                .delayElement(Duration.ofSeconds(1))
+                .flatMap(id -> request.bodyToMono(ProjectConfDto.class)
+                        .flatMap(dto -> ServerResponse.ok().build())); // TODO
+    }
+
+    private static Mono<Long> withProjectId(ServerRequest request) {
+        return Mono
+                .justOrEmpty(request.pathVariable("id"))
+                .map(Long::parseLong)
+                .onErrorMap(e -> e instanceof NumberFormatException, e -> PROJECT_NOT_FOUND_EXCEPTION);
     }
 
     @RequiredArgsConstructor

@@ -26,9 +26,11 @@ public final class ProjectsRouter {
                 .path("/api/projects", b1 -> b1
                         .GET("", projectsHandler::getTop)
                         .GET("/{id}", projectsHandler::get)
-                        .GET("/{id}/admins", projectsHandler::admins)
+                        .GET("/{id}/admins", projectsHandler::getRepoAdmins)
+                        .GET("/{id}/conf", projectsHandler::getConf)
                         .nest(accept(APPLICATION_JSON), b2 -> b2
                                 .POST("", projectsHandler::create)
+                                .PUT("/{id}/conf", projectsHandler::updateConf)
                                 .DELETE("/{id}", projectsHandler::delete)))
                 .build();
     }

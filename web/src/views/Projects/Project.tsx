@@ -8,15 +8,21 @@ import { bindActionCreators } from 'redux'
 import { Breadcrumbs } from 'components/Breadcrumbs'
 import { Loader } from 'components/Loader'
 import { AppDispatch, AppState } from 'store'
-import { getProjectAction, getRepoAdminsAction } from 'store/projects/actions'
+import {
+  getProjectAction, getProjectConfAction,
+  getRepoAdminsAction,
+  updateProjectConfAction
+} from 'store/projects/actions'
 import { getPullsAction } from 'store/pulls/actions'
-import { IProject, IUser } from 'types'
+import { IProject, IProjectConf, IUser } from 'types'
 import { ProjectPullsTab } from 'views/Projects/ProjectPullsTab'
 import { ProjectConfigurationTab } from 'views/Projects/ProjectConfigurationTab'
 
 const mapStateToProps = (state: AppState) => ({
   isFetching: state.projects.project.isFetching || !state.projects.project.value,
   project: state.projects.project,
+  projectConf: state.projects.projectConf,
+  updateProjectConfState: state.projects.updateProjectConf,
   repoAdmins: state.projects.repoAdmins,
   pulls: state.pulls.pulls,
   user: state.users.user
@@ -24,28 +30,34 @@ const mapStateToProps = (state: AppState) => ({
 
 const mapDispatchToProps = (dispatch: AppDispatch) => ({
   getProject: bindActionCreators(getProjectAction, dispatch),
+  getProjectConf: bindActionCreators(getProjectConfAction, dispatch),
   getRepoAdmins: bindActionCreators(getRepoAdminsAction, dispatch),
-  getPulls: bindActionCreators(getPullsAction, dispatch)
+  getPulls: bindActionCreators(getPullsAction, dispatch),
+  updateProjectConf: bindActionCreators(updateProjectConfAction, dispatch)
 })
 
 const connector = connect(mapStateToProps, mapDispatchToProps)
 type ProjectProps = ConnectedProps<typeof connector>
 
-const showSettings = (user: IUser, project: IProject): boolean => {
+const showSettings = (user: IUser, project: IProject, projectConf: IProjectConf): boolean => {
   return (
-    user && project && (project.creatorId === user.id || project.admins.indexOf(user.id) !== -1)
+    user && project && (project.creatorId === user.id || projectConf.admins.indexOf(user.id) !== -1)
   )
 }
 
 const Project = ({
   isFetching, //
   project,
+  projectConf,
+  updateProjectConfState,
   repoAdmins,
   pulls,
   user,
   getProject,
+  getProjectConf,
   getRepoAdmins,
-  getPulls
+  getPulls,
+  updateProjectConf
 }: ProjectProps) => {
   const history = useHistory()
   const { prId, tab } = useParams()
@@ -53,15 +65,10 @@ const Project = ({
 
   useEffect(() => {
     getProject(projectId)
-  }, [getProject, projectId])
-
-  useEffect(() => {
+    getProjectConf(projectId)
     getRepoAdmins(projectId)
-  }, [getRepoAdmins, projectId])
-
-  useEffect(() => {
     getPulls(projectId)
-  }, [getPulls, projectId])
+  }, [getProject, getProjectConf, getRepoAdmins, getPulls, projectId])
 
   return isFetching ? (
     <Loader />
@@ -102,7 +109,7 @@ const Project = ({
           >
             <ProjectPullsTab project={project} pulls={pulls} />
           </Tab>
-          {showSettings(user.value, project.value) && (
+          {showSettings(user.value, project.value, projectConf.value) && (
             <Tab
               eventKey="configuration"
               title={
@@ -111,7 +118,13 @@ const Project = ({
                 </>
               }
             >
-              <ProjectConfigurationTab project={project} repoAdmins={repoAdmins} />
+              <ProjectConfigurationTab
+                project={project} //
+                repoAdmins={repoAdmins}
+                projectConf={projectConf}
+                updateConf={conf => updateProjectConf(projectId, conf)}
+                updateConfState={updateProjectConfState}
+              />
             </Tab>
           )}
         </Tabs>

@@ -38,7 +38,6 @@ public final class ModelToDtoConverter {
                         project.getGithubRepo().getName()))
                 .repoOpenPullCount(openPullCount)
                 .creatorId(project.getCreator().getId())
-                .admins(project.getAdmins())
                 .build();
     }
 
