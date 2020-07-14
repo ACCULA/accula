@@ -98,3 +98,22 @@ export const getClones = async (
     })
     .then(resp => resp.data as IClone[])
 }
+
+export const refreshClones = async (
+  token: IToken,
+  projectId: number,
+  pullId: number
+): Promise<IClone[]> => {
+  if (DEBUG) {
+    return Promise.resolve([])
+  }
+  return axios //
+    .post(`${API_URL}/api/projects/${projectId}/pulls/${pullId}/clones/refresh`, null, {
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token.accessToken}`
+      },
+      withCredentials: true
+    })
+    .then(resp => resp.data as IClone[])
+}

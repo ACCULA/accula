@@ -17,7 +17,7 @@ import {
   SetPull,
   SetPulls
 } from './types'
-import { getClones, getCompares, getDiffs, getPull, getPulls } from './services'
+import { getClones, getCompares, getDiffs, getPull, getPulls, refreshClones } from './services'
 
 const setPulls = (payload: Wrapper<IShortPull[]>): SetPulls => ({
   type: SET_PULLS,
@@ -166,5 +166,20 @@ export const getClonesAction = (projectId: number, pullNumber: number) => async 
     } catch (e) {
       dispatch(setClones(failed(e)))
     }
+  }
+}
+
+export const refreshClonesAction = (projectId: number, pullNumber: number) => async (
+  dispatch: AppDispatch, //
+  getState: AppStateSupplier
+) => {
+  await requireToken(dispatch, getState)
+  const { users } = getState()
+  try {
+    dispatch(setClones(fetching))
+    const clones = await refreshClones(users.token, projectId, pullNumber)
+    dispatch(setClones(fetched(clones, { projectId, pullNumber })))
+  } catch (e) {
+    dispatch(setClones(failed(e)))
   }
 }

@@ -7,17 +7,29 @@ import { IPullClonesState } from 'store/pulls/types'
 
 interface PullClonesTabProps {
   clones: IPullClonesState
+  refreshClones: () => void
 }
 
-export const PullClonesTab = ({ clones }: PullClonesTabProps) => {
+export const PullClonesTab = ({ clones, refreshClones }: PullClonesTabProps) => {
   const [splitView, setSplitView] = useState(false)
   return clones.isFetching ? (
     <Loader />
   ) : (
     <>
       <div className="pull-right">
+        <Button
+          bsStyle="info" //
+          className="pull-refresh-clone"
+          onClick={refreshClones}
+        >
+          Refresh
+        </Button>
         {clones.value && clones.value.length > 0 && (
-          <Button bsStyle="info" onClick={() => setSplitView(!splitView)} style={{ marginTop: -7 }}>
+          <Button
+            bsStyle="info" //
+            className="split-unified-view-button"
+            onClick={() => setSplitView(!splitView)}
+          >
             {splitView ? 'Unified view' : 'Split view'}
           </Button>
         )}

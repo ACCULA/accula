@@ -79,8 +79,6 @@ export const PullOverviewTab = ({ pull }: PullOverviewTabProps) => {
                   <GitHubLink to={pull.author.url}>
                     <code>{`@${pull.author.login}`}</code>
                   </GitHubLink>
-                  <br />
-                  <small>{pull.author.name}</small>
                 </h4>
               </ListGroupItem>
             </ListGroup>
@@ -96,14 +94,14 @@ export const PullOverviewTab = ({ pull }: PullOverviewTabProps) => {
               {pull.previousPulls.length > 0 ? (
                 pull.previousPulls.map(prevPull => (
                   <ListGroupItem key={prevPull.number}>
+                    {prevPull.open ? (
+                      <Badge className="badge-success prev-pull-badge">Open</Badge> //
+                    ) : (
+                      <Badge className="badge-danger prev-pull-badge">Closed</Badge>
+                    )}
                     <Link to={`/projects/${prevPull.projectId}/pulls/${prevPull.number}`}>
                       {`#${prevPull.number}: ${prevPull.title}`}
                     </Link>
-                    {prevPull.open ? (
-                      <Badge className="badge-success">Open</Badge> //
-                    ) : (
-                      <Badge className="badge-danger">Closed</Badge>
-                    )}
                   </ListGroupItem>
                 ))
               ) : (

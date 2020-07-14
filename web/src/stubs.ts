@@ -50,7 +50,6 @@ export const pulls: IPull[] = [
     author: {
       url: 'https://github.com/kilinochi',
       login: 'kilinochi',
-      name: 'Arman Shamenov',
       avatar: 'https://avatars2.githubusercontent.com/u/34065879?v=4'
     },
     open: false,
@@ -76,7 +75,6 @@ export const pulls: IPull[] = [
     author: {
       url: 'https://github.com/vaddya',
       login: 'vaddya',
-      name: 'Vadim Dyachkov',
       avatar: 'https://avatars3.githubusercontent.com/u/15687094?v=4'
     },
     open: true,

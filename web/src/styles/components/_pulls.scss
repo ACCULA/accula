@@ -25,4 +25,14 @@
       margin-right: $padding-small-horizontal;
     }
   }
+  
+  .prev-pull-badge {
+    float: none;
+    margin-right: $padding-xs-horizontal
+  }
+}
+
+.pull-refresh-clone {
+  margin-top: -7px;
+  margin-right: $padding-small-horizontal;
 }

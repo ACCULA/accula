@@ -17,6 +17,7 @@ import { getPullsAction } from 'store/pulls/actions'
 import { IProject, IProjectConf, IUser } from 'types'
 import { ProjectPullsTab } from 'views/Projects/ProjectPullsTab'
 import { ProjectConfigurationTab } from 'views/Projects/ProjectConfigurationTab'
+import { ProjectOverviewTab } from 'views/Projects/ProjectOverviewTab'
 
 const mapStateToProps = (state: AppState) => ({
   isFetching: state.projects.project.isFetching || !state.projects.project.value,
@@ -97,7 +98,7 @@ const Project = ({
               </>
             }
           >
-            Overview
+            <ProjectOverviewTab />
           </Tab>
           <Tab
             eventKey="pulls"

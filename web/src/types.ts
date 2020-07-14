@@ -45,7 +45,6 @@ export interface IShortPull {
   author: {
     url: string
     login: string
-    name: string
     avatar: string
   }
 }
@@ -65,7 +64,6 @@ export interface IPull {
   author: {
     url: string
     login: string
-    name: string
     avatar: string
   }
   title: string
