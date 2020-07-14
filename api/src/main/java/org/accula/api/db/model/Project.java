@@ -4,8 +4,6 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 
-import java.util.List;
-
 /**
  * @author Anton Lamtev
  */

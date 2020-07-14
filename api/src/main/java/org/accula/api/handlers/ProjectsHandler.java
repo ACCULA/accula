@@ -129,7 +129,7 @@ public final class ProjectsHandler {
     public Mono<ServerResponse> getRepoAdmins(ServerRequest request) {
         return withProjectId(request)
                 .flatMap(projectRepo::findById)
-                .flatMap(project -> githubClient.getRepoAdmins(project.getGithubRepo().getOwner().getLogin(), project.getGithubRepo().getName()))
+                .flatMap(p -> githubClient.getRepoAdmins(p.getGithubRepo().getOwner().getLogin(), p.getGithubRepo().getName()))
                 .flatMapMany(userRepo::findByGithubIds)
                 .map(ModelToDtoConverter::convert)
                 .collectList()
