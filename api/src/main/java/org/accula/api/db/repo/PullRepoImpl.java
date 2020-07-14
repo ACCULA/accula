@@ -184,7 +184,7 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
     private static PostgresqlStatement selectByProjectIdStatement(final Connection connection) {
         return selectStatement(connection, """
                 WHERE pull.project_id = $1
-                ORDER BY pull.updated_at DESC
+                ORDER BY pull.open DESC, pull.updated_at DESC
                 """);
     }
 

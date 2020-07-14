@@ -98,7 +98,7 @@ const Project = ({
               </>
             }
           >
-            <ProjectOverviewTab />
+            <ProjectOverviewTab project={project} />
           </Tab>
           <Tab
             eventKey="pulls"

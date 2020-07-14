@@ -168,11 +168,12 @@ public final class ProjectsHandler {
         final var owner = ownerAndRepo.getT1();
         final var repo = ownerAndRepo.getT2();
 
-        return Mono.zip(
-                githubClient.hasAdminPermission(owner, repo).subscribeOn(remoteCallsScheduler),
-                githubClient.getRepo(owner, repo).subscribeOn(remoteCallsScheduler),
-                githubClient.getRepositoryPulls(owner, repo, State.ALL).subscribeOn(remoteCallsScheduler),
-                currentUser.get());
+        //@formatter:off
+        return Mono.zip(githubClient.hasAdminPermission(owner, repo).subscribeOn(remoteCallsScheduler),
+                        githubClient.getRepo(owner, repo).subscribeOn(remoteCallsScheduler),
+                        githubClient.getRepositoryPulls(owner, repo, State.ALL).subscribeOn(remoteCallsScheduler),
+                        currentUser.get());
+        //@formatter:on
     }
 
     private Mono<ProjectDto> saveProjectData(final Tuple4<Boolean, GithubApiRepo, GithubApiPull[], User> tuple) {

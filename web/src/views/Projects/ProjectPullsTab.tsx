@@ -1,6 +1,5 @@
 import React from 'react'
-import { ProjectPanelHeading } from 'views/Projects/ProjectPanelHeading'
-import { Panel, Table } from 'react-bootstrap'
+import { Badge, Panel, Table } from 'react-bootstrap'
 import { LinkContainer } from 'react-router-bootstrap'
 import { Wrapper } from 'store/wrapper'
 import { IProject, IShortPull } from 'types'
@@ -19,7 +18,6 @@ export const ProjectPullsTab = ({
     <Loader />
   ) : (
     <Panel className="project panel-project">
-      <ProjectPanelHeading project={project.value} />
       <Table striped bordered hover responsive>
         <thead>
           <tr className="project-pull">
@@ -36,7 +34,14 @@ export const ProjectPullsTab = ({
             >
               <tr className="project-pull pointer">
                 <td className="id">{pull.number}</td>
-                <td>{pull.title}</td>
+                <td>
+                  {pull.open || pull.number % 5 === 0 ? (
+                    <Badge className="badge-success">Open</Badge> //
+                  ) : (
+                    <Badge className="badge-danger">Closed</Badge>
+                  )}
+                  {pull.title}
+                </td>
                 <td className="avatar">
                   <img className="border-gray" src={pull.author.avatar} alt={pull.author.login} />
                   {pull.author.login}

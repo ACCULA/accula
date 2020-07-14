@@ -62,5 +62,19 @@
       }
     }
   }
+  
+  .badge {
+    background: none;
+    border: 1px solid $light-gray;
+    margin-right: $padding-xs-horizontal;
+    
+    &.badge-success {
+      color: $success-color
+    }
+
+    &.badge-danger {
+      color: $danger-color
+    }
+  }
 }
 
