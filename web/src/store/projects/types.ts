@@ -1,14 +1,20 @@
-import { IProject } from 'types'
+import { IProject, IProjectConf, IProjectRef, IUser } from 'types'
 import { Wrapper } from 'store/wrapper'
 
 export const SET_PROJECTS = 'SET_PROJECTS'
 export const SET_PROJECT = 'SET_PROJECT'
-export const SET_CREATION_STATE = 'SET_CREATION_STATE'
+export const SET_PROJECT_CONF = 'SET_PROJECT_CONF'
+export const UPDATE_PROJECT_CONF = 'UPDATE_PROJECT_CONF'
+export const SET_REPO_ADMINS = 'SET_REPO_ADMINS'
+export const CREATE_PROJECT = 'CREATE_PROJECT'
 
 export interface ProjectsState {
   projects: Wrapper<IProject[]>
   project: Wrapper<IProject>
-  creationState: [boolean, string]
+  createProject: [boolean, string]
+  projectConf: Wrapper<IProjectConf> & IProjectRef
+  updateProjectConf: [boolean, string]
+  repoAdmins: Wrapper<IUser[]> & IProjectRef
 }
 
 export interface SetProjects {
@@ -21,12 +27,30 @@ export interface SetProject {
   payload: Wrapper<IProject>
 }
 
-export interface SetCreationState {
-  type: typeof SET_CREATION_STATE
-  creationState: [boolean, string]
+export interface SetProjectConf {
+  type: typeof SET_PROJECT_CONF
+  payload: Wrapper<IProjectConf> & IProjectRef
+}
+
+export interface UpdateProjectConf {
+  type: typeof UPDATE_PROJECT_CONF
+  payload: [boolean, string]
+}
+
+export interface SetRepoAdmins {
+  type: typeof SET_REPO_ADMINS
+  payload: Wrapper<IUser[]> & IProjectRef
+}
+
+export interface CreateProject {
+  type: typeof CREATE_PROJECT
+  payload: [boolean, string]
 }
 
 export type ProjectsActionTypes =
   | SetProjects //
   | SetProject
-  | SetCreationState
+  | SetProjectConf
+  | UpdateProjectConf
+  | SetRepoAdmins
+  | CreateProject

@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 import { API_URL, DEBUG } from 'utils'
-import { IProject, IToken } from 'types'
+import { IProject, IProjectConf, IToken, IUser } from 'types'
 import { projects } from 'stubs'
 
 export const getProjects = async (): Promise<IProject[]> => {
@@ -33,7 +33,56 @@ export const getProject = async (id: number, token: IToken): Promise<IProject> =
     .then(resp => resp.data as IProject)
 }
 
-export const createProject = async (url: string, token: IToken): Promise<IProject | string> => {
+export const getProjectConf = async (id: number, token: IToken): Promise<IProjectConf> => {
+  if (DEBUG) {
+    return Promise.resolve({ admins: [], cloneMinLineCount: 0 })
+  }
+  return axios
+    .get(`${API_URL}/api/projects/${id}/conf`, {
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token.accessToken}`
+      },
+      withCredentials: true
+    })
+    .then(resp => resp.data as IProjectConf)
+}
+
+export const putProjectConf = async (
+  id: number,
+  token: IToken,
+  conf: IProjectConf
+): Promise<void> => {
+  console.log(conf)
+  if (DEBUG) {
+    return Promise.resolve()
+  }
+  return axios //
+    .put(`${API_URL}/api/projects/${id}/conf`, conf, {
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token.accessToken}`
+      },
+      withCredentials: true
+    })
+}
+
+export const getRepoAdmins = async (id: number, token: IToken): Promise<IUser[]> => {
+  if (DEBUG) {
+    return Promise.resolve([])
+  }
+  return axios
+    .get(`${API_URL}/api/projects/${id}/admins`, {
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token.accessToken}`
+      },
+      withCredentials: true
+    })
+    .then(resp => resp.data as IUser[])
+}
+
+export const postProject = async (url: string, token: IToken): Promise<IProject | string> => {
   if (DEBUG) {
     return Promise.resolve(projects[0])
   }

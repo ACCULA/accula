@@ -1,6 +1,7 @@
 export interface Wrapper<T> {
   isFetching: boolean
   value?: T
+  error?: string
 }
 
 export const notFetching = {
@@ -20,6 +21,7 @@ export const fetched = <T>(value: T, args?: any): Wrapper<T> => ({
 export const failed = <T>(error: Error): Wrapper<T> => {
   console.log(error)
   return {
-    isFetching: false
+    isFetching: false,
+    error: error.message
   }
 }

@@ -4,21 +4,30 @@ import { Button } from 'react-bootstrap'
 import { CodeDiff, DiffMethod } from 'components/CodeDiff'
 import { Loader } from 'components/Loader'
 import { IPullClonesState } from 'store/pulls/types'
+import { SplitUnifiedViewButton } from 'components/CodeDiff/SplitUnifiedViewButton'
 
 interface PullClonesTabProps {
   clones: IPullClonesState
+  refreshClones: () => void
 }
 
-export const PullClonesTab = ({ clones }: PullClonesTabProps) => {
+export const PullClonesTab = ({ clones, refreshClones }: PullClonesTabProps) => {
   const [splitView, setSplitView] = useState(false)
   return clones.isFetching ? (
     <Loader />
   ) : (
     <>
       <div className="pull-right">
-        <Button bsStyle="info" onClick={() => setSplitView(!splitView)} style={{ marginTop: -7 }}>
-          {splitView ? 'Unified view' : 'Split view'}
+        <Button
+          bsStyle="info" //
+          className="pull-refresh-clone"
+          onClick={refreshClones}
+        >
+          <i className="fas fa-fw fa-sync-alt" />{' '}Refresh
         </Button>
+        {clones.value && clones.value.length > 0 && (
+          <SplitUnifiedViewButton splitView={splitView} setSplitView={setSplitView} />
+        )}
       </div>
       <h5>{clones.value?.length || 0} clones found</h5>
       {clones.value &&

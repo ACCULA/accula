@@ -1,7 +1,7 @@
 import { AppDispatch, AppStateSupplier } from 'store'
 import { requireToken } from 'store/users/actions'
 import { failed, fetched, fetching, notFetching, Wrapper } from 'store/wrapper'
-import { IPull } from 'types'
+import { IPull, IShortPull } from 'types'
 import {
   IPullClonesState,
   IPullComparesState,
@@ -17,9 +17,9 @@ import {
   SetPull,
   SetPulls
 } from './types'
-import { getClones, getCompares, getDiffs, getPull, getPulls } from './services'
+import { getClones, getCompares, getDiffs, getPull, getPulls, refreshClones } from './services'
 
-const setPulls = (payload: Wrapper<IPull[]>): SetPulls => ({
+const setPulls = (payload: Wrapper<IShortPull[]>): SetPulls => ({
   type: SET_PULLS,
   payload
 })
@@ -74,13 +74,6 @@ export const getPullAction = (projectId: number, pullNumber: number) => async (
 ) => {
   await requireToken(dispatch, getState)
   const { pulls, users } = getState()
-  if (pulls.pulls.value) {
-    const pull = pulls.pulls.value.find(p => p.number === pullNumber && p.projectId === projectId)
-    if (pull) {
-      dispatch(setPull(fetched(pull)))
-      return
-    }
-  }
   if (pulls.pull.isFetching) {
     return
   }
@@ -173,5 +166,20 @@ export const getClonesAction = (projectId: number, pullNumber: number) => async 
     } catch (e) {
       dispatch(setClones(failed(e)))
     }
+  }
+}
+
+export const refreshClonesAction = (projectId: number, pullNumber: number) => async (
+  dispatch: AppDispatch, //
+  getState: AppStateSupplier
+) => {
+  await requireToken(dispatch, getState)
+  const { users } = getState()
+  try {
+    dispatch(setClones(fetching))
+    const clones = await refreshClones(users.token, projectId, pullNumber)
+    dispatch(setClones(fetched(clones, { projectId, pullNumber })))
+  } catch (e) {
+    dispatch(setClones(failed(e)))
   }
 }

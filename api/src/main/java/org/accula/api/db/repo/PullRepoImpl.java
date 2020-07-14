@@ -85,6 +85,17 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
     }
 
     @Override
+    public Flux<Pull> findPrevious(Long projectId, Integer number, Long authorId) {
+        return manyWithConnection(connection -> Mono
+                .from(selectPreviousByNumberAndAuthorIdStatement(connection)
+                        .bind("$1", projectId)
+                        .bind("$2", number)
+                        .bind("$3", authorId)
+                        .execute())
+                .flatMapMany(result -> ConnectionProvidedRepo.convertMany(result, this::convert)));
+    }
+
+    @Override
     public Flux<Pull> findUpdatedEarlierThan(final Long projectId, final Integer number) {
         return manyWithConnection(connection -> Mono
                 .from(selectUpdatedEarlierStatement(connection)
@@ -173,12 +184,19 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
     private static PostgresqlStatement selectByProjectIdStatement(final Connection connection) {
         return selectStatement(connection, """
                 WHERE pull.project_id = $1
-                ORDER BY pull.updated_at DESC
+                ORDER BY pull.open DESC, pull.updated_at DESC
                 """);
     }
 
     private static PostgresqlStatement selectByNumberStatement(final Connection connection) {
         return selectStatement(connection, "WHERE pull.project_id = $1 AND pull.number = $2");
+    }
+    
+    private static PostgresqlStatement selectPreviousByNumberAndAuthorIdStatement(final Connection connection) {
+        return selectStatement(connection, """
+                WHERE pull.project_id = $1 AND pull.number < $2 AND author.id = $3
+                ORDER BY pull.number DESC
+                """);
     }
 
     private static PostgresqlStatement selectUpdatedEarlierStatement(final Connection connection) {

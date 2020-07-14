@@ -1,13 +1,13 @@
 import axios from 'axios'
 
 import { API_URL, DEBUG } from 'utils'
-import { IClone, IDiff, IPull, IToken } from 'types'
+import { IClone, IDiff, IPull, IShortPull, IToken } from 'types'
 import { pulls, clones } from 'stubs'
 
 export const getPulls = async (
   token: IToken, //
   projectId: number
-): Promise<IPull[]> => {
+): Promise<IShortPull[]> => {
   if (DEBUG) {
     return Promise.resolve(pulls)
   }
@@ -19,7 +19,7 @@ export const getPulls = async (
       },
       withCredentials: true
     })
-    .then(resp => resp.data as IPull[])
+    .then(resp => resp.data as IShortPull[])
 }
 
 export const getPull = async (
@@ -90,6 +90,25 @@ export const getClones = async (
   }
   return axios
     .get(`${API_URL}/api/projects/${projectId}/pulls/${pullId}/clones`, {
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token.accessToken}`
+      },
+      withCredentials: true
+    })
+    .then(resp => resp.data as IClone[])
+}
+
+export const refreshClones = async (
+  token: IToken,
+  projectId: number,
+  pullId: number
+): Promise<IClone[]> => {
+  if (DEBUG) {
+    return Promise.resolve([])
+  }
+  return axios //
+    .post(`${API_URL}/api/projects/${projectId}/pulls/${pullId}/clones/refresh`, null, {
       headers: {
         Accept: 'application/json',
         Authorization: `Bearer ${token.accessToken}`

@@ -1,15 +1,16 @@
 import React, { useState } from 'react'
-import { Button, FormControl, FormGroup } from 'react-bootstrap'
+import { FormControl, FormGroup } from 'react-bootstrap'
 
-import { IPull } from 'types'
+import { IShortPull } from 'types'
 import { IPullComparesState } from 'store/pulls/types'
 import { CodeDiff, DiffMethod } from 'components/CodeDiff'
 import { Loader } from 'components/Loader'
+import { SplitUnifiedViewButton } from 'components/CodeDiff/SplitUnifiedViewButton'
 import { getTitle } from './PullChangesTab'
 
 interface PullCompareTabProps {
   pullId: number
-  pulls: IPull[]
+  pulls: IShortPull[]
   compares: IPullComparesState
   compareWith: number
   onSelect: (compareWith: number) => void
@@ -42,7 +43,7 @@ export const PullCompareTab = ({
                 .sort((a, b) => (a.number > b.number ? -1 : a.number === b.number ? 0 : 1))
                 .map(pull => (
                   <option key={pull.number} value={pull.number}>
-                    {`#${pull.number} ${pull.title} (${pull.head.label})`}
+                    {`#${pull.number} ${pull.title} (@${pull.author.login})`}
                   </option>
                 ))}
           </FormControl>
@@ -55,13 +56,7 @@ export const PullCompareTab = ({
       ) : (
         <>
           <div className="pull-right">
-            <Button
-              bsStyle="info"
-              onClick={() => setSplitView(!splitView)}
-              style={{ marginTop: -7 }}
-            >
-              {splitView ? 'Unified view' : 'Split view'}
-            </Button>
+            <SplitUnifiedViewButton splitView={splitView} setSplitView={setSplitView} />
           </div>
           <h5>{compares.value.length} files changed</h5>
           {compares.value.map((diff, i) => {

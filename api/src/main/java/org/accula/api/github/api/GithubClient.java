@@ -5,6 +5,8 @@ import org.accula.api.github.model.GithubApiPull;
 import org.accula.api.github.model.GithubApiRepo;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
 /**
  * @author Anton Lamtev
  */
@@ -12,6 +14,8 @@ public interface GithubClient {
     Mono<Boolean> hasAdminPermission(String owner, String repo);
 
     Mono<GithubApiRepo> getRepo(String owner, String repo);
+
+    Mono<List<Long>> getRepoAdmins(String owner, String repo);
 
     Mono<GithubApiPull[]> getRepositoryPulls(String owner, String repo, GithubApiPull.State state);
 

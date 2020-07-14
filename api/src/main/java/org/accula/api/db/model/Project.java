@@ -16,7 +16,5 @@ public class Project {
     GithubRepo githubRepo;
     User creator;
     @Builder.Default
-    User[] admins = new User[0];
-    @Builder.Default
     Integer openPullCount = 0;
 }

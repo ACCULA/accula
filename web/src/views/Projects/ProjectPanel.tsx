@@ -14,7 +14,7 @@ export const ProjectPanel = (project: IProject) => {
       </Panel.Body>
       <Panel.Footer className="clearfix">
         <div className="pull-right">
-          <Link to={`/projects/${project.id}`}>
+          <Link to={`/projects/${project.id}/pulls`}>
             View {project.repoOpenPullCount} opened pull requests
             <i className="fa fa-fw fa-chevron-circle-right" />
           </Link>

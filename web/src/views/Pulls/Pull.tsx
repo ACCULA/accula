@@ -13,7 +13,8 @@ import {
   getComparesAction,
   getDiffsAction,
   getPullAction,
-  getPullsAction
+  getPullsAction,
+  refreshClonesAction
 } from 'store/pulls/actions'
 import { getProjectAction } from 'store/projects/actions'
 import { PullCompareTab } from 'views/Pulls/PullCompareTab'
@@ -42,7 +43,8 @@ const mapDispatchToProps = (dispatch: AppDispatch) => ({
   getPulls: bindActionCreators(getPullsAction, dispatch),
   getDiffs: bindActionCreators(getDiffsAction, dispatch),
   getCompares: bindActionCreators(getComparesAction, dispatch),
-  getClones: bindActionCreators(getClonesAction, dispatch)
+  getClones: bindActionCreators(getClonesAction, dispatch),
+  refreshClones: bindActionCreators(refreshClonesAction, dispatch)
 })
 
 const connector = connect(mapStateToProps, mapDispatchToProps)
@@ -61,7 +63,8 @@ const Pull = ({
   getPulls,
   getDiffs,
   getCompares,
-  getClones
+  getClones,
+  refreshClones
 }: PullsProps) => {
   const history = useHistory()
   const location = useLocation()
@@ -77,7 +80,7 @@ const Pull = ({
       setCompareWith(query)
       getCompares(projectId, pullId, query)
     }
-  }, [compareWith, location])
+  }, [compareWith, location, getCompares, projectId, pullId])
 
   useEffect(() => {
     getProject(projectId)
@@ -186,7 +189,10 @@ const Pull = ({
             </>
           }
         >
-          <PullClonesTab clones={clones} />
+          <PullClonesTab
+            clones={clones} //
+            refreshClones={() => refreshClones(projectId, pullId)}
+          />
         </Tab>
       </Tabs>
     </div>

@@ -41,10 +41,10 @@ export const PullOverviewTab = ({ pull }: PullOverviewTabProps) => {
                   <Badge className="badge-danger">Closed</Badge>
                 )}
               </ListGroupItem>
-              <ListGroupItem>
-                <i className="far fa-fw fa-check-square" /> Checks status
-                <Badge className="badge-success">Passed</Badge>
-              </ListGroupItem>
+              {/*<ListGroupItem>*/}
+              {/*  <i className="far fa-fw fa-check-square" /> Checks status*/}
+              {/*  <Badge className="badge-success">Passed</Badge>*/}
+              {/*</ListGroupItem>*/}
               <ListGroupItem>
                 <i className="far fa-fw fa-clock" /> Created
                 <Badge
@@ -79,8 +79,6 @@ export const PullOverviewTab = ({ pull }: PullOverviewTabProps) => {
                   <GitHubLink to={pull.author.url}>
                     <code>{`@${pull.author.login}`}</code>
                   </GitHubLink>
-                  <br />
-                  <small>{pull.author.name}</small>
                 </h4>
               </ListGroupItem>
             </ListGroup>
@@ -95,15 +93,15 @@ export const PullOverviewTab = ({ pull }: PullOverviewTabProps) => {
             <ListGroup>
               {pull.previousPulls.length > 0 ? (
                 pull.previousPulls.map(prevPull => (
-                  <ListGroupItem key={prevPull.id}>
-                    <Link to={`/projects/${prevPull.projectId}/pulls/${prevPull.id}`}>
-                      {prevPull.title}
-                    </Link>
+                  <ListGroupItem key={prevPull.number}>
                     {prevPull.open ? (
-                      <Badge className="badge-success">Open</Badge> //
+                      <Badge className="badge-success prev-pull-badge">Open</Badge> //
                     ) : (
-                      <Badge className="badge-danger">Closed</Badge>
+                      <Badge className="badge-danger prev-pull-badge">Closed</Badge>
                     )}
+                    <Link to={`/projects/${prevPull.projectId}/pulls/${prevPull.number}`}>
+                      {`#${prevPull.number}: ${prevPull.title}`}
+                    </Link>
                   </ListGroupItem>
                 ))
               ) : (

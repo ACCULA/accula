@@ -9,12 +9,14 @@ import org.accula.api.db.model.User;
 import org.accula.api.db.repo.CurrentUserRepo;
 import org.accula.api.db.repo.GithubUserRepo;
 import org.accula.api.db.repo.ProjectRepo;
+import org.accula.api.db.repo.UserRepo;
 import org.accula.api.github.api.GithubClient;
 import org.accula.api.github.api.GithubClientException;
 import org.accula.api.github.model.GithubApiHook;
 import org.accula.api.github.model.GithubApiPull;
 import org.accula.api.github.model.GithubApiPull.State;
 import org.accula.api.github.model.GithubApiRepo;
+import org.accula.api.handlers.dto.ProjectConfDto;
 import org.accula.api.handlers.dto.ProjectDto;
 import org.accula.api.handlers.request.CreateProjectRequestBody;
 import org.accula.api.handlers.response.ErrorBody;
@@ -29,7 +31,9 @@ import reactor.util.function.Tuple2;
 import reactor.util.function.Tuple4;
 import reactor.util.function.Tuples;
 
+import java.time.Duration;
 import java.util.Arrays;
+import java.util.List;
 
 import static java.util.function.Predicate.isEqual;
 import static java.util.function.Predicate.not;
@@ -52,9 +56,9 @@ public final class ProjectsHandler {
     private final GithubClient githubClient;
     private final ProjectRepo projectRepo;
     private final GithubUserRepo githubUserRepo;
+    private final UserRepo userRepo;
     private final ProjectUpdater projectUpdater;
     private final GithubApiToModelConverter githubToModelConverter;
-    private final ModelToDtoConverter modelToDtoConverter;
 
     public Mono<ServerResponse> getTop(final ServerRequest request) {
         return Mono
@@ -63,17 +67,14 @@ public final class ProjectsHandler {
                 .flatMap(count -> ServerResponse
                         .ok()
                         .contentType(APPLICATION_JSON)
-                        .body(projectRepo.getTop(count).map(modelToDtoConverter::convert), ProjectDto.class))
+                        .body(projectRepo.getTop(count).map(ModelToDtoConverter::convert), ProjectDto.class))
                 .doOnSuccess(response -> log.debug("{}: {}", request, response.statusCode()));
     }
 
     public Mono<ServerResponse> get(final ServerRequest request) {
-        return Mono
-                .justOrEmpty(request.pathVariable("id"))
-                .map(Long::parseLong)
-                .onErrorMap(e -> e instanceof NumberFormatException, e -> PROJECT_NOT_FOUND_EXCEPTION)
+        return withProjectId(request)
                 .flatMap(projectRepo::findById)
-                .map(modelToDtoConverter::convert)
+                .map(ModelToDtoConverter::convert)
                 .switchIfEmpty(Mono.error(PROJECT_NOT_FOUND_EXCEPTION))
                 .flatMap(project -> ServerResponse
                         .ok()
@@ -113,10 +114,7 @@ public final class ProjectsHandler {
     }
 
     public Mono<ServerResponse> delete(final ServerRequest request) {
-        return Mono
-                .justOrEmpty(request.pathVariable("id"))
-                .map(Long::parseLong)
-                .onErrorMap(e -> e instanceof NumberFormatException, e -> PROJECT_NOT_FOUND_EXCEPTION)
+        return withProjectId(request)
                 .zipWith(currentUser.get())
                 .flatMap(projectIdAndCurrentUser -> {
                     final var projectId = projectIdAndCurrentUser.getT1();
@@ -126,6 +124,43 @@ public final class ProjectsHandler {
                 })
                 .flatMap(success -> ServerResponse.ok().build())
                 .onErrorResume(PROJECT_NOT_FOUND_EXCEPTION::equals, e -> ServerResponse.notFound().build());
+    }
+
+    public Mono<ServerResponse> getRepoAdmins(ServerRequest request) {
+        return withProjectId(request)
+                .flatMap(projectRepo::findById)
+                .flatMap(p -> githubClient.getRepoAdmins(p.getGithubRepo().getOwner().getLogin(), p.getGithubRepo().getName()))
+                .flatMapMany(userRepo::findByGithubIds)
+                .map(ModelToDtoConverter::convert)
+                .collectList()
+                .flatMap(admins -> ServerResponse
+                        .ok()
+                        .contentType(APPLICATION_JSON)
+                        .bodyValue(admins))
+                .switchIfEmpty(Mono.error(PROJECT_NOT_FOUND_EXCEPTION))
+                .onErrorResume(PROJECT_NOT_FOUND_EXCEPTION::equals, e -> ServerResponse.notFound().build())
+                .onErrorResume(GithubClientException.class, e -> {
+                    log.warn("Cannot fetch repository admins", e);
+                    return ServerResponse.badRequest().build();
+                });
+    }
+
+    public Mono<ServerResponse> getConf(final ServerRequest request) {
+        return withProjectId(request)
+                .delayElement(Duration.ofMillis(100))
+                .flatMap(id -> ServerResponse
+                        .ok()
+                        .bodyValue(ProjectConfDto.builder()
+                                .admins(List.of(1L, 2L))
+                                .cloneMinLineCount(10)
+                                .build())); // TODO
+    }
+
+    public Mono<ServerResponse> updateConf(final ServerRequest request) {
+        return withProjectId(request)
+                .delayElement(Duration.ofSeconds(1))
+                .flatMap(id -> request.bodyToMono(ProjectConfDto.class)
+                        .flatMap(dto -> ServerResponse.ok().build())); // TODO
     }
 
     private Mono<Tuple4<Boolean, GithubApiRepo, GithubApiPull[], User>> retrieveGithubInfoForProjectCreation(
@@ -163,7 +198,7 @@ public final class ProjectsHandler {
                     .flatMap(repoOwner -> projectRepo.upsert(projectGithubRepo, currentUser)
                             .doOnError(e -> log.error("Error saving Project: {}-{}", projectGithubRepo.getOwner(), currentUser, e)))
                     .flatMap(project -> projectUpdater.update(project.getId(), githubApiPulls)
-                            .map(openPullCount -> modelToDtoConverter.convert(project, openPullCount)));
+                            .map(openPullCount -> ModelToDtoConverter.convert(project, openPullCount)));
         });
     }
 
@@ -199,6 +234,13 @@ public final class ProjectsHandler {
         }
 
         return Tuples.of(pathComponents.get(0), pathComponents.get(1));
+    }
+
+    private static Mono<Long> withProjectId(final ServerRequest request) {
+        return Mono
+                .justOrEmpty(request.pathVariable("id"))
+                .map(Long::parseLong)
+                .onErrorMap(NumberFormatException.class, e -> PROJECT_NOT_FOUND_EXCEPTION);
     }
 
     @RequiredArgsConstructor

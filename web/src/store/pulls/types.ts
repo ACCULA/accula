@@ -1,4 +1,4 @@
-import { IClone, ICompareRef, IDiff, IPull, IPullRef } from 'types'
+import { IClone, ICompareRef, IDiff, IPull, IPullRef, IShortPull } from 'types'
 import { Wrapper } from 'store/wrapper'
 
 export const SET_PULLS = 'SET_PULLS'
@@ -12,7 +12,7 @@ export type IPullComparesState = Wrapper<IDiff[]> & ICompareRef
 export type IPullClonesState = Wrapper<IClone[]> & IPullRef
 
 export interface PullsState {
-  pulls: Wrapper<IPull[]>
+  pulls: Wrapper<IShortPull[]>
   pull: Wrapper<IPull>
   diffs: IPullDiffsState
   compares: IPullComparesState
@@ -21,7 +21,7 @@ export interface PullsState {
 
 export interface SetPulls {
   type: typeof SET_PULLS
-  payload: Wrapper<IPull[]>
+  payload: Wrapper<IShortPull[]>
 }
 
 export interface SetPull {

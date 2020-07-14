@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
-import { Button } from 'react-bootstrap'
 import { CodeDiff, DiffMethod } from 'components/CodeDiff'
 import { Loader } from 'components/Loader'
 import { IPullDiffsState } from 'store/pulls/types'
+import { SplitUnifiedViewButton } from 'components/CodeDiff/SplitUnifiedViewButton'
 
 interface PullChangesTabProps {
   diffs: IPullDiffsState
@@ -31,9 +31,9 @@ export const PullChangesTab = ({ diffs }: PullChangesTabProps) => {
   ) : (
     <>
       <div className="pull-right">
-        <Button bsStyle="info" onClick={() => setSplitView(!splitView)} style={{ marginTop: -7 }}>
-          {splitView ? 'Unified view' : 'Split view'}
-        </Button>
+        {diffs.value.length > 0 && (
+          <SplitUnifiedViewButton splitView={splitView} setSplitView={setSplitView} />
+        )}
       </div>
       <h5>{diffs.value.length} files changed</h5>
       {diffs.value.map((diff, i) => {
