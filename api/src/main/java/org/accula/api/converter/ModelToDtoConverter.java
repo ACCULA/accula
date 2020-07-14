@@ -6,7 +6,11 @@ import org.accula.api.db.model.Project;
 import org.accula.api.db.model.Pull;
 import org.accula.api.db.model.CommitSnapshot;
 import org.accula.api.db.model.User;
-import org.accula.api.handlers.dto.*;
+import org.accula.api.handlers.dto.GithubUserDto;
+import org.accula.api.handlers.dto.ProjectDto;
+import org.accula.api.handlers.dto.PullDto;
+import org.accula.api.handlers.dto.ShortPullDto;
+import org.accula.api.handlers.dto.UserDto;
 
 import java.net.URLEncoder;
 import java.util.Collections;
@@ -22,6 +26,9 @@ public final class ModelToDtoConverter {
     private static final String GITHUB_REPO_URL_FORMAT = GITHUB_USER_URL_FORMAT + "/%s";
     private static final String GITHUB_PULL_URL_FORMAT = GITHUB_REPO_URL_FORMAT + "/pull/%s";
 
+    private ModelToDtoConverter() {
+    }
+    
     public static ProjectDto convert(final Project project) {
         return convert(project, project.getOpenPullCount());
     }
@@ -78,7 +85,7 @@ public final class ModelToDtoConverter {
     }
     
     public static List<ShortPullDto> convertShort(final List<Pull> pulls) {
-        if (pulls == null || pulls.isEmpty()) {
+        if (pulls.isEmpty()) {
             return Collections.emptyList();
         }
         return pulls

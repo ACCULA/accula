@@ -14,8 +14,6 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.Collections;
-
 /**
  * @author Anton Lamtev
  */
@@ -71,7 +69,6 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
                                 .id(Converters.value(row, "id", Long.class))
                                 .githubRepo(githubRepo)
                                 .creator(creator)
-                                .admins(Collections.emptyList())
                                 .build()
                         )));
     }
@@ -216,7 +213,6 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
                         "project_creator_github_user_avatar",
                         "project_creator_github_user_is_org"))
                 .openPullCount(Converters.integer(row, "project_open_pull_count"))
-                .admins(Collections.emptyList()) // TODO: fetch admin list
                 .build();
     }
 }

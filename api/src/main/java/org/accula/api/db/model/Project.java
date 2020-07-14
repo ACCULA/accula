@@ -17,7 +17,6 @@ public class Project {
     Long id;
     GithubRepo githubRepo;
     User creator;
-    List<Long> admins;
     @Builder.Default
     Integer openPullCount = 0;
 }

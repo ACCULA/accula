@@ -15,7 +15,7 @@ import static lombok.AccessLevel.PRIVATE;
 public class GithubApiCollaborator {
     Long id;
     String login;
-    GithubApiCollaboratorPermissions permissions;
+    Permissions permissions;
 
     public boolean hasAdminPermissions() {
         return permissions != null && permissions.getAdmin() != null && permissions.getAdmin();
@@ -24,7 +24,7 @@ public class GithubApiCollaborator {
     @Value
     @NoArgsConstructor(force = true, access = PRIVATE)
     @AllArgsConstructor
-    public static class GithubApiCollaboratorPermissions {
+    public static class Permissions {
         Boolean admin;
         Boolean push;
         Boolean pull;

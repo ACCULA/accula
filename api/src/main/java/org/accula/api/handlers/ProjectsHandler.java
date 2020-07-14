@@ -126,17 +126,53 @@ public final class ProjectsHandler {
                 .onErrorResume(PROJECT_NOT_FOUND_EXCEPTION::equals, e -> ServerResponse.notFound().build());
     }
 
+    public Mono<ServerResponse> getRepoAdmins(ServerRequest request) {
+        return withProjectId(request)
+                .flatMap(projectRepo::findById)
+                .flatMap(project -> githubClient.getRepoAdmins(project.getGithubRepo().getOwner().getLogin(), project.getGithubRepo().getName()))
+                .flatMapMany(userRepo::findByGithubIds)
+                .map(ModelToDtoConverter::convert)
+                .collectList()
+                .flatMap(admins -> ServerResponse
+                        .ok()
+                        .contentType(APPLICATION_JSON)
+                        .bodyValue(admins))
+                .switchIfEmpty(Mono.error(PROJECT_NOT_FOUND_EXCEPTION))
+                .onErrorResume(PROJECT_NOT_FOUND_EXCEPTION::equals, e -> ServerResponse.notFound().build())
+                .onErrorResume(GithubClientException.class, e -> {
+                    log.warn("Cannot fetch repository admins", e);
+                    return ServerResponse.badRequest().build();
+                });
+    }
+
+    public Mono<ServerResponse> getConf(final ServerRequest request) {
+        return withProjectId(request)
+                .delayElement(Duration.ofMillis(100))
+                .flatMap(id -> ServerResponse
+                        .ok()
+                        .bodyValue(ProjectConfDto.builder()
+                                .admins(List.of(1L, 2L))
+                                .cloneMinLineCount(10)
+                                .build())); // TODO
+    }
+
+    public Mono<ServerResponse> updateConf(final ServerRequest request) {
+        return withProjectId(request)
+                .delayElement(Duration.ofSeconds(1))
+                .flatMap(id -> request.bodyToMono(ProjectConfDto.class)
+                        .flatMap(dto -> ServerResponse.ok().build())); // TODO
+    }
+
     private Mono<Tuple4<Boolean, GithubApiRepo, GithubApiPull[], User>> retrieveGithubInfoForProjectCreation(
             final Tuple2<String, String> ownerAndRepo) {
         final var owner = ownerAndRepo.getT1();
         final var repo = ownerAndRepo.getT2();
 
-        //@formatter:off
-        return Mono.zip(githubClient.hasAdminPermission(owner, repo).subscribeOn(remoteCallsScheduler),
+        return Mono.zip(
+                githubClient.hasAdminPermission(owner, repo).subscribeOn(remoteCallsScheduler),
                 githubClient.getRepo(owner, repo).subscribeOn(remoteCallsScheduler),
                 githubClient.getRepositoryPulls(owner, repo, State.ALL).subscribeOn(remoteCallsScheduler),
                 currentUser.get());
-        //@formatter:on
     }
 
     private Mono<ProjectDto> saveProjectData(final Tuple4<Boolean, GithubApiRepo, GithubApiPull[], User> tuple) {
@@ -199,48 +235,11 @@ public final class ProjectsHandler {
         return Tuples.of(pathComponents.get(0), pathComponents.get(1));
     }
 
-    public Mono<ServerResponse> getRepoAdmins(ServerRequest request) {
-        return withProjectId(request)
-                .flatMap(projectRepo::findById)
-                .flatMap(project -> githubClient.getRepoAdmins(project.getGithubRepo().getOwner().getLogin(), project.getGithubRepo().getName()))
-                .flatMapMany(userRepo::findByGithubIds)
-                .map(ModelToDtoConverter::convert)
-                .collectList()
-                .flatMap(admins -> ServerResponse
-                        .ok()
-                        .contentType(APPLICATION_JSON)
-                        .bodyValue(admins))
-                .switchIfEmpty(Mono.error(PROJECT_NOT_FOUND_EXCEPTION))
-                .onErrorResume(PROJECT_NOT_FOUND_EXCEPTION::equals, e -> ServerResponse.notFound().build())
-                .onErrorResume(GithubClientException.class, e -> {
-                    log.warn("Cannot fetch repository admins", e);
-                    return ServerResponse.badRequest().build();
-                });
-    }
-
-    public Mono<ServerResponse> getConf(ServerRequest request) {
-        return withProjectId(request)
-                .delayElement(Duration.ofMillis(100))
-                .flatMap(id -> ServerResponse
-                        .ok()
-                        .bodyValue(ProjectConfDto.builder()
-                                .admins(List.of(1L, 2L))
-                                .cloneMinLineCount(10)
-                                .build())); // TODO
-    }
-
-    public Mono<ServerResponse> updateConf(ServerRequest request) {
-        return withProjectId(request)
-                .delayElement(Duration.ofSeconds(1))
-                .flatMap(id -> request.bodyToMono(ProjectConfDto.class)
-                        .flatMap(dto -> ServerResponse.ok().build())); // TODO
-    }
-
-    private static Mono<Long> withProjectId(ServerRequest request) {
+    private static Mono<Long> withProjectId(final ServerRequest request) {
         return Mono
                 .justOrEmpty(request.pathVariable("id"))
                 .map(Long::parseLong)
-                .onErrorMap(e -> e instanceof NumberFormatException, e -> PROJECT_NOT_FOUND_EXCEPTION);
+                .onErrorMap(NumberFormatException.class, e -> PROJECT_NOT_FOUND_EXCEPTION);
     }
 
     @RequiredArgsConstructor

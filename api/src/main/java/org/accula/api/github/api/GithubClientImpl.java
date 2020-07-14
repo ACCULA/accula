@@ -1,7 +1,11 @@
 package org.accula.api.github.api;
 
 import lombok.extern.slf4j.Slf4j;
-import org.accula.api.github.model.*;
+import org.accula.api.github.model.GithubApiCollaborator;
+import org.accula.api.github.model.GithubApiHook;
+import org.accula.api.github.model.GithubApiPull;
+import org.accula.api.github.model.GithubApiRepo;
+import org.accula.api.github.model.GithubApiUserPermission;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -73,7 +77,7 @@ public final class GithubClientImpl implements GithubClient {
     }
 
     @Override
-    public Mono<List<Long>> getRepoAdmins(String owner, String repo) {
+    public Mono<List<Long>> getRepoAdmins(final String owner, final String repo) {
         return withAccessToken(accessToken -> githubApiWebClient
                 .get()
                 .uri("/repos/{owner}/{repo}/collaborators", owner, repo)
