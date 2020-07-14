@@ -16,9 +16,11 @@ export const PullClonesTab = ({ clones }: PullClonesTabProps) => {
   ) : (
     <>
       <div className="pull-right">
-        <Button bsStyle="info" onClick={() => setSplitView(!splitView)} style={{ marginTop: -7 }}>
-          {splitView ? 'Unified view' : 'Split view'}
-        </Button>
+        {clones.value && clones.value.length > 0 && (
+          <Button bsStyle="info" onClick={() => setSplitView(!splitView)} style={{ marginTop: -7 }}>
+            {splitView ? 'Unified view' : 'Split view'}
+          </Button>
+        )}
       </div>
       <h5>{clones.value?.length || 0} clones found</h5>
       {clones.value &&

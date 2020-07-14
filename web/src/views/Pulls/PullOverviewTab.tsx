@@ -41,10 +41,10 @@ export const PullOverviewTab = ({ pull }: PullOverviewTabProps) => {
                   <Badge className="badge-danger">Closed</Badge>
                 )}
               </ListGroupItem>
-              <ListGroupItem>
-                <i className="far fa-fw fa-check-square" /> Checks status
-                <Badge className="badge-success">Passed</Badge>
-              </ListGroupItem>
+              {/*<ListGroupItem>*/}
+              {/*  <i className="far fa-fw fa-check-square" /> Checks status*/}
+              {/*  <Badge className="badge-success">Passed</Badge>*/}
+              {/*</ListGroupItem>*/}
               <ListGroupItem>
                 <i className="far fa-fw fa-clock" /> Created
                 <Badge
@@ -97,7 +97,7 @@ export const PullOverviewTab = ({ pull }: PullOverviewTabProps) => {
                 pull.previousPulls.map(prevPull => (
                   <ListGroupItem key={prevPull.number}>
                     <Link to={`/projects/${prevPull.projectId}/pulls/${prevPull.number}`}>
-                      {prevPull.title}
+                      {`#${prevPull.number}: ${prevPull.title}`}
                     </Link>
                     {prevPull.open ? (
                       <Badge className="badge-success">Open</Badge> //
