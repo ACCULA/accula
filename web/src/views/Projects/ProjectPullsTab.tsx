@@ -35,7 +35,7 @@ export const ProjectPullsTab = ({
               <tr className="project-pull pointer">
                 <td className="id">{pull.number}</td>
                 <td>
-                  {pull.open || pull.number % 5 === 0 ? (
+                  {pull.open ? (
                     <Badge className="badge-success">Open</Badge> //
                   ) : (
                     <Badge className="badge-danger">Closed</Badge>

@@ -4,6 +4,7 @@ import { Button } from 'react-bootstrap'
 import { CodeDiff, DiffMethod } from 'components/CodeDiff'
 import { Loader } from 'components/Loader'
 import { IPullClonesState } from 'store/pulls/types'
+import { SplitUnifiedViewButton } from 'components/CodeDiff/SplitUnifiedViewButton'
 
 interface PullClonesTabProps {
   clones: IPullClonesState
@@ -22,16 +23,10 @@ export const PullClonesTab = ({ clones, refreshClones }: PullClonesTabProps) => 
           className="pull-refresh-clone"
           onClick={refreshClones}
         >
-          Refresh
+          <i className="fas fa-fw fa-sync-alt" />{' '}Refresh
         </Button>
         {clones.value && clones.value.length > 0 && (
-          <Button
-            bsStyle="info" //
-            className="split-unified-view-button"
-            onClick={() => setSplitView(!splitView)}
-          >
-            {splitView ? 'Unified view' : 'Split view'}
-          </Button>
+          <SplitUnifiedViewButton splitView={splitView} setSplitView={setSplitView} />
         )}
       </div>
       <h5>{clones.value?.length || 0} clones found</h5>
