@@ -19,7 +19,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.LongStream;
-import java.util.stream.Stream;
 
 
 public class SuffixTreeCloneDetector implements CloneDetector {
@@ -54,79 +53,94 @@ public class SuffixTreeCloneDetector implements CloneDetector {
         final long targetFilesFirstSequenceId = sourceFilesLastSequenceId + 1;
         final long targetFilesLastSequenceId = addFilesIntoTree(targetFiles, suffixTree);
 
-        LongStream.rangeClosed(sourceFilesFirstSequenceId, sourceFilesLastSequenceId).forEach(sequenceId ->
-            CLONE_DETECTOR_INSTANCE.getAllSequenceCloneClasses(sequenceId, minCloneLength)
-                    .stream()
-                    .findFirst()
-                    .ifPresent(treeCloneClass -> {
-                        int cloneLength = treeCloneClass.getLength();
-                        CloneClass cloneClass = new CloneClass(extractBeginToken(treeCloneClass),
-                                                               extractEndToken(treeCloneClass));
-
-                        treeCloneClass.getTreeNode().getEdges()
-                                .stream()
-                                .filter(edge -> {
-                                    int lastElementIndex = edge.getSequence().size() - 1;
-                                    final Object element = edge.getSequence().get(lastElementIndex);
-                                    if (element instanceof EndToken endToken) {
-                                        return endToken.getIdSequence() == sequenceId;
-                                    } else {
-                                        return false;
-                                    }
-                                })
-                                .forEach(edge -> {
-                                    int hahActuallyEnd = edge.getBegin();
-                                    Token begin = (Token) edge.getSequence().get(hahActuallyEnd - cloneLength);
-                                    Token end   = (Token) edge.getSequence().get(hahActuallyEnd - 1);
-                                    CodeSnippet codeSnippet =
-                                            new CodeSnippet((CommitSnapshot) begin.getCommitSnapshot(),
-                                                            begin.getFilename(),
-                                                            begin.getLine(),
-                                                            end.getLine());
-                                    cloneClassCodeSnippetsMap
-                                            .computeIfAbsent(cloneClass, __ -> new ArrayList<>())
-                                            .add(codeSnippet);
-                                });
-                    }));
+        LongStream.rangeClosed(sourceFilesFirstSequenceId, sourceFilesLastSequenceId)
+                .forEach(methodId ->
+                        extractClonesIntoMapForSourceMethod(methodId, cloneClassCodeSnippetsMap));
 
         LongStream.rangeClosed(targetFilesFirstSequenceId, targetFilesLastSequenceId)
-                .forEach(targetMethodId -> CLONE_DETECTOR_INSTANCE
-                        .getAllSequenceCloneClasses(targetMethodId, minCloneLength)
-                        .stream()
-                        .findFirst()
-                        .ifPresent(treeCloneClass -> {
-                            int cloneLength = treeCloneClass.getLength();
-                            CloneClass cloneClass = new CloneClass(extractBeginToken(treeCloneClass),
-                                                                   extractEndToken(treeCloneClass));
+                .forEach(targetMethodId ->
+                        getClonesForTargetMethod(targetMethodId, cloneClassCodeSnippetsMap, result));
 
-                            treeCloneClass.getTreeNode().getEdges()
-                                    .stream()
-                                    .filter(edge -> {
-                                        int lastElementIndex = edge.getSequence().size() - 1;
-                                        final Object element = edge.getSequence().get(lastElementIndex);
-                                        if (element instanceof EndToken endToken) {
-                                            return endToken.getIdSequence() == targetMethodId;
-                                        } else {
-                                            return false;
-                                        }
-                                    })
-                                    .forEach(edge -> {
-                                        int hahActuallyEnd = edge.getBegin();
-                                        Token begin = (Token) edge.getSequence().get(hahActuallyEnd - cloneLength);
-                                        Token end = (Token) edge.getSequence().get(hahActuallyEnd - 1);
-                                        CodeSnippet codeSnippetTarget =
-                                                new CodeSnippet((CommitSnapshot) begin.getCommitSnapshot(),
-                                                                begin.getFilename(),
-                                                                begin.getLine(),
-                                                                end.getLine());
-                                        cloneClassCodeSnippetsMap
-                                                .get(cloneClass)
-                                                .forEach(codeSnippetSource ->
-                                                        result.add(Tuples.of(codeSnippetTarget, codeSnippetSource)));
-                                    });
-                        }));
         CLONE_DETECTOR_INSTANCE.clear();
         return result;
+    }
+
+    private void extractClonesIntoMapForSourceMethod(@NonNull final Long methodId,
+                                                     @NonNull final Map<CloneClass, List<CodeSnippet>> cloneClassCodeSnippetsMap) {
+        CLONE_DETECTOR_INSTANCE
+                .getAllSequenceCloneClasses(methodId, minCloneLength)
+                .stream()
+                .findFirst()
+                .ifPresent(treeCloneClass -> {
+                    int cloneLength = treeCloneClass.getLength();
+                    CloneClass cloneClass = new CloneClass(extractBeginToken(treeCloneClass),
+                            extractEndToken(treeCloneClass));
+
+                    treeCloneClass.getTreeNode().getEdges()
+                            .stream()
+                            .filter(edge -> {
+                                int lastElementIndex = edge.getSequence().size() - 1;
+                                final Object element = edge.getSequence().get(lastElementIndex);
+                                if (element instanceof EndToken endToken) {
+                                    return endToken.getIdSequence() == methodId;
+                                } else {
+                                    return false;
+                                }
+                            })
+                            .forEach(edge -> {
+                                int hahActuallyEnd = edge.getBegin();
+                                Token begin = (Token) edge.getSequence().get(hahActuallyEnd - cloneLength);
+                                Token end   = (Token) edge.getSequence().get(hahActuallyEnd - 1);
+                                CodeSnippet codeSnippet =
+                                        new CodeSnippet((CommitSnapshot) begin.getCommitSnapshot(),
+                                                begin.getFilename(),
+                                                begin.getLine(),
+                                                end.getLine());
+                                cloneClassCodeSnippetsMap
+                                        .computeIfAbsent(cloneClass, __ -> new ArrayList<>())
+                                        .add(codeSnippet);
+                            });
+                });
+    }
+
+    public void getClonesForTargetMethod(@NonNull final Long methodId,
+                                         @NonNull final Map<CloneClass, List<CodeSnippet>> cloneClassCodeSnippetsMap,
+                                         @NonNull final List<Tuple2<CodeSnippet, CodeSnippet>> clones) {
+        CLONE_DETECTOR_INSTANCE
+                .getAllSequenceCloneClasses(methodId, minCloneLength)
+                .stream()
+                .findFirst()
+                .ifPresent(treeCloneClass -> {
+                    int cloneLength = treeCloneClass.getLength();
+                    CloneClass cloneClass = new CloneClass(extractBeginToken(treeCloneClass),
+                            extractEndToken(treeCloneClass));
+
+                    treeCloneClass.getTreeNode().getEdges()
+                            .stream()
+                            .filter(edge -> {
+                                int lastElementIndex = edge.getSequence().size() - 1;
+                                final Object element = edge.getSequence().get(lastElementIndex);
+                                if (element instanceof EndToken endToken) {
+                                    return endToken.getIdSequence() == methodId;
+                                } else {
+                                    return false;
+                                }
+                            })
+                            .forEach(edge -> {
+                                int hahActuallyEnd = edge.getBegin();
+                                Token begin = (Token) edge.getSequence().get(hahActuallyEnd - cloneLength);
+                                Token end = (Token) edge.getSequence().get(hahActuallyEnd - 1);
+                                CodeSnippet codeSnippetTarget =
+                                        new CodeSnippet((CommitSnapshot) begin.getCommitSnapshot(),
+                                                begin.getFilename(),
+                                                begin.getLine(),
+                                                end.getLine());
+                                cloneClassCodeSnippetsMap
+                                        .get(cloneClass)
+                                        .forEach(codeSnippetSource ->
+                                                clones.add(Tuples.of(codeSnippetTarget, codeSnippetSource)));
+                            });
+                });
     }
 
     /**
