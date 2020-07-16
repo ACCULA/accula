@@ -3,6 +3,7 @@ package org.accula.api.detector;
 import com.suhininalex.clones.core.CloneIndexer;
 import com.suhininalex.clones.core.structures.Token;
 import com.suhininalex.clones.core.structures.TreeCloneClass;
+import com.suhininalex.suffixtree.Edge;
 import com.suhininalex.suffixtree.EndToken;
 import com.suhininalex.suffixtree.SuffixTree;
 import lombok.NonNull;
@@ -14,11 +15,9 @@ import reactor.core.publisher.Flux;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.LongStream;
+import java.util.stream.Stream;
 
 
 public class SuffixTreeCloneDetector implements CloneDetector {
@@ -67,35 +66,15 @@ public class SuffixTreeCloneDetector implements CloneDetector {
 
     private void extractClonesIntoMapForSourceMethod(@NonNull final Long methodId,
                                                      @NonNull final Map<CloneClass, List<CodeSnippet>> cloneClassCodeSnippetsMap) {
-        CLONE_DETECTOR_INSTANCE
-                .getAllSequenceCloneClasses(methodId, minCloneLength)
-                .stream()
-                .findFirst()
+        getTreeCloneClassForMethod(methodId)
                 .ifPresent(treeCloneClass -> {
-                    int cloneLength = treeCloneClass.getLength();
+                    final int cloneLength = treeCloneClass.getLength();
                     CloneClass cloneClass = new CloneClass(extractBeginToken(treeCloneClass),
-                            extractEndToken(treeCloneClass));
+                                                           extractEndToken(treeCloneClass));
 
-                    treeCloneClass.getTreeNode().getEdges()
-                            .stream()
-                            .filter(edge -> {
-                                int lastElementIndex = edge.getSequence().size() - 1;
-                                final Object element = edge.getSequence().get(lastElementIndex);
-                                if (element instanceof EndToken endToken) {
-                                    return endToken.getIdSequence() == methodId;
-                                } else {
-                                    return false;
-                                }
-                            })
+                    edgesFromTreeCloneClassForMethod(treeCloneClass, methodId)
                             .forEach(edge -> {
-                                int hahActuallyEnd = edge.getBegin();
-                                Token begin = (Token) edge.getSequence().get(hahActuallyEnd - cloneLength);
-                                Token end   = (Token) edge.getSequence().get(hahActuallyEnd - 1);
-                                CodeSnippet codeSnippet =
-                                        new CodeSnippet((CommitSnapshot) begin.getCommitSnapshot(),
-                                                begin.getFilename(),
-                                                begin.getLine(),
-                                                end.getLine());
+                                CodeSnippet codeSnippet = getCodeSnippetFromEdge(edge, cloneLength);
                                 cloneClassCodeSnippetsMap
                                         .computeIfAbsent(cloneClass, __ -> new ArrayList<>())
                                         .add(codeSnippet);
@@ -106,41 +85,54 @@ public class SuffixTreeCloneDetector implements CloneDetector {
     public void getClonesForTargetMethod(@NonNull final Long methodId,
                                          @NonNull final Map<CloneClass, List<CodeSnippet>> cloneClassCodeSnippetsMap,
                                          @NonNull final List<Tuple2<CodeSnippet, CodeSnippet>> clones) {
-        CLONE_DETECTOR_INSTANCE
-                .getAllSequenceCloneClasses(methodId, minCloneLength)
-                .stream()
-                .findFirst()
+       getTreeCloneClassForMethod(methodId)
                 .ifPresent(treeCloneClass -> {
-                    int cloneLength = treeCloneClass.getLength();
+                    final int cloneLength = treeCloneClass.getLength();
                     CloneClass cloneClass = new CloneClass(extractBeginToken(treeCloneClass),
-                            extractEndToken(treeCloneClass));
+                                                           extractEndToken(treeCloneClass));
 
-                    treeCloneClass.getTreeNode().getEdges()
-                            .stream()
-                            .filter(edge -> {
-                                int lastElementIndex = edge.getSequence().size() - 1;
-                                final Object element = edge.getSequence().get(lastElementIndex);
-                                if (element instanceof EndToken endToken) {
-                                    return endToken.getIdSequence() == methodId;
-                                } else {
-                                    return false;
-                                }
-                            })
+                    edgesFromTreeCloneClassForMethod(treeCloneClass, methodId)
                             .forEach(edge -> {
-                                int hahActuallyEnd = edge.getBegin();
-                                Token begin = (Token) edge.getSequence().get(hahActuallyEnd - cloneLength);
-                                Token end = (Token) edge.getSequence().get(hahActuallyEnd - 1);
-                                CodeSnippet codeSnippetTarget =
-                                        new CodeSnippet((CommitSnapshot) begin.getCommitSnapshot(),
-                                                begin.getFilename(),
-                                                begin.getLine(),
-                                                end.getLine());
+                                CodeSnippet codeSnippetTarget = getCodeSnippetFromEdge(edge, cloneLength);
                                 cloneClassCodeSnippetsMap
                                         .get(cloneClass)
                                         .forEach(codeSnippetSource ->
                                                 clones.add(Tuples.of(codeSnippetTarget, codeSnippetSource)));
                             });
                 });
+    }
+
+    private CodeSnippet getCodeSnippetFromEdge(@NonNull final Edge edge, final int cloneLength) {
+        int sequenceEndIndex = edge.getBegin();
+        Token begin = (Token) edge.getSequence().get(sequenceEndIndex - cloneLength);
+        Token end = (Token) edge.getSequence().get(sequenceEndIndex - 1);
+
+        return new CodeSnippet((CommitSnapshot) begin.getCommitSnapshot(),
+                                                begin.getFilename(),
+                                                begin.getLine(),
+                                                end.getLine());
+    }
+
+    private Stream<Edge> edgesFromTreeCloneClassForMethod(@NonNull final TreeCloneClass treeCloneClass,
+                                                          @NonNull final Long methodId) {
+        return treeCloneClass.getTreeNode()
+                .getEdges()
+                .stream()
+                .filter(edge -> matchesToMethod(edge, methodId));
+    }
+
+    private static boolean matchesToMethod(@NonNull final Edge edge, @NonNull final Long methodId) {
+        final int lastElementIndex = edge.getSequence().size() - 1;
+        final Object element = edge.getSequence().get(lastElementIndex);
+
+        return (element instanceof EndToken endToken) && (endToken.getIdSequence() == methodId);
+    }
+
+    private Optional<TreeCloneClass> getTreeCloneClassForMethod(@NonNull final Long methodId) {
+        return CLONE_DETECTOR_INSTANCE
+                .getAllSequenceCloneClasses(methodId, minCloneLength)
+                .stream()
+                .findFirst();
     }
 
     /**
