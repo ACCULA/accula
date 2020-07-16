@@ -35,7 +35,7 @@ public final class SuffixTreeUtils {
 
     public static boolean matchesToMethod(@NonNull final Edge edge, @NonNull final Long methodId) {
         final int lastElementIndex = edge.getSequence().size() - 1;
-        final Object element = edge.getSequence().get(lastElementIndex);
+        final var element = edge.getSequence().get(lastElementIndex);
 
         return (element instanceof EndToken endToken) && (endToken.getIdSequence() == methodId);
     }

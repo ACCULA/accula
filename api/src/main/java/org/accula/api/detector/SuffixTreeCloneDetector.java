@@ -12,6 +12,7 @@ import reactor.core.publisher.Flux;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
+
 import java.util.*;
 import java.util.stream.LongStream;
 
@@ -41,9 +42,9 @@ public class SuffixTreeCloneDetector implements CloneDetector {
 
     private List<Tuple2<CodeSnippet, CodeSnippet>> clones(final List<FileEntity> targetFiles,
                                                           final List<FileEntity> sourceFiles) {
-        final Map<CloneClass, List<CodeSnippet>> cloneClassCodeSnippetsMap = new HashMap<>();
-        final List<Tuple2<CodeSnippet, CodeSnippet>> resultList = new ArrayList<>();
-        final SuffixTree<Token> suffixTree = CLONE_DETECTOR_INSTANCE.getTree();
+        final var cloneClassCodeSnippetsMap = new HashMap<CloneClass, List<CodeSnippet>>();
+        final var resultList = new ArrayList<Tuple2<CodeSnippet, CodeSnippet>>();
+        final var suffixTree = CLONE_DETECTOR_INSTANCE.getTree();
         final long sourceFilesFirstSequenceId = 2;
         //NB! Source files must be added into suffixTree BEFORE target files
         final long sourceFilesLastSequenceId = addFilesIntoTree(sourceFiles, suffixTree);
@@ -68,12 +69,12 @@ public class SuffixTreeCloneDetector implements CloneDetector {
         getTreeCloneClassForMethod(methodId)
                 .ifPresent(treeCloneClass -> {
                     final int cloneLength = treeCloneClass.getLength();
-                    CloneClass cloneClass = new CloneClass(extractBeginToken(treeCloneClass),
+                    var cloneClass = new CloneClass(extractBeginToken(treeCloneClass),
                                                            extractEndToken(treeCloneClass));
 
                     edgesFromTreeCloneClassForMethod(treeCloneClass, methodId)
                             .forEach(edge -> {
-                                CodeSnippet codeSnippet = getCodeSnippetFromEdge(edge, cloneLength);
+                                var codeSnippet = getCodeSnippetFromEdge(edge, cloneLength);
                                 putCodeSnippetIntoCloneClassCodeSnippetsMap(codeSnippet,
                                                                             cloneClass,
                                                                             cloneClassCodeSnippetsMap);
@@ -88,12 +89,12 @@ public class SuffixTreeCloneDetector implements CloneDetector {
        getTreeCloneClassForMethod(methodId)
                 .ifPresent(treeCloneClass -> {
                     final int cloneLength = treeCloneClass.getLength();
-                    CloneClass cloneClass = new CloneClass(extractBeginToken(treeCloneClass),
+                    var cloneClass = new CloneClass(extractBeginToken(treeCloneClass),
                                                            extractEndToken(treeCloneClass));
 
                     edgesFromTreeCloneClassForMethod(treeCloneClass, methodId)
                             .forEach(edge -> {
-                                CodeSnippet codeSnippetTarget = getCodeSnippetFromEdge(edge, cloneLength);
+                                var codeSnippetTarget = getCodeSnippetFromEdge(edge, cloneLength);
                                 getClonesForCloneClassIntoList(codeSnippetTarget,
                                                                cloneClass,
                                                                clones,
