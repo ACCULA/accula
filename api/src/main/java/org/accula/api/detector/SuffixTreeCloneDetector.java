@@ -63,19 +63,21 @@ public class SuffixTreeCloneDetector implements CloneDetector {
     private void extractClonesIntoMapForSourceMethod(@NonNull final Long methodId,
                                                      @NonNull final Map<CloneClass,
                                                              List<CodeSnippet>> cloneClassCodeSnippetsMap) {
-        getTreeCloneClassForMethod(methodId).ifPresent(treeCloneClass -> {
-            final int cloneLength = treeCloneClass.getLength();
-            var cloneClass = new CloneClass(extractBeginToken(treeCloneClass), extractEndToken(treeCloneClass));
-            edgesFromTreeCloneClassForMethod(treeCloneClass, methodId).forEach(edge -> {
-                var codeSnippet = getCodeSnippetFromEdge(edge, cloneLength);
-                putCodeSnippetIntoCloneClassCodeSnippetsMap(codeSnippet, cloneClass, cloneClassCodeSnippetsMap);
-            });
-        });
+        getTreeCloneClassForMethod(methodId)
+                .ifPresent(treeCloneClass -> {
+                    final int cloneLength = treeCloneClass.getLength();
+                    var cloneClass = new CloneClass(extractBeginToken(treeCloneClass), extractEndToken(treeCloneClass));
+                    edgesFromTreeCloneClassForMethod(treeCloneClass, methodId).forEach(edge -> {
+                        var codeSnippet = getCodeSnippetFromEdge(edge, cloneLength);
+                        putCodeSnippetIntoCloneClassCodeSnippetsMap(codeSnippet, cloneClass, cloneClassCodeSnippetsMap);
+                    });
+                });
     }
 
     public void addClonesToListForTargetMethod(@NonNull final Long methodId,
                                                @NonNull final List<Tuple2<CodeSnippet, CodeSnippet>> clones,
-                                               @NonNull final Map<CloneClass, List<CodeSnippet>> cloneClassCodeSnippetsMap) {
+                                               @NonNull final Map<CloneClass,
+                                                       List<CodeSnippet>> cloneClassCodeSnippetsMap) {
        getTreeCloneClassForMethod(methodId)
                .ifPresent(treeCloneClass -> {
                    final int cloneLength = treeCloneClass.getLength();
@@ -103,7 +105,8 @@ public class SuffixTreeCloneDetector implements CloneDetector {
     private static void getClonesForCloneClassIntoList(@NonNull final CodeSnippet codeSnippetTarget,
                                                        @NonNull final CloneClass cloneClassKey,
                                                        @NonNull final List<Tuple2<CodeSnippet, CodeSnippet>> clones,
-                                                       @NonNull final Map<CloneClass, List<CodeSnippet>> cloneClassCodeSnippetsMap) {
+                                                       @NonNull final Map<CloneClass,
+                                                               List<CodeSnippet>> cloneClassCodeSnippetsMap) {
         cloneClassCodeSnippetsMap
                 .get(cloneClassKey)
                 .forEach(codeSnippetSource -> clones.add(Tuples.of(codeSnippetTarget, codeSnippetSource)));
