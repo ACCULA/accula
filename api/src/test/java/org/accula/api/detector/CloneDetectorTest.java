@@ -1,5 +1,6 @@
 package org.accula.api.detector;
 
+import lombok.SneakyThrows;
 import org.accula.api.code.CodeLoader;
 import org.accula.api.code.FileEntity;
 import org.accula.api.code.FileFilter;
@@ -12,7 +13,11 @@ import org.junit.jupiter.api.io.TempDir;
 import reactor.core.publisher.Flux;
 import reactor.util.function.Tuple2;
 
+import java.awt.*;
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -30,168 +35,73 @@ class CloneDetectorTest {
      */
     @Test
     void testStubs() {
-        //CloneDetector detector = new PrimitiveCloneDetector(1, 1);
-
-        CloneDetector detector = new SuffixTreeCloneDetector(3);
+        CloneDetector detector = new PrimitiveCloneDetector(1, 1);
 
         // target file
         var repoOwner = new GithubUser(1L, "owner", "owner", "ava", false);
         GithubRepo repo = new GithubRepo(1L, "repo", "descr", repoOwner);
         CommitSnapshot commitSnapshot = CommitSnapshot.builder().sha("sha").branch("branch").repo(repo).build();
-        FileEntity target1 = new FileEntity(commitSnapshot, "Main.java", "package name;\n" +
-                "public class Main {\n" +
-                "    private String print() {\n" +
-                "        var a = 0;\n" +
-                "        var b = 0;\n" +
-                "        var c = 0;\n" +
-                "        var text = \"Hello, clone!\";\n" +
-                "        return text;\n" +
-                "    }\n" +
-                "}");
-        FileEntity target2 = new FileEntity(commitSnapshot, "Main2.java", "package name;\n" +
-                "\n" +
-                "public class Main {\n" +
-                "    @java.lang.Override\n" +
-                "    public java.lang.String toString() {\n" +
-                "\n" +
-                "        var abc = 11;\n" +
-                "\n" +
-                "        var xyz = 12;\n" +
-                "\n" +
-                "        Stream.of(\"abcdefgh\", \"123cdeabc\", \"xyz\", \"6789xy0-\")\n" +
-                "                .map(Parser::getTokenizedString)\n" +
-                "                .forEach(suffixTree::addSequence);\n" +
-                "\n" +
-                "        return \"Main{}\";\n" +
-                "    }\n" +
-                "}");
-//        var repoOwner = new GithubUser(1L, "owner", "owner", "ava", false);
-//        GithubRepo repo = new GithubRepo(1L, "repo", "descr", repoOwner);
-//        CommitSnapshot commitSnapshot = CommitSnapshot.builder().sha("sha").branch("branch").repo(repo).build();
-//        FileEntity target1 = new FileEntity(commitSnapshot, "01.txt", "4\n6\n7\n8\n9\n\n\n");
-//        FileEntity target2 = new FileEntity(commitSnapshot, "02.txt", "10\n11\n1\n2\n");
+        FileEntity target1 = new FileEntity(commitSnapshot, "01.txt", "4\n6\n7\n8\n9\n\n\n");
+        FileEntity target2 = new FileEntity(commitSnapshot, "02.txt", "10\n11\n1\n2\n");
 
         // source files
         var repoOwner1 = new GithubUser(2L, "owner1", "owner", "ava", false);
         GithubRepo repo1 = new GithubRepo(2L, "repo1", "descr", repoOwner1);
         CommitSnapshot commitSnapshot1 = CommitSnapshot.builder().sha("sha1").branch("branch").repo(repo1).build();
+        FileEntity source1 = new FileEntity(commitSnapshot1, "1.txt", "1\n2\n3\n4\n9\n");
+
         var repoOwner2 = new GithubUser(3L, "owner2", "owner", "ava", false);
         GithubRepo repo2 = new GithubRepo(3L, "repo2", "descr", repoOwner2);
         CommitSnapshot commitSnapshot2 = CommitSnapshot.builder().sha("sha2").branch("branch").repo(repo2).build();
-        FileEntity source1 = new FileEntity(commitSnapshot1, "Common.java", "package name;\n" +
-                "\n" +
-                "public class Main {\n" +
-                "\n" +
-                "    private String print() {\n" +
-                "        var a = 0;\n" +
-                "        var b = 0;\n" +
-                "        var c = 0;\n" +
-                "        var text = \"Hello, clone!\";\n" +
-                "        return text;\n" +
-                "    }\n" +
-                "\n" +
-                "    public static void main(String[] args) {\n" +
-                "        var text = \"Hello, clone!\";\n" +
-                "        return print();\n" +
-                "    }\n" +
-                "\n" +
-                "    public static void main2() {\n" +
-                "//       ----> comments...\n" +
-                "        return puts();\n" +
-                "    }\n" +
-                "\n" +
-                "    public static String puts(String text) {\n" +
-                "        var a = 0;\n" +
-                "        final var d = 0;\n" +
-                "        var c = 0;\n" +
-                "        /**\n" +
-                "         *\n" +
-                "         */\n" +
-                "        var text = \"Hello, world\";\n" +
-                "        return text;\n" +
-                "    }\n" +
-                "}\n");
-        FileEntity source2 = new FileEntity(commitSnapshot1, "Main.java", "package name;\n" +
-                "\n" +
-                "public class Main {\n" +
-                "    public static void main(String[] args) {\n" +
-                "        final var foo = 666;\n" +
-                "        int b__ = 100;\n" +
-                "        final Integer __ccc__ = 55555;\n" +
-                "        final char[] text = \"qwerty\";\n" +
-                "        return text.length();\n" +
-                "    }\n" +
-                "}");
-        FileEntity source3 = new FileEntity(commitSnapshot2, "Task.java", "package name;\n" +
-                "\n" +
-                "public class Task {\n" +
-                "    public static void main(String[] args) {\n" +
-                "//       ----> comments...\n" +
-                "        return puts();\n" +
-                "    }\n" +
-                "\n" +
-                "    public static String puts(String text) {\n" +
-                "        var a = 0;\n" +
-                "        var b = 0;\n" +
-                "        var c = 0;\n" +
-                "        var text = \"Hello, world\";\n" +
-                "        return text;\n" +
-                "        var a = 0;\n" +
-                "        var b = 0;\n" +
-                "        var c = 0;\n" +
-                "        var text = \"Hello, world\";\n" +
-                "        return text;\n" +
-                "    }\n" +
-                "\n" +
-                "    @java.lang.Override\n" +
-                "    public java.lang.String toString() {\n" +
-                "        var abc=11;\n" +
-                "        var xyz=12;\n" +
-                "        Stream.of(\"abcdefgh\", \"123cdeabc\", \"xyz\", \"6789xy0-\").map(Parser::getTokenizedString).forEach(suffixTree::addSequence);\n" +
-                "        return \"Main{}\";\n" +
-                "    }\n" +
-                "}");
-        FileEntity source4 = new FileEntity(commitSnapshot1, "Code.java", "package name;\n" +
-                "\n" +
-                "public class Task {\n" +
-                "    public static void main(String[] args) {\n" +
-                "//       ----> comments...\n" +
-                "        return puts();\n" +
-                "    }\n" +
-                "\n" +
-                "    public static String puts(String text) {\n" +
-                "        final Integer a = 0;\n" +
-                "        final Clazz<MyClass<? extends MyOtherClass>> b = 0;\n" +
-                "        var c = 0;\n" +
-                "        var text = \"Hello, world\";\n" +
-                "        return text;\n" +
-                "    }\n" +
-                "}");
-//        var repoOwner1 = new GithubUser(2L, "owner1", "owner", "ava", false);
-//        GithubRepo repo1 = new GithubRepo(2L, "repo1", "descr", repoOwner1);
-//        CommitSnapshot commitSnapshot1 = CommitSnapshot.builder().sha("sha1").branch("branch").repo(repo1).build();
-//        FileEntity source1 = new FileEntity(commitSnapshot1, "1.txt", "1\n2\n3\n4\n9\n");
-
-//        var repoOwner2 = new GithubUser(3L, "owner2", "owner", "ava", false);
-//        GithubRepo repo2 = new GithubRepo(3L, "repo2", "descr", repoOwner2);
-//        CommitSnapshot commitSnapshot2 = CommitSnapshot.builder().sha("sha2").branch("branch").repo(repo2).build();
-//        FileEntity source2 = new FileEntity(commitSnapshot2, "2.txt", target1.getContent());
+        FileEntity source2 = new FileEntity(commitSnapshot2, "2.txt", target1.getContent());
 
         // find clones
         Flux<FileEntity> target = Flux.just(target1, target2);
-        Flux<FileEntity> source = Flux.just(source1, source2, source3, source4);
-//        Flux<FileEntity> target = Flux.just(target1, target2);
-//        Flux<FileEntity> source = Flux.just(source1, source2);
+        Flux<FileEntity> source = Flux.just(source1, source2);
         List<Tuple2<CodeSnippet, CodeSnippet>> clones = detector.findClones(target, source).collectList().block();
         assert clones != null;
         clones.forEach(t -> System.out.println(t.getT1() + " -> " + t.getT2()));
+        assertEquals(4, clones.size());
+    }
+
+    @Test
+    void testSuffixTreeDetector() {
+        CloneDetector detector = new SuffixTreeCloneDetector(3);
+
+        var repoOwner       = new GithubUser(1L, "owner", "owner", "ava", false);
+        var repoOwner1      = new GithubUser(2L, "owner1", "owner", "ava", false);
+        var repoOwner2      = new GithubUser(3L, "owner2", "owner", "ava", false);
+        var repo            = new GithubRepo(1L, "repo", "descr", repoOwner);
+        var repo1           = new GithubRepo(2L, "repo1", "descr", repoOwner1);
+        var repo2           = new GithubRepo(3L, "repo2", "descr", repoOwner2);
+        var commitSnapshot  = CommitSnapshot.builder().sha("sha").branch("branch").repo(repo).build();
+        var commitSnapshot1 = CommitSnapshot.builder().sha("sha1").branch("branch").repo(repo1).build();
+        var commitSnapshot2 = CommitSnapshot.builder().sha("sha2").branch("branch").repo(repo2).build();
+
+        // target files
+        FileEntity target1 = new FileEntity(commitSnapshot, "Main.java", content("target/Main.java"));
+        FileEntity target2 = new FileEntity(commitSnapshot, "Main2.java", content("target/Main2.java"));
+
+        // source files
+        FileEntity source1 = new FileEntity(commitSnapshot1, "Common.java", content("source/Common.java"));
+        FileEntity source2 = new FileEntity(commitSnapshot1, "Main.java", content("source/Main.java"));
+        FileEntity source3 = new FileEntity(commitSnapshot2, "Task.java", content("source/Task.java"));
+        FileEntity source4 = new FileEntity(commitSnapshot1, "Code.java", content("source/Code.java"));
+
+        Flux<FileEntity> target = Flux.just(target1, target2);
+        Flux<FileEntity> source = Flux.just(source1, source2, source3, source4);
+
+        List<Tuple2<CodeSnippet, CodeSnippet>> clones = detector.findClones(target, source).collectList().block();
+        assert clones != null;
+        clones.forEach(t -> System.out.println(t.getT1() + " -> " + t.getT2()));
+
+        //Test that suffix tree is empty
         System.out.println("Second run");
         Flux<FileEntity> targets = Flux.just(target1);
         Flux<FileEntity> sources = Flux.just(source1);
         List<Tuple2<CodeSnippet, CodeSnippet>> clones1 = detector.findClones(targets, sources).collectList().block();
         assert clones1 != null;
         clones1.forEach(t -> System.out.println(t.getT1() + " -> " + t.getT2()));
-        //assertEquals(4, clones.size());
     }
 
     @Test
@@ -223,5 +133,12 @@ class CloneDetectorTest {
         System.out.println(into + " -> " + from);
         System.out.println(fromCode.getContent());
         System.out.println("======================");
+    }
+
+    @SneakyThrows
+    private static String content(String pathStr) {
+        String testFilesDir = "src/test/resources/testfiles/";
+        Path path = Paths.get(testFilesDir + pathStr);
+        return new String(Files.readAllBytes(path));
     }
 }
