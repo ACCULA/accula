@@ -12,13 +12,17 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import reactor.core.publisher.Flux;
 import reactor.util.function.Tuple2;
+import reactor.util.function.Tuples;
 
-import java.awt.*;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Set;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -64,6 +68,20 @@ class CloneDetectorTest {
         assertEquals(4, clones.size());
     }
 
+    /**
+     * owner/repo/sha:Main.java[4:8] -> owner1/repo1/sha1:Common.java[6:10]
+     * owner/repo/sha:Main.java[4:8] -> owner1/repo1/sha1:Common.java[14:15]
+     * owner/repo/sha:Main.java[4:8] -> owner1/repo1/sha1:Common.java[24:31]
+     * owner/repo/sha:Main.java[4:8] -> owner1/repo1/sha1:Main.java[5:9]
+     * owner/repo/sha:Main.java[4:8] -> owner2/repo2/sha2:Task.java[10:14]
+     * owner/repo/sha:Main.java[4:8] -> owner2/repo2/sha2:Task.java[15:19]
+     * owner/repo/sha:Main.java[4:8] -> owner1/repo1/sha1:Code.java[10:14]
+     * owner/repo/sha:Main2.java[7:15] -> owner2/repo2/sha2:Task.java[24:27]
+     * Second run
+     * owner/repo/sha:Main.java[4:8] -> owner1/repo1/sha1:Common.java[6:10]
+     * owner/repo/sha:Main.java[4:8] -> owner1/repo1/sha1:Common.java[14:15]
+     * owner/repo/sha:Main.java[4:8] -> owner1/repo1/sha1:Common.java[24:31]
+     */
     @Test
     void testSuffixTreeDetector() {
         CloneDetector detector = new SuffixTreeCloneDetector(3);
@@ -79,29 +97,52 @@ class CloneDetectorTest {
         var commitSnapshot2 = CommitSnapshot.builder().sha("sha2").branch("branch").repo(repo2).build();
 
         // target files
-        FileEntity target1 = new FileEntity(commitSnapshot, "Main.java", content("target/Main.java"));
-        FileEntity target2 = new FileEntity(commitSnapshot, "Main2.java", content("target/Main2.java"));
+        var target1 = new FileEntity(commitSnapshot, "Main.java", content("target/Main.java"));
+        var target2 = new FileEntity(commitSnapshot, "Main2.java", content("target/Main2.java"));
 
         // source files
-        FileEntity source1 = new FileEntity(commitSnapshot1, "Common.java", content("source/Common.java"));
-        FileEntity source2 = new FileEntity(commitSnapshot1, "Main.java", content("source/Main.java"));
-        FileEntity source3 = new FileEntity(commitSnapshot2, "Task.java", content("source/Task.java"));
-        FileEntity source4 = new FileEntity(commitSnapshot1, "Code.java", content("source/Code.java"));
+        var source1 = new FileEntity(commitSnapshot1, "Common.java", content("source/Common.java"));
+        var source2 = new FileEntity(commitSnapshot1, "Main.java", content("source/Main.java"));
+        var source3 = new FileEntity(commitSnapshot2, "Task.java", content("source/Task.java"));
+        var source4 = new FileEntity(commitSnapshot1, "Code.java", content("source/Code.java"));
 
+        var trg1 = new CodeSnippet(target1.getCommitSnapshot(), target1.getName(), 4, 8);
+        var trg2 = new CodeSnippet(target2.getCommitSnapshot(), target2.getName(), 7, 15);
+
+        //expected result on first execution
+        Supplier<Stream<Tuple2<CodeSnippet, CodeSnippet>>> expectedPairs = () -> Stream.of(
+                Tuples.of(trg1, new CodeSnippet(source1.getCommitSnapshot(), source1.getName(), 6, 10)),
+                Tuples.of(trg1, new CodeSnippet(source1.getCommitSnapshot(), source1.getName(), 14, 15)),
+                Tuples.of(trg1, new CodeSnippet(source1.getCommitSnapshot(), source1.getName(), 24, 31)),
+                Tuples.of(trg1, new CodeSnippet(source2.getCommitSnapshot(), source2.getName(), 5, 9)),
+                Tuples.of(trg1, new CodeSnippet(source3.getCommitSnapshot(), source3.getName(), 10, 14)),
+                Tuples.of(trg1, new CodeSnippet(source3.getCommitSnapshot(), source3.getName(), 15, 19)),
+                Tuples.of(trg1, new CodeSnippet(source4.getCommitSnapshot(), source4.getName(), 10, 14)),
+                Tuples.of(trg2, new CodeSnippet(source3.getCommitSnapshot(), source3.getName(), 24, 27)));
+
+        // expected result on second execution
+        var result2 = expectedPairs
+                .get()
+                .limit(3)
+                .collect(Collectors.toSet());
+
+        //First execution
         Flux<FileEntity> target = Flux.just(target1, target2);
         Flux<FileEntity> source = Flux.just(source1, source2, source3, source4);
 
         List<Tuple2<CodeSnippet, CodeSnippet>> clones = detector.findClones(target, source).collectList().block();
         assert clones != null;
+        assertEquals(expectedPairs.get().collect(Collectors.toSet()), Set.copyOf(clones));
         clones.forEach(t -> System.out.println(t.getT1() + " -> " + t.getT2()));
 
-        //Test that suffix tree is empty
+        //Second execution - test that suffix tree is empty after first execution
         System.out.println("Second run");
         Flux<FileEntity> targets = Flux.just(target1);
         Flux<FileEntity> sources = Flux.just(source1);
-        List<Tuple2<CodeSnippet, CodeSnippet>> clones1 = detector.findClones(targets, sources).collectList().block();
-        assert clones1 != null;
-        clones1.forEach(t -> System.out.println(t.getT1() + " -> " + t.getT2()));
+        List<Tuple2<CodeSnippet, CodeSnippet>> clones2 = detector.findClones(targets, sources).collectList().block();
+        assert clones2 != null;
+        assertEquals(result2, Set.copyOf(clones2));
+        clones2.forEach(t -> System.out.println(t.getT1() + " -> " + t.getT2()));
     }
 
     @Test
