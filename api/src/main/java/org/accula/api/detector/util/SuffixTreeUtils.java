@@ -20,15 +20,14 @@ public final class SuffixTreeUtils {
         Token end = (Token) edge.getSequence().get(sequenceEndIndex - 1);
 
         return new CodeSnippet((CommitSnapshot) begin.getCommitSnapshot(),
-                begin.getFilename(),
-                begin.getLine(),
-                end.getLine());
+                                                begin.getFilename(),
+                                                begin.getLine(),
+                                                end.getLine());
     }
 
     public static Stream<Edge> edgesFromTreeCloneClassForMethod(@NonNull final TreeCloneClass treeCloneClass,
                                                                 @NonNull final Long methodId) {
-        return treeCloneClass.getTreeNode()
-                .getEdges()
+        return treeCloneClass.getTreeNode().getEdges()
                 .stream()
                 .filter(edge -> matchesToMethod(edge, methodId));
     }
@@ -40,11 +39,11 @@ public final class SuffixTreeUtils {
         return (element instanceof EndToken endToken) && (endToken.getIdSequence() == methodId);
     }
 
-    public static Token extractBeginToken(TreeCloneClass treeCloneClass) {
+    public static Token extractBeginToken(@NonNull final TreeCloneClass treeCloneClass) {
         return treeCloneClass.getClones().iterator().next().getFirstElement();
     }
 
-    public static Token extractEndToken(TreeCloneClass treeCloneClass) {
+    public static Token extractEndToken(@NonNull final TreeCloneClass treeCloneClass) {
         return treeCloneClass.getClones().iterator().next().getLastElement();
     }
 }

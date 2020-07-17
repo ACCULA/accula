@@ -40,24 +40,21 @@ public class SuffixTreeCloneDetector implements CloneDetector {
                 .flatMapMany(Flux::fromIterable);
     }
 
-    private List<Tuple2<CodeSnippet, CodeSnippet>> clones(final List<FileEntity> targetFiles,
-                                                          final List<FileEntity> sourceFiles) {
+    private List<Tuple2<CodeSnippet, CodeSnippet>> clones(@NonNull final List<FileEntity> targetFiles,
+                                                          @NonNull final List<FileEntity> sourceFiles) {
         final var cloneClassCodeSnippetsMap = new HashMap<CloneClass, List<CodeSnippet>>();
         final var resultList = new ArrayList<Tuple2<CodeSnippet, CodeSnippet>>();
         final var suffixTree = CLONE_DETECTOR_INSTANCE.getTree();
-        final long sourceFilesFirstSequenceId = 2;
+        final long srcFirstMethodId = 2;
         //NB! Source files must be added into suffixTree BEFORE target files
-        final long sourceFilesLastSequenceId = addFilesIntoTree(sourceFiles, suffixTree);
-        final long targetFilesFirstSequenceId = sourceFilesLastSequenceId + 1;
-        final long targetFilesLastSequenceId = addFilesIntoTree(targetFiles, suffixTree);
+        final long srcLastMethodId = addFilesIntoTree(sourceFiles, suffixTree);
+        final long targetFirstMethodId = srcLastMethodId + 1;
+        final long targetLastMethodId = addFilesIntoTree(targetFiles, suffixTree);
 
-        LongStream.rangeClosed(sourceFilesFirstSequenceId, sourceFilesLastSequenceId)
-                .forEach(methodId ->
-                        extractClonesIntoMapForSourceMethod(methodId, cloneClassCodeSnippetsMap));
-
-        LongStream.rangeClosed(targetFilesFirstSequenceId, targetFilesLastSequenceId)
-                .forEach(targetMethodId ->
-                        addClonesToListForTargetMethod(targetMethodId, resultList, cloneClassCodeSnippetsMap));
+        LongStream.rangeClosed(srcFirstMethodId, srcLastMethodId).forEach(methodId ->
+                extractClonesIntoMapForSourceMethod(methodId, cloneClassCodeSnippetsMap));
+        LongStream.rangeClosed(targetFirstMethodId, targetLastMethodId).forEach(targetMethodId ->
+                addClonesToListForTargetMethod(targetMethodId, resultList, cloneClassCodeSnippetsMap));
 
         CLONE_DETECTOR_INSTANCE.clear();
         return resultList;
@@ -66,48 +63,32 @@ public class SuffixTreeCloneDetector implements CloneDetector {
     private void extractClonesIntoMapForSourceMethod(@NonNull final Long methodId,
                                                      @NonNull final Map<CloneClass,
                                                              List<CodeSnippet>> cloneClassCodeSnippetsMap) {
-        getTreeCloneClassForMethod(methodId)
-                .ifPresent(treeCloneClass -> {
-                    final int cloneLength = treeCloneClass.getLength();
-                    var cloneClass = new CloneClass(extractBeginToken(treeCloneClass),
-                                                           extractEndToken(treeCloneClass));
-
-                    edgesFromTreeCloneClassForMethod(treeCloneClass, methodId)
-                            .forEach(edge -> {
-                                var codeSnippet = getCodeSnippetFromEdge(edge, cloneLength);
-                                putCodeSnippetIntoCloneClassCodeSnippetsMap(codeSnippet,
-                                                                            cloneClass,
-                                                                            cloneClassCodeSnippetsMap);
-                            });
-                });
+        getTreeCloneClassForMethod(methodId).ifPresent(treeCloneClass -> {
+            final int cloneLength = treeCloneClass.getLength();
+            var cloneClass = new CloneClass(extractBeginToken(treeCloneClass), extractEndToken(treeCloneClass));
+            edgesFromTreeCloneClassForMethod(treeCloneClass, methodId).forEach(edge -> {
+                var codeSnippet = getCodeSnippetFromEdge(edge, cloneLength);
+                putCodeSnippetIntoCloneClassCodeSnippetsMap(codeSnippet, cloneClass, cloneClassCodeSnippetsMap);
+            });
+        });
     }
 
     public void addClonesToListForTargetMethod(@NonNull final Long methodId,
                                                @NonNull final List<Tuple2<CodeSnippet, CodeSnippet>> clones,
-                                               @NonNull final Map<CloneClass,
-                                                       List<CodeSnippet>> cloneClassCodeSnippetsMap) {
+                                               @NonNull final Map<CloneClass, List<CodeSnippet>> cloneClassCodeSnippetsMap) {
        getTreeCloneClassForMethod(methodId)
-                .ifPresent(treeCloneClass -> {
-                    final int cloneLength = treeCloneClass.getLength();
-                    var cloneClass = new CloneClass(extractBeginToken(treeCloneClass),
-                                                           extractEndToken(treeCloneClass));
-
-                    edgesFromTreeCloneClassForMethod(treeCloneClass, methodId)
-                            .forEach(edge -> {
-                                var codeSnippetTarget = getCodeSnippetFromEdge(edge, cloneLength);
-                                getClonesForCloneClassIntoList(codeSnippetTarget,
-                                                               cloneClass,
-                                                               clones,
-                                                               cloneClassCodeSnippetsMap);
-                            });
-                });
+               .ifPresent(treeCloneClass -> {
+                   final int cloneLength = treeCloneClass.getLength();
+                   var cloneClass = new CloneClass(extractBeginToken(treeCloneClass), extractEndToken(treeCloneClass));
+                   edgesFromTreeCloneClassForMethod(treeCloneClass, methodId).forEach(edge -> {
+                       var codeSnippetTarget = getCodeSnippetFromEdge(edge, cloneLength);
+                       getClonesForCloneClassIntoList(codeSnippetTarget, cloneClass, clones, cloneClassCodeSnippetsMap);
+                   });
+               });
     }
 
     private Optional<TreeCloneClass> getTreeCloneClassForMethod(@NonNull final Long methodId) {
-        return CLONE_DETECTOR_INSTANCE
-                .getAllSequenceCloneClasses(methodId, minCloneLength)
-                .stream()
-                .findFirst();
+        return CLONE_DETECTOR_INSTANCE.getAllSequenceCloneClasses(methodId, minCloneLength).stream().findFirst();
     }
 
     private static void putCodeSnippetIntoCloneClassCodeSnippetsMap(@NonNull final CodeSnippet codeSnippetValue,
@@ -122,11 +103,10 @@ public class SuffixTreeCloneDetector implements CloneDetector {
     private static void getClonesForCloneClassIntoList(@NonNull final CodeSnippet codeSnippetTarget,
                                                        @NonNull final CloneClass cloneClassKey,
                                                        @NonNull final List<Tuple2<CodeSnippet, CodeSnippet>> clones,
-                                                       @NonNull final Map<CloneClass,
-                                                               List<CodeSnippet>> cloneClassCodeSnippetsMap) {
-        cloneClassCodeSnippetsMap.get(cloneClassKey)
-                .forEach(codeSnippetSource ->
-                        clones.add(Tuples.of(codeSnippetTarget, codeSnippetSource)));
+                                                       @NonNull final Map<CloneClass, List<CodeSnippet>> cloneClassCodeSnippetsMap) {
+        cloneClassCodeSnippetsMap
+                .get(cloneClassKey)
+                .forEach(codeSnippetSource -> clones.add(Tuples.of(codeSnippetTarget, codeSnippetSource)));
     }
 
     /**
@@ -152,7 +132,8 @@ public class SuffixTreeCloneDetector implements CloneDetector {
                                         @NonNull final SuffixTree<Token> suffixTree) {
         return Parser.tokenizedFunctions(file)
                 .map(suffixTree::addSequence)
-                .max(Long::compareTo).orElseThrow();
+                .max(Long::compareTo)
+                .orElseThrow();
     }
 
     @Value
