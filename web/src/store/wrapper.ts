@@ -22,6 +22,7 @@ export const failed = <T>(error: Error): Wrapper<T> => {
   console.log(error)
   return {
     isFetching: false,
-    error: error.message
+    error: error.message,
+    value: null
   }
 }

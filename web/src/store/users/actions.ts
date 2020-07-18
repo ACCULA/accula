@@ -2,7 +2,7 @@ import jwtDecode from 'jwt-decode'
 
 import { AppDispatch, AppStateSupplier } from 'store'
 import { IToken } from 'types'
-import { failed, fetched, fetching, notFetching } from 'store/wrapper'
+import { failed, fetched, fetching } from 'store/wrapper'
 import { SET_ACCESS_TOKEN, SET_USER, SetAccessToken, SetUser } from './types'
 import { getUserById, refreshToken } from './services'
 
@@ -47,17 +47,22 @@ export const getCurrentUserAction = () => async (
   dispatch: AppDispatch,
   getState: AppStateSupplier
 ) => {
+  await requireToken(dispatch, getState)
+  const { users } = getState()
+  if (!users.token.accessToken) {
+    return
+  }
+  if (users.user.isFetching) {
+    return
+  }
   try {
-    dispatch(setUser(fetching))
-    await requireToken(dispatch, getState)
-    const { users } = getState()
-    if (!users.token.accessToken) {
-      dispatch(setUser(notFetching))
+    const { sub } = jwtDecode(users.token.accessToken)
+    const id = parseInt(sub, 10)
+    if (users.user.value && users.user.value.id === id) {
       return
     }
-
-    const { sub } = jwtDecode(users.token.accessToken)
-    const user = await getUserById(parseInt(sub, 10))
+    dispatch(setUser(fetching))
+    const user = await getUserById(id)
     dispatch(setUser(fetched(user)))
   } catch (e) {
     dispatch(setUser(failed(e)))

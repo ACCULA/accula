@@ -50,21 +50,20 @@ export const getPullsAction = (projectId: number) => async (
 ) => {
   await requireToken(dispatch, getState)
   const { pulls, users } = getState()
-  if (pulls.pulls.isFetching) {
+  if (
+    pulls.pulls.isFetching ||
+    (pulls.pulls.value &&
+      pulls.pulls.value.length !== 0 &&
+      pulls.pulls.value[0].projectId === projectId)
+  ) {
     return
   }
-  if (
-    !pulls.pulls.value ||
-    pulls.pulls.value.length === 0 ||
-    pulls.pulls.value[0].projectId !== projectId
-  ) {
-    try {
-      dispatch(setPulls(fetching))
-      const result = await getPulls(users.token, projectId)
-      dispatch(setPulls(fetched(result)))
-    } catch (e) {
-      dispatch(setPulls(failed(e)))
-    }
+  try {
+    dispatch(setPulls(fetching))
+    const result = await getPulls(users.token, projectId)
+    dispatch(setPulls(fetched(result)))
+  } catch (e) {
+    dispatch(setPulls(failed(e)))
   }
 }
 
@@ -74,21 +73,20 @@ export const getPullAction = (projectId: number, pullNumber: number) => async (
 ) => {
   await requireToken(dispatch, getState)
   const { pulls, users } = getState()
-  if (pulls.pull.isFetching) {
+  if (
+    pulls.pull.isFetching ||
+    (pulls.pull.value &&
+      pulls.pull.value.projectId === projectId &&
+      pulls.pull.value.number === pullNumber)
+  ) {
     return
   }
-  if (
-    !pulls.pull.value ||
-    pulls.pull.value.projectId !== projectId ||
-    pulls.pull.value.number !== pullNumber
-  ) {
-    try {
-      dispatch(setPull(fetching))
-      const pull = await getPull(users.token, projectId, pullNumber)
-      dispatch(setPull(fetched(pull)))
-    } catch (e) {
-      dispatch(setPull(failed(e)))
-    }
+  try {
+    dispatch(setPull(fetching))
+    const pull = await getPull(users.token, projectId, pullNumber)
+    dispatch(setPull(fetched(pull)))
+  } catch (e) {
+    dispatch(setPull(failed(e)))
   }
 }
 
@@ -98,21 +96,20 @@ export const getDiffsAction = (projectId: number, pullNumber: number) => async (
 ) => {
   await requireToken(dispatch, getState)
   const { users, pulls } = getState()
-  if (pulls.diffs.isFetching) {
+  if (
+    pulls.diffs.isFetching ||
+    (pulls.diffs.value &&
+      pulls.diffs.projectId === projectId &&
+      pulls.diffs.pullNumber === pullNumber)
+  ) {
     return
   }
-  if (
-    !pulls.diffs.value || //
-    pulls.diffs.projectId !== projectId ||
-    pulls.diffs.pullNumber !== pullNumber
-  ) {
-    try {
-      dispatch(setDiffs(fetching))
-      const result = await getDiffs(users.token, projectId, pullNumber)
-      dispatch(setDiffs(fetched(result, { projectId, pullNumber })))
-    } catch (e) {
-      dispatch(setDiffs(failed(e)))
-    }
+  try {
+    dispatch(setDiffs(fetching))
+    const result = await getDiffs(users.token, projectId, pullNumber)
+    dispatch(setDiffs(fetched(result, { projectId, pullNumber })))
+  } catch (e) {
+    dispatch(setDiffs(failed(e)))
   }
 }
 
@@ -126,22 +123,21 @@ export const getComparesAction = (projectId: number, target: number, source: num
   }
   await requireToken(dispatch, getState)
   const { users, pulls } = getState()
-  if (pulls.compares.isFetching) {
+  if (
+    pulls.compares.isFetching ||
+    (pulls.compares.value &&
+      pulls.compares.projectId === projectId &&
+      pulls.compares.target === target &&
+      pulls.compares.source === source)
+  ) {
     return
   }
-  if (
-    !pulls.compares.value || //
-    pulls.compares.projectId !== projectId ||
-    pulls.compares.target !== target ||
-    pulls.compares.source !== source
-  ) {
-    try {
-      dispatch(setCompares(fetching))
-      const result = await getCompares(users.token, projectId, target, source)
-      dispatch(setCompares(fetched(result, { projectId, target, source })))
-    } catch (e) {
-      dispatch(setCompares(failed(e)))
-    }
+  try {
+    dispatch(setCompares(fetching))
+    const result = await getCompares(users.token, projectId, target, source)
+    dispatch(setCompares(fetched(result, { projectId, target, source })))
+  } catch (e) {
+    dispatch(setCompares(failed(e)))
   }
 }
 
@@ -151,21 +147,20 @@ export const getClonesAction = (projectId: number, pullNumber: number) => async 
 ) => {
   await requireToken(dispatch, getState)
   const { users, pulls } = getState()
-  if (pulls.clones.isFetching) {
+  if (
+    pulls.clones.isFetching ||
+    (pulls.clones.value &&
+      pulls.clones.projectId === projectId &&
+      pulls.clones.pullNumber === pullNumber)
+  ) {
     return
   }
-  if (
-    !pulls.clones.value || //
-    pulls.clones.projectId !== projectId ||
-    pulls.clones.pullNumber !== pullNumber
-  ) {
-    try {
-      dispatch(setClones(fetching))
-      const result = await getClones(users.token, projectId, pullNumber)
-      dispatch(setClones(fetched(result, { projectId, pullNumber })))
-    } catch (e) {
-      dispatch(setClones(failed(e)))
-    }
+  try {
+    dispatch(setClones(fetching))
+    const result = await getClones(users.token, projectId, pullNumber)
+    dispatch(setClones(fetched(result, { projectId, pullNumber })))
+  } catch (e) {
+    dispatch(setClones(failed(e)))
   }
 }
 
