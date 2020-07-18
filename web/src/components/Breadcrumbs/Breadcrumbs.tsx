@@ -7,15 +7,16 @@ interface Breadcrumb {
 }
 
 interface BreadcrumbsProps {
-  breadcrumbs: Breadcrumb[]
+  breadcrumbs?: Breadcrumb[]
 }
 
 export const Breadcrumbs = ({ breadcrumbs }: BreadcrumbsProps) => (
   <ol className="breadcrumb">
-    {breadcrumbs.map(({ text, to }) => (
-      <li key={text} className={to ? '' : 'active'}>
-        {to ? <NavLink to={to}>{text}</NavLink> : text}
-      </li>
-    ))}
+    {breadcrumbs &&
+      breadcrumbs.map(({ text, to }) => (
+        <li key={text} className={to ? '' : 'active'}>
+          {to ? <NavLink to={to}>{text}</NavLink> : text}
+        </li>
+      ))}
   </ol>
 )

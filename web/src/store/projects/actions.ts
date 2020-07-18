@@ -8,11 +8,13 @@ import {
   SET_PROJECT_CONF,
   SET_PROJECTS,
   SET_REPO_ADMINS,
+  UPDATE_PROJECT_CONF,
   CreateProject,
   SetProject,
   SetProjectConf,
   SetProjects,
-  SetRepoAdmins, UPDATE_PROJECT_CONF, UpdateProjectConf
+  SetRepoAdmins,
+  UpdateProjectConf
 } from './types'
 import {
   postProject,
@@ -62,7 +64,7 @@ export const getProjectsAction = () => async (
   getState: AppStateSupplier
 ) => {
   const { projects } = getState()
-  if (projects.projects.value) {
+  if (projects.projects.isFetching || projects.projects.value) {
     return
   }
   try {
@@ -79,7 +81,7 @@ export const getProjectAction = (id: number) => async (
   getState: AppStateSupplier
 ) => {
   const { projects } = getState()
-  if (projects.project.value && projects.project.value.id === id) {
+  if (projects.project.isFetching || (projects.project.value && projects.project.value.id === id)) {
     return
   }
   if (projects.projects.value) {
@@ -105,7 +107,10 @@ export const getProjectConfAction = (id: number) => async (
   getState: AppStateSupplier
 ) => {
   const { projects } = getState()
-  if (projects.projectConf.value && projects.projectConf.projectId === id) {
+  if (
+    projects.projectConf.isFetching ||
+    (projects.projectConf.value && projects.projectConf.projectId === id)
+  ) {
     return
   }
   await requireToken(dispatch, getState)

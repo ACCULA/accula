@@ -2,15 +2,17 @@ import React, { useState } from 'react'
 import { FormControl, FormGroup } from 'react-bootstrap'
 
 import { IShortPull } from 'types'
+import { Wrapper } from 'store/wrapper'
 import { IPullComparesState } from 'store/pulls/types'
 import { CodeDiff, DiffMethod } from 'components/CodeDiff'
 import { Loader } from 'components/Loader'
 import { SplitUnifiedViewButton } from 'components/CodeDiff/SplitUnifiedViewButton'
+import { LoadingWrapper } from 'components/LoadingWrapper'
 import { getTitle } from './PullChangesTab'
 
 interface PullCompareTabProps {
   pullId: number
-  pulls: IShortPull[]
+  pulls: Wrapper<IShortPull[]>
   compares: IPullComparesState
   compareWith: number
   onSelect: (compareWith: number) => void
@@ -26,7 +28,7 @@ export const PullCompareTab = ({
   const [splitView, setSplitView] = useState(false)
 
   return (
-    <>
+    <LoadingWrapper deps={[pulls]}>
       <div>
         <h5 style={{ display: 'inline-block', marginRight: 15 }}>Compare with</h5>
         <FormGroup controlId="formControlsSelect" style={{ display: 'inline-block' }}>
@@ -37,8 +39,8 @@ export const PullCompareTab = ({
             value={compareWith}
           >
             <option value="0">...</option>
-            {pulls &&
-              pulls
+            {pulls.value &&
+              pulls.value
                 .filter(p => p.number !== pullId)
                 .sort((a, b) => (a.number > b.number ? -1 : a.number === b.number ? 0 : 1))
                 .map(pull => (
@@ -75,6 +77,6 @@ export const PullCompareTab = ({
           })}
         </>
       )}
-    </>
+    </LoadingWrapper>
   )
 }
