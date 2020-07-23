@@ -15,8 +15,9 @@ import java.util.stream.Stream;
 import com.suhininalex.clones.core.structures.Token;
 
 public final class Parser {
+    private Parser() {
 
-    private Parser() {}
+    }
 
     public static Stream<List<Token>> tokenizedFunctions(final FileEntity file) {
         final var lexer = new Java9Lexer(CharStreams.fromString(file.getContent()));
@@ -33,14 +34,15 @@ public final class Parser {
                 .map(func -> func
                         .stream()
                         .filter(token -> isAllowedToken(token, listener.getTypeArgs()))
-                        .map(token -> new Token(
-                                token.getType(),
-                                token.getText(),
-                                token.getLine(),
-                                file.getName(),
-                                file.getCommitSnapshot())
+                        .map(token -> anonymize(
+                                new Token(
+                                        token.getType(),
+                                        token.getText(),
+                                        token.getLine(),
+                                        file.getName(),
+                                        file.getCommitSnapshot())
+                                )
                         )
-                        .map(Parser::anonymize)
                         .collect(Collectors.toUnmodifiableList())
                 );
     }
@@ -52,8 +54,9 @@ public final class Parser {
     }
 
     private static Token anonymize(final Token token) {
-        if (TokenFilter.primitiveTypes.contains(token.getType()))
+        if (TokenFilter.primitiveTypes.contains(token.getType())) {
             token.setType(Java9Lexer.Identifier);
+        }
         return token;
     }
 }

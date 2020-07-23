@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
-public class JavaListener extends Java9BaseListener {
+public final class JavaListener extends Java9BaseListener {
     private final CommonTokenStream tokenStream;
     private final List<List<Token>> functions = new LinkedList<>();
     private final Set<Token> typeArgs = new HashSet<>();
@@ -29,7 +29,7 @@ public class JavaListener extends Java9BaseListener {
     }
 
     @Override
-    public void enterMethodBody(Java9Parser.MethodBodyContext ctx) {
+    public void enterMethodBody(final Java9Parser.MethodBodyContext ctx) {
         final var tokens = new LinkedList<Token>();
         var tok = ctx.getStart();
         var idx = tok.getTokenIndex();
@@ -41,7 +41,7 @@ public class JavaListener extends Java9BaseListener {
     }
 
     @Override
-    public void enterClassOrInterfaceType(Java9Parser.ClassOrInterfaceTypeContext ctx) {
+    public void enterClassOrInterfaceType(final Java9Parser.ClassOrInterfaceTypeContext ctx) {
         for (int i = ctx.getStart().getTokenIndex() - 1; i <= ctx.getStop().getTokenIndex() + 1; i++) {
             typeArgs.add(tokenStream.get(i));
         }

@@ -69,23 +69,24 @@ class CloneDetectorTest {
     }
 
     /**
-     * owner/repo/sha:Main.java[4:8] -> owner1/repo1/sha1:Common.java[6:10]
-     * owner/repo/sha:Main.java[4:8] -> owner1/repo1/sha1:Common.java[14:15]
-     * owner/repo/sha:Main.java[4:8] -> owner1/repo1/sha1:Common.java[24:31]
-     * owner/repo/sha:Main.java[4:8] -> owner1/repo1/sha1:Main.java[5:9]
-     * owner/repo/sha:Main.java[4:8] -> owner2/repo2/sha2:Task.java[10:14]
-     * owner/repo/sha:Main.java[4:8] -> owner2/repo2/sha2:Task.java[15:19]
-     * owner/repo/sha:Main.java[4:8] -> owner1/repo1/sha1:Code.java[10:14]
-     * owner/repo/sha:Main2.java[7:15] -> owner2/repo2/sha2:Task.java[24:27]
+     * owner/repo/sha:Main.txt[4:8] -> owner1/repo1/sha1:Common.txt[6:10]
+     * owner/repo/sha:Main.txt[4:8] -> owner1/repo1/sha1:Common.txt[14:15]
+     * owner/repo/sha:Main.txt[4:8] -> owner1/repo1/sha1:Common.txt[24:31]
+     * owner/repo/sha:Main.txt[4:8] -> owner1/repo1/sha1:Main.txt[5:9]
+     * owner/repo/sha:Main.txt[4:8] -> owner2/repo2/sha2:Task.txt[10:14]
+     * owner/repo/sha:Main.txt[4:8] -> owner2/repo2/sha2:Task.txt[15:19]
+     * owner/repo/sha:Main.txt[4:8] -> owner1/repo1/sha1:Code.txt[10:14]
+     * owner/repo/sha:Main2.txt[7:15] -> owner2/repo2/sha2:Task.txt[24:27]
      * Second run
-     * owner/repo/sha:Main.java[4:8] -> owner1/repo1/sha1:Common.java[6:10]
-     * owner/repo/sha:Main.java[4:8] -> owner1/repo1/sha1:Common.java[14:15]
-     * owner/repo/sha:Main.java[4:8] -> owner1/repo1/sha1:Common.java[24:31]
+     * owner/repo/sha:Main.txt[4:8] -> owner1/repo1/sha1:Common.txt[6:10]
+     * owner/repo/sha:Main.txt[4:8] -> owner1/repo1/sha1:Common.txt[14:15]
+     * owner/repo/sha:Main.txt[4:8] -> owner1/repo1/sha1:Common.txt[24:31]
      */
     @Test
     void testSuffixTreeDetector() {
         CloneDetector detector = new SuffixTreeCloneDetector(3);
 
+        //@formatter:off
         var repoOwner       = new GithubUser(1L, "owner", "owner", "ava", false);
         var repoOwner1      = new GithubUser(2L, "owner1", "owner", "ava", false);
         var repoOwner2      = new GithubUser(3L, "owner2", "owner", "ava", false);
@@ -95,16 +96,17 @@ class CloneDetectorTest {
         var commitSnapshot  = CommitSnapshot.builder().sha("sha").branch("branch").repo(repo).build();
         var commitSnapshot1 = CommitSnapshot.builder().sha("sha1").branch("branch").repo(repo1).build();
         var commitSnapshot2 = CommitSnapshot.builder().sha("sha2").branch("branch").repo(repo2).build();
+        //@formatter:on
 
         // target files
-        var target1 = new FileEntity(commitSnapshot, "Main.java", content("target/Main.java"));
-        var target2 = new FileEntity(commitSnapshot, "Main2.java", content("target/Main2.java"));
+        var target1 = new FileEntity(commitSnapshot, "Main.txt", content("target/Main.txt"));
+        var target2 = new FileEntity(commitSnapshot, "Main2.txt", content("target/Main2.txt"));
 
         // source files
-        var source1 = new FileEntity(commitSnapshot1, "Common.java", content("source/Common.java"));
-        var source2 = new FileEntity(commitSnapshot1, "Main.java", content("source/Main.java"));
-        var source3 = new FileEntity(commitSnapshot2, "Task.java", content("source/Task.java"));
-        var source4 = new FileEntity(commitSnapshot1, "Code.java", content("source/Code.java"));
+        var source1 = new FileEntity(commitSnapshot1, "Common.txt", content("source/Common.txt"));
+        var source2 = new FileEntity(commitSnapshot1, "Main.txt", content("source/Main.txt"));
+        var source3 = new FileEntity(commitSnapshot2, "Task.txt", content("source/Task.txt"));
+        var source4 = new FileEntity(commitSnapshot1, "Code.txt", content("source/Code.txt"));
 
         var trg1 = new CodeSnippet(target1.getCommitSnapshot(), target1.getName(), 4, 8);
         var trg2 = new CodeSnippet(target2.getCommitSnapshot(), target2.getName(), 7, 15);

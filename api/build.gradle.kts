@@ -7,11 +7,14 @@ plugins {
 
 repositories {
     maven(url = "https://dl.bintray.com/vorpal-research/kotlin-maven/")
+    maven(url =  "https://dl.bintray.com/accula/clone-detector")
 }
 
 version = "1.0-SNAPSHOT"
 
 val byteBuddyPlugin: Configuration by configurations.creating
+val antlrVersion = "4.8-1"
+val cloneDetectorVersion =
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-webflux")
@@ -51,12 +54,12 @@ dependencies {
 
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
-    antlr("org.antlr:antlr4:4.8-1")
-    compileOnly("org.antlr:antlr4-runtime:4.8-1")
+    antlr("org.antlr:antlr4:$antlrVersion")
+    compileOnly("org.antlr:antlr4-runtime:$antlrVersion")
 
     implementation("com.suhininalex:suffixtree:1.0.2")
+    implementation("org.accula:clone-detector:1.0.1")
 
-    implementation(fileTree("dir" to "libs", "include" to  "*.jar"))
 }
 
 byteBuddy {
