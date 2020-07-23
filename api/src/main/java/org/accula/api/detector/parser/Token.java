@@ -17,7 +17,7 @@ public class Token implements Comparable<Token> {
     private final Long repoId;
 
     @Override
-    public int compareTo(@NotNull Token o) {
+    public int compareTo(@NotNull final Token o) {
         return type - o.type;
     }
 

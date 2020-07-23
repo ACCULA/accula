@@ -42,7 +42,7 @@ public final class SuffixTreeCloneDetector implements CloneDetector {
     }
 
     private List<Tuple2<CodeSnippet, CodeSnippet>> clones(final List<FileEntity> targetFiles, final List<FileEntity> sourceFiles) {
-        var cloneDetectorInstance = new CloneIndexer();
+        final var cloneDetectorInstance = new CloneIndexer();
         final var cloneClassCodeSnippetsMap = new HashMap<CloneClass, List<CodeSnippet>>();
         final var resultList = new ArrayList<Tuple2<CodeSnippet, CodeSnippet>>();
         final var suffixTree = cloneDetectorInstance.getTree();
