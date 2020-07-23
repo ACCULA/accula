@@ -16,7 +16,6 @@ import com.suhininalex.clones.core.structures.Token;
 
 public final class Parser {
     private Parser() {
-
     }
 
     public static Stream<List<Token>> tokenizedFunctions(final FileEntity file) {
@@ -45,17 +44,15 @@ public final class Parser {
     }
 
     private static Token anonymize(final org.antlr.v4.runtime.Token antlrToken, final FileEntity file) {
-        //@formatter:off
-        Token token = new Token(antlrToken.getType(),
-                                antlrToken.getText(),
-                                antlrToken.getLine(),
-                                file.getName(),
-                                file.getCommitSnapshot());
-        //@formatter:on
+        final var type = TokenFilter.PRIMITIVE_TYPES.contains(antlrToken.getType()) ?
+                Java9Lexer.Identifier : antlrToken.getType();
 
-        if (TokenFilter.PRIMITIVE_TYPES.contains(token.getType())) {
-            token.setType(Java9Lexer.Identifier);
-        }
-        return token;
+        return new Token(
+                type,
+                antlrToken.getText(),
+                antlrToken.getLine(),
+                file.getName(),
+                file.getCommitSnapshot()
+        );
     }
 }

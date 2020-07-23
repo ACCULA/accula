@@ -6,14 +6,14 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Token;
 
 import java.util.HashSet;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
 public final class JavaListener extends Java9BaseListener {
     private final CommonTokenStream tokenStream;
-    private final List<List<Token>> functions = new LinkedList<>();
+    private final List<List<Token>> functions = new ArrayList<>();
     private final Set<Token> typeArgs = new HashSet<>();
 
     public JavaListener(final CommonTokenStream tokens) {
@@ -30,7 +30,7 @@ public final class JavaListener extends Java9BaseListener {
 
     @Override
     public void enterMethodBody(final Java9Parser.MethodBodyContext ctx) {
-        final var tokens = new LinkedList<Token>();
+        final var tokens = new ArrayList<Token>();
         var tok = ctx.getStart();
         var idx = tok.getTokenIndex();
         while (tok != ctx.getStop()) {

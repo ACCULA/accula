@@ -31,6 +31,5 @@ public final class TokenFilter {
     );
 
     private TokenFilter() {
-
     }
 }
