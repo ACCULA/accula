@@ -4,8 +4,12 @@ import generated.Java9Lexer;
 
 import java.util.Set;
 
-public class TokenFilter {
-    static final Set<Integer> excludeTokens = Set.of(
+public final class TokenFilter {
+    private TokenFilter() {
+
+    }
+
+    static final Set<Integer> EXCLUDE_TOKENS = Set.of(
             Java9Lexer.LPAREN,
             Java9Lexer.RPAREN,
             Java9Lexer.LBRACE,
@@ -19,7 +23,7 @@ public class TokenFilter {
             Java9Lexer.FINAL
     );
 
-    static final Set<Integer> primitiveTypes = Set.of(
+    static final Set<Integer> PRIMITIVE_TYPES = Set.of(
             Java9Lexer.INT,
             Java9Lexer.SHORT,
             Java9Lexer.LONG,

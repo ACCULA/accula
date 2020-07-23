@@ -49,12 +49,12 @@ public final class Parser {
 
     private static boolean isAllowedToken(final org.antlr.v4.runtime.Token token,
                                           final Set<org.antlr.v4.runtime.Token> typeArgs) {
-        return !TokenFilter.excludeTokens.contains(token.getType())
+        return !TokenFilter.EXCLUDE_TOKENS.contains(token.getType())
                 && !typeArgs.contains(token);
     }
 
     private static Token anonymize(final Token token) {
-        if (TokenFilter.primitiveTypes.contains(token.getType())) {
+        if (TokenFilter.PRIMITIVE_TYPES.contains(token.getType())) {
             token.setType(Java9Lexer.Identifier);
         }
         return token;

@@ -10,9 +10,11 @@ import org.accula.api.detector.CodeSnippet;
 
 import java.util.stream.Stream;
 
+/**
+ * @author VanyaKrylov
+ */
 @Slf4j
 public final class SuffixTreeUtils {
-
     private SuffixTreeUtils() {
 
     }

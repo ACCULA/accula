@@ -69,10 +69,9 @@ public final class SuffixTreeCloneDetector implements CloneDetector {
                                                      final Map<CloneClass, List<CodeSnippet>> cloneClassCodeSnippetsMap) {
         getTreeCloneClassForMethod(methodId, cloneDetectorInstance)
                 .ifPresent(treeCloneClass -> {
-                    final int cloneLength = treeCloneClass.getLength();
                     final var cloneClass = new CloneClass(extractBeginToken(treeCloneClass), extractEndToken(treeCloneClass));
                     edgesFromTreeCloneClassForMethod(treeCloneClass, methodId).forEach(edge -> {
-                        final var codeSnippet = getCodeSnippetFromEdge(edge, cloneLength);
+                        final var codeSnippet = getCodeSnippetFromEdge(edge, treeCloneClass.getLength());
                         putCodeSnippetIntoCloneClassCodeSnippetsMap(codeSnippet, cloneClass, cloneClassCodeSnippetsMap);
                     });
                 });
@@ -84,10 +83,9 @@ public final class SuffixTreeCloneDetector implements CloneDetector {
                                                 final Map<CloneClass, List<CodeSnippet>> cloneClassCodeSnippetsMap) {
        getTreeCloneClassForMethod(methodId, cloneDetectorInstance)
                .ifPresent(treeCloneClass -> {
-                   final int cloneLength = treeCloneClass.getLength();
                    final var cloneClass = new CloneClass(extractBeginToken(treeCloneClass), extractEndToken(treeCloneClass));
                    edgesFromTreeCloneClassForMethod(treeCloneClass, methodId).forEach(edge -> {
-                       final var codeSnippetTarget = getCodeSnippetFromEdge(edge, cloneLength);
+                       final var codeSnippetTarget = getCodeSnippetFromEdge(edge, treeCloneClass.getLength());
                        getClonesForCloneClassIntoList(codeSnippetTarget, cloneClass, clones, cloneClassCodeSnippetsMap);
                    });
                });

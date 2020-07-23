@@ -1,17 +1,14 @@
 package org.accula.api.detector.parser;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Comparator;
-import java.util.Objects;
-
-@Getter
-@AllArgsConstructor
+//Temporally unused class, will be used when generification of input data in CloneIndexer is being introduced
+@Data
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Token implements Comparable<Token> {
-    @Setter
+    @EqualsAndHashCode.Include
     private Integer type;
     private final String text;
     private final Integer line;
@@ -20,23 +17,8 @@ public class Token implements Comparable<Token> {
     private final Long repoId;
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Token token = (Token) o;
-        return type.equals(token.type);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(type);
-    }
-
-    @Override
     public int compareTo(@NotNull Token o) {
-        return Comparator
-                .comparingInt(Token::getType)
-                .compare(this, o);
+        return type - o.type;
     }
 
     @Override
