@@ -34,17 +34,8 @@ public final class Parser {
                 .map(func -> func
                         .stream()
                         .filter(token -> isAllowedToken(token, listener.getTypeArgs()))
-                        .map(token -> anonymize(
-                                new Token(
-                                        token.getType(),
-                                        token.getText(),
-                                        token.getLine(),
-                                        file.getName(),
-                                        file.getCommitSnapshot())
-                                )
-                        )
-                        .collect(Collectors.toUnmodifiableList())
-                );
+                        .map(token -> anonymize(token, file))
+                        .collect(Collectors.toUnmodifiableList()));
     }
 
     private static boolean isAllowedToken(final org.antlr.v4.runtime.Token token,
@@ -53,7 +44,15 @@ public final class Parser {
                 && !typeArgs.contains(token);
     }
 
-    private static Token anonymize(final Token token) {
+    private static Token anonymize(final org.antlr.v4.runtime.Token antlrToken, final FileEntity file) {
+        //@formatter:off
+        Token token = new Token(antlrToken.getType(),
+                                antlrToken.getText(),
+                                antlrToken.getLine(),
+                                file.getName(),
+                                file.getCommitSnapshot());
+        //@formatter:on
+
         if (TokenFilter.PRIMITIVE_TYPES.contains(token.getType())) {
             token.setType(Java9Lexer.Identifier);
         }

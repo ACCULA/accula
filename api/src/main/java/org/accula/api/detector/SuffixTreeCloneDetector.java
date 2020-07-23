@@ -33,6 +33,7 @@ import static org.accula.api.detector.util.SuffixTreeUtils.getCodeSnippetFromEdg
 @RequiredArgsConstructor
 public final class SuffixTreeCloneDetector implements CloneDetector {
     private final int minCloneLength;
+    private static final long SRC_FIRST_METHOD_ID = 2;
 
     @Override
     public Flux<Tuple2<CodeSnippet, CodeSnippet>> findClones(final Flux<FileEntity> targetFiles, final Flux<FileEntity> sourceFiles) {
@@ -46,14 +47,13 @@ public final class SuffixTreeCloneDetector implements CloneDetector {
         final var cloneClassCodeSnippetsMap = new HashMap<CloneClass, List<CodeSnippet>>();
         final var resultList = new ArrayList<Tuple2<CodeSnippet, CodeSnippet>>();
         final var suffixTree = cloneDetectorInstance.getTree();
-        final long srcFirstMethodId = 2;
         //NB! Source files must be added into suffixTree BEFORE target files
         final long srcLastMethodId = addFilesIntoTree(sourceFiles, suffixTree);
         final long targetFirstMethodId = srcLastMethodId + 1;
         final long targetLastMethodId = addFilesIntoTree(targetFiles, suffixTree);
 
         try {
-            LongStream.rangeClosed(srcFirstMethodId, srcLastMethodId).forEach(methodId ->
+            LongStream.rangeClosed(SRC_FIRST_METHOD_ID, srcLastMethodId).forEach(methodId ->
                     extractClonesIntoMapForSourceMethod(methodId, cloneDetectorInstance, cloneClassCodeSnippetsMap));
             LongStream.rangeClosed(targetFirstMethodId, targetLastMethodId).forEach(targetMethodId ->
                     addClonesToListForTargetMethod(targetMethodId, cloneDetectorInstance, resultList, cloneClassCodeSnippetsMap));
@@ -120,8 +120,8 @@ public final class SuffixTreeCloneDetector implements CloneDetector {
      */
     private static long addFilesIntoTree(final List<FileEntity> files, final SuffixTree<Token> suffixTree) {
         return files.stream()
-                .map(file -> addFileIntoTree(file, suffixTree))
-                .max(Long::compareTo)
+                .mapToLong(file -> addFileIntoTree(file, suffixTree))
+                .max()
                 .orElseThrow();
     }
 
@@ -133,8 +133,8 @@ public final class SuffixTreeCloneDetector implements CloneDetector {
      */
     private static long addFileIntoTree(final FileEntity file, final SuffixTree<Token> suffixTree) {
         return Parser.tokenizedFunctions(file)
-                .map(suffixTree::addSequence)
-                .max(Long::compareTo)
+                .mapToLong(suffixTree::addSequence)
+                .max()
                 .orElseThrow();
     }
 
