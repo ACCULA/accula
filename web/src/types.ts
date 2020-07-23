@@ -24,7 +24,6 @@ export interface IProject {
   id: number
   repoUrl: string
   creatorId: number
-  admins?: number[]
   repoOwner: string
   repoName: string
   repoDescription?: string
@@ -32,14 +31,22 @@ export interface IProject {
   repoOpenPullCount: number
 }
 
-export interface IProjectSettings {}
+export interface IProjectConf {
+  admins: number[]
+  cloneMinLineCount: number
+}
 
-export interface IPullShort {
-  id: number
+export interface IShortPull {
+  number: number
   projectId: number
+  url: string
   title: string
   open: boolean
-  cloneCount: number
+  author: {
+    url: string
+    login: string
+    avatar: string
+  }
 }
 
 export interface IPull {
@@ -57,7 +64,6 @@ export interface IPull {
   author: {
     url: string
     login: string
-    name: string
     avatar: string
   }
   title: string
@@ -66,12 +72,22 @@ export interface IPull {
   updatedAt: string
   status: string
   cloneCount: number
-  previousPulls: IPullShort[]
+  previousPulls: IShortPull[]
+}
+
+export interface IProjectRef {
+  projectId?: number
 }
 
 export interface IPullRef {
   projectId?: number
   pullNumber?: number
+}
+
+export interface ICompareRef {
+  projectId?: number
+  target?: number
+  source?: number
 }
 
 export interface ICodeSnippet {

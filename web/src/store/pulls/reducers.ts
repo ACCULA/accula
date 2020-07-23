@@ -1,18 +1,50 @@
-import { notFetching } from 'store/wrapper'
+import { notFetching, Wrapper } from 'store/wrapper'
+import { IClone, IDiff } from 'types'
 import {
   PullsActionTypes, //
   PullsState,
   SET_CLONES,
+  SET_COMPARES,
   SET_DIFFS,
   SET_PULL,
   SET_PULLS
 } from './types'
 
+const decodeDiff = (wrapper: Wrapper<IDiff[]>): Wrapper<IDiff[]> => ({
+  ...wrapper,
+  value:
+    wrapper.value &&
+    wrapper.value.map(diff => ({
+      baseFilename: diff.baseFilename,
+      baseContent: diff.baseContent ? atob(diff.baseContent) : '',
+      headFilename: diff.headFilename,
+      headContent: diff.headContent ? atob(diff.headContent) : ''
+    }))
+})
+
+const decodeClones = (wrapper: Wrapper<IClone[]>): Wrapper<IClone[]> => ({
+  ...wrapper,
+  value:
+    wrapper.value &&
+    wrapper.value.map(diff => ({
+      id: diff.id,
+      target: {
+        ...diff.target,
+        content: atob(diff.target.content)
+      },
+      source: {
+        ...diff.source,
+        content: atob(diff.source.content)
+      }
+    }))
+})
+
 const initialState: PullsState = {
   pulls: notFetching,
   pull: notFetching,
-  clones: notFetching,
-  diff: notFetching
+  diffs: notFetching,
+  compares: notFetching,
+  clones: notFetching
 }
 
 export function pullsReducer(
@@ -35,38 +67,19 @@ export function pullsReducer(
     case SET_CLONES: {
       return {
         ...state,
-        clones: {
-          ...action.payload,
-          value:
-            action.payload.value &&
-            action.payload.value.map(diff => ({
-              id: diff.id,
-              target: {
-                ...diff.target,
-                content: atob(diff.target.content)
-              },
-              source: {
-                ...diff.source,
-                content: atob(diff.source.content)
-              }
-            }))
-        }
+        clones: decodeClones(action.payload)
       }
     }
     case SET_DIFFS: {
       return {
         ...state,
-        diff: {
-          ...action.payload,
-          value:
-            action.payload.value &&
-            action.payload.value.map(diff => ({
-              baseFilename: diff.baseFilename,
-              baseContent: diff.baseContent ? atob(diff.baseContent) : '',
-              headFilename: diff.headFilename,
-              headContent: diff.headContent ? atob(diff.headContent) : ''
-            }))
-        }
+        diffs: decodeDiff(action.payload)
+      }
+    }
+    case SET_COMPARES: {
+      return {
+        ...state,
+        compares: decodeDiff(action.payload)
       }
     }
     default:

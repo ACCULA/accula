@@ -23,7 +23,6 @@ public final class UsersHandler {
     private static final Exception USER_NOT_FOUND_EXCEPTION = new Exception();
 
     private final UserRepo userRepo;
-    private final ModelToDtoConverter modelToDtoConverter;
 
     public Mono<ServerResponse> getById(final ServerRequest request) {
         return Mono
@@ -31,7 +30,7 @@ public final class UsersHandler {
                 .map(Long::parseLong)
                 .onErrorMap(NumberFormatException.class, e -> USER_NOT_FOUND_EXCEPTION)
                 .flatMap(userRepo::findById)
-                .map(modelToDtoConverter::convert)
+                .map(ModelToDtoConverter::convert)
                 .flatMap(user -> ServerResponse
                         .ok()
                         .contentType(APPLICATION_JSON)

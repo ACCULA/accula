@@ -44,7 +44,8 @@ public final class ProjectUpdater {
                 .defer(() -> {
                     final var users = new HashSet<GithubUser>();
                     final var repos = new HashSet<GithubRepo>();
-                    final var commitSnapshots = new HashSet<CommitSnapshot>();
+                    final var heads = new HashSet<CommitSnapshot>();
+                    final var bases = new HashSet<CommitSnapshot>();
                     final var pulls = new HashSet<Pull>();
                     int openPullCount = 0;
 
@@ -53,7 +54,7 @@ public final class ProjectUpdater {
                             continue;
                         }
 
-                        final var pull = processGithubApiPull(projectId, githubApiPull, users, repos, commitSnapshots);
+                        final var pull = processGithubApiPull(projectId, githubApiPull, users, repos, heads, bases);
                         pulls.add(pull);
 
                         if (pull.isOpen()) {
@@ -61,14 +62,16 @@ public final class ProjectUpdater {
                         }
                     }
 
+                    final var allCommitSnapshots = combine(heads, bases);
+
                     return githubUserRepo.upsert(users)
                             .thenMany(githubRepoRepo.upsert(repos))
-                            .thenMany(commitSnapshotRepo.insert(commitSnapshots))
+                            .thenMany(commitSnapshotRepo.insert(allCommitSnapshots))
                             .thenMany(pullRepo.upsert(pulls))
-                            .thenMany(commitSnapshotRepo.mapToPulls(commitSnapshots))
+                            .thenMany(commitSnapshotRepo.mapToPulls(heads))
                             .then(Mono.just(openPullCount));
                 })
-                .doOnSuccess(success -> log.info("Project has been updated successfully with pulls={}", Arrays.toString(githubApiPulls)))
+                .doOnSuccess(success -> log.info("Project has been updated successfully with {} pulls", githubApiPulls.length))
                 .doOnError(e -> log.error("Failed to update project with pulls={}", Arrays.toString(githubApiPulls), e))
                 .subscribeOn(processingScheduler);
     }
@@ -82,15 +85,17 @@ public final class ProjectUpdater {
 
                     final var users = new HashSet<GithubUser>();
                     final var repos = new HashSet<GithubRepo>();
-                    final var commitSnapshots = new HashSet<CommitSnapshot>();
+                    final var heads = new HashSet<CommitSnapshot>();
+                    final var bases = new HashSet<CommitSnapshot>();
 
-                    final var pull = processGithubApiPull(projectId, githubApiPull, users, repos, commitSnapshots);
+                    final var pull = processGithubApiPull(projectId, githubApiPull, users, repos, heads, bases);
+                    final var allCommitSnapshots = combine(heads, bases);
 
                     return githubUserRepo.upsert(users)
                             .thenMany(githubRepoRepo.upsert(repos))
-                            .thenMany(commitSnapshotRepo.insert(commitSnapshots))
+                            .thenMany(commitSnapshotRepo.insert(allCommitSnapshots))
                             .then(pullRepo.upsert(pull))
-                            .thenMany(commitSnapshotRepo.mapToPulls(commitSnapshots))
+                            .thenMany(commitSnapshotRepo.mapToPulls(heads))
                             .then(Mono.just(pull));
                 })
                 .doOnSuccess(success -> log.info("Project has been updated successfully with pull={}", githubApiPull))
@@ -102,21 +107,29 @@ public final class ProjectUpdater {
                                       final GithubApiPull githubApiPull,
                                       final Set<GithubUser> users,
                                       final Set<GithubRepo> repos,
-                                      final Set<CommitSnapshot> commitSnapshots) {
+                                      final Set<CommitSnapshot> heads,
+                                      final Set<CommitSnapshot> bases) {
         final var pull = converter.convert(githubApiPull, projectId);
 
         final var head = pull.getHead();
         users.add(head.getRepo().getOwner());
         repos.add(head.getRepo());
-        commitSnapshots.add(head);
+        heads.add(head);
 
         final var base = pull.getBase();
         users.add(base.getRepo().getOwner());
         repos.add(base.getRepo());
-        commitSnapshots.add(base);
+        bases.add(base);
 
         users.add(pull.getAuthor());
 
         return pull;
+    }
+
+    private static <T> Set<T> combine(final Set<T> first, final Set<T> second) {
+        final var combined = new HashSet<T>(first.size() + second.size());
+        combined.addAll(first);
+        combined.addAll(second);
+        return combined;
     }
 }

@@ -2,28 +2,42 @@ import React, { useState } from 'react'
 import { Button } from 'react-bootstrap'
 
 import { CodeDiff, DiffMethod } from 'components/CodeDiff'
-import { IClone } from 'types'
-import { Loader } from 'components/Loader'
+import { IPullClonesState } from 'store/pulls/types'
+import { SplitUnifiedViewButton } from 'components/CodeDiff/SplitUnifiedViewButton'
+import { LoadingWrapper } from 'components/LoadingWrapper'
 
 interface PullClonesTabProps {
-  isFetching: boolean
-  clones: IClone[]
+  clones: IPullClonesState
+  refreshClones: () => void
+  isAdmin: boolean
 }
 
-export const PullClonesTab = ({ isFetching, clones }: PullClonesTabProps) => {
+export const PullClonesTab = ({
+  clones, //
+  refreshClones,
+  isAdmin
+}: PullClonesTabProps) => {
   const [splitView, setSplitView] = useState(false)
-  return isFetching ? (
-    <Loader />
-  ) : (
-    <>
+
+  return (
+    <LoadingWrapper deps={[clones]}>
       <div className="pull-right">
-        <Button bsStyle="info" onClick={() => setSplitView(!splitView)} style={{ marginTop: -7 }}>
-          {splitView ? 'Unified view' : 'Split view'}
-        </Button>
+        {isAdmin && (
+          <Button
+            bsStyle="info" //
+            className="pull-refresh-clone"
+            onClick={refreshClones}
+          >
+            <i className="fas fa-fw fa-sync-alt" /> Refresh
+          </Button>
+        )}
+        {clones.value && clones.value.length > 0 && (
+          <SplitUnifiedViewButton splitView={splitView} setSplitView={setSplitView} />
+        )}
       </div>
-      <h5>{clones?.length || 0} clones found</h5>
-      {clones &&
-        clones.map(clone => (
+      <h5>{clones.value?.length || 0} clones found</h5>
+      {clones.value &&
+        clones.value.map(clone => (
           <CodeDiff
             key={clone.id}
             leftTitle={
@@ -45,6 +59,6 @@ export const PullClonesTab = ({ isFetching, clones }: PullClonesTabProps) => {
             // disableWordDiff
           />
         ))}
-    </>
+    </LoadingWrapper>
   )
 }

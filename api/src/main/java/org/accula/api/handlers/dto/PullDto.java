@@ -4,6 +4,7 @@ import lombok.Builder;
 import lombok.Value;
 
 import java.time.Instant;
+import java.util.List;
 
 /**
  * @author Anton Lamtev
@@ -25,8 +26,7 @@ public class PullDto {
     @Builder.Default
     Integer cloneCount = 0;
     GithubUserDto author;
-    @Builder.Default
-    PullDto[] previousPulls = new PullDto[0];
+    List<ShortPullDto> previousPulls;
 
     @Value
     public static class Marker {

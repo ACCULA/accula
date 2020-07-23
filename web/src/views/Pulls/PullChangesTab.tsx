@@ -1,15 +1,14 @@
 import React, { useState } from 'react'
-import { Button } from 'react-bootstrap'
 import { CodeDiff, DiffMethod } from 'components/CodeDiff'
-import { IDiff } from 'types'
-import { Loader } from 'components/Loader'
+import { IPullDiffsState } from 'store/pulls/types'
+import { SplitUnifiedViewButton } from 'components/CodeDiff/SplitUnifiedViewButton'
+import { LoadingWrapper } from 'components/LoadingWrapper'
 
 interface PullChangesTabProps {
-  isFetching: boolean
-  diffs: IDiff[]
+  diffs: IPullDiffsState
 }
 
-const getTitle = (base?: string, head?: string): JSX.Element => {
+export const getTitle = (base?: string, head?: string): JSX.Element => {
   if (base && head) {
     if (base === head) {
       return <code>{base}</code>
@@ -25,32 +24,32 @@ const getTitle = (base?: string, head?: string): JSX.Element => {
   return <code />
 }
 
-export const PullChangesTab = ({ isFetching, diffs }: PullChangesTabProps) => {
+export const PullChangesTab = ({ diffs }: PullChangesTabProps) => {
   const [splitView, setSplitView] = useState(false)
-  return isFetching || !diffs ? (
-    <Loader />
-  ) : (
-    <>
-      <div className="pull-right">
-        <Button bsStyle="info" onClick={() => setSplitView(!splitView)} style={{ marginTop: -7 }}>
-          {splitView ? 'Unified view' : 'Split view'}
-        </Button>
-      </div>
-      <h5>{diffs.length} files changed</h5>
-      {diffs.map((diff, i) => {
-        const { baseContent, baseFilename, headFilename, headContent } = diff
-        return (
-          <CodeDiff
-            key={i}
-            leftTitle={getTitle(baseFilename, headFilename)}
-            splitView={splitView} //
-            oldValue={baseContent}
-            newValue={headContent}
-            compareMethod={DiffMethod.LINES}
-            disableWordDiff
-          />
-        )
-      })}
-    </>
+
+  return (
+    <LoadingWrapper deps={[diffs]}>
+      {diffs.value && (
+        <>
+          <div className="pull-right">
+            {diffs.value.length > 0 && (
+              <SplitUnifiedViewButton splitView={splitView} setSplitView={setSplitView} />
+            )}
+          </div>
+          <h5>{diffs.value.length} files changed</h5>
+          {diffs.value.map(({ baseContent, baseFilename, headFilename, headContent }, i) => (
+            <CodeDiff
+              key={i}
+              leftTitle={getTitle(baseFilename, headFilename)}
+              splitView={splitView} //
+              oldValue={baseContent}
+              newValue={headContent}
+              compareMethod={DiffMethod.LINES}
+              disableWordDiff
+            />
+          ))}
+        </>
+      )}
+    </LoadingWrapper>
   )
 }

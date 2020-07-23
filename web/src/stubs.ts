@@ -50,7 +50,6 @@ export const pulls: IPull[] = [
     author: {
       url: 'https://github.com/kilinochi',
       login: 'kilinochi',
-      name: 'Arman Shamenov',
       avatar: 'https://avatars2.githubusercontent.com/u/34065879?v=4'
     },
     open: false,
@@ -76,7 +75,6 @@ export const pulls: IPull[] = [
     author: {
       url: 'https://github.com/vaddya',
       login: 'vaddya',
-      name: 'Vadim Dyachkov',
       avatar: 'https://avatars3.githubusercontent.com/u/15687094?v=4'
     },
     open: true,
@@ -84,22 +82,7 @@ export const pulls: IPull[] = [
     updatedAt: '2020-05-11T04:02:18Z',
     status: 'Processing',
     cloneCount: 0,
-    previousPulls: [
-      {
-        id: 3,
-        projectId: 1,
-        title: 'Stage 1',
-        open: false,
-        cloneCount: 3
-      },
-      {
-        id: 3,
-        projectId: 1,
-        title: 'Stage 2',
-        open: false,
-        cloneCount: 3
-      }
-    ]
+    previousPulls: []
   }
 ]
 
@@ -161,7 +144,6 @@ public interface RefreshTokenRepository extends ReactiveCrudRepository<RefreshTo
 `
 
 export const files = { oldCode, newCode }
-
 
 const oldCode2 = `
 @Modifying

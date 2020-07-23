@@ -1,87 +1,122 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { bindActionCreators } from 'redux'
 import { connect, ConnectedProps } from 'react-redux'
 import { useHistory, useParams } from 'react-router-dom'
 import { Badge, Tab, Tabs } from 'react-bootstrap'
-import { Helmet } from 'react-helmet'
 
 import { Breadcrumbs } from 'components/Breadcrumbs'
 import { Loader } from 'components/Loader'
 import { AppDispatch, AppState } from 'store'
-import { getClonesAction, getDiffAction, getPullAction } from 'store/pulls/actions'
-import { getProjectAction } from 'store/projects/actions'
+import {
+  getClonesAction,
+  getComparesAction,
+  getDiffsAction,
+  getPullAction,
+  getPullsAction,
+  refreshClonesAction
+} from 'store/pulls/actions'
+import { getProjectAction, getProjectConfAction } from 'store/projects/actions'
+import { PullCompareTab } from 'views/Pulls/PullCompareTab'
+import { useLocation } from 'react-use'
+import { isProjectAdmin } from 'utils'
+import { getCurrentUserAction } from 'store/users/actions'
+import { PageTitle } from 'components/PageTitle'
 import { PullClonesTab } from './PullClonesTab'
 import { PullChangesTab } from './PullChangesTab'
 import { PullOverviewTab } from './PullOverviewTab'
 
 const mapStateToProps = (state: AppState) => ({
-  isFetching:
-    state.pulls.pull.isFetching ||
-    state.projects.project.isFetching ||
-    !state.pulls.pull.value ||
-    !state.projects.project,
-  project: state.projects.project.value,
-  pull: state.pulls.pull.value,
-  diffs: state.pulls.diff,
+  user: state.users.user,
+  project: state.projects.project,
+  projectConf: state.projects.projectConf,
+  pull: state.pulls.pull,
+  pulls: state.pulls.pulls,
+  diffs: state.pulls.diffs,
+  compares: state.pulls.compares,
   clones: state.pulls.clones
 })
 
 const mapDispatchToProps = (dispatch: AppDispatch) => ({
+  getUser: bindActionCreators(getCurrentUserAction, dispatch),
   getProject: bindActionCreators(getProjectAction, dispatch),
+  getProjectConf: bindActionCreators(getProjectConfAction, dispatch),
   getPull: bindActionCreators(getPullAction, dispatch),
-  getDiffs: bindActionCreators(getDiffAction, dispatch),
-  getClones: bindActionCreators(getClonesAction, dispatch)
+  getPulls: bindActionCreators(getPullsAction, dispatch),
+  getDiffs: bindActionCreators(getDiffsAction, dispatch),
+  getCompares: bindActionCreators(getComparesAction, dispatch),
+  getClones: bindActionCreators(getClonesAction, dispatch),
+  refreshClones: bindActionCreators(refreshClonesAction, dispatch)
 })
 
 const connector = connect(mapStateToProps, mapDispatchToProps)
 type PullsProps = ConnectedProps<typeof connector>
 
 const Pull = ({
-  isFetching,
+  user,
   project,
+  projectConf,
   pull,
+  pulls,
   diffs,
+  compares,
   clones,
+  getUser,
   getProject,
+  getProjectConf,
   getPull,
+  getPulls,
+  getDiffs,
+  getCompares,
   getClones,
-  getDiffs
+  refreshClones
 }: PullsProps) => {
   const history = useHistory()
+  const location = useLocation()
+
   const { prId, plId, tab } = useParams()
   const projectId = parseInt(prId, 10)
   const pullId = parseInt(plId, 10)
+  const [compareWith, setCompareWith] = useState(0)
 
   useEffect(() => {
-    getProject(projectId)
-  }, [getProject, projectId])
+    const query = parseInt(new URLSearchParams(location.search).get('with') || '0', 10)
+    if (compareWith !== query) {
+      setCompareWith(query)
+      getCompares(projectId, pullId, query)
+    }
+  }, [compareWith, location, getCompares, projectId, pullId])
 
   useEffect(() => {
     getPull(projectId, pullId)
-  }, [getPull, projectId, pullId])
-
-  useEffect(() => {
-    getClones(projectId, pullId)
-  }, [getClones, projectId, pullId])
-
-  useEffect(() => {
+    getPulls(projectId)
     getDiffs(projectId, pullId)
-  }, [getDiffs, projectId, pullId])
+    getClones(projectId, pullId)
+  }, [getPull, getPulls, getDiffs, getClones, projectId, pullId])
 
-  if (isFetching || (pull && pull.number !== pullId)) {
+  useEffect(() => {
+    getUser()
+    getProject(projectId)
+    getProjectConf(projectId)
+  }, [getUser, getProject, getProjectConf])
+
+  if (pull.value && pull.value.number !== pullId) {
     return <Loader />
   }
   return (
     <div className="content">
-      <Helmet>
-        <title>{`${pull.title} - ${project.repoName} - ACCULA`}</title>
-      </Helmet>
+      <PageTitle
+        title={pull.value && project.value && `${pull.value.title} - ${project.value.repoName}`}
+      />
       <Breadcrumbs
-        breadcrumbs={[
-          { text: 'Projects', to: '/projects' },
-          { text: project.repoName, to: `/projects/${project.id}` },
-          { text: pull.title }
-        ]}
+        breadcrumbs={
+          project.value && pull.value
+            ? [
+                { text: 'Projects', to: '/projects' },
+                { text: project.value.repoName, to: `/projects/${project.value.id}/pulls` },
+                { text: pull.value.title }
+              ]
+            : [{ text: '' }]
+        }
       />
       <Tabs
         activeKey={tab || 'overview'} //
@@ -116,7 +151,29 @@ const Pull = ({
             </>
           }
         >
-          <PullChangesTab isFetching={diffs.isFetching} diffs={diffs.value} />
+          <PullChangesTab diffs={diffs} />
+        </Tab>
+        <Tab
+          eventKey="compare"
+          title={
+            <>
+              <i className="fas fa-fw fa-exchange-alt" /> Compare
+            </>
+          }
+        >
+          <PullCompareTab
+            pullId={pullId}
+            pulls={pulls}
+            compares={compares}
+            compareWith={compareWith}
+            onSelect={num => {
+              if (num === 0) {
+                history.push(`/projects/${projectId}/pulls/${pullId}/compare`)
+              } else {
+                history.push(`/projects/${projectId}/pulls/${pullId}/compare?with=${num}`)
+              }
+            }}
+          />
         </Tab>
         <Tab
           eventKey="clones"
@@ -133,7 +190,11 @@ const Pull = ({
             </>
           }
         >
-          <PullClonesTab isFetching={clones.isFetching} clones={clones.value} />
+          <PullClonesTab
+            clones={clones} //
+            refreshClones={() => refreshClones(projectId, pullId)}
+            isAdmin={isProjectAdmin(user.value, project.value, projectConf.value)}
+          />
         </Tab>
       </Tabs>
     </div>

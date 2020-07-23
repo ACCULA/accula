@@ -12,7 +12,6 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.Instant;
 import java.util.Collection;
 
 /**
@@ -86,6 +85,17 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
     }
 
     @Override
+    public Flux<Pull> findPrevious(Long projectId, Integer number, Long authorId) {
+        return manyWithConnection(connection -> Mono
+                .from(selectPreviousByNumberAndAuthorIdStatement(connection)
+                        .bind("$1", projectId)
+                        .bind("$2", number)
+                        .bind("$3", authorId)
+                        .execute())
+                .flatMapMany(result -> ConnectionProvidedRepo.convertMany(result, this::convert)));
+    }
+
+    @Override
     public Flux<Pull> findUpdatedEarlierThan(final Long projectId, final Integer number) {
         return manyWithConnection(connection -> Mono
                 .from(selectUpdatedEarlierStatement(connection)
@@ -102,6 +112,28 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
                         .bind("$1", projectId)
                         .execute())
                 .flatMapMany(result -> ConnectionProvidedRepo.convertMany(result, this::convert)));
+    }
+
+    @Override
+    public Flux<Integer> numbersByIds(final Collection<Long> ids) {
+        if (ids.isEmpty()) {
+            return Flux.empty();
+        }
+
+        return manyWithConnection(connection -> {
+            final var statement = (PostgresqlStatement) connection.createStatement("""
+                    SELECT number 
+                    FROM pull
+                    WHERE id = $1
+                    """);
+            ids.forEach(id -> statement
+                    .bind("$1", id)
+                    .add());
+
+            return statement
+                    .execute()
+                    .flatMap(result -> ConnectionProvidedRepo.column(result, "number", Integer.class));
+        });
     }
 
     private static PostgresqlStatement insertStatement(final Connection connection) {
@@ -152,12 +184,19 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
     private static PostgresqlStatement selectByProjectIdStatement(final Connection connection) {
         return selectStatement(connection, """
                 WHERE pull.project_id = $1
-                ORDER BY pull.updated_at DESC
+                ORDER BY pull.open DESC, pull.updated_at DESC
                 """);
     }
 
     private static PostgresqlStatement selectByNumberStatement(final Connection connection) {
         return selectStatement(connection, "WHERE pull.project_id = $1 AND pull.number = $2");
+    }
+    
+    private static PostgresqlStatement selectPreviousByNumberAndAuthorIdStatement(final Connection connection) {
+        return selectStatement(connection, """
+                WHERE pull.project_id = $1 AND pull.number < $2 AND author.id = $3
+                ORDER BY pull.number DESC
+                """);
     }
 
     private static PostgresqlStatement selectUpdatedEarlierStatement(final Connection connection) {
@@ -224,44 +263,40 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
     }
 
     private Pull convert(final Row row) {
-        return Pull.builder()
-                .id(Converters.value(row, "id", Long.class))
-                .number(Converters.value(row, "number", Integer.class))
-                .title(Converters.value(row, "title", String.class))
-                .open(Converters.value(row, "open", Boolean.class))
-                .createdAt(Converters.value(row, "created_at", Instant.class))
-                .updatedAt(Converters.value(row, "updated_at", Instant.class))
-                .head(Converters.convertCommitSnapshot(row,
-                        "head_snap_sha",
-                        "head_snap_branch",
-                        Converters.NOTHING,
-                        "head_repo_id",
-                        "head_repo_name",
-                        "head_repo_description",
-                        "head_repo_owner_id",
-                        "head_repo_owner_login",
-                        "head_repo_owner_name",
-                        "head_repo_owner_avatar",
-                        "head_repo_owner_is_org"))
-                .base(Converters.convertCommitSnapshot(row,
-                        "base_snap_sha",
-                        "base_snap_branch",
-                        Converters.NOTHING,
-                        "base_repo_id",
-                        "base_repo_name",
-                        "base_repo_description",
-                        "base_repo_owner_id",
-                        "base_repo_owner_login",
-                        "base_repo_owner_name",
-                        "base_repo_owner_avatar",
-                        "base_repo_owner_is_org"))
-                .author(Converters.convertUser(row,
-                        "author_id",
-                        "author_login",
-                        "author_name",
-                        "author_avatar",
-                        "author_is_org"))
-                .projectId(Converters.value(row, "project_id", Long.class))
-                .build();
+        return Converters.convertPull(row,
+                "id",
+                "number",
+                "title",
+                "open",
+                "created_at",
+                "updated_at",
+                "head_snap_sha",
+                "head_snap_branch",
+                "id",
+                "head_repo_id",
+                "head_repo_name",
+                "head_repo_description",
+                "head_repo_owner_id",
+                "head_repo_owner_login",
+                "head_repo_owner_name",
+                "head_repo_owner_avatar",
+                "head_repo_owner_is_org",
+                "base_snap_sha",
+                "base_snap_branch",
+                Converters.NOTHING,
+                "base_repo_id",
+                "base_repo_name",
+                "base_repo_description",
+                "base_repo_owner_id",
+                "base_repo_owner_login",
+                "base_repo_owner_name",
+                "base_repo_owner_avatar",
+                "base_repo_owner_is_org",
+                "author_id",
+                "author_login",
+                "author_name",
+                "author_avatar",
+                "author_is_org",
+                "project_id");
     }
 }

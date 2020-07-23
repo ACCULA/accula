@@ -10,7 +10,7 @@ import { AppDispatch, AppState } from 'store'
 import {
   createProjectAction,
   getProjectsAction,
-  resetCreationStateAction
+  resetCreateProject
 } from 'store/projects/actions'
 import { CreateProjectModal } from './CreateProjectModal'
 import { ProjectPanel } from './ProjectPanel'
@@ -19,13 +19,13 @@ const mapStateToProps = (state: AppState) => ({
   isFetching: state.projects.projects.isFetching || !state.projects.projects.value,
   user: state.users.user.value,
   projects: state.projects.projects.value,
-  creationState: state.projects.creationState
+  creationState: state.projects.createProject
 })
 
 const mapDispatchToProps = (dispatch: AppDispatch) => ({
   getProjects: bindActionCreators(getProjectsAction, dispatch),
   createProject: bindActionCreators(createProjectAction, dispatch),
-  resetCreationState: () => dispatch(resetCreationStateAction())
+  resetCreationState: () => dispatch(resetCreateProject())
 })
 
 const connector = connect(mapStateToProps, mapDispatchToProps)

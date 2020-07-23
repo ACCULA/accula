@@ -9,25 +9,31 @@ import org.accula.api.db.model.User;
 import org.accula.api.handlers.dto.GithubUserDto;
 import org.accula.api.handlers.dto.ProjectDto;
 import org.accula.api.handlers.dto.PullDto;
+import org.accula.api.handlers.dto.ShortPullDto;
 import org.accula.api.handlers.dto.UserDto;
-import org.springframework.stereotype.Component;
 
 import java.net.URLEncoder;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Anton Lamtev
+ * @author Vadim Dyachkov
  */
-@Component
 public final class ModelToDtoConverter {
     private static final String GITHUB_USER_URL_FORMAT = "https://github.com/%s";
     private static final String GITHUB_REPO_URL_FORMAT = GITHUB_USER_URL_FORMAT + "/%s";
     private static final String GITHUB_PULL_URL_FORMAT = GITHUB_REPO_URL_FORMAT + "/pull/%s";
 
-    public ProjectDto convert(final Project project) {
+    private ModelToDtoConverter() {
+    }
+    
+    public static ProjectDto convert(final Project project) {
         return convert(project, project.getOpenPullCount());
     }
 
-    public ProjectDto convert(final Project project, final int openPullCount) {
+    public static ProjectDto convert(final Project project, final int openPullCount) {
         return ProjectDto.builder()
                 .id(project.getId())
                 .repoOwner(project.getGithubRepo().getOwner().getLogin())
@@ -42,15 +48,15 @@ public final class ModelToDtoConverter {
                 .build();
     }
 
-    public UserDto convert(final User user) {
+    public static UserDto convert(final User user) {
         return new UserDto(user.getId(), user.getGithubUser().getLogin(), user.getGithubUser().getName());
     }
 
-    public GithubUserDto convert(final GithubUser user) {
+    public static GithubUserDto convert(final GithubUser user) {
         return new GithubUserDto(user.getLogin(), user.getAvatar(), String.format(GITHUB_USER_URL_FORMAT, user.getLogin()));
     }
 
-    public PullDto convert(final Pull pull) {
+    public static PullDto convert(final Pull pull, final List<Pull> previousPulls) {
         return PullDto.builder()
                 .projectId(pull.getProjectId())
                 .number(pull.getNumber())
@@ -62,10 +68,11 @@ public final class ModelToDtoConverter {
                 .createdAt(pull.getCreatedAt())
                 .updatedAt(pull.getUpdatedAt())
                 .author(convert(pull.getAuthor()))
+                .previousPulls(convertShort(previousPulls))
                 .build();
     }
 
-    public PullDto.Marker convert(final CommitSnapshot snapshot) {
+    public static PullDto.Marker convert(final CommitSnapshot snapshot) {
         return new PullDto.Marker(
                 String.format(
                         GITHUB_REPO_URL_FORMAT + "/tree/%s",
@@ -75,6 +82,27 @@ public final class ModelToDtoConverter {
                 ),
                 String.format("%s:%s", snapshot.getRepo().getOwner().getLogin(), snapshot.getBranch())
         );
+    }
+    
+    public static List<ShortPullDto> convertShort(final List<Pull> pulls) {
+        if (pulls.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return pulls
+                .stream()
+                .map(ModelToDtoConverter::convertShort)
+                .collect(Collectors.toList());
+    }
+
+    public static ShortPullDto convertShort(final Pull pull) {
+        return ShortPullDto.builder()
+                .projectId(pull.getProjectId())
+                .number(pull.getNumber())
+                .url(pullUrl(pull))
+                .title(pull.getTitle())
+                .open(pull.isOpen())
+                .author(convert(pull.getAuthor()))
+                .build();
     }
 
     private static String pullUrl(final Pull pull) {

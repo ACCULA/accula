@@ -14,6 +14,7 @@ import org.accula.api.db.repo.CurrentUserRepo;
 import org.accula.api.db.repo.GithubUserRepo;
 import org.accula.api.db.repo.ProjectRepo;
 import org.accula.api.db.repo.PullRepo;
+import org.accula.api.db.repo.UserRepo;
 import org.accula.api.github.api.GithubClient;
 import org.accula.api.github.api.GithubClientException;
 import org.accula.api.github.model.GithubApiCommitSnapshot;
@@ -62,7 +63,6 @@ public class ProjectsRouterTest {
             .build();
     private static final List<Pull> PULLS = List.of(PULL, PULL, PULL);
     private static final String EMPTY = "";
-    private static final User[] ADMINS = new User[0];
     private static final GithubUser GITHUB_USER = new GithubUser(1L, "login", "name", "avatar", false);
     private static final User CURRENT_USER = new User(0L, "", GITHUB_USER);
     private static final GithubApiUser GH_OWNER = new GithubApiUser(1L, REPO_OWNER, EMPTY, EMPTY, EMPTY, GithubApiUser.Type.USER);
@@ -71,7 +71,7 @@ public class ProjectsRouterTest {
     private static final GithubApiPull GH_PULL = new GithubApiPull(0L, "", MARKER, MARKER, GH_OWNER, 0, "", State.OPEN, Instant.now(), Instant.now());
     private static final GithubApiPull[] OPEN_PULLS = new GithubApiPull[]{GH_PULL, GH_PULL, GH_PULL};
     private static final GithubRepo REPO = new GithubRepo(1L, "name", "description", GITHUB_USER);
-    private static final Project PROJECT = Project.builder().id(1L).githubRepo(REPO).creator(CURRENT_USER).admins(ADMINS).openPullCount(OPEN_PULLS.length).build();
+    private static final Project PROJECT = Project.builder().id(1L).githubRepo(REPO).creator(CURRENT_USER).openPullCount(OPEN_PULLS.length).build();
     private static final RequestBody REQUEST_BODY = new CreateProjectRequestBody(REPO_URL);
     private static final String INVALID_REPO_URL = "htps://bad_url";
     private static final RequestBody REQUEST_BODY_INVALID_URL = new CreateProjectRequestBody(INVALID_REPO_URL);
@@ -86,6 +86,8 @@ public class ProjectsRouterTest {
     private CurrentUserRepo currentUser;
     @MockBean
     private ProjectRepo projectRepo;
+    @MockBean
+    private UserRepo userRepo;
     @MockBean
     private PullRepo pullRepo;
     @MockBean
