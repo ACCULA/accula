@@ -45,8 +45,7 @@ public final class SuffixTreeUtils {
         final int lastElementIndex = edge.getSequence().size() - 1;
         final var lastElement = edge.getSequence().get(lastElementIndex);
 
-        return (lastElement instanceof EndToken) && (methodId.equals( ((EndToken) lastElement).getIdSequence() ));
-
+        return lastElement instanceof EndToken && methodId.equals(((EndToken) lastElement).getIdSequence());
     }
 
     public static Token extractBeginToken(final TreeCloneClass treeCloneClass) {
