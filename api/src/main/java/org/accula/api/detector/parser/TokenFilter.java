@@ -4,7 +4,7 @@ import generated.Java9Lexer;
 
 import java.util.Set;
 
-public final class TokenFilter {
+final class TokenFilter {
     static final Set<Integer> EXCLUDE_TOKENS = Set.of(
             Java9Lexer.LPAREN,
             Java9Lexer.RPAREN,

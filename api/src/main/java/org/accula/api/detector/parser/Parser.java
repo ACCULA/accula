@@ -29,7 +29,7 @@ public final class Parser {
         walker.walk(listener, parseTree);
 
         return listener
-                .getFunctions()
+                .functions()
                 .map(func -> func
                         .stream()
                         .filter(token -> isAllowedToken(token, listener.getTypeArgs()))

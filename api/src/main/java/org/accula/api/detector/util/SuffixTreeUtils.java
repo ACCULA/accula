@@ -16,7 +16,6 @@ import java.util.stream.Stream;
 @Slf4j
 public final class SuffixTreeUtils {
     private SuffixTreeUtils() {
-
     }
 
     public static CodeSnippet getCodeSnippetFromEdge(final Edge edge, final int cloneLength) {
@@ -42,12 +41,12 @@ public final class SuffixTreeUtils {
         if (edge.getSequence().isEmpty()) {
             log.warn("Empty sequence for edge: " + edge.toString());
             return false;
-        } else {
-            final int lastElementIndex = edge.getSequence().size() - 1;
-            final var lastElement = edge.getSequence().get(lastElementIndex);
-
-            return (lastElement instanceof EndToken) && (methodId.equals( ((EndToken) lastElement).getIdSequence() ));
         }
+        final int lastElementIndex = edge.getSequence().size() - 1;
+        final var lastElement = edge.getSequence().get(lastElementIndex);
+
+        return (lastElement instanceof EndToken) && (methodId.equals( ((EndToken) lastElement).getIdSequence() ));
+
     }
 
     public static Token extractBeginToken(final TreeCloneClass treeCloneClass) {

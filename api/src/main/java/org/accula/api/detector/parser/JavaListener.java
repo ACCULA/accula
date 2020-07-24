@@ -2,6 +2,8 @@ package org.accula.api.detector.parser;
 
 import generated.Java9BaseListener;
 import generated.Java9Parser;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Token;
 
@@ -11,21 +13,15 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
-public final class JavaListener extends Java9BaseListener {
+@RequiredArgsConstructor
+final class JavaListener extends Java9BaseListener {
     private final CommonTokenStream tokenStream;
     private final List<List<Token>> functions = new ArrayList<>();
+    @Getter
     private final Set<Token> typeArgs = new HashSet<>();
 
-    public JavaListener(final CommonTokenStream tokens) {
-        tokenStream = tokens;
-    }
-
-    public Stream<List<Token>> getFunctions() {
+    Stream<List<Token>> functions() {
         return functions.stream();
-    }
-
-    public Set<Token> getTypeArgs() {
-        return typeArgs;
     }
 
     @Override

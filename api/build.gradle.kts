@@ -14,7 +14,6 @@ version = "1.0-SNAPSHOT"
 
 val byteBuddyPlugin: Configuration by configurations.creating
 val antlrVersion = "4.8-1"
-val cloneDetectorVersion =
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-webflux")
@@ -59,7 +58,6 @@ dependencies {
 
     implementation("com.suhininalex:suffixtree:1.0.2")
     implementation("org.accula:clone-detector:1.0.1")
-
 }
 
 byteBuddy {
