@@ -16,12 +16,12 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 final class JavaListener extends Java9BaseListener {
     private final CommonTokenStream tokenStream;
-    private final List<List<Token>> functions = new ArrayList<>();
+    private final List<List<Token>> functionsList = new ArrayList<>();
     @Getter
     private final Set<Token> typeArgs = new HashSet<>();
 
     Stream<List<Token>> functions() {
-        return functions.stream();
+        return functionsList.stream();
     }
 
     @Override
@@ -33,7 +33,7 @@ final class JavaListener extends Java9BaseListener {
             tok = tokenStream.get(idx++);
             tokens.add(tok);
         }
-        functions.add(tokens);
+        functionsList.add(tokens);
     }
 
     @Override
