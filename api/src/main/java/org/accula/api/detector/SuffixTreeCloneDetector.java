@@ -47,12 +47,12 @@ public final class SuffixTreeCloneDetector implements CloneDetector {
         final var cloneClassCodeSnippetsMap = new HashMap<CloneClass, List<CodeSnippet>>();
         final var resultList = new ArrayList<Tuple2<CodeSnippet, CodeSnippet>>();
         final var suffixTree = cloneDetectorInstance.getTree();
-        //NB! Source files must be added into suffixTree BEFORE target files
-        final long srcLastMethodId = addFilesIntoTree(sourceFiles, suffixTree);
-        final long targetFirstMethodId = srcLastMethodId + 1;
-        final long targetLastMethodId = addFilesIntoTree(targetFiles, suffixTree);
-
         try {
+            //NB! Source files must be added into suffixTree BEFORE target files
+            final long srcLastMethodId = addFilesIntoTree(sourceFiles, suffixTree);
+            final long targetFirstMethodId = srcLastMethodId + 1;
+            final long targetLastMethodId = addFilesIntoTree(targetFiles, suffixTree);
+
             LongStream.rangeClosed(SRC_FIRST_METHOD_ID, srcLastMethodId).forEach(methodId ->
                     extractClonesIntoMapForSourceMethod(methodId, cloneDetectorInstance, cloneClassCodeSnippetsMap));
             LongStream.rangeClosed(targetFirstMethodId, targetLastMethodId).forEach(targetMethodId ->
