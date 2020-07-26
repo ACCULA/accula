@@ -12,8 +12,9 @@ import java.util.function.Predicate;
 public interface FileFilter extends Predicate<String> {
     FileFilter ALL = file -> true;
     FileFilter JAVA = file -> file.endsWith(".java");
-    FileFilter TESTS = file -> file.contains("Test");
-    FileFilter SRC_JAVA = JAVA.and(TESTS.negate());
+    FileFilter SRC = file -> file.contains("src/main/java");
+    FileFilter TESTS = file -> file.contains("src/test/java");
+    FileFilter SRC_JAVA = JAVA.and(SRC);
 
     @Override
     default FileFilter and(Predicate<? super String> other) {

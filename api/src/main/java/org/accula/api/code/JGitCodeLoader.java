@@ -231,9 +231,7 @@ public class JGitCodeLoader implements CodeLoader {
     }
 
     @SneakyThrows
-    private AbstractTreeIterator getTreeIterator(final Repository repository,
-                                                 final AccessSync accessSync,
-                                                 final String sha) {
+    private AbstractTreeIterator getTreeIterator(final Repository repository, final AccessSync accessSync, final String sha) {
         return accessSync.withReadLock(() -> {
             final ObjectReader reader = repository.newObjectReader();
             final RevWalk revWalk = new RevWalk(reader);
@@ -248,7 +246,7 @@ public class JGitCodeLoader implements CodeLoader {
 
     private Mono<FileEntity> getFileNullable(final CommitSnapshot snapshot, final String filename) {
         if (DELETED_FILE.equals(filename)) {
-            return Mono.just(new FileEntity(snapshot, null, null));
+            return Mono.just(FileEntity.absent(snapshot));
         }
         final var ref = RepoRef.from(snapshot);
         final var dir = getDirectory(ref);
