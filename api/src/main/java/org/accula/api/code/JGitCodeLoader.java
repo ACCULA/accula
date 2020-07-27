@@ -6,9 +6,10 @@ import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.accula.api.code.util.FileContentCutter;
 import org.accula.api.db.model.CommitSnapshot;
+import org.accula.api.db.model.GithubRepo;
 import org.accula.api.util.AcculaSchedulers;
+import org.accula.api.util.Sync;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.errors.MissingObjectException;
 import org.eclipse.jgit.internal.storage.file.FileRepository;
 import org.eclipse.jgit.lib.ObjectId;
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
+import reactor.function.TupleUtils;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
@@ -34,10 +36,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @author Vadim Dyachkov
@@ -56,7 +55,7 @@ public class JGitCodeLoader implements CodeLoader {
     private final Scheduler scheduler = AcculaSchedulers.newBoundedElastic(getClass().getSimpleName());
     private final Scheduler remoteCallsScheduler = AcculaSchedulers.newBoundedElastic(getClass().getSimpleName() + "-remote");
     private final Map<RepoRef, Repository> clonedRepos = new ConcurrentHashMap<>();
-    private final Map<RepoRef, AccessSync> accessSynchronizers = new ConcurrentHashMap<>();
+    private final Map<RepoRef, Sync> accessSynchronizers = new ConcurrentHashMap<>();
     private final File root;
 
     @Value
@@ -80,59 +79,11 @@ public class JGitCodeLoader implements CodeLoader {
         }
     }
 
-    private static class AccessSync {
-        final ReadWriteLock lock = new ReentrantReadWriteLock();
-
-        @SuppressWarnings("unused")
-        static <Any> AccessSync create(final Any any) {
-            return new AccessSync();
-        }
-
-        <T> T withReadLock(final Action<T> action) {
-            return Objects.requireNonNull(withReadLockNullable(action));
-        }
-
-        @Nullable
-        @SneakyThrows
-        <T> T withReadLockNullable(final Action<T> action) {
-            final var readLock = lock.readLock();
-            readLock.lock();
-            try {
-                return action.perform();
-            } finally {
-                readLock.unlock();
-            }
-        }
-
-        @Nullable
-        @SneakyThrows
-        <T> T withWriteLockNullable(final Action<T> action) {
-            final var writeLock = lock.writeLock();
-            writeLock.lock();
-            try {
-                return action.perform();
-            } finally {
-                writeLock.unlock();
-            }
-        }
-
-        @FunctionalInterface
-        interface Action<T> {
-            @Nullable
-            T perform() throws Exception;
-        }
-    }
-
-    @Override
-    public Flux<FileEntity> getFiles(final CommitSnapshot snapshot) {
-        return getFiles(snapshot, FileFilter.ALL);
-    }
-
     @Override
     public Flux<FileEntity> getFiles(final CommitSnapshot snapshot, final FileFilter filter) {
         final var ref = RepoRef.from(snapshot);
         final var dir = getDirectory(ref);
-        final var accessSync = accessSynchronizers.computeIfAbsent(ref, AccessSync::create);
+        final var accessSync = accessSynchronizers.computeIfAbsent(ref, Sync::create);
         return getRepo(ref, dir, accessSync)
                 .publishOn(scheduler)
                 .flatMapMany(repo -> getObjectLoaders(repo, accessSync, snapshot.getSha()))
@@ -151,7 +102,7 @@ public class JGitCodeLoader implements CodeLoader {
         }
         final var ref = RepoRef.from(snapshot);
         final var dir = getDirectory(ref);
-        final var accessSync = accessSynchronizers.computeIfAbsent(ref, AccessSync::create);
+        final var accessSync = accessSynchronizers.computeIfAbsent(ref, Sync::create);
         return getRepo(ref, dir, accessSync)
                 .switchIfEmpty(Mono.error(REPO_NOT_FOUND))
                 .publishOn(scheduler)
@@ -163,17 +114,10 @@ public class JGitCodeLoader implements CodeLoader {
     }
 
     @Override
-    public Flux<Tuple2<FileEntity, FileEntity>> getDiff(final CommitSnapshot base, final CommitSnapshot head) {
-        return getDiff(base, head, FileFilter.ALL);
-    }
-
-    @Override
-    public Flux<Tuple2<FileEntity, FileEntity>> getDiff(final CommitSnapshot base,
-                                                        final CommitSnapshot head,
-                                                        final FileFilter filter) {
+    public Flux<DiffEntry> getDiff(final CommitSnapshot base, final CommitSnapshot head, final FileFilter filter) {
         final var ref = RepoRef.from(head);
         final var dir = getDirectory(ref);
-        final var accessSync = accessSynchronizers.computeIfAbsent(ref, AccessSync::create);
+        final var accessSync = accessSynchronizers.computeIfAbsent(ref, Sync::create);
         return getRepo(ref, dir, accessSync)
                 .switchIfEmpty(Mono.error(REPO_NOT_FOUND))
                 .publishOn(scheduler)
@@ -182,17 +126,16 @@ public class JGitCodeLoader implements CodeLoader {
                 .parallel()
                 .runOn(scheduler)
                 .flatMap(diff -> Mono.zip(getFileNullable(base, diff.getOldPath()), getFileNullable(head, diff.getNewPath())))
+                .map(TupleUtils.function(DiffEntry::of))
                 .sequential()
                 .onErrorResume(MissingObjectException.class, e -> Flux.empty());
     }
 
     @Override
-    public Flux<Tuple2<FileEntity, FileEntity>> getRemoteDiff(final CommitSnapshot origin,
-                                                              final CommitSnapshot remote,
-                                                              final FileFilter filter) {
+    public Flux<DiffEntry> getRemoteDiff(final GithubRepo projectRepo, final CommitSnapshot origin, final CommitSnapshot remote, final FileFilter filter) {
         final var ref = RepoRef.from(origin);
         final var dir = getDirectory(ref);
-        final var accessSync = accessSynchronizers.computeIfAbsent(ref, AccessSync::create);
+        final var accessSync = accessSynchronizers.computeIfAbsent(ref, Sync::create);
         return getRepo(ref, dir, accessSync)
                 .switchIfEmpty(Mono.error(REPO_NOT_FOUND))
                 .flatMap(repo -> addAndFetchRemote(repo, accessSync, remote))
@@ -201,11 +144,12 @@ public class JGitCodeLoader implements CodeLoader {
                 .parallel()
                 .runOn(scheduler)
                 .flatMap(diff -> Mono.zip(getFileNullable(origin, diff.getOldPath()), getFileNullable(remote, diff.getNewPath())))
+                .map(TupleUtils.function(DiffEntry::of))
                 .sequential()
                 .onErrorResume(MissingObjectException.class, e -> Flux.empty());
     }
 
-    private static boolean passesFilter(final DiffEntry entry,
+    private static boolean passesFilter(final org.eclipse.jgit.diff.DiffEntry entry,
                                         final FileFilter filter,
                                         final CommitSnapshot base,
                                         final CommitSnapshot head) {
@@ -218,10 +162,10 @@ public class JGitCodeLoader implements CodeLoader {
     }
 
     @SneakyThrows
-    private Flux<DiffEntry> getDiffEntries(final Repository repo,
-                                           final AccessSync accessSync,
-                                           final CommitSnapshot base,
-                                           final CommitSnapshot head) {
+    private Flux<org.eclipse.jgit.diff.DiffEntry> getDiffEntries(final Repository repo,
+                                                                 final Sync accessSync,
+                                                                 final CommitSnapshot base,
+                                                                 final CommitSnapshot head) {
         return Flux.fromIterable(accessSync.withReadLock(() -> Git
                 .wrap(repo)
                 .diff()
@@ -231,7 +175,7 @@ public class JGitCodeLoader implements CodeLoader {
     }
 
     @SneakyThrows
-    private AbstractTreeIterator getTreeIterator(final Repository repository, final AccessSync accessSync, final String sha) {
+    private AbstractTreeIterator getTreeIterator(final Repository repository, final Sync accessSync, final String sha) {
         return accessSync.withReadLock(() -> {
             final ObjectReader reader = repository.newObjectReader();
             final RevWalk revWalk = new RevWalk(reader);
@@ -250,7 +194,7 @@ public class JGitCodeLoader implements CodeLoader {
         }
         final var ref = RepoRef.from(snapshot);
         final var dir = getDirectory(ref);
-        final var accessSync = accessSynchronizers.computeIfAbsent(ref, AccessSync::create);
+        final var accessSync = accessSynchronizers.computeIfAbsent(ref, Sync::create);
         return getRepo(ref, dir, accessSync)
                 .switchIfEmpty(Mono.error(REPO_NOT_FOUND))
                 .publishOn(scheduler)
@@ -264,7 +208,7 @@ public class JGitCodeLoader implements CodeLoader {
     @SneakyThrows
     @Nullable
     private ObjectLoader getObjectLoader(final Repository repository,
-                                         final AccessSync accessSync,
+                                         final Sync accessSync,
                                          final String sha,
                                          final String file) {
         return accessSync.withReadLockNullable(() -> {
@@ -283,7 +227,7 @@ public class JGitCodeLoader implements CodeLoader {
     }
 
     private Flux<Tuple2<String, ObjectLoader>> getObjectLoaders(final Repository repo,
-                                                                final AccessSync accessSync,
+                                                                final Sync accessSync,
                                                                 final String sha) {
         return Flux.fromIterable(accessSync.withReadLock(() -> {
             final ObjectReader reader = repo.newObjectReader();
@@ -312,7 +256,7 @@ public class JGitCodeLoader implements CodeLoader {
     }
 
     private Mono<Repository> addAndFetchRemote(final Repository originRepo,
-                                               final AccessSync accessSync,
+                                               final Sync accessSync,
                                                final CommitSnapshot remote) {
         return Mono
                 .fromSupplier(() -> accessSync
@@ -327,12 +271,12 @@ public class JGitCodeLoader implements CodeLoader {
                 .subscribeOn(remoteCallsScheduler);
     }
 
-    private Mono<Repository> getRepo(final RepoRef ref, final File dir, final AccessSync accessSync) {
+    private Mono<Repository> getRepo(final RepoRef ref, final File dir, final Sync accessSync) {
         return openRepo(ref, dir, accessSync)
                 .switchIfEmpty(cloneRepo(ref, dir, accessSync));
     }
 
-    private Mono<Repository> openRepo(final RepoRef ref, final File directory, final AccessSync accessSync) {
+    private Mono<Repository> openRepo(final RepoRef ref, final File directory, final Sync accessSync) {
         return Mono
                 .fromSupplier(() -> accessSync
                         .withReadLockNullable(() -> {
@@ -353,7 +297,7 @@ public class JGitCodeLoader implements CodeLoader {
                 });
     }
 
-    private Mono<Repository> cloneRepo(final RepoRef ref, final File dir, final AccessSync accessSync) {
+    private Mono<Repository> cloneRepo(final RepoRef ref, final File dir, final Sync accessSync) {
         return Mono
                 .fromSupplier(() -> accessSync
                         .withWriteLockNullable(() -> {

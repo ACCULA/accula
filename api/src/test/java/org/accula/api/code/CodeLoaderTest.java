@@ -102,7 +102,7 @@ class CodeLoaderTest {
         var headRepo = new GithubRepo(1L, "2019-highload-dht", "descr", headOwner);
         var head = CommitSnapshot.builder().sha("a1c28a1b500701819cf9919246f15f3f900bb609").branch("branch").repo(headRepo).build();
         var base = CommitSnapshot.builder().sha("d6357dccc16c7d5c001fd2a2203298c36fe96b63").branch("branch").repo(REPO).build();
-        List<Tuple2<FileEntity, FileEntity>> diff = codeLoader.getDiff(base, head).collectList().block();
+        List<DiffEntry> diff = codeLoader.getDiff(base, head).collectList().block();
         assertNotNull(diff);
         assertEquals(18, diff.size());
     }

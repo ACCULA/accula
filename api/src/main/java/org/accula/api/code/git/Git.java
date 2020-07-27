@@ -3,11 +3,15 @@ package org.accula.api.code.git;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import org.accula.api.code.FileEntity;
+import org.accula.api.code.git.GitDiffEntry.Addition;
+import org.accula.api.code.git.GitDiffEntry.Deletion;
+import org.accula.api.code.git.GitDiffEntry.Modification;
+import org.accula.api.code.git.GitDiffEntry.Renaming;
 import org.accula.api.db.model.CommitSnapshot;
+import org.accula.api.util.Sync;
 import org.jetbrains.annotations.Nullable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuples;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -25,9 +29,11 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -44,11 +50,12 @@ public final class Git {
     private static final int SUCCESS = 0;
     private static final byte[] NEWLINE = System.lineSeparator().getBytes(StandardCharsets.UTF_8);
 
-    private final ExecutorService executor;
+    private final Map<String, Sync> syncs = new ConcurrentHashMap<>();
     private final Path root;
+    private final ExecutorService executor;
 
     public static void main(String[] args) throws Throwable {
-        final var git = new Git(Executors.newFixedThreadPool(10), Paths.get("/Users/anton.lamtev/Downloads/"));
+        final var git = new Git(Paths.get("/Users/anton.lamtev/Downloads/"), Executors.newFixedThreadPool(10));
         final var repo = git.repo(Paths.get("2020-db-lsm")).get();
         final var flux = Mono
                 .fromFuture(repo.diff("transaction", "remotes/zvladn7/master", 1))
@@ -56,7 +63,7 @@ public final class Git {
                         .fromFuture(repo
                                 .catFiles(diffEntries
                                         .stream()
-                                        .flatMap(DiffEntry::objectIds)
+                                        .flatMap(GitDiffEntry::objectIds)
                                         .collect(Collectors.toList())))
                         .map(files -> diffEntries
                                 .stream()
@@ -64,44 +71,45 @@ public final class Git {
                                     CommitSnapshot c = null;
                                     if (diffEntry instanceof Addition) {
                                         final var addition = (Addition) diffEntry;
-                                        return Tuples.of(FileEntity.absent(c), new FileEntity(c, addition.head.name, files.get(addition.head.objectId)));
+                                        return org.accula.api.code.DiffEntry.of(FileEntity.absent(c), new FileEntity(c, addition.head.name, files.get(addition.head.objectId)));
                                     } else if (diffEntry instanceof Deletion) {
                                         final var deletion = (Deletion) diffEntry;
-                                        return Tuples.of(new FileEntity(c, deletion.base.name, files.get(deletion.base.objectId)), FileEntity.absent(c));
+                                        return org.accula.api.code.DiffEntry.of(new FileEntity(c, deletion.base.name, files.get(deletion.base.objectId)), FileEntity.absent(c));
                                     } else if (diffEntry instanceof Modification) {
                                         final var modification = (Modification) diffEntry;
-                                        return Tuples.of(
+                                        return org.accula.api.code.DiffEntry.of(
                                                 new FileEntity(c, modification.base.name, files.get(modification.base.objectId)),
                                                 new FileEntity(c, modification.head.name, files.get(modification.head.objectId)));
                                     } else if (diffEntry instanceof Renaming) {
                                         final var renaming = (Renaming) diffEntry;
-                                        return Tuples.of(
+                                        return new org.accula.api.code.DiffEntry(
                                                 new FileEntity(c, renaming.base.name, files.get(renaming.base.objectId)),
-                                                new FileEntity(c, renaming.head.name, files.get(renaming.head.objectId)));
+                                                new FileEntity(c, renaming.head.name, files.get(renaming.head.objectId)),
+                                                renaming.similarityIndex);
                                     } else {
                                         return null;
                                     }
                                 }))
                         .flatMapMany(Flux::fromStream))
                 .subscribe(res -> {
-                    System.out.println("");
+                    System.out.println(res);
                 });
     }
 
     public CompletableFuture<Repo> repo(final Path directory) {
         return CompletableFuture
-                .supplyAsync(() -> {
+                .supplyAsync(safe(directory).reading(() -> {
                     final var completePath = root.resolve(directory);
                     if (Files.exists(completePath) && Files.isDirectory(completePath)) {
                         return new Repo(directory);
                     }
                     return null;
-                }, executor);
+                }), executor);
     }
 
     public CompletableFuture<Repo> clone(final String url, final String subdirectory) {
         return CompletableFuture
-                .supplyAsync(() -> {
+                .supplyAsync(safe(subdirectory).writing(() -> {
                     try {
                         final var process = new ProcessBuilder()
                                 .directory(root.toFile())
@@ -112,18 +120,18 @@ public final class Git {
                     } catch (IOException | InterruptedException e) {
                         throw wrap(e);
                     }
-                }, executor);
+                }), executor);
     }
 
     @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
     public final class Repo {
         private final Path directory;
 
-        public CompletableFuture<List<DiffEntry>> diff(final String baseRef,
-                                                       final String headRef,
-                                                       final int findRenamesMinSimilarityIndex) {
+        public CompletableFuture<List<GitDiffEntry>> diff(final String baseRef,
+                                                          final String headRef,
+                                                          final int findRenamesMinSimilarityIndex) {
             return CompletableFuture
-                    .supplyAsync(() -> {
+                    .supplyAsync(reading(() -> {
                         final var command = findRenamesMinSimilarityIndex == 0 || findRenamesMinSimilarityIndex == 100
                                 ? new String[]{"diff", "--raw", baseRef, headRef}
                                 : new String[]{"diff", String.format("-M%02d", findRenamesMinSimilarityIndex), "--raw", baseRef, headRef};
@@ -134,12 +142,12 @@ public final class Git {
                                 .map(Git::parseDiffEntry)
                                 .filter(Objects::nonNull)
                                 .collect(Collectors.toList()));
-                    }, executor);
+                    }), executor);
         }
 
         public CompletableFuture<Map<String, String>> catFiles(final List<String> objectIds) {
             return CompletableFuture
-                    .supplyAsync(() -> {
+                    .supplyAsync(reading(() -> {
                         final var process = git("cat-file", "--batch");
 
                         return usingStdoutLines(process, Collections.emptyMap(), lines -> {
@@ -156,44 +164,44 @@ public final class Git {
                             final var lineList = lines.collect(Collectors.toList());
                             return filesContent(lineList, objectIds);
                         });
-                    }, executor);
+                    }), executor);
         }
 
         public CompletableFuture<List<File>> show(final String commitSha) {
             return CompletableFuture
-                    .supplyAsync(() -> {
+                    .supplyAsync(reading(() -> {
                         final var process = git("show", "--raw", commitSha);
 
                         return usingStdoutLines(process, Collections.emptyList(), lines -> lines
                                 .map(Git::parseShowEntry)
                                 .filter(Objects::nonNull)
                                 .collect(Collectors.toList()));
-                    }, executor);
+                    }), executor);
         }
 
         public CompletableFuture<List<File>> lsTree(final String commitSha) {
             return CompletableFuture
-                    .supplyAsync(() -> {
+                    .supplyAsync(reading(() -> {
                         final var process = git("ls-tree", "-r", commitSha);
 
                         return usingStdoutLines(process, Collections.emptyList(), lines -> lines
                                 .map(Git::parseLsEntry)
                                 .filter(Objects::nonNull)
                                 .collect(Collectors.toList()));
-                    }, executor);
+                    }), executor);
         }
 
         public CompletableFuture<Set<String>> remote() {
             return CompletableFuture
-                    .supplyAsync(() -> {
+                    .supplyAsync(reading(() -> {
                         final var process = git("remote");
                         return usingStdoutLines(process, Collections.emptySet(), lines -> lines.collect(Collectors.toSet()));
-                    });
+                    }), executor);
         }
 
         public CompletableFuture<Boolean> remoteAdd(final String url, final String uniqueName) {
             return CompletableFuture
-                    .supplyAsync(() -> {
+                    .supplyAsync(writing(() -> {
                         final var process = git("remote-add", "-f", uniqueName, url);
                         try {
                             //TODO: remote-add -f timeout
@@ -201,12 +209,12 @@ public final class Git {
                         } catch (InterruptedException e) {
                             throw wrap(e);
                         }
-                    }, executor);
+                    }), executor);
         }
 
         public CompletableFuture<Boolean> remoteUpdate(final String name) {
             return CompletableFuture
-                    .supplyAsync(() -> {
+                    .supplyAsync(writing(() -> {
                         final var process = git("remote", "update", name);
                         try {
                             //TODO: remote update timeout
@@ -214,7 +222,7 @@ public final class Git {
                         } catch (InterruptedException e) {
                             throw wrap(e);
                         }
-                    }, executor);
+                    }), executor);
         }
 
         private Process git(final String... command) {
@@ -228,6 +236,14 @@ public final class Git {
             } catch (IOException e) {
                 throw wrap(e);
             }
+        }
+
+        private <T> Supplier<T> reading(final Supplier<T> readOp) {
+            return safe(directory).reading(readOp);
+        }
+
+        private <T> Supplier<T> writing(final Supplier<T> writeOp) {
+            return safe(directory).writing(writeOp);
         }
     }
 
@@ -254,14 +270,14 @@ public final class Git {
     ///      0                1                2              3        4        5             6
     /// :base_file_mode head_file_mode base_object_id head_object_id type base_filename head_filename
     @Nullable
-    private static DiffEntry parseDiffEntry(final String line) {
+    private static GitDiffEntry parseDiffEntry(final String line) {
         final var components = line.split("\\s+");
         switch (components.length) {
             case 6:
                 return switch (components[4]) {
-                    case ADDITION -> DiffEntry.addition(components[3], components[5]);
-                    case DELETION -> DiffEntry.deletion(components[2], components[5]);
-                    case MODIFICATION -> DiffEntry.modification(components[2], components[3], components[5]);
+                    case ADDITION -> GitDiffEntry.addition(components[3], components[5]);
+                    case DELETION -> GitDiffEntry.deletion(components[2], components[5]);
+                    case MODIFICATION -> GitDiffEntry.modification(components[2], components[3], components[5]);
                     default -> null;
                 };
             case 7: {
@@ -277,7 +293,7 @@ public final class Git {
                     similarityIndex = 0;
                 }
 
-                return DiffEntry.renaming(components[2], components[5], components[3], components[6], similarityIndex);
+                return GitDiffEntry.renaming(components[2], components[5], components[3], components[6], similarityIndex);
             }
             default:
                 return null;
@@ -325,6 +341,14 @@ public final class Git {
                 throw wrap(e);
             }
         }
+    }
+
+    private Sync safe(final String key) {
+        return syncs.computeIfAbsent(key, Sync::create);
+    }
+
+    private Sync safe(final Path path) {
+        return safe(path.toString());
     }
 
     private static GitException wrap(final Throwable e) {

@@ -1,8 +1,11 @@
 package org.accula.api.config;
 
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import org.accula.api.code.CodeLoader;
+import org.accula.api.code.GitCodeLoader;
 import org.accula.api.code.JGitCodeLoader;
+import org.accula.api.code.git.File;
 import org.accula.api.db.repo.CurrentUserRepo;
 import org.accula.api.detector.CloneDetector;
 import org.accula.api.detector.PrimitiveCloneDetector;
@@ -15,7 +18,8 @@ import org.springframework.web.reactive.config.WebFluxConfigurer;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 /**
  * @author Anton Lamtev
@@ -46,9 +50,15 @@ public class WebConfig implements WebFluxConfigurer {
                 .flatMap(user -> Mono.just(user.getGithubUser().getLogin()));
     }
 
+    @SneakyThrows
     @Bean
     public CodeLoader codeLoader(@Value("${accula.reposPath}") final String reposPath) {
-        return new JGitCodeLoader(new File(reposPath));
+        final var reposDirectory = Paths.get(reposPath);
+        if (!Files.exists(reposDirectory)) {
+            Files.createDirectory(reposDirectory);
+        }
+        return new GitCodeLoader(Paths.get(reposPath));
+//        return new JGitCodeLoader(new File(reposPath));
     }
 
     @Bean

@@ -16,6 +16,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-security")
     testImplementation("org.springframework.security:spring-security-test")
 
+    implementation("io.projectreactor.addons:reactor-extra")
     compileOnly("io.projectreactor:reactor-tools:3.3.5.RELEASE")
     byteBuddyPlugin(group = "io.projectreactor", name = "reactor-tools", classifier = "original")
 
