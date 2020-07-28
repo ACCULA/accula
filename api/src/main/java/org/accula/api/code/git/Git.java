@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.concurrent.CompletableFuture;
@@ -33,6 +34,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -49,6 +51,7 @@ public final class Git {
     private static final String DELETED_OBJECT_ID = "0000000";
     private static final int SUCCESS = 0;
     private static final byte[] NEWLINE = System.lineSeparator().getBytes(StandardCharsets.UTF_8);
+    private static final String ALREADY_EXISTS = "already exists";
 
     private final Map<String, Sync> syncs = new ConcurrentHashMap<>();
     private final Path root;
@@ -57,8 +60,15 @@ public final class Git {
     public static void main(String[] args) throws Throwable {
         final var git = new Git(Paths.get("/Users/anton.lamtev/Downloads/"), Executors.newFixedThreadPool(10));
         final var repo = git.repo(Paths.get("2020-db-lsm")).get();
+
+        Mono
+                .fromFuture(repo.remoteAdd("https://github.com/zvladn7/2020-db-lsm.git", "zvladn7"))
+                .subscribe(v -> {
+                    System.out.println(v);
+                });
+
         final var flux = Mono
-                .fromFuture(repo.diff("transaction", "remotes/zvladn7/master", 1))
+                .fromFuture(repo.diff("335573f171c8094d451ada860614f6fae968899b", "f3e55115145d02dd40dc73c9bf7b3114bf9bc226", 1))
                 .flatMapMany(diffEntries -> Mono
                         .fromFuture(repo
                                 .catFiles(diffEntries
@@ -110,6 +120,9 @@ public final class Git {
     public CompletableFuture<Repo> clone(final String url, final String subdirectory) {
         return CompletableFuture
                 .supplyAsync(safe(subdirectory).writing(() -> {
+                    if (Files.exists(root.resolve(subdirectory))) {
+                        return new Repo(Paths.get(subdirectory));
+                    }
                     try {
                         final var process = new ProcessBuilder()
                                 .directory(root.toFile())
@@ -202,10 +215,14 @@ public final class Git {
         public CompletableFuture<Boolean> remoteAdd(final String url, final String uniqueName) {
             return CompletableFuture
                     .supplyAsync(writing(() -> {
-                        final var process = git("remote-add", "-f", uniqueName, url);
+                        final var process = git("remote", "add", "-f", uniqueName, url);
                         try {
                             //TODO: remote-add -f timeout
-                            return process.waitFor() == SUCCESS ? Boolean.TRUE : Boolean.FALSE;
+                            final var ret = process.waitFor();
+                            final Predicate<Process> remoteAlreadyExists = proc -> usingStderrLines(proc, Stream::findFirst)
+                                    .orElse("")
+                                    .contains(ALREADY_EXISTS);
+                            return ret == SUCCESS ? Boolean.TRUE : remoteAlreadyExists.test(process) ? Boolean.TRUE : Boolean.FALSE;
                         } catch (InterruptedException e) {
                             throw wrap(e);
                         }
@@ -337,6 +354,17 @@ public final class Git {
             final var res = stdoutLinesUse.apply(stdoutLines);
             try {
                 return process.waitFor() == SUCCESS ? res : fallback;
+            } catch (InterruptedException e) {
+                throw wrap(e);
+            }
+        }
+    }
+
+    private static <T> T usingStderrLines(final Process process, final Function<Stream<String>, T> stderrLinesUse) {
+        try (final var stdoutLines = new BufferedReader(new InputStreamReader(process.getErrorStream())).lines()) {
+            try {
+                process.waitFor();
+                return stderrLinesUse.apply(stdoutLines);
             } catch (InterruptedException e) {
                 throw wrap(e);
             }

@@ -132,18 +132,18 @@ public class JGitCodeLoader implements CodeLoader {
     }
 
     @Override
-    public Flux<DiffEntry> getRemoteDiff(final GithubRepo projectRepo, final CommitSnapshot origin, final CommitSnapshot remote, final FileFilter filter) {
-        final var ref = RepoRef.from(origin);
+    public Flux<DiffEntry> getRemoteDiff(final GithubRepo projectRepo, final CommitSnapshot base, final CommitSnapshot head, final FileFilter filter) {
+        final var ref = RepoRef.from(base);
         final var dir = getDirectory(ref);
         final var accessSync = accessSynchronizers.computeIfAbsent(ref, Sync::create);
         return getRepo(ref, dir, accessSync)
                 .switchIfEmpty(Mono.error(REPO_NOT_FOUND))
-                .flatMap(repo -> addAndFetchRemote(repo, accessSync, remote))
-                .flatMapMany(repo -> getDiffEntries(repo, accessSync, origin, remote))
-                .filter(diff -> passesFilter(diff, filter, origin, remote))
+                .flatMap(repo -> addAndFetchRemote(repo, accessSync, head))
+                .flatMapMany(repo -> getDiffEntries(repo, accessSync, base, head))
+                .filter(diff -> passesFilter(diff, filter, base, head))
                 .parallel()
                 .runOn(scheduler)
-                .flatMap(diff -> Mono.zip(getFileNullable(origin, diff.getOldPath()), getFileNullable(remote, diff.getNewPath())))
+                .flatMap(diff -> Mono.zip(getFileNullable(base, diff.getOldPath()), getFileNullable(head, diff.getNewPath())))
                 .map(TupleUtils.function(DiffEntry::of))
                 .sequential()
                 .onErrorResume(MissingObjectException.class, e -> Flux.empty());

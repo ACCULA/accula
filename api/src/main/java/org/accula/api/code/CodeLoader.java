@@ -61,5 +61,5 @@ public interface CodeLoader {
      *
      * @see #getDiff(CommitSnapshot, CommitSnapshot, FileFilter)
      */
-    Flux<DiffEntry> getRemoteDiff(GithubRepo projectRepo, CommitSnapshot origin, CommitSnapshot remote, FileFilter filter);
+    Flux<DiffEntry> getRemoteDiff(GithubRepo projectRepo, CommitSnapshot base, CommitSnapshot head, FileFilter filter);
 }

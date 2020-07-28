@@ -15,7 +15,10 @@ import reactor.core.publisher.Mono;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 
@@ -56,7 +59,7 @@ public final class GitCodeLoader implements CodeLoader {
     }
 
     @Override
-    public Flux<FileEntity> getFileSnippets(List<SnippetMarker> markers) {
+    public Flux<FileEntity> getFileSnippets(final List<SnippetMarker> markers) {
         return Flux.empty();
     }
 
@@ -79,51 +82,85 @@ public final class GitCodeLoader implements CodeLoader {
                                                 .stream()
                                                 .flatMap(GitDiffEntry::objectIds)
                                                 .collect(toList())))
-                                .map(files -> diffEntries
-                                        .stream()
-                                        .map(diffEntry -> {
-                                            if (diffEntry instanceof Addition) {
-                                                final var addition = (Addition) diffEntry;
-                                                return DiffEntry.of(FileEntity.absent(base), new FileEntity(head, addition.head.name, files.get(addition.head.objectId)));
-                                            }
-                                            if (diffEntry instanceof Deletion) {
-                                                final var deletion = (Deletion) diffEntry;
-                                                return DiffEntry.of(new FileEntity(base, deletion.base.name, files.get(deletion.base.objectId)), FileEntity.absent(head));
-                                            }
-                                            if (diffEntry instanceof Modification) {
-                                                final var modification = (Modification) diffEntry;
-                                                return DiffEntry.of(
-                                                        new FileEntity(base, modification.base.name, files.get(modification.base.objectId)),
-                                                        new FileEntity(head, modification.head.name, files.get(modification.head.objectId)));
-                                            }
-                                            if (diffEntry instanceof Renaming) {
-                                                final var renaming = (Renaming) diffEntry;
-                                                return new DiffEntry(
-                                                        new FileEntity(base, renaming.base.name, files.get(renaming.base.objectId)),
-                                                        new FileEntity(head, renaming.head.name, files.get(renaming.head.objectId)),
-                                                        renaming.similarityIndex);
-                                            }
-
-                                            return null;
-                                        }))
+                                .transform(buildDiffEntry(diffEntries, base, head))
                                 .flatMapMany(Flux::fromStream)))
                 .map(it -> it);
     }
 
+    private static Function<Mono<Map<String, String>>, Mono<Stream<DiffEntry>>> buildDiffEntry(final List<GitDiffEntry> diffEntries,
+                                                                                               final CommitSnapshot base,
+                                                                                               final CommitSnapshot head) {
+        return filesMono -> filesMono
+                .map(files -> diffEntries
+                        .stream()
+                        .map(diffEntry -> {
+                            if (diffEntry instanceof Addition) {
+                                final var addition = (Addition) diffEntry;
+                                return DiffEntry.of(FileEntity.absent(base), new FileEntity(head, addition.head.name, files.get(addition.head.objectId)));
+                            }
+                            if (diffEntry instanceof Deletion) {
+                                final var deletion = (Deletion) diffEntry;
+                                return DiffEntry.of(new FileEntity(base, deletion.base.name, files.get(deletion.base.objectId)), FileEntity.absent(head));
+                            }
+                            if (diffEntry instanceof Modification) {
+                                final var modification = (Modification) diffEntry;
+                                return DiffEntry.of(
+                                        new FileEntity(base, modification.base.name, files.get(modification.base.objectId)),
+                                        new FileEntity(head, modification.head.name, files.get(modification.head.objectId)));
+                            }
+                            if (diffEntry instanceof Renaming) {
+                                final var renaming = (Renaming) diffEntry;
+                                return new DiffEntry(
+                                        new FileEntity(base, renaming.base.name, files.get(renaming.base.objectId)),
+                                        new FileEntity(head, renaming.head.name, files.get(renaming.head.objectId)),
+                                        renaming.similarityIndex);
+                            }
+
+                            return null;
+                        }));
+    }
+
     @Override
     public Flux<DiffEntry> getRemoteDiff(final GithubRepo projectRepo,
-                                         final CommitSnapshot origin,
-                                         final CommitSnapshot remote,
+                                         final CommitSnapshot base,
+                                         final CommitSnapshot head,
                                          final FileFilter filter) {
         final var directory = Paths.get(projectRepo.getName());
-        final var url = GITHUB_BASE_URL + projectRepo.getOwner().getLogin() + "/" + projectRepo.getName() + ".git";
+        final var url = repoGitUrl(projectRepo);
 
-        Mono
+        final var baseRemote = base.getRepo().getOwner().getLogin();
+        final var headRemote = head.getRepo().getOwner().getLogin();
+
+        final var baseRef = base.getSha();
+        final var headRef = head.getSha();
+
+        final var baseUrl = repoGitUrl(base.getRepo());
+        final var headUrl = repoGitUrl(head.getRepo());
+
+        return Mono
                 .fromFuture(git.repo(directory))
                 .switchIfEmpty(Mono.fromFuture(git.clone(url, directory.toString())))
-                .flatMap(repo -> Mono
-                        .fromFuture(repo.remote())
-                        .map(remotes -> remotes));
-        return Flux.empty();
+                .flatMapMany(repo -> Mono
+                        .fromFuture(repo.remoteAdd(baseUrl, baseRemote))
+                        .zipWith(Mono.fromFuture(repo.remoteAdd(headUrl, headRemote)), (baseSuccess, headSuccess) -> baseSuccess && headSuccess)
+                        .filter(Boolean::booleanValue)
+                        .flatMapMany(success -> Mono
+                                .fromFuture(repo.diff(baseRef, headRef, 1))
+                                .map(diffEntries -> diffEntries
+                                        .stream()
+                                        .filter(entry -> entry.passes(filter))
+                                        .collect(toList()))
+                                .flatMapMany(diffEntries -> Mono
+                                        .fromFuture(repo
+                                                .catFiles(diffEntries
+                                                        .stream()
+                                                        .flatMap(GitDiffEntry::objectIds)
+                                                        .collect(toList())))
+                                        .transform(buildDiffEntry(diffEntries, base, head))
+                                        .flatMapMany(Flux::fromStream))));
+    }
+
+    private static String repoGitUrl(final GithubRepo repo) {
+        return GITHUB_BASE_URL + repo.getOwner().getLogin() + "/" + repo.getName() + ".git";
     }
 }
