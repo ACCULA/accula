@@ -240,7 +240,7 @@ public class ProjectsRouterTest {
         Mockito.when(projectRepo.findById(Mockito.anyLong()))
                 .thenReturn(Mono.just(PROJECT));
 
-        final var expectedBody = converter.convert(PROJECT);
+        final var expectedBody = ModelToDtoConverter.convert(PROJECT);
 
         client.get().uri("/api/projects/{id}", PROJECT.getId())
                 .exchange()
@@ -263,7 +263,7 @@ public class ProjectsRouterTest {
         Mockito.when(projectRepo.getTop(Mockito.anyInt()))
                 .thenReturn(Flux.fromArray(new Project[]{PROJECT, PROJECT}));
 
-        final var expectedBody = converter.convert(PROJECT);
+        final var expectedBody = ModelToDtoConverter.convert(PROJECT);
 
         client.get().uri("/api/projects?count={count}", 2L)
                 .exchange()

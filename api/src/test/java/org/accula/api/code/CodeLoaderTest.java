@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import reactor.test.StepVerifier;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -16,7 +16,6 @@ import java.util.regex.Pattern;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -37,13 +36,13 @@ class CodeLoaderTest {
     private static CodeLoader codeLoader;
 
     @BeforeAll
-    static void beforeAll(@TempDir final File tempDir) {
-        codeLoader = new JGitCodeLoader(tempDir);
+    static void beforeAll(@TempDir final Path tempDir) {
+        codeLoader = new GitCodeLoader(tempDir);
     }
 
     @Test
     void testGetSingleFile() {
-        StepVerifier.create(codeLoader.getFiles(COMMIT, README::equals))
+        StepVerifier.create(codeLoader.loadFiles(COMMIT, README::equals))
                 .expectNextMatches(readme -> readme.getContent().startsWith("# 2019-highload-dht"))
                 .expectComplete()
                 .verify();
@@ -51,7 +50,7 @@ class CodeLoaderTest {
 
     @Test
     void testGetMultipleFiles() {
-        Map<String, String> files = codeLoader.getFiles(COMMIT)
+        Map<String, String> files = codeLoader.loadFiles(COMMIT)
                 .collectMap(FileEntity::getName, FileEntity::getContent).block();
         assertNotNull(files);
         assertEquals(40, files.size());
@@ -63,7 +62,7 @@ class CodeLoaderTest {
     void testGetMultipleFilteredFiles() {
         Pattern excludeRegex = Pattern.compile(".*Test.*");
         FileFilter filter = fileName -> fileName.endsWith(".java") && !excludeRegex.matcher(fileName).matches();
-        Map<String, String> files = codeLoader.getFiles(COMMIT, filter)
+        Map<String, String> files = codeLoader.loadFiles(COMMIT, filter)
                 .collectMap(FileEntity::getName, FileEntity::getContent).block();
         assertNotNull(files);
         assertEquals(10, files.size());
@@ -75,14 +74,14 @@ class CodeLoaderTest {
 
     @Test
     void testGetFileSnippetSingleLine() {
-        FileEntity snippet = codeLoader.getFileSnippet(COMMIT, README, 4, 4).block();
+        FileEntity snippet = codeLoader.loadSnippets(COMMIT, List.of(SnippetMarker.of(README, 4, 4))).blockFirst();
         assertNotNull(snippet);
         assertEquals("## Этап 1. HTTP + storage (deadline 2019-10-05)", snippet.getContent());
     }
 
     @Test
     void testGetFileSnippetMultiplyLines() {
-        StepVerifier.create(codeLoader.getFileSnippet(COMMIT, README, 4, 5)
+        StepVerifier.create(codeLoader.loadSnippets(COMMIT, List.of(SnippetMarker.of(README, 4, 5)))
                 .map(FileEntity::getContent))
                 .expectNextMatches(content -> content.equals("## Этап 1. HTTP + storage (deadline 2019-10-05)\n### Fork"))
                 .expectComplete()
@@ -91,7 +90,10 @@ class CodeLoaderTest {
 
     @Test
     void testGetFileSnippetWrongRange() {
-        assertThrows(Exception.class, () -> codeLoader.getFileSnippet(COMMIT, README, 5, 4).block());
+        StepVerifier.create(codeLoader.loadSnippets(COMMIT, List.of(SnippetMarker.of(README, 5, 4))))
+                .expectNextMatches(file -> file.getContent() == null)
+                .expectComplete()
+                .verify();
     }
 
     @Test
@@ -100,8 +102,9 @@ class CodeLoaderTest {
         var headRepo = new GithubRepo(1L, "2019-highload-dht", "descr", headOwner);
         var head = CommitSnapshot.builder().sha("a1c28a1b500701819cf9919246f15f3f900bb609").branch("branch").repo(headRepo).build();
         var base = CommitSnapshot.builder().sha("d6357dccc16c7d5c001fd2a2203298c36fe96b63").branch("branch").repo(REPO).build();
-        List<DiffEntry> diff = codeLoader.getDiff(base, head).collectList().block();
-        assertNotNull(diff);
-        assertEquals(18, diff.size());
+        StepVerifier.create(codeLoader.loadDiff(base, head))
+                .expectNextCount(18)
+                .expectComplete()
+                .verify();
     }
 }

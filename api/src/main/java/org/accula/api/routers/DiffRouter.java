@@ -10,6 +10,7 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 
 /**
  * @author Vadim Dyachkov
+ * @author Anton Lamtev
  */
 @Component
 @RequiredArgsConstructor
@@ -20,9 +21,9 @@ public final class DiffRouter {
     public RouterFunction<ServerResponse> diffRoute() {
         return RouterFunctions
                 .route()
-                .path("/api/projects/{projectId}/pulls", b -> b
-                        .GET("/{pullNumber}/diff", diffHandler::diff)
-                        .GET("/diff", diffHandler::diffBetweenPulls))
+                .path("/api/projects/{projectId}/pulls/{pullNumber}", b -> b
+                        .GET("/diff", diffHandler::diff)
+                        .GET("/compare", diffHandler::diffBetweenPulls))
                 .build();
     }
 }

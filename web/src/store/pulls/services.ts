@@ -70,7 +70,7 @@ export const getCompares = async (
     return Promise.resolve([])
   }
   return axios
-    .get(`${API_URL}/api/projects/${projectId}/pulls/diff?source=${source}&target=${target}`, {
+    .get(`${API_URL}/api/projects/${projectId}/pulls/${source}/compare?with=${target}`, {
       headers: {
         Accept: 'application/json',
         Authorization: `Bearer ${token.accessToken}`

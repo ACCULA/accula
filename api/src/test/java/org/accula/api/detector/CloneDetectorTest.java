@@ -3,7 +3,8 @@ package org.accula.api.detector;
 import org.accula.api.code.CodeLoader;
 import org.accula.api.code.FileEntity;
 import org.accula.api.code.FileFilter;
-import org.accula.api.code.JGitCodeLoader;
+import org.accula.api.code.GitCodeLoader;
+import org.accula.api.code.SnippetMarker;
 import org.accula.api.db.model.CommitSnapshot;
 import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.GithubUser;
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.io.TempDir;
 import reactor.core.publisher.Flux;
 import reactor.util.function.Tuple2;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -60,18 +61,18 @@ class CloneDetectorTest {
     }
 
     @Test
-    void testReal(@TempDir final File tempDir) {
-        CodeLoader codeLoader = new JGitCodeLoader(tempDir);
+    void testReal(@TempDir final Path tempDir) {
+        CodeLoader codeLoader = new GitCodeLoader(tempDir);
 
         var repoOwner = new GithubUser(1L, "vaddya", "owner", "ava", false);
         GithubRepo repo = new GithubRepo(1L, "2017-highload-kv", "descr", repoOwner);
         CommitSnapshot commitSnapshot = CommitSnapshot.builder().sha("076c99d7bbb06b31c27a9c3164f152d5c18c5010").branch("branch").repo(repo).build();
-        Flux<FileEntity> targetFiles = codeLoader.getFiles(commitSnapshot, FileFilter.SRC_JAVA);
+        Flux<FileEntity> targetFiles = codeLoader.loadFiles(commitSnapshot, FileFilter.SRC_JAVA);
 
         var repoOwner1 = new GithubUser(2L, "lamtev", "owner", "ava", false);
         GithubRepo repo1 = new GithubRepo(2L, "2017-highload-kv", "descr", repoOwner1);
         CommitSnapshot commitSnapshot1 = CommitSnapshot.builder().sha("8ad07b914c0c2cee8b5a47993061b79c611db65d").branch("branch").repo(repo1).build();
-        Flux<FileEntity> sourceFiles = codeLoader.getFiles(commitSnapshot1, FileFilter.SRC_JAVA);
+        Flux<FileEntity> sourceFiles = codeLoader.loadFiles(commitSnapshot1, FileFilter.SRC_JAVA);
 
         CloneDetector detector = new PrimitiveCloneDetector(10, 5);
         List<Tuple2<CodeSnippet, CodeSnippet>> clones = detector.findClones(targetFiles, sourceFiles).collectList().block();
@@ -83,7 +84,7 @@ class CloneDetectorTest {
     private void printClone(CodeLoader codeLoader, Tuple2<CodeSnippet, CodeSnippet> clone) {
         CodeSnippet into = clone.getT1();
         CodeSnippet from = clone.getT2();
-        FileEntity fromCode = codeLoader.getFileSnippet(from.getCommitSnapshot(), from.getFile(), from.getFromLine(), from.getToLine()).block();
+        FileEntity fromCode = codeLoader.loadSnippets(from.getCommitSnapshot(), List.of(SnippetMarker.of(from.getFile(), from.getFromLine(), from.getToLine()))).blockFirst();
         assertNotNull(fromCode);
         System.out.println(into + " -> " + from);
         System.out.println(fromCode.getContent());

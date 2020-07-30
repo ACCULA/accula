@@ -2,21 +2,12 @@ package org.accula.api.code.git;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
-import org.accula.api.code.FileEntity;
-import org.accula.api.code.git.GitDiffEntry.Addition;
-import org.accula.api.code.git.GitDiffEntry.Deletion;
-import org.accula.api.code.git.GitDiffEntry.Modification;
-import org.accula.api.code.git.GitDiffEntry.Renaming;
-import org.accula.api.db.model.CommitSnapshot;
 import org.accula.api.util.Sync;
 import org.jetbrains.annotations.Nullable;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -26,22 +17,23 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 /**
  * @author Anton Lamtev
  */
+@SuppressWarnings("unused")
 @RequiredArgsConstructor
 public final class Git {
     private static final String ADDITION = "A";
@@ -50,61 +42,12 @@ public final class Git {
     private static final String RENAMING = "R";
     private static final String DELETED_OBJECT_ID = "0000000";
     private static final int SUCCESS = 0;
-    private static final byte[] NEWLINE = System.lineSeparator().getBytes(StandardCharsets.UTF_8);
+    private static final byte[] NEWLINE = System.lineSeparator().getBytes(UTF_8);
     private static final String ALREADY_EXISTS = "already exists";
 
     private final Map<String, Sync> syncs = new ConcurrentHashMap<>();
     private final Path root;
     private final ExecutorService executor;
-
-    public static void main(String[] args) throws Throwable {
-        final var git = new Git(Paths.get("/Users/anton.lamtev/Downloads/"), Executors.newFixedThreadPool(10));
-        final var repo = git.repo(Paths.get("2020-db-lsm")).get();
-
-        Mono
-                .fromFuture(repo.remoteAdd("https://github.com/zvladn7/2020-db-lsm.git", "zvladn7"))
-                .subscribe(v -> {
-                    System.out.println(v);
-                });
-
-        final var flux = Mono
-                .fromFuture(repo.diff("335573f171c8094d451ada860614f6fae968899b", "f3e55115145d02dd40dc73c9bf7b3114bf9bc226", 1))
-                .flatMapMany(diffEntries -> Mono
-                        .fromFuture(repo
-                                .catFiles(diffEntries
-                                        .stream()
-                                        .flatMap(GitDiffEntry::objectIds)
-                                        .collect(Collectors.toList())))
-                        .map(files -> diffEntries
-                                .stream()
-                                .map(diffEntry -> {
-                                    CommitSnapshot c = null;
-                                    if (diffEntry instanceof Addition) {
-                                        final var addition = (Addition) diffEntry;
-                                        return org.accula.api.code.DiffEntry.of(FileEntity.absent(c), new FileEntity(c, addition.head.name, files.get(addition.head.objectId)));
-                                    } else if (diffEntry instanceof Deletion) {
-                                        final var deletion = (Deletion) diffEntry;
-                                        return org.accula.api.code.DiffEntry.of(new FileEntity(c, deletion.base.name, files.get(deletion.base.objectId)), FileEntity.absent(c));
-                                    } else if (diffEntry instanceof Modification) {
-                                        final var modification = (Modification) diffEntry;
-                                        return org.accula.api.code.DiffEntry.of(
-                                                new FileEntity(c, modification.base.name, files.get(modification.base.objectId)),
-                                                new FileEntity(c, modification.head.name, files.get(modification.head.objectId)));
-                                    } else if (diffEntry instanceof Renaming) {
-                                        final var renaming = (Renaming) diffEntry;
-                                        return new org.accula.api.code.DiffEntry(
-                                                new FileEntity(c, renaming.base.name, files.get(renaming.base.objectId)),
-                                                new FileEntity(c, renaming.head.name, files.get(renaming.head.objectId)),
-                                                renaming.similarityIndex);
-                                    } else {
-                                        return null;
-                                    }
-                                }))
-                        .flatMapMany(Flux::fromStream))
-                .subscribe(res -> {
-                    System.out.println(res);
-                });
-    }
 
     public CompletableFuture<Repo> repo(final Path directory) {
         return CompletableFuture
@@ -140,9 +83,9 @@ public final class Git {
     public final class Repo {
         private final Path directory;
 
-        public CompletableFuture<List<GitDiffEntry>> diff(final String baseRef,
-                                                          final String headRef,
-                                                          final int findRenamesMinSimilarityIndex) {
+        public CompletableFuture<List<DiffEntry>> diff(final String baseRef,
+                                                       final String headRef,
+                                                       final int findRenamesMinSimilarityIndex) {
             return CompletableFuture
                     .supplyAsync(reading(() -> {
                         final var command = findRenamesMinSimilarityIndex == 0 || findRenamesMinSimilarityIndex == 100
@@ -158,15 +101,15 @@ public final class Git {
                     }), executor);
         }
 
-        public CompletableFuture<Map<String, String>> catFiles(final List<String> objectIds) {
+        public CompletableFuture<Map<String, String>> catFiles(final List<? extends Identifiable> objectIds) {
             return CompletableFuture
                     .supplyAsync(reading(() -> {
                         final var process = git("cat-file", "--batch");
 
                         return usingStdoutLines(process, Collections.emptyMap(), lines -> {
                             try (final var stdin = process.getOutputStream()) {
-                                for (String objectId : objectIds) {
-                                    stdin.write(objectId.getBytes(StandardCharsets.UTF_8));
+                                for (final var objectId : objectIds) {
+                                    stdin.write(objectId.getId().getBytes(UTF_8));
                                     stdin.write(NEWLINE);
                                 }
                                 stdin.flush();
@@ -264,21 +207,40 @@ public final class Git {
         }
     }
 
-    private static Map<String, String> filesContent(final List<String> lines, final List<String> objectIds) {
-        int fileIdx = 0;
+    private static Map<String, String> filesContent(final List<String> lines, final List<? extends Identifiable> objectIds) {
         final var filesContent = new HashMap<String, String>(objectIds.size());
+        int fileToDiscoverIdx = 0;
+        int currentFileLineCounter = 1;
         StringJoiner currentFile = null;
-        for (int i = 0; i < lines.size() && fileIdx < objectIds.size(); ++i) {
-            final var line = lines.get(i);
-            if (line.startsWith(objectIds.get(fileIdx))) {
-                if (fileIdx != 0) {
-                    filesContent.put(objectIds.get(fileIdx - 1), currentFile.toString());
+        int fromLine = Integer.MIN_VALUE;
+        int toLine = Integer.MAX_VALUE;
+        for (final var line : lines) {
+            Identifiable identifiable;
+            if (fileToDiscoverIdx < objectIds.size() && line.startsWith((identifiable = objectIds.get(fileToDiscoverIdx)).getId())) {
+                currentFileLineCounter = 1;
+                if (identifiable instanceof Snippet) {
+                    final var snippet = (Snippet) identifiable;
+                    fromLine = snippet.fromLine;
+                    toLine = snippet.toLine;
+                } else {
+                    fromLine = Integer.MIN_VALUE;
+                    toLine = Integer.MAX_VALUE;
                 }
-                ++fileIdx;
+                if (fileToDiscoverIdx != 0 && currentFile.length() > 0) {
+                    filesContent.put(objectIds.get(fileToDiscoverIdx - 1).getId(), currentFile.toString());
+                }
+                ++fileToDiscoverIdx;
+
                 currentFile = new StringJoiner(System.lineSeparator());
                 continue;
             }
-            Objects.requireNonNull(currentFile).add(line);
+            final var lineNumber = currentFileLineCounter++;
+            if (lineNumber >= fromLine && lineNumber <= toLine) {
+                Objects.requireNonNull(currentFile).add(line);
+            }
+        }
+        if (fileToDiscoverIdx != 0 && currentFile.length() > 0) {
+            filesContent.put(objectIds.get(fileToDiscoverIdx - 1).getId(), currentFile.toString());
         }
         return filesContent;
     }
@@ -287,14 +249,14 @@ public final class Git {
     ///      0                1                2              3        4        5             6
     /// :base_file_mode head_file_mode base_object_id head_object_id type base_filename head_filename
     @Nullable
-    private static GitDiffEntry parseDiffEntry(final String line) {
+    private static DiffEntry parseDiffEntry(final String line) {
         final var components = line.split("\\s+");
         switch (components.length) {
             case 6:
                 return switch (components[4]) {
-                    case ADDITION -> GitDiffEntry.addition(components[3], components[5]);
-                    case DELETION -> GitDiffEntry.deletion(components[2], components[5]);
-                    case MODIFICATION -> GitDiffEntry.modification(components[2], components[3], components[5]);
+                    case ADDITION -> DiffEntry.addition(components[3], components[5]);
+                    case DELETION -> DiffEntry.deletion(components[2], components[5]);
+                    case MODIFICATION -> DiffEntry.modification(components[2], components[3], components[5]);
                     default -> null;
                 };
             case 7: {
@@ -310,7 +272,7 @@ public final class Git {
                     similarityIndex = 0;
                 }
 
-                return GitDiffEntry.renaming(components[2], components[5], components[3], components[6], similarityIndex);
+                return DiffEntry.renaming(components[2], components[5], components[3], components[6], similarityIndex);
             }
             default:
                 return null;
@@ -350,7 +312,7 @@ public final class Git {
     }
 
     private static <T> T usingStdoutLines(final Process process, final T fallback, final Function<Stream<String>, T> stdoutLinesUse) {
-        try (final var stdoutLines = new BufferedReader(new InputStreamReader(process.getInputStream())).lines()) {
+        try (final var stdoutLines = new BufferedReader(new InputStreamReader(process.getInputStream(), UTF_8)).lines()) {
             final var res = stdoutLinesUse.apply(stdoutLines);
             try {
                 return process.waitFor() == SUCCESS ? res : fallback;
@@ -361,7 +323,7 @@ public final class Git {
     }
 
     private static <T> T usingStderrLines(final Process process, final Function<Stream<String>, T> stderrLinesUse) {
-        try (final var stdoutLines = new BufferedReader(new InputStreamReader(process.getErrorStream())).lines()) {
+        try (final var stdoutLines = new BufferedReader(new InputStreamReader(process.getErrorStream(), UTF_8)).lines()) {
             try {
                 process.waitFor();
                 return stderrLinesUse.apply(stdoutLines);

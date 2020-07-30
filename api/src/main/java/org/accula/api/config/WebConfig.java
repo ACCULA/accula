@@ -4,8 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.accula.api.code.CodeLoader;
 import org.accula.api.code.GitCodeLoader;
-import org.accula.api.code.JGitCodeLoader;
-import org.accula.api.code.git.File;
 import org.accula.api.db.repo.CurrentUserRepo;
 import org.accula.api.detector.CloneDetector;
 import org.accula.api.detector.PrimitiveCloneDetector;
@@ -58,7 +56,6 @@ public class WebConfig implements WebFluxConfigurer {
             Files.createDirectory(reposDirectory);
         }
         return new GitCodeLoader(Paths.get(reposPath));
-//        return new JGitCodeLoader(new File(reposPath));
     }
 
     @Bean

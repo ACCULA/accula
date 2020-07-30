@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.Value;
 import org.accula.api.code.CodeLoader;
 import org.accula.api.code.FileEntity;
+import org.accula.api.code.SnippetMarker;
 import org.accula.api.db.model.Clone;
 import org.accula.api.db.model.CommitSnapshot;
 import org.accula.api.db.model.Pull;
@@ -26,6 +27,7 @@ import reactor.core.scheduler.Schedulers;
 import reactor.util.function.Tuple4;
 
 import java.util.Base64;
+import java.util.List;
 import java.util.Objects;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON;
@@ -172,7 +174,7 @@ public final class ClonesHandler {
     private Flux<FileEntity> getFileSnippets(final Flux<FileSnippetMarker> markers) {
         return markers
                 .flatMapSequential(marker -> codeLoader
-                        .getFileSnippet(marker.commitSnapshot, marker.filename, marker.fromLine, marker.toLine))
+                        .loadSnippets(marker.commitSnapshot, List.of(SnippetMarker.of(marker.filename, marker.fromLine, marker.toLine))))
                 .subscribeOn(codeLoadingScheduler);
     }
 

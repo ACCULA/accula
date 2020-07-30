@@ -29,8 +29,7 @@ public final class DiffHandler {
     private static final Exception PULL_NOT_FOUND_EXCEPTION = new Exception();
     private static final String PROJECT_ID = "projectId";
     private static final String PULL_NUMBER = "pullNumber";
-    private static final String SOURCE_PULL = "source";
-    private static final String TARGET_PULL = "target";
+    private static final String PULL_TO_COMPARE_WITH = "with";
 
     private static final Base64.Encoder base64 = Base64.getEncoder(); // NOPMD
 
@@ -50,17 +49,17 @@ public final class DiffHandler {
 
     public Mono<ServerResponse> diffBetweenPulls(final ServerRequest request) {
         final var queryParams = request.queryParams();
-        if (!queryParams.containsKey(TARGET_PULL) || !queryParams.containsKey(SOURCE_PULL)) {
-            return ServerResponse.notFound().build();
+        if (!request.queryParams().containsKey(PULL_TO_COMPARE_WITH)) {
+            return ServerResponse.badRequest().build();
         }
 
         return Mono
                 .defer(() -> {
                     final var projectId = Long.parseLong(request.pathVariable(PROJECT_ID));
-                    final var sourcePullNumber = Integer.parseInt(queryParams.getFirst(SOURCE_PULL));
-                    final var targetPullNumber = Integer.parseInt(queryParams.getFirst(TARGET_PULL));
+                    final var basePullNumber = Integer.parseInt(request.pathVariable(PULL_NUMBER));
+                    final var headPullNumber = Integer.parseInt(queryParams.getFirst(PULL_TO_COMPARE_WITH));
 
-                    return diffBetweenPulls(projectId, sourcePullNumber, targetPullNumber);
+                    return diffBetweenPulls(projectId, basePullNumber, headPullNumber);
                 });
     }
 
@@ -73,26 +72,26 @@ public final class DiffHandler {
 
         final var diff = Mono
                 .zip(base, head)
-                .flatMapMany(baseHead -> codeLoader.getDiff(baseHead.getT1(), baseHead.getT2(), FileFilter.SRC_JAVA));
+                .flatMapMany(baseHead -> codeLoader.loadDiff(baseHead.getT1(), baseHead.getT2(), FileFilter.SRC_JAVA));
 
         return toResponse(diff);
     }
 
-    private Mono<ServerResponse> diffBetweenPulls(final long projectId, final int sourcePullNumber, final int targetPullNumber) {
-        final var sourcePullHead = pullRepo
-                .findByNumber(projectId, sourcePullNumber)
+    private Mono<ServerResponse> diffBetweenPulls(final long projectId, final int basePullNumber, final int headPullNumber) {
+        final var basePullSnapshot = pullRepo
+                .findByNumber(projectId, basePullNumber)
                 .map(Pull::getHead);
-        final var targetPull = pullRepo
-                .findByNumber(projectId, targetPullNumber)
+        final var headPull = pullRepo
+                .findByNumber(projectId, headPullNumber)
                 .cache();
-        final var targetPullHead = targetPull
+        final var headPullSnapshot = headPull
                 .map(Pull::getHead);
-        final var projectRepo = targetPull
+        final var projectRepo = headPull
                 .map(pull -> pull.getBase().getRepo());
 
         final var diff = Mono
-                .zip(projectRepo, sourcePullHead, targetPullHead)
-                .flatMapMany(Lambda.passingLastArgument(codeLoader::getRemoteDiff, FileFilter.SRC_JAVA));
+                .zip(projectRepo, basePullSnapshot, headPullSnapshot)
+                .flatMapMany(Lambda.passingLastArgument(codeLoader::loadRemoteDiff, FileFilter.SRC_JAVA));
 
         return toResponse(diff);
     }
