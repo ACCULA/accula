@@ -2,24 +2,21 @@ package org.accula.parser;
 
 import generated.org.accula.parser.Java9BaseListener;
 import generated.org.accula.parser.Java9Parser;
+import lombok.RequiredArgsConstructor;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Token;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
+@RequiredArgsConstructor
 public class JavaListener extends Java9BaseListener {
     private final CommonTokenStream tokenStream;
-    private final List<List<Token>> functions = new LinkedList<>();
+    private final List<List<Token>> functions = new ArrayList<>();
     private final Set<Token> typeArgs = new HashSet<>();
-
-    public JavaListener(@NotNull final CommonTokenStream tokens) {
-        tokenStream = tokens;
-    }
 
     public Stream<List<Token>> getFunctions() {
         return functions.stream();
@@ -31,7 +28,7 @@ public class JavaListener extends Java9BaseListener {
 
     @Override
     public void enterMethodBody(Java9Parser.MethodBodyContext ctx) {
-        final var tokens = new LinkedList<Token>();
+        final var tokens = new ArrayList<Token>();
         var tok = ctx.getStart();
         var idx = tok.getTokenIndex();
         while (tok != ctx.getStop()) {

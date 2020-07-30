@@ -1,4 +1,4 @@
-package org.accula.analyzer;
+package org.accula.analyzer.research;
 
 import com.suhininalex.suffixtree.Edge;
 import com.suhininalex.suffixtree.Node;
@@ -6,6 +6,7 @@ import org.accula.parser.Token;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class SuffixTreeUtils {
@@ -16,7 +17,7 @@ public class SuffixTreeUtils {
      * @return list of nodes
      */
     public static List<Node> dfs(@NotNull final Node node) {
-        final var list = new LinkedList<Node>();
+        final var list = new ArrayList<Node>();
         list.add(node);
         node
                 .getEdges()
@@ -82,20 +83,22 @@ public class SuffixTreeUtils {
     }
 
     /**
-     * Check if there are other nodes with similar clones.
+     * Get allowed clones checking if there are no other nodes with similar clones.
      * https://github.com/suhininalex/IdeaClonePlugin/blob/master/src/main/com/suhininalex/clones/core/postprocessing/SubClassFilter.kt#L21
      *
      * @param node                parent node
      * @param reversedSuffixLinks map of reversed suffix links
-     * @return true if there are no similar clones with a greater number of clones (?)
+     * @return stream of clones if there are no similar clones
      */
-    public static boolean isAllowed(@NotNull final Node node,
-                                    @NotNull final Map<Node, Long> reversedSuffixLinks) {
-        final var greaterNodeClones = reversedSuffixLinks.get(node);
-        if (greaterNodeClones == null) return true;
-        final var currentNodeClones = getClonesFromNode(node).count();
-
-        return greaterNodeClones != currentNodeClones;
+    public static Stream<List<Edge>> getAllowedClones(@NotNull final Node node,
+                                                      @NotNull final Map<Node, Long> reversedSuffixLinks) {
+        final var currentNodeClones = getClonesFromNode(node).collect(Collectors.toUnmodifiableList());
+        final var greaterNodeClonesSize = reversedSuffixLinks.get(node);
+        if (greaterNodeClonesSize == null) return currentNodeClones.stream();
+        if (greaterNodeClonesSize != currentNodeClones.size())
+            return currentNodeClones.stream();
+        else
+            return Stream.empty();
     }
 
     private static int getCloneLength(@NotNull final List<Edge> cloneEdges) {
@@ -121,13 +124,15 @@ public class SuffixTreeUtils {
 
         final var clone = new Clone(
                 (Token) firstEdge.getSequence().get(firstEdge.getBegin() - length),
-                (Token) firstEdge.getSequence().get(firstEdge.getBegin() - 1)
+                (Token) firstEdge.getSequence().get(firstEdge.getBegin() - 1),
+                length
         );
         final var cloneFrom = new Clone(
                 (Token) secondEdge.getSequence().get(secondEdge.getEnd() - length + 1),
-                (Token) secondEdge.getSequence().get(secondEdge.getEnd())
+                (Token) secondEdge.getSequence().get(secondEdge.getEnd()),
+                length
         );
 
-        return new CloneInfo(clone, cloneFrom, length);
+        return new CloneInfo(clone, cloneFrom);
     }
 }

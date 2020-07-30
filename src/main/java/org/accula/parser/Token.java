@@ -1,30 +1,26 @@
 package org.accula.parser;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Value;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
 import java.util.Objects;
 
-@Getter
-@AllArgsConstructor
+@Value
 public class Token implements Comparable<Token> {
-    @Setter
-    private Integer type;
-    private final String text;
-    private final Integer line;
-    private final String filename;
-    private final String owner;
-    private final String path;
+    int type;
+    String text;
+    int line;
+    String filename;
+    String owner;
+    String path;
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Token token = (Token) o;
-        return type.equals(token.type);
+        return type == token.type;
     }
 
     @Override

@@ -1,4 +1,4 @@
-package org.accula.analyzer;
+package org.accula.analyzer.research;
 
 import lombok.Value;
 import org.accula.parser.Token;
@@ -9,6 +9,7 @@ import java.util.Objects;
 public class Clone {
     Token from;
     Token to;
+    int length;
 
     @Override
     public boolean equals(Object o) {
@@ -16,12 +17,18 @@ public class Clone {
         if (o == null || getClass() != o.getClass()) return false;
         Clone clone = (Clone) o;
         return from.getText().equals(clone.from.getText()) &&
-                to.getText().equals(clone.to.getText());
+                to.getText().equals(clone.to.getText()) &&
+                length == clone.length;
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(from.getText(), to.getText());
+    }
+
+    @Override
+    public String toString() {
+        return from.getFilename() + ":" + from.getLine() + ":" + to.getLine();
     }
 
     public String getFileName() {

@@ -1,12 +1,12 @@
-package org.accula.analyzer;
+package org.accula.analyzer.research;
 
 import lombok.Value;
+import org.accula.analyzer.research.Clone;
 
 @Value
 public class CloneInfo {
     Clone clone;
     Clone real;
-    Integer cloneLength;
 
     @Override
     public String toString() {
