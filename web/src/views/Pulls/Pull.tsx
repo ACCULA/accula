@@ -3,7 +3,6 @@ import { bindActionCreators } from 'redux'
 import { connect, ConnectedProps } from 'react-redux'
 import { useHistory, useParams } from 'react-router-dom'
 import { Badge, Tab, Tabs } from 'react-bootstrap'
-import { Helmet } from 'react-helmet'
 
 import { Breadcrumbs } from 'components/Breadcrumbs'
 import { Loader } from 'components/Loader'
@@ -16,29 +15,31 @@ import {
   getPullsAction,
   refreshClonesAction
 } from 'store/pulls/actions'
-import { getProjectAction } from 'store/projects/actions'
+import { getProjectAction, getProjectConfAction } from 'store/projects/actions'
 import { PullCompareTab } from 'views/Pulls/PullCompareTab'
 import { useLocation } from 'react-use'
+import { isProjectAdmin } from 'utils'
+import { getCurrentUserAction } from 'store/users/actions'
+import { PageTitle } from 'components/PageTitle'
 import { PullClonesTab } from './PullClonesTab'
 import { PullChangesTab } from './PullChangesTab'
 import { PullOverviewTab } from './PullOverviewTab'
 
 const mapStateToProps = (state: AppState) => ({
-  isFetching:
-    state.pulls.pull.isFetching ||
-    state.projects.project.isFetching ||
-    !state.pulls.pull.value ||
-    !state.projects.project,
-  project: state.projects.project.value,
-  pull: state.pulls.pull.value,
-  pulls: state.pulls.pulls.value,
+  user: state.users.user,
+  project: state.projects.project,
+  projectConf: state.projects.projectConf,
+  pull: state.pulls.pull,
+  pulls: state.pulls.pulls,
   diffs: state.pulls.diffs,
   compares: state.pulls.compares,
   clones: state.pulls.clones
 })
 
 const mapDispatchToProps = (dispatch: AppDispatch) => ({
+  getUser: bindActionCreators(getCurrentUserAction, dispatch),
   getProject: bindActionCreators(getProjectAction, dispatch),
+  getProjectConf: bindActionCreators(getProjectConfAction, dispatch),
   getPull: bindActionCreators(getPullAction, dispatch),
   getPulls: bindActionCreators(getPullsAction, dispatch),
   getDiffs: bindActionCreators(getDiffsAction, dispatch),
@@ -51,14 +52,17 @@ const connector = connect(mapStateToProps, mapDispatchToProps)
 type PullsProps = ConnectedProps<typeof connector>
 
 const Pull = ({
-  isFetching,
+  user,
   project,
+  projectConf,
   pull,
   pulls,
   diffs,
   compares,
   clones,
+  getUser,
   getProject,
+  getProjectConf,
   getPull,
   getPulls,
   getDiffs,
@@ -83,39 +87,36 @@ const Pull = ({
   }, [compareWith, location, getCompares, projectId, pullId])
 
   useEffect(() => {
-    getProject(projectId)
-  }, [getProject, projectId])
-
-  useEffect(() => {
     getPull(projectId, pullId)
-  }, [getPull, projectId, pullId])
-
-  useEffect(() => {
     getPulls(projectId)
-  }, [getPulls, projectId])
-
-  useEffect(() => {
     getDiffs(projectId, pullId)
-  }, [getDiffs, projectId, pullId])
+    getClones(projectId, pullId)
+  }, [getPull, getPulls, getDiffs, getClones, projectId, pullId])
 
   useEffect(() => {
-    getClones(projectId, pullId)
-  }, [getClones, projectId, pullId])
+    getUser()
+    getProject(projectId)
+    getProjectConf(projectId)
+  }, [getUser, getProject, getProjectConf])
 
-  if (isFetching || (pull && pull.number !== pullId)) {
+  if (pull.value && pull.value.number !== pullId) {
     return <Loader />
   }
   return (
     <div className="content">
-      <Helmet>
-        <title>{`${pull.title} - ${project.repoName} - ACCULA`}</title>
-      </Helmet>
+      <PageTitle
+        title={pull.value && project.value && `${pull.value.title} - ${project.value.repoName}`}
+      />
       <Breadcrumbs
-        breadcrumbs={[
-          { text: 'Projects', to: '/projects' },
-          { text: project.repoName, to: `/projects/${project.id}` },
-          { text: pull.title }
-        ]}
+        breadcrumbs={
+          project.value && pull.value
+            ? [
+                { text: 'Projects', to: '/projects' },
+                { text: project.value.repoName, to: `/projects/${project.value.id}/pulls` },
+                { text: pull.value.title }
+              ]
+            : [{ text: '' }]
+        }
       />
       <Tabs
         activeKey={tab || 'overview'} //
@@ -192,6 +193,7 @@ const Pull = ({
           <PullClonesTab
             clones={clones} //
             refreshClones={() => refreshClones(projectId, pullId)}
+            isAdmin={isProjectAdmin(user.value, project.value, projectConf.value)}
           />
         </Tab>
       </Tabs>

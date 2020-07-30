@@ -2,29 +2,35 @@ import React, { useState } from 'react'
 import { Button } from 'react-bootstrap'
 
 import { CodeDiff, DiffMethod } from 'components/CodeDiff'
-import { Loader } from 'components/Loader'
 import { IPullClonesState } from 'store/pulls/types'
 import { SplitUnifiedViewButton } from 'components/CodeDiff/SplitUnifiedViewButton'
+import { LoadingWrapper } from 'components/LoadingWrapper'
 
 interface PullClonesTabProps {
   clones: IPullClonesState
   refreshClones: () => void
+  isAdmin: boolean
 }
 
-export const PullClonesTab = ({ clones, refreshClones }: PullClonesTabProps) => {
+export const PullClonesTab = ({
+  clones, //
+  refreshClones,
+  isAdmin
+}: PullClonesTabProps) => {
   const [splitView, setSplitView] = useState(false)
-  return clones.isFetching ? (
-    <Loader />
-  ) : (
-    <>
+
+  return (
+    <LoadingWrapper deps={[clones]}>
       <div className="pull-right">
-        <Button
-          bsStyle="info" //
-          className="pull-refresh-clone"
-          onClick={refreshClones}
-        >
-          <i className="fas fa-fw fa-sync-alt" />{' '}Refresh
-        </Button>
+        {isAdmin && (
+          <Button
+            bsStyle="info" //
+            className="pull-refresh-clone"
+            onClick={refreshClones}
+          >
+            <i className="fas fa-fw fa-sync-alt" /> Refresh
+          </Button>
+        )}
         {clones.value && clones.value.length > 0 && (
           <SplitUnifiedViewButton splitView={splitView} setSplitView={setSplitView} />
         )}
@@ -53,6 +59,6 @@ export const PullClonesTab = ({ clones, refreshClones }: PullClonesTabProps) => 
             // disableWordDiff
           />
         ))}
-    </>
+    </LoadingWrapper>
   )
 }

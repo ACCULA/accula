@@ -2,11 +2,18 @@ plugins {
     id("org.springframework.boot") version "2.3.1.RELEASE"
     id("io.spring.dependency-management") version "1.0.9.RELEASE"
     id("net.bytebuddy.byte-buddy-gradle-plugin") version "1.10.11"
+    antlr
+}
+
+repositories {
+    maven(url = "https://dl.bintray.com/vorpal-research/kotlin-maven/")
+    maven(url =  "https://dl.bintray.com/accula/clone-detector")
 }
 
 version = "1.0-SNAPSHOT"
 
 val byteBuddyPlugin: Configuration by configurations.creating
+val antlrVersion = "4.8-1"
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-webflux")
@@ -42,6 +49,12 @@ dependencies {
     implementation("org.flywaydb:flyway-core")
 
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
+
+    antlr("org.antlr:antlr4:$antlrVersion")
+    compileOnly("org.antlr:antlr4-runtime:$antlrVersion")
+
+    implementation("com.suhininalex:suffixtree:1.0.2")
+    implementation("org.accula:clone-detector:1.0.1")
 }
 
 byteBuddy {
@@ -49,4 +62,10 @@ byteBuddy {
         plugin = "reactor.tools.agent.ReactorDebugByteBuddyPlugin"
         setClassPath(byteBuddyPlugin)
     })
+}
+
+tasks.generateGrammarSource {
+    maxHeapSize = "64m"
+    arguments = arguments + listOf("-package", "generated")
+    outputDirectory = File("src/main/java/generated")
 }
