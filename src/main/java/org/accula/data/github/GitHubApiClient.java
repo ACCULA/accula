@@ -33,7 +33,7 @@ public class GitHubApiClient implements DataProvider {
         final var start = System.nanoTime();
 
         final var pulls = fetchPullRequests()
-                .take(100)
+                .take(100) // Number of PRs
                 .publish()
                 .autoConnect(2);
         pulls
@@ -98,7 +98,7 @@ public class GitHubApiClient implements DataProvider {
 
     private Mono<FileEntity> downloadFile(@NotNull final RepositoryFile rf, @NotNull final String userName) {
         if (rf.getPath().endsWith("java")) {
-            System.err.println("Downloading : " + rf.getFilename());
+            System.err.println("Downloading : " + userName + "/" + rf.getFilename());
             return fileDownloaderClient
                     .get()
                     .uri(rf.getRawUrl())
