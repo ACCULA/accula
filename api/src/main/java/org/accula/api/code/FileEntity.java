@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vadim Dyachkov
+ * @author Anton Lamtev
  */
 @Value
 public class FileEntity {
