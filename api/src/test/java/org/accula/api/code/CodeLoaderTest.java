@@ -22,15 +22,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * FIXME: replace block with StepVerifier
  *
  * @author Vadim Dyachkov
+ * @author Anton Lamtev
  */
 class CodeLoaderTest {
     public static final String README = "README.md";
-    public static final GithubUser USER1 = new GithubUser(0L, "polis-mail-ru", "name", "ava", true);
-    public static final GithubRepo REPO1 = new GithubRepo(0L, "2019-highload-dht", "descr", USER1);
+    public static final GithubUser USER = new GithubUser(0L, "polis-mail-ru", "name", "ava", true);
+    public static final GithubRepo REPO = new GithubRepo(0L, "2019-highload-dht", "descr", USER);
     public static final CommitSnapshot COMMIT = CommitSnapshot.builder()
             .sha("720cefb3f361895e9e23524c2b4025f9a949d5d2")
             .branch("branch")
-            .repo(REPO1)
+            .repo(REPO)
             .build();
 
     private static CodeLoader codeLoader;
@@ -101,10 +102,33 @@ class CodeLoaderTest {
         var headOwner = new GithubUser(1L, "vaddya", "owner", "ava", false);
         var headRepo = new GithubRepo(1L, "2019-highload-dht", "descr", headOwner);
         var head = CommitSnapshot.builder().sha("a1c28a1b500701819cf9919246f15f3f900bb609").branch("branch").repo(headRepo).build();
-        var base = CommitSnapshot.builder().sha("d6357dccc16c7d5c001fd2a2203298c36fe96b63").branch("branch").repo(REPO1).build();
+        var base = CommitSnapshot.builder().sha("d6357dccc16c7d5c001fd2a2203298c36fe96b63").branch("branch").repo(REPO).build();
         StepVerifier.create(codeLoader.loadDiff(base, head))
                 .expectNextCount(18)
                 .expectComplete()
                 .verify();
+    }
+
+    @Test
+    void testRemoteDiff() {
+        final var projectRepo = new GithubRepo(1L, "2017-highload-kv", "descr", USER);
+        final var base = CommitSnapshot
+                .builder()
+                .sha("fe675f17ad4aab9a8c853b5f3b07b0bc64f06907")
+                .repo(new GithubRepo(0L, "2017-highload-kv", "", new GithubUser(0L, "lamtev", null, "", false)))
+                .build();
+        final var head = CommitSnapshot
+                .builder()
+                .sha("076c99d7bbb06b31c27a9c3164f152d5c18c5010")
+                .repo(new GithubRepo(0L, "2017-highload-kv", "", new GithubUser(0L, "vaddya", null, "", false)))
+                .build();
+
+        final var diffEntries = codeLoader.loadRemoteDiff(projectRepo, base, head, FileFilter.SRC_JAVA).collectList().block();
+        assertEquals(9, diffEntries.size());
+        final var possibleRenameCount = diffEntries
+                .stream()
+                .filter(diffEntry -> diffEntry.getSimilarityIndex() > 0)
+                .count();
+        assertEquals(5, possibleRenameCount);
     }
 }

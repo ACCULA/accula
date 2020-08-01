@@ -16,11 +16,16 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
-class GitTest {
+/**
+ * @author Anton Lamtev
+ */
+final class GitTest {
     private static final String REPO_URL = "https://github.com/ACCULA/accula.git";
     private static final String REPO_DIR = "accula";
     private static final String BASE_REF = "7a019e571e2716f7f133e1a63a49f300e03aea00";
     private static final String HEAD_REF = "69f552851f0f6093816c3064b6e00438e0ff3b19";
+    public static final String REMOTE_URL = "https://github.com/lamtev/poker.git";
+    public static final String REMOTE_NAME = "newRemote";
     private static Git git;
 
     @BeforeAll
@@ -138,7 +143,7 @@ class GitTest {
             IntStream.range(0, Runtime.getRuntime().availableProcessors() * 5)
                     .parallel()
                     .forEach(it -> assertDoesNotThrow(() ->
-                            assertNotNull(repo.remoteAdd("https://github.com/lamtev/poker.git", "newRemote"))));
+                            assertNotNull(repo.remoteAdd(REMOTE_URL, REMOTE_NAME))));
         });
     }
 
@@ -147,12 +152,12 @@ class GitTest {
         assertDoesNotThrow(() -> {
             final var repo = git.clone(REPO_URL, REPO_DIR).get();
             assertNotNull(repo);
-            assertNotNull(repo.remoteAdd("https://github.com/lamtev/poker.git", "newRemote").get());
+            assertNotNull(repo.remoteAdd(REMOTE_URL, REMOTE_NAME).get());
 
             IntStream.range(0, Runtime.getRuntime().availableProcessors() * 5)
                     .parallel()
                     .forEach(it -> assertDoesNotThrow(() ->
-                            assertNotNull(repo.remoteUpdate("newRemote"))));
+                            assertNotNull(repo.remoteUpdate(REMOTE_NAME))));
         });
     }
 }
