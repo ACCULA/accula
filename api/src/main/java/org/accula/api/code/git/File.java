@@ -11,7 +11,7 @@ import lombok.Value;
 @Value
 @RequiredArgsConstructor(staticName = "of", access = AccessLevel.PACKAGE)
 public class File implements Identifiable {
-    public String id;
+    String id;
     @EqualsAndHashCode.Exclude
-    public String name;
+    String name;
 }

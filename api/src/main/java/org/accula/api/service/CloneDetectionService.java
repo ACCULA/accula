@@ -9,7 +9,7 @@ import org.accula.api.db.repo.CloneRepo;
 import org.accula.api.db.repo.PullRepo;
 import org.accula.api.detector.CloneDetector;
 import org.accula.api.detector.CodeSnippet;
-import org.accula.api.util.AcculaSchedulers;
+import org.accula.api.util.ReactorSchedulers;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Scheduler;
@@ -21,7 +21,7 @@ import reactor.util.function.Tuple2;
 @Service
 @RequiredArgsConstructor
 public final class CloneDetectionService {
-    private final Scheduler processingScheduler = AcculaSchedulers.newBoundedElastic(getClass().getSimpleName());
+    private final Scheduler processingScheduler = ReactorSchedulers.newBoundedElastic(getClass().getSimpleName());
     private final PullRepo pullRepo;
     private final CloneRepo cloneRepo;
     private final CloneDetector detector;

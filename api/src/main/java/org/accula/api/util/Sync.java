@@ -7,32 +7,27 @@ import java.util.function.Supplier;
 /**
  * @author Anton Lamtev
  */
-public class Sync {
+public final class Sync {
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
-    @SuppressWarnings("unused")
-    public static <Any> Sync create(final Any any) {
-        return new Sync();
-    }
-
-    public <T> Supplier<T> reading(final Supplier<T> criticalSection) {
+    public <T> Supplier<T> reading(final Supplier<T> readOp) {
         return () -> {
             final var readLock = lock.readLock();
             readLock.lock();
             try {
-                return criticalSection.get();
+                return readOp.get();
             } finally {
                 readLock.unlock();
             }
         };
     }
 
-    public <T> Supplier<T> writing(final Supplier<T> criticalSection) {
+    public <T> Supplier<T> writing(final Supplier<T> writeOp) {
         return () -> {
             final var writeLock = lock.writeLock();
             writeLock.lock();
             try {
-                return criticalSection.get();
+                return writeOp.get();
             } finally {
                 writeLock.unlock();
             }

@@ -2,6 +2,7 @@ package org.accula.api.code.git;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import org.accula.api.util.Lambda;
 import org.accula.api.util.Sync;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +34,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 /**
  * @author Anton Lamtev
  */
-@SuppressWarnings("unused")
 @RequiredArgsConstructor
 public final class Git {
     private static final String ADDITION = "A";
@@ -83,6 +83,19 @@ public final class Git {
     public final class Repo {
         private final Path directory;
 
+        public CompletableFuture<Repo> fetch() {
+            return CompletableFuture.supplyAsync(writing(() -> {
+                final var process = git("fetch");
+                try {
+                    //TODO: fetch timeout
+                    final var ret = process.waitFor();
+                    return ret == SUCCESS ? this : null;
+                } catch (InterruptedException e) {
+                    throw wrap(e);
+                }
+            }), executor);
+        }
+
         public CompletableFuture<List<DiffEntry>> diff(final String baseRef,
                                                        final String headRef,
                                                        final int findRenamesMinSimilarityIndex) {
@@ -123,6 +136,8 @@ public final class Git {
                     }), executor);
         }
 
+        @SuppressWarnings("unused")
+        /// Once we'll start to detecting clones in commits, not revisions, the method will be in use
         public CompletableFuture<List<File>> show(final String commitSha) {
             return CompletableFuture
                     .supplyAsync(reading(() -> {
@@ -155,7 +170,7 @@ public final class Git {
                     }), executor);
         }
 
-        public CompletableFuture<Boolean> remoteAdd(final String url, final String uniqueName) {
+        public CompletableFuture<Repo> remoteAdd(final String url, final String uniqueName) {
             return CompletableFuture
                     .supplyAsync(writing(() -> {
                         final var process = git("remote", "add", "-f", uniqueName, url);
@@ -165,20 +180,20 @@ public final class Git {
                             final Predicate<Process> remoteAlreadyExists = proc -> usingStderrLines(proc, Stream::findFirst)
                                     .orElse("")
                                     .contains(ALREADY_EXISTS);
-                            return ret == SUCCESS ? Boolean.TRUE : remoteAlreadyExists.test(process) ? Boolean.TRUE : Boolean.FALSE;
+                            return ret == SUCCESS ? this : remoteAlreadyExists.test(process) ? this : null;
                         } catch (InterruptedException e) {
                             throw wrap(e);
                         }
                     }), executor);
         }
 
-        public CompletableFuture<Boolean> remoteUpdate(final String name) {
+        public CompletableFuture<Repo> remoteUpdate(final String name) {
             return CompletableFuture
                     .supplyAsync(writing(() -> {
                         final var process = git("remote", "update", name);
                         try {
                             //TODO: remote update timeout
-                            return process.waitFor() == SUCCESS ? Boolean.TRUE : Boolean.FALSE;
+                            return process.waitFor() == SUCCESS ? this : null;
                         } catch (InterruptedException e) {
                             throw wrap(e);
                         }
@@ -215,13 +230,13 @@ public final class Git {
         int fromLine = Integer.MIN_VALUE;
         int toLine = Integer.MAX_VALUE;
         for (final var line : lines) {
-            Identifiable identifiable;
+            final Identifiable identifiable;
             if (fileToDiscoverIdx < objectIds.size() && line.startsWith((identifiable = objectIds.get(fileToDiscoverIdx)).getId())) {
                 currentFileLineCounter = 1;
                 if (identifiable instanceof Snippet) {
                     final var snippet = (Snippet) identifiable;
-                    fromLine = snippet.fromLine;
-                    toLine = snippet.toLine;
+                    fromLine = snippet.getFromLine();
+                    toLine = snippet.getToLine();
                 } else {
                     fromLine = Integer.MIN_VALUE;
                     toLine = Integer.MAX_VALUE;
@@ -334,7 +349,7 @@ public final class Git {
     }
 
     private Sync safe(final String key) {
-        return syncs.computeIfAbsent(key, Sync::create);
+        return syncs.computeIfAbsent(key, Lambda.expandingWithArg(Sync::new));
     }
 
     private Sync safe(final Path path) {

@@ -2,9 +2,12 @@ package org.accula.api.code;
 
 import lombok.Value;
 
+/**
+ * @author Anton Lamtev
+ */
 @Value(staticConstructor = "of")
 public class SnippetMarker {
-    String filename;
-    int fromLine;
-    int toLine;
+    public String filename;
+    public int fromLine;
+    public int toLine;
 }

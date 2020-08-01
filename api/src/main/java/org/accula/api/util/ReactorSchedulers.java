@@ -6,8 +6,8 @@ import reactor.core.scheduler.Schedulers;
 import static reactor.core.scheduler.Schedulers.DEFAULT_BOUNDED_ELASTIC_QUEUESIZE;
 import static reactor.core.scheduler.Schedulers.DEFAULT_BOUNDED_ELASTIC_SIZE;
 
-public final class AcculaSchedulers {
-    private AcculaSchedulers() {
+public final class ReactorSchedulers {
+    private ReactorSchedulers() {
     }
 
     public static Scheduler newBoundedElastic(final String name) {

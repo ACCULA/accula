@@ -7,12 +7,12 @@ import lombok.Value;
  */
 @Value(staticConstructor = "of")
 public class Snippet implements Identifiable {
-    public File file;
-    public int fromLine;
-    public int toLine;
+    File file;
+    int fromLine;
+    int toLine;
 
     @Override
     public String getId() {
-        return file.id;
+        return file.getId();
     }
 }

@@ -38,8 +38,8 @@ public interface DiffEntry {
     @Value
     @RequiredArgsConstructor(staticName = "of", access = AccessLevel.PRIVATE)
     class Modification implements DiffEntry {
-        public File base;
-        public File head;
+        File base;
+        File head;
 
         @Override
         public Stream<? extends Identifiable> objectIds() {
@@ -48,14 +48,14 @@ public interface DiffEntry {
 
         @Override
         public <F extends Predicate<String>> boolean passes(final F filter) {
-            return filter.test(base.name);
+            return filter.test(base.getName());
         }
     }
 
     @Value
     @RequiredArgsConstructor(staticName = "of", access = AccessLevel.PRIVATE)
     class Addition implements DiffEntry {
-        public File head;
+        File head;
 
         @Override
         public Stream<? extends Identifiable> objectIds() {
@@ -64,14 +64,14 @@ public interface DiffEntry {
 
         @Override
         public <F extends Predicate<String>> boolean passes(final F filter) {
-            return filter.test(head.name);
+            return filter.test(head.getName());
         }
     }
 
     @Value
     @RequiredArgsConstructor(staticName = "of", access = AccessLevel.PRIVATE)
     class Deletion implements DiffEntry {
-        public File base;
+        File base;
 
         @Override
         public Stream<? extends Identifiable> objectIds() {
@@ -80,16 +80,16 @@ public interface DiffEntry {
 
         @Override
         public <F extends Predicate<String>> boolean passes(final F filter) {
-            return filter.test(base.name);
+            return filter.test(base.getName());
         }
     }
 
     @Value
     @RequiredArgsConstructor(staticName = "of", access = AccessLevel.PRIVATE)
     class Renaming implements DiffEntry {
-        public File base;
-        public File head;
-        public int similarityIndex;
+        File base;
+        File head;
+        int similarityIndex;
 
         @Override
         public Stream<? extends Identifiable> objectIds() {
@@ -98,7 +98,7 @@ public interface DiffEntry {
 
         @Override
         public <F extends Predicate<String>> boolean passes(final F filter) {
-            return filter.test(base.name) || filter.test(head.name);
+            return filter.test(base.getName()) || filter.test(head.getName());
         }
     }
 }
