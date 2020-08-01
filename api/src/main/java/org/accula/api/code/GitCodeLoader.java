@@ -117,6 +117,25 @@ public final class GitCodeLoader implements CodeLoader {
                 .flatMap(repo -> Mono.fromFuture(repo.fetch()));
     }
 
+    private Mono<Repo> addOrUpdateRemotes(final Repo repo, final CommitSnapshot base, final CommitSnapshot head) {
+        final var baseRemote = base.getRepo().getOwner().getLogin();
+        final var headRemote = head.getRepo().getOwner().getLogin();
+        final var baseUrl = repoGitUrl(base.getRepo());
+        final var headUrl = repoGitUrl(head.getRepo());
+        return Mono
+                .fromFuture(repo.remote())
+                .flatMap(remotesPresent -> Mono
+                        .zip(
+                                addOrUpdateRemote(repo, baseUrl, baseRemote, remotesPresent),
+                                addOrUpdateRemote(repo, headUrl, headRemote, remotesPresent),
+                                Lambda::firstArg
+                        ));
+    }
+
+    private static Mono<Repo> addOrUpdateRemote(final Repo repo, final String remoteUrl, final String remote, final Set<String> remotesPresent) {
+        return Mono.fromFuture(remotesPresent.contains(remote) ? repo.remoteUpdate(remote) : repo.remoteAdd(remoteUrl, remote));
+    }
+
     private static Flux<org.accula.api.code.DiffEntry> loadDiff(final Repo repo,
                                                                 final CommitSnapshot base,
                                                                 final CommitSnapshot head,
@@ -136,25 +155,6 @@ public final class GitCodeLoader implements CodeLoader {
                                         .collect(toList())))
                         .transform(convertDiffEntries(diffEntries, base, head))
                         .flatMapMany(Flux::fromStream));
-    }
-
-    private Mono<Repo> addOrUpdateRemotes(final Repo repo, final CommitSnapshot base, final CommitSnapshot head) {
-        final var baseRemote = base.getRepo().getOwner().getLogin();
-        final var headRemote = head.getRepo().getOwner().getLogin();
-        final var baseUrl = repoGitUrl(base.getRepo());
-        final var headUrl = repoGitUrl(head.getRepo());
-        return Mono
-                .fromFuture(repo.remote())
-                .flatMap(remotesPresent -> Mono
-                        .zip(
-                                addOrUpdateRemote(repo, baseUrl, baseRemote, remotesPresent),
-                                addOrUpdateRemote(repo, headUrl, headRemote, remotesPresent),
-                                Lambda::firstArg
-                        ));
-    }
-
-    private Mono<Repo> addOrUpdateRemote(final Repo repo, final String remoteUrl, final String remote, final Set<String> remotesPresent) {
-        return Mono.fromFuture(remotesPresent.contains(remote) ? repo.remoteUpdate(remote) : repo.remoteAdd(remoteUrl, remote));
     }
 
     private static Function<

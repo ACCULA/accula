@@ -299,6 +299,9 @@ public final class Git {
     /// :base_file_mode head_file_mode base_object_id head_object_id type base_filename head_filename
     @Nullable
     private static File parseShowEntry(final String line) {
+        if (line.isEmpty() || line.charAt(0) != ':') {
+            return null;
+        }
         final var components = line.split("\\s+");
         if (components.length != 6 && components.length != 7) {
             return null;

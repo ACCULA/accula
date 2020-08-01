@@ -25,12 +25,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class CodeLoaderTest {
     public static final String README = "README.md";
-    public static final GithubUser USER = new GithubUser(0L, "polis-mail-ru", "name", "ava", true);
-    public static final GithubRepo REPO = new GithubRepo(0L, "2019-highload-dht", "descr", USER);
+    public static final GithubUser USER1 = new GithubUser(0L, "polis-mail-ru", "name", "ava", true);
+    public static final GithubRepo REPO1 = new GithubRepo(0L, "2019-highload-dht", "descr", USER1);
     public static final CommitSnapshot COMMIT = CommitSnapshot.builder()
             .sha("720cefb3f361895e9e23524c2b4025f9a949d5d2")
             .branch("branch")
-            .repo(REPO)
+            .repo(REPO1)
             .build();
 
     private static CodeLoader codeLoader;
@@ -101,7 +101,7 @@ class CodeLoaderTest {
         var headOwner = new GithubUser(1L, "vaddya", "owner", "ava", false);
         var headRepo = new GithubRepo(1L, "2019-highload-dht", "descr", headOwner);
         var head = CommitSnapshot.builder().sha("a1c28a1b500701819cf9919246f15f3f900bb609").branch("branch").repo(headRepo).build();
-        var base = CommitSnapshot.builder().sha("d6357dccc16c7d5c001fd2a2203298c36fe96b63").branch("branch").repo(REPO).build();
+        var base = CommitSnapshot.builder().sha("d6357dccc16c7d5c001fd2a2203298c36fe96b63").branch("branch").repo(REPO1).build();
         StepVerifier.create(codeLoader.loadDiff(base, head))
                 .expectNextCount(18)
                 .expectComplete()
