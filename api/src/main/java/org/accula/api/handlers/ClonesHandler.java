@@ -59,7 +59,7 @@ public final class ClonesHandler {
                     final var pullNumber = Integer.parseInt(request.pathVariable(PULL_NUMBER));
                     return getLastCommitClones(projectId, pullNumber);
                 })
-                .onErrorResume(NumberFormatException.class, this::notFound);
+                .onErrorResume(NumberFormatException.class, ClonesHandler::notFound);
     }
 
     public Mono<ServerResponse> refreshClones(final ServerRequest request) {
@@ -77,7 +77,7 @@ public final class ClonesHandler {
                             .then(getLastCommitClones(projectId, pullNumber)))
                             .switchIfEmpty(ServerResponse.status(HttpStatus.FORBIDDEN).build());
                 })
-                .onErrorResume(NumberFormatException.class, this::notFound);
+                .onErrorResume(NumberFormatException.class, ClonesHandler::notFound);
     }
 
     private <T> Mono<T> doIfCurrentUserHasAdminPermissionInProject(final long projectId, final Mono<T> action) {
@@ -174,11 +174,13 @@ public final class ClonesHandler {
     private Flux<FileEntity> getFileSnippets(final Flux<FileSnippetMarker> markers) {
         return markers
                 .flatMapSequential(marker -> codeLoader
+                        //FIXME: The Current solution is an adaptor of the previous one using new api
+                        //TODO: We need to load snippets in a batch
                         .loadSnippets(marker.commitSnapshot, List.of(SnippetMarker.of(marker.filename, marker.fromLine, marker.toLine))))
                 .subscribeOn(codeLoadingScheduler);
     }
 
-    private <E extends Throwable> Mono<ServerResponse> notFound(final E ignored) {
+    private static <E extends Throwable> Mono<ServerResponse> notFound(final E ignored) {
         return ServerResponse.notFound().build();
     }
 
