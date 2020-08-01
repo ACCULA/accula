@@ -6,6 +6,9 @@ import reactor.core.scheduler.Schedulers;
 import static reactor.core.scheduler.Schedulers.DEFAULT_BOUNDED_ELASTIC_QUEUESIZE;
 import static reactor.core.scheduler.Schedulers.DEFAULT_BOUNDED_ELASTIC_SIZE;
 
+/**
+ * @author Anton Lamtev
+ */
 public final class ReactorSchedulers {
     private ReactorSchedulers() {
     }

@@ -37,7 +37,7 @@ public final class GitCodeLoader implements CodeLoader {
     private final Git git;
 
     public GitCodeLoader(final Path root) {
-        this.git = new Git(root, Executors.newFixedThreadPool(10));
+        this.git = new Git(root, Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 10));
     }
 
     @Override
