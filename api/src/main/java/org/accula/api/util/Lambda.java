@@ -22,7 +22,7 @@ public final class Lambda {
         return arg -> noArgFun.get();
     }
 
-    public static <T> T firstArg(final T first, @SuppressWarnings("unused") final T second) {
+    public static <T> T firstArg(final T first, final T second) {
         return first;
     }
 }
