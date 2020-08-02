@@ -164,7 +164,7 @@ public final class GitCodeLoader implements CodeLoader {
     }
 
     private static Function<
-            Mono<Map<? super Identifiable, String>>,
+            Mono<Map<Identifiable, String>>,
             Mono<Stream<org.accula.api.code.DiffEntry>>
             > convertDiffEntries(final List<DiffEntry> diffEntries,
                                  final CommitSnapshot base,

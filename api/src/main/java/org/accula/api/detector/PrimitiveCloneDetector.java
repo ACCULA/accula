@@ -9,10 +9,10 @@ import reactor.util.function.Tuples;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
@@ -41,7 +41,7 @@ public class PrimitiveCloneDetector implements CloneDetector {
     }
 
     private Map<String, Collection<CodeSnippet>> lineToSnippetsMap(final FileEntity file) {
-        final Map<String, Collection<CodeSnippet>> source = new HashMap<>();
+        final Map<String, Collection<CodeSnippet>> source = new ConcurrentHashMap<>();
         final String[] lines = file.getContent().split("\n");
         for (int i = 1; i <= lines.length; i++) {
             final String line = lines[i - 1];

@@ -114,7 +114,7 @@ public final class Git {
                     }), executor);
         }
 
-        public CompletableFuture<Map<? super Identifiable, String>> catFiles(final List<? extends Identifiable> objectIds) {
+        public CompletableFuture<Map<Identifiable, String>> catFiles(final List<? extends Identifiable> objectIds) {
             return CompletableFuture
                     .supplyAsync(reading(() -> {
                         final var process = git("cat-file", "--batch");
@@ -222,11 +222,11 @@ public final class Git {
         }
     }
 
-    private static Map<? super Identifiable, String> filesContent(final List<String> lines, final List<? extends Identifiable> objectIds) {
+    private static Map<Identifiable, String> filesContent(final List<String> lines, final List<? extends Identifiable> objectIds) {
         if (objectIds.isEmpty()) {
             return Collections.emptyMap();
         }
-        final Map<? super Identifiable, String> filesContent = new HashMap<>(objectIds.size());
+        final Map<Identifiable, String> filesContent = new HashMap<>(objectIds.size());
         int fileToDiscoverIdx = 0;
         int currentFileLineCounter = 1;
         StringJoiner currentFile = null;

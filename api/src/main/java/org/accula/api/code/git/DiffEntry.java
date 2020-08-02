@@ -31,7 +31,7 @@ public interface DiffEntry {
         return Renaming.of(File.of(baseObjectId, baseFilename), File.of(headObjectId, headFilename), similarityIndex);
     }
 
-    Stream<? extends Identifiable> objectIds();
+    Stream<Identifiable> objectIds();
 
     <F extends Predicate<String>> boolean passes(F filter);
 
@@ -42,7 +42,7 @@ public interface DiffEntry {
         File head;
 
         @Override
-        public Stream<? extends Identifiable> objectIds() {
+        public Stream<Identifiable> objectIds() {
             return Stream.of(base, head);
         }
 
@@ -58,7 +58,7 @@ public interface DiffEntry {
         File head;
 
         @Override
-        public Stream<? extends Identifiable> objectIds() {
+        public Stream<Identifiable> objectIds() {
             return Stream.of(head);
         }
 
@@ -74,7 +74,7 @@ public interface DiffEntry {
         File base;
 
         @Override
-        public Stream<? extends Identifiable> objectIds() {
+        public Stream<Identifiable> objectIds() {
             return Stream.of(base);
         }
 
@@ -92,7 +92,7 @@ public interface DiffEntry {
         int similarityIndex;
 
         @Override
-        public Stream<? extends Identifiable> objectIds() {
+        public Stream<Identifiable> objectIds() {
             return Stream.of(base, head);
         }
 

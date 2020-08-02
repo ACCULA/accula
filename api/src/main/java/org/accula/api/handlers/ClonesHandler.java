@@ -185,7 +185,7 @@ public final class ClonesHandler {
                 .subscribeOn(codeLoadingScheduler);
     }
 
-    private static <E extends Throwable> Mono<ServerResponse> notFound(final E ignored) {
+    private static <E extends Throwable> Mono<ServerResponse> notFound(final E error) {
         return ServerResponse.notFound().build();
     }
 

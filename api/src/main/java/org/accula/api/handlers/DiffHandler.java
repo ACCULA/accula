@@ -49,7 +49,7 @@ public final class DiffHandler {
 
     public Mono<ServerResponse> diffBetweenPulls(final ServerRequest request) {
         final var queryParams = request.queryParams();
-        if (!request.queryParams().containsKey(PULL_TO_COMPARE_WITH)) {
+        if (!queryParams.containsKey(PULL_TO_COMPARE_WITH)) {
             return ServerResponse.badRequest().build();
         }
 
