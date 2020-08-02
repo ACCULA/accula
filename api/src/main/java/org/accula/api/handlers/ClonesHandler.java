@@ -30,6 +30,8 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Objects;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.stream.Collectors.toList;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 /**
@@ -102,13 +104,16 @@ public final class ClonesHandler {
     }
 
     private Mono<ServerResponse> toResponse(final Flux<Clone> clones, final long projectId, final int pullNumber) {
-        final var targetFileSnippetMarkers = clones
-                .map(clone -> new FileSnippetMarker(
-                        clone.getTargetSnapshot(),
-                        clone.getTargetFile(),
-                        clone.getTargetFromLine(),
-                        clone.getTargetToLine()
-                ));
+        final var targetFileSnippets = clones
+                .collectList()
+                .flatMapMany(cloneList -> Flux.defer(() -> {
+                    final var commitSnapshot = cloneList.get(0).getTargetSnapshot();
+                    final var snippetMarkers = cloneList
+                            .stream()
+                            .map(clone -> SnippetMarker.of(clone.getTargetFile(), clone.getTargetFromLine(), clone.getTargetToLine()))
+                            .collect(toList());
+                    return codeLoader.loadSnippets(commitSnapshot, snippetMarkers);
+                }));
 
         final var sourcePullNumbers = clones
                 .map(clone -> Objects.requireNonNull(clone.getSourceSnapshot().getPullId()))
@@ -125,7 +130,7 @@ public final class ClonesHandler {
 
         final var responseClones = Flux
                 .zip(clones,
-                        getFileSnippets(targetFileSnippetMarkers),
+                        targetFileSnippets,
                         getFileSnippets(sourceFileSnippetMarkers),
                         sourcePullNumbers)
                 .map(tuple -> toCloneDto(tuple, projectId, pullNumber));
@@ -142,7 +147,7 @@ public final class ClonesHandler {
         final var clone = tuple.getT1();
 
         final var targetFile = tuple.getT2();
-        final var target = codeSnippetWith(targetFile.getCommitSnapshot(), targetFile.getContent())
+        final var target = codeSnippetWith(targetFile.getCommitSnapshot(), Objects.requireNonNull(targetFile.getContent()))
                 .projectId(projectId)
                 .pullNumber(targetPullNumber)
                 .file(clone.getTargetFile())
@@ -152,7 +157,7 @@ public final class ClonesHandler {
 
         final var sourceFile = tuple.getT3();
         final var sourcePullNumber = tuple.getT4();
-        final var source = codeSnippetWith(sourceFile.getCommitSnapshot(), sourceFile.getContent())
+        final var source = codeSnippetWith(sourceFile.getCommitSnapshot(), Objects.requireNonNull(sourceFile.getContent()))
                 .projectId(projectId)
                 .pullNumber(sourcePullNumber)
                 .file(clone.getSourceFile())
@@ -168,7 +173,7 @@ public final class ClonesHandler {
                 .owner(commitSnapshot.getRepo().getOwner().getLogin())
                 .repo(commitSnapshot.getRepo().getName())
                 .sha(commitSnapshot.getSha())
-                .content(base64.encodeToString(content.getBytes()));
+                .content(base64.encodeToString(content.getBytes(UTF_8)));
     }
 
     private Flux<FileEntity> getFileSnippets(final Flux<FileSnippetMarker> markers) {

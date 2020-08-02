@@ -17,7 +17,6 @@ import reactor.util.function.Tuples;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -181,7 +180,7 @@ class CloneDetectorTest {
     @SneakyThrows
     private static String content(String pathStr) {
         String testFilesDir = "src/test/resources/testfiles/";
-        Path path = Paths.get(testFilesDir + pathStr);
+        Path path = Path.of(testFilesDir + pathStr);
         return new String(Files.readAllBytes(path));
     }
 }

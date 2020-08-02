@@ -7,7 +7,7 @@ import lombok.Value;
  */
 @Value(staticConstructor = "of")
 public class SnippetMarker {
-    public String filename;
-    public int fromLine;
-    public int toLine;
+    String filename;
+    int fromLine;
+    int toLine;
 }

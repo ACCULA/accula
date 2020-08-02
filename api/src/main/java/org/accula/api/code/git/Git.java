@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -30,6 +29,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.stream.Collectors.toSet;
 
 /**
  * @author Anton Lamtev
@@ -64,7 +64,7 @@ public final class Git {
         return CompletableFuture
                 .supplyAsync(safe(subdirectory).writing(() -> {
                     if (Files.exists(root.resolve(subdirectory))) {
-                        return new Repo(Paths.get(subdirectory));
+                        return new Repo(Path.of(subdirectory));
                     }
                     try {
                         final var process = new ProcessBuilder()
@@ -72,7 +72,7 @@ public final class Git {
                                 .command("git", "clone", url, subdirectory)
                                 .start();
                         //TODO: clone timeout
-                        return process.waitFor() == SUCCESS ? new Repo(Paths.get(subdirectory)) : null;
+                        return process.waitFor() == SUCCESS ? new Repo(Path.of(subdirectory)) : null;
                     } catch (IOException | InterruptedException e) {
                         throw wrap(e);
                     }
@@ -114,7 +114,7 @@ public final class Git {
                     }), executor);
         }
 
-        public CompletableFuture<Map<String, String>> catFiles(final List<? extends Identifiable> objectIds) {
+        public CompletableFuture<Map<? super Identifiable, String>> catFiles(final List<? extends Identifiable> objectIds) {
             return CompletableFuture
                     .supplyAsync(reading(() -> {
                         final var process = git("cat-file", "--batch");
@@ -166,7 +166,7 @@ public final class Git {
             return CompletableFuture
                     .supplyAsync(reading(() -> {
                         final var process = git("remote");
-                        return usingStdoutLines(process, Collections.emptySet(), lines -> lines.collect(Collectors.toSet()));
+                        return usingStdoutLines(process, Collections.emptySet(), lines -> lines.collect(toSet()));
                     }), executor);
         }
 
@@ -222,8 +222,11 @@ public final class Git {
         }
     }
 
-    private static Map<String, String> filesContent(final List<String> lines, final List<? extends Identifiable> objectIds) {
-        final var filesContent = new HashMap<String, String>(objectIds.size());
+    private static Map<? super Identifiable, String> filesContent(final List<String> lines, final List<? extends Identifiable> objectIds) {
+        if (objectIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        final Map<? super Identifiable, String> filesContent = new HashMap<>(objectIds.size());
         int fileToDiscoverIdx = 0;
         int currentFileLineCounter = 1;
         StringJoiner currentFile = null;
@@ -242,7 +245,7 @@ public final class Git {
                     toLine = Integer.MAX_VALUE;
                 }
                 if (fileToDiscoverIdx != 0 && currentFile.length() > 0) {
-                    filesContent.put(objectIds.get(fileToDiscoverIdx - 1).getId(), currentFile.toString());
+                    filesContent.put(objectIds.get(fileToDiscoverIdx - 1), currentFile.toString());
                 }
                 ++fileToDiscoverIdx;
 
@@ -251,11 +254,14 @@ public final class Git {
             }
             final var lineNumber = currentFileLineCounter++;
             if (lineNumber >= fromLine && lineNumber <= toLine) {
-                Objects.requireNonNull(currentFile).add(line);
+                currentFile.add(line);
+            }
+            if (lineNumber == toLine) {
+                currentFile.add("");
             }
         }
         if (fileToDiscoverIdx != 0 && currentFile.length() > 0) {
-            filesContent.put(objectIds.get(fileToDiscoverIdx - 1).getId(), currentFile.toString());
+            filesContent.put(objectIds.get(fileToDiscoverIdx - 1), currentFile.toString());
         }
         return filesContent;
     }

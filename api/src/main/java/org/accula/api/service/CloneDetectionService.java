@@ -1,6 +1,7 @@
 package org.accula.api.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.accula.api.code.CodeLoader;
 import org.accula.api.code.FileFilter;
 import org.accula.api.db.model.Clone;
@@ -18,6 +19,7 @@ import reactor.util.function.Tuple2;
 /**
  * @author Anton Lamtev
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public final class CloneDetectionService {
@@ -42,6 +44,7 @@ public final class CloneDetectionService {
 
         return clones
                 .collectList()
+                .doOnNext(cloneList -> log.info("{} clones have been detected", cloneList.size()))
                 .flatMapMany(cloneRepo::insert);
     }
 

@@ -20,17 +20,17 @@ import static org.junit.jupiter.api.Assertions.fail;
  * @author Anton Lamtev
  */
 final class GitTest {
-    private static final String REPO_URL = "https://github.com/ACCULA/accula.git";
-    private static final String REPO_DIR = "accula";
-    private static final String BASE_REF = "7a019e571e2716f7f133e1a63a49f300e03aea00";
-    private static final String HEAD_REF = "69f552851f0f6093816c3064b6e00438e0ff3b19";
-    public static final String REMOTE_URL = "https://github.com/lamtev/poker.git";
-    public static final String REMOTE_NAME = "newRemote";
-    private static Git git;
+    static final String REPO_URL = "https://github.com/ACCULA/accula.git";
+    static final String REPO_DIR = "accula";
+    static final String BASE_REF = "7a019e571e2716f7f133e1a63a49f300e03aea00";
+    static final String HEAD_REF = "69f552851f0f6093816c3064b6e00438e0ff3b19";
+    static final String REMOTE_URL = "https://github.com/lamtev/poker.git";
+    static final String REMOTE_NAME = "newRemote";
+    static Git git;
 
     @BeforeAll
     static void setUp(@TempDir final Path dir) {
-        git = new Git(dir, Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()));
+        git = new Git(dir, Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 3));
     }
 
     @Test

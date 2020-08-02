@@ -1,5 +1,5 @@
 plugins {
-    id("org.springframework.boot") version "2.3.1.RELEASE"
+    id("org.springframework.boot") version "2.3.2.RELEASE"
     id("io.spring.dependency-management") version "1.0.9.RELEASE"
     id("net.bytebuddy.byte-buddy-gradle-plugin") version "1.10.11"
     antlr
@@ -24,7 +24,7 @@ dependencies {
     testImplementation("org.springframework.security:spring-security-test")
 
     implementation("io.projectreactor.addons:reactor-extra")
-    compileOnly("io.projectreactor:reactor-tools:3.3.5.RELEASE")
+    compileOnly("io.projectreactor:reactor-tools")
     byteBuddyPlugin(group = "io.projectreactor", name = "reactor-tools", classifier = "original")
 
     testImplementation("io.projectreactor:reactor-test")

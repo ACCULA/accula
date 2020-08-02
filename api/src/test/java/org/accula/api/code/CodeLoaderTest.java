@@ -26,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class CodeLoaderTest {
     public static final String README = "README.md";
+    public static final String CLUSTER_JAVA = "src/main/java/ru/mail/polis/Cluster.java";
     public static final GithubUser USER = new GithubUser(0L, "polis-mail-ru", "name", "ava", true);
     public static final GithubRepo REPO = new GithubRepo(0L, "2019-highload-dht", "descr", USER);
     public static final CommitSnapshot COMMIT = CommitSnapshot.builder()
@@ -77,14 +78,19 @@ class CodeLoaderTest {
     void testGetFileSnippetSingleLine() {
         FileEntity snippet = codeLoader.loadSnippets(COMMIT, List.of(SnippetMarker.of(README, 4, 4))).blockFirst();
         assertNotNull(snippet);
-        assertEquals("## Этап 1. HTTP + storage (deadline 2019-10-05)", snippet.getContent());
+        assertEquals("""
+                ## Этап 1. HTTP + storage (deadline 2019-10-05)
+                """, snippet.getContent());
     }
 
     @Test
     void testGetFileSnippetMultiplyLines() {
         StepVerifier.create(codeLoader.loadSnippets(COMMIT, List.of(SnippetMarker.of(README, 4, 5)))
                 .map(FileEntity::getContent))
-                .expectNextMatches(content -> content.equals("## Этап 1. HTTP + storage (deadline 2019-10-05)\n### Fork"))
+                .expectNextMatches(content -> content.equals("""
+                        ## Этап 1. HTTP + storage (deadline 2019-10-05)
+                        ### Fork
+                        """))
                 .expectComplete()
                 .verify();
     }
@@ -98,13 +104,67 @@ class CodeLoaderTest {
     }
 
     @Test
+    void testLoadManySnippetsFromSameFile() {
+        final var snippets = codeLoader
+                .loadSnippets(COMMIT, List.of(
+                        SnippetMarker.of(README, 1, 5),
+                        SnippetMarker.of(README, 4, 10),
+                        SnippetMarker.of(README, 7, 15),
+                        SnippetMarker.of(CLUSTER_JAVA, 38, 39),
+                        SnippetMarker.of(CLUSTER_JAVA, 51, 56)
+                ))
+                .collectList()
+                .block();
+        assertEquals(5, snippets.size());
+        assertEquals("""
+                # 2019-highload-dht
+                Курсовой проект 2019 года [курса](https://polis.mail.ru/curriculum/program/discipline/792/) "Highload системы" в [Технополис](https://polis.mail.ru).
+                                
+                ## Этап 1. HTTP + storage (deadline 2019-10-05)
+                ### Fork
+                """, snippets.get(0).getContent());
+        assertEquals("""
+                ## Этап 1. HTTP + storage (deadline 2019-10-05)
+                ### Fork
+                [Форкните проект](https://help.github.com/articles/fork-a-repo/), склонируйте и добавьте `upstream`:
+                ```
+                $ git clone git@github.com:<username>/2019-highload-dht.git
+                Cloning into '2019-highload-dht'...
+                ...
+                """, snippets.get(1).getContent());
+        assertEquals("""
+                ```
+                $ git clone git@github.com:<username>/2019-highload-dht.git
+                Cloning into '2019-highload-dht'...
+                ...
+                $ git remote add upstream git@github.com:polis-mail-ru/2019-highload-dht.git
+                $ git fetch upstream
+                From github.com:polis-mail-ru/2019-highload-dht
+                 * [new branch]      master     -> upstream/master
+                ```
+                """, snippets.get(2).getContent());
+        assertEquals("""
+                    private static final int[] PORTS = {8080, 8081, 8082};
+                    private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+                """, snippets.get(3).getContent());
+        assertEquals("""
+                    public static void main(final String[] args) throws IOException {
+                        // Fill the topology
+                        final Set<String> topology = new HashSet<>(3);
+                        for (final int port : PORTS) {
+                            topology.add("http://localhost:" + port);
+                        }
+                """, snippets.get(4).getContent());
+    }
+
+    @Test
     void testDiff() {
         var headOwner = new GithubUser(1L, "vaddya", "owner", "ava", false);
         var headRepo = new GithubRepo(1L, "2019-highload-dht", "descr", headOwner);
         var head = CommitSnapshot.builder().sha("a1c28a1b500701819cf9919246f15f3f900bb609").branch("branch").repo(headRepo).build();
         var base = CommitSnapshot.builder().sha("d6357dccc16c7d5c001fd2a2203298c36fe96b63").branch("branch").repo(REPO).build();
-        StepVerifier.create(codeLoader.loadDiff(base, head))
-                .expectNextCount(18)
+        StepVerifier.create(codeLoader.loadDiff(base, head, FileFilter.SRC_JAVA))
+                .expectNextCount(11)
                 .expectComplete()
                 .verify();
     }

@@ -17,7 +17,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 
 /**
  * @author Anton Lamtev
@@ -51,11 +51,11 @@ public class WebConfig implements WebFluxConfigurer {
     @SneakyThrows
     @Bean
     public CodeLoader codeLoader(@Value("${accula.reposPath}") final String reposPath) {
-        final var reposDirectory = Paths.get(reposPath);
+        final var reposDirectory = Path.of(reposPath);
         if (!Files.exists(reposDirectory)) {
             Files.createDirectory(reposDirectory);
         }
-        return new GitCodeLoader(Paths.get(reposPath));
+        return new GitCodeLoader(reposDirectory);
     }
 
     @Bean
