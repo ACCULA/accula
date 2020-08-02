@@ -109,8 +109,8 @@ class CodeLoaderTest {
                 .loadSnippets(COMMIT, List.of(
                         SnippetMarker.of(README, 1, 5),
                         SnippetMarker.of(README, 4, 10),
-                        SnippetMarker.of(README, 7, 15),
                         SnippetMarker.of(CLUSTER_JAVA, 38, 39),
+                        SnippetMarker.of(README, 7, 15),
                         SnippetMarker.of(CLUSTER_JAVA, 51, 56)
                 ))
                 .collectList()
@@ -133,6 +133,10 @@ class CodeLoaderTest {
                 ...
                 """, snippets.get(1).getContent());
         assertEquals("""
+                    private static final int[] PORTS = {8080, 8081, 8082};
+                    private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+                """, snippets.get(2).getContent());
+        assertEquals("""
                 ```
                 $ git clone git@github.com:<username>/2019-highload-dht.git
                 Cloning into '2019-highload-dht'...
@@ -142,10 +146,6 @@ class CodeLoaderTest {
                 From github.com:polis-mail-ru/2019-highload-dht
                  * [new branch]      master     -> upstream/master
                 ```
-                """, snippets.get(2).getContent());
-        assertEquals("""
-                    private static final int[] PORTS = {8080, 8081, 8082};
-                    private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
                 """, snippets.get(3).getContent());
         assertEquals("""
                     public static void main(final String[] args) throws IOException {
