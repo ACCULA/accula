@@ -180,7 +180,7 @@ class CloneDetectorTest {
     @SneakyThrows
     private static String content(String pathStr) {
         String testFilesDir = "src/test/resources/testfiles/";
-        Path path = Path.of(testFilesDir + pathStr);
+        Path path = Path.of(testFilesDir, pathStr);
         return new String(Files.readAllBytes(path));
     }
 }

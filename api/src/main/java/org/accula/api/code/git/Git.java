@@ -136,8 +136,6 @@ public final class Git {
                     }), executor);
         }
 
-        @SuppressWarnings("unused")
-        /// Once we'll start to detecting clones in commits, not revisions, the method will be in use
         public CompletableFuture<List<File>> show(final String commitSha) {
             return CompletableFuture
                     .supplyAsync(reading(() -> {
