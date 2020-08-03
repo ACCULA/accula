@@ -108,13 +108,8 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    public String refreshTokenEndpointPath() {
-        return "/api/refreshToken";
-    }
-
-    @Bean
-    public CookieRefreshTokenHelper cookieRefreshTokenHelper(final String refreshTokenEndpointPath) {
-        return new CookieRefreshTokenHelper(refreshTokenEndpointPath);
+    public CookieRefreshTokenHelper cookieRefreshTokenHelper() {
+        return new CookieRefreshTokenHelper(jwtProperties.getRefreshTokenEndpointPath());
     }
 
     @Bean
@@ -177,13 +172,12 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    public WebFilter jwtRefreshFilter(final String refreshTokenEndpointPath,
-                                      final JwtAccessTokenResponseProducer jwtAccessTokenResponseProducer,
+    public WebFilter jwtRefreshFilter(final JwtAccessTokenResponseProducer jwtAccessTokenResponseProducer,
                                       final Jwt jwt,
                                       final RefreshTokenRepo refreshTokens,
                                       final CookieRefreshTokenHelper cookieRefreshTokenHelper) {
         return new JwtRefreshFilter(
-                pathMatchers(refreshTokenEndpointPath),
+                pathMatchers(jwtProperties.getRefreshTokenEndpointPath()),
                 cookieRefreshTokenHelper,
                 jwtAccessTokenResponseProducer,
                 jwt,

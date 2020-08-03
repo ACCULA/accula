@@ -3,6 +3,7 @@ package org.accula.api.config;
 import lombok.RequiredArgsConstructor;
 import org.accula.api.code.CodeLoader;
 import org.accula.api.code.JGitCodeLoader;
+import org.accula.api.db.model.User;
 import org.accula.api.db.repo.CurrentUserRepo;
 import org.accula.api.detector.CloneDetector;
 import org.accula.api.detector.SuffixTreeCloneDetector;
@@ -13,7 +14,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.reactive.config.WebFluxConfigurer;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
 
 import java.io.File;
 
@@ -36,14 +36,14 @@ public class WebConfig implements WebFluxConfigurer {
     public GithubClient.AccessTokenProvider githubAccessTokenProvider() {
         return () -> currentUserRepo
                 .get()
-                .flatMap(user -> Mono.just(user.getGithubAccessToken()));
+                .map(User::getGithubAccessToken);
     }
 
     @Bean
     public GithubClient.LoginProvider githubLoginProvider() {
         return () -> currentUserRepo
                 .get()
-                .flatMap(user -> Mono.just(user.getGithubUser().getLogin()));
+                .map(user -> user.getGithubUser().getLogin());
     }
 
     @Bean

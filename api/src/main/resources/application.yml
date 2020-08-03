@@ -42,6 +42,7 @@ accula:
     expiresIn:
       access: 1m
       refresh: 90d
+    refreshTokenEndpointPath: /api/refreshToken
 
   cluster:
     webUrl: ${WEB_URL}

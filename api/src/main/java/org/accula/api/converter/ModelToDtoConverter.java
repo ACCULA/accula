@@ -1,10 +1,9 @@
 package org.accula.api.converter;
 
-import com.nimbusds.jose.util.StandardCharset;
+import org.accula.api.db.model.CommitSnapshot;
 import org.accula.api.db.model.GithubUser;
 import org.accula.api.db.model.Project;
 import org.accula.api.db.model.Pull;
-import org.accula.api.db.model.CommitSnapshot;
 import org.accula.api.db.model.User;
 import org.accula.api.handlers.dto.GithubUserDto;
 import org.accula.api.handlers.dto.ProjectDto;
@@ -13,6 +12,7 @@ import org.accula.api.handlers.dto.ShortPullDto;
 import org.accula.api.handlers.dto.UserDto;
 
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -28,7 +28,7 @@ public final class ModelToDtoConverter {
 
     private ModelToDtoConverter() {
     }
-    
+
     public static ProjectDto convert(final Project project) {
         return convert(project, project.getOpenPullCount());
     }
@@ -78,12 +78,12 @@ public final class ModelToDtoConverter {
                         GITHUB_REPO_URL_FORMAT + "/tree/%s",
                         snapshot.getRepo().getOwner().getLogin(),
                         snapshot.getRepo().getName(),
-                        URLEncoder.encode(snapshot.getBranch(), StandardCharset.UTF_8)
+                        URLEncoder.encode(snapshot.getBranch(), StandardCharsets.UTF_8)
                 ),
                 String.format("%s:%s", snapshot.getRepo().getOwner().getLogin(), snapshot.getBranch())
         );
     }
-    
+
     public static List<ShortPullDto> convertShort(final List<Pull> pulls) {
         if (pulls.isEmpty()) {
             return Collections.emptyList();
