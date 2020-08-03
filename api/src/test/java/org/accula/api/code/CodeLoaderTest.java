@@ -12,6 +12,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
+import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -52,12 +53,16 @@ class CodeLoaderTest {
 
     @Test
     void testGetMultipleFiles() {
-        Map<String, String> files = codeLoader.loadFiles(COMMIT)
-                .collectMap(FileEntity::getName, FileEntity::getContent).block();
-        assertNotNull(files);
-        assertEquals(40, files.size());
-        assertTrue(files.containsKey(README));
-        assertTrue(files.get(README).startsWith("# 2019-highload-dht"));
+        IntStream.range(0, 10)
+                .parallel()
+                .forEach(it -> {
+                    Map<String, String> files = codeLoader.loadFiles(COMMIT)
+                            .collectMap(FileEntity::getName, FileEntity::getContent).block();
+                    assertNotNull(files);
+                    assertEquals(40, files.size());
+                    assertTrue(files.containsKey(README));
+                    assertTrue(files.get(README).startsWith("# 2019-highload-dht"));
+                });
     }
 
     @Test
@@ -85,7 +90,9 @@ class CodeLoaderTest {
 
     @Test
     void testGetFileSnippetMultiplyLines() {
-        StepVerifier.create(codeLoader.loadSnippets(COMMIT, List.of(SnippetMarker.of(README, 4, 5)))
+        StepVerifier.create(codeLoader.loadSnippets(COMMIT, List.of(
+                SnippetMarker.of(README, 4, 5),
+                SnippetMarker.of("NOT_EXISTENT_FILE", 1, 1)))
                 .map(FileEntity::getContent))
                 .expectNextMatches(content -> content.equals("""
                         ## Этап 1. HTTP + storage (deadline 2019-10-05)
