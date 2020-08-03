@@ -92,7 +92,7 @@ final class GitTest {
                     .thenCompose(diffEntries -> repo
                             .catFiles(diffEntries
                                     .stream()
-                                    .flatMap(DiffEntry::objectIds)
+                                    .flatMap(GitDiffEntry::objectIds)
                                     .collect(toList())))
                     .get();
             assertTrue(filesContent.values().stream().anyMatch("""

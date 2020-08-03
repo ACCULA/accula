@@ -21,8 +21,4 @@ public final class Lambda {
     public static <T, R> Function<T, R> expandingWithArg(final Supplier<R> noArgFun) {
         return arg -> noArgFun.get();
     }
-
-    public static <T> T firstArg(final T first, final T second) {
-        return first;
-    }
 }

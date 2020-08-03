@@ -1,13 +1,13 @@
 package org.accula.api.code;
 
-import org.accula.api.code.git.DiffEntry;
-import org.accula.api.code.git.DiffEntry.Addition;
-import org.accula.api.code.git.DiffEntry.Deletion;
-import org.accula.api.code.git.DiffEntry.Modification;
-import org.accula.api.code.git.DiffEntry.Renaming;
-import org.accula.api.code.git.File;
 import org.accula.api.code.git.Git;
 import org.accula.api.code.git.Git.Repo;
+import org.accula.api.code.git.GitDiffEntry;
+import org.accula.api.code.git.GitDiffEntry.Addition;
+import org.accula.api.code.git.GitDiffEntry.Deletion;
+import org.accula.api.code.git.GitDiffEntry.Modification;
+import org.accula.api.code.git.GitDiffEntry.Renaming;
+import org.accula.api.code.git.GitFile;
 import org.accula.api.code.git.Identifiable;
 import org.accula.api.code.git.Snippet;
 import org.accula.api.db.model.CommitSnapshot;
@@ -60,20 +60,7 @@ public final class GitCodeLoader implements CodeLoader {
         return withCommonGitRepo(snapshot)
                 .flatMap(repo -> Mono
                         .fromFuture(repo.lsTree(snapshot.getSha()))
-                        .map(files -> {
-                            final var nameToFileMap = files.stream().collect(toMap(File::getName, file -> file));
-                            return markers
-                                    .stream()
-                                    .map(marker -> {
-                                        final var file = nameToFileMap.get(marker.getFilename());
-                                        if (file == null) {
-                                            return null;
-                                        }
-                                        return Snippet.of(file, marker.getFromLine(), marker.getToLine());
-                                    })
-                                    .filter(Objects::nonNull)
-                                    .collect(toList());
-                        })
+                        .map(files -> convertSnippets(files, markers))
                         .flatMap(snippets -> Mono
                                 .fromFuture(repo.catFiles(snippets))
                                 .map(filesContent -> snippets
@@ -85,16 +72,16 @@ public final class GitCodeLoader implements CodeLoader {
     }
 
     @Override
-    public Flux<org.accula.api.code.DiffEntry> loadDiff(final CommitSnapshot base, final CommitSnapshot head, final FileFilter filter) {
+    public Flux<DiffEntry> loadDiff(final CommitSnapshot base, final CommitSnapshot head, final FileFilter filter) {
         return withCommonGitRepo(head)
                 .flatMapMany(repo -> loadDiff(repo, base, head, filter, 0));
     }
 
     @Override
-    public Flux<org.accula.api.code.DiffEntry> loadRemoteDiff(final GithubRepo projectRepo,
-                                                              final CommitSnapshot base,
-                                                              final CommitSnapshot head,
-                                                              final FileFilter filter) {
+    public Flux<DiffEntry> loadRemoteDiff(final GithubRepo projectRepo,
+                                          final CommitSnapshot base,
+                                          final CommitSnapshot head,
+                                          final FileFilter filter) {
         return withProjectGitRepo(projectRepo)
                 .flatMap(repo -> addOrUpdateRemotes(repo, base, head))
                 .flatMapMany(repo -> loadDiff(repo, base, head, filter, 1));
@@ -102,8 +89,9 @@ public final class GitCodeLoader implements CodeLoader {
 
     /// We name each common repo git folder like that: <owner-login>_<repo-name>
     private Mono<Repo> withCommonGitRepo(final CommitSnapshot snapshot) {
-        final var repoGitDirectory = Path.of(snapshot.getRepo().getOwner().getLogin() + "_" + snapshot.getRepo().getName());
-        final var repoUrl = repoGitUrl(snapshot.getRepo());
+        final var snapshotRepo = snapshot.getRepo();
+        final var repoGitDirectory = Path.of(snapshotRepo.getOwner().getLogin() + "_" + snapshotRepo.getName());
+        final var repoUrl = repoGitUrl(snapshotRepo);
         return withGitRepo(repoGitDirectory, repoUrl);
     }
 
@@ -131,7 +119,7 @@ public final class GitCodeLoader implements CodeLoader {
                         .zip(
                                 addOrUpdateRemote(repo, baseUrl, baseRemote, remotesPresent),
                                 addOrUpdateRemote(repo, headUrl, headRemote, remotesPresent),
-                                Lambda::firstArg
+                                (firstRepo, secondRepo) -> firstRepo
                         ));
     }
 
@@ -142,11 +130,11 @@ public final class GitCodeLoader implements CodeLoader {
         return Mono.fromFuture(remotesPresent.contains(remote) ? repo.remoteUpdate(remote) : repo.remoteAdd(remoteUrl, remote));
     }
 
-    private static Flux<org.accula.api.code.DiffEntry> loadDiff(final Repo repo,
-                                                                final CommitSnapshot base,
-                                                                final CommitSnapshot head,
-                                                                final FileFilter filter,
-                                                                final int findRenamesMinSimilarityIndex) {
+    private static Flux<DiffEntry> loadDiff(final Repo repo,
+                                            final CommitSnapshot base,
+                                            final CommitSnapshot head,
+                                            final FileFilter filter,
+                                            final int findRenamesMinSimilarityIndex) {
         return Mono
                 .fromFuture(repo.diff(base.getSha(), head.getSha(), findRenamesMinSimilarityIndex))
                 .map(diffEntries -> diffEntries
@@ -157,7 +145,7 @@ public final class GitCodeLoader implements CodeLoader {
                         .fromFuture(repo
                                 .catFiles(diffEntries
                                         .stream()
-                                        .flatMap(DiffEntry::objectIds)
+                                        .flatMap(GitDiffEntry::objectIds)
                                         .collect(toList())))
                         .transform(convertDiffEntries(diffEntries, base, head))
                         .flatMapMany(Flux::fromStream));
@@ -165,36 +153,36 @@ public final class GitCodeLoader implements CodeLoader {
 
     private static Function<
             Mono<Map<Identifiable, String>>,
-            Mono<Stream<org.accula.api.code.DiffEntry>>
-            > convertDiffEntries(final List<DiffEntry> diffEntries, final CommitSnapshot base, final CommitSnapshot head) {
+            Mono<Stream<DiffEntry>>
+            > convertDiffEntries(final List<GitDiffEntry> diffEntries, final CommitSnapshot base, final CommitSnapshot head) {
         return filesMono -> filesMono
                 .map(files -> diffEntries
                         .stream()
                         .map(diffEntry -> {
                             if (diffEntry instanceof Addition) {
                                 final var addition = (Addition) diffEntry;
-                                return org.accula.api.code.DiffEntry.of(
+                                return DiffEntry.of(
                                         FileEntity.absent(base),
                                         new FileEntity(head, addition.getHead().getName(), files.get(addition.getHead()))
                                 );
                             }
                             if (diffEntry instanceof Deletion) {
                                 final var deletion = (Deletion) diffEntry;
-                                return org.accula.api.code.DiffEntry.of(
+                                return DiffEntry.of(
                                         new FileEntity(base, deletion.getBase().getName(), files.get(deletion.getBase())),
                                         FileEntity.absent(head)
                                 );
                             }
                             if (diffEntry instanceof Modification) {
                                 final var modification = (Modification) diffEntry;
-                                return org.accula.api.code.DiffEntry.of(
+                                return DiffEntry.of(
                                         new FileEntity(base, modification.getBase().getName(), files.get(modification.getBase())),
                                         new FileEntity(head, modification.getHead().getName(), files.get(modification.getHead()))
                                 );
                             }
                             if (diffEntry instanceof Renaming) {
                                 final var renaming = (Renaming) diffEntry;
-                                return new org.accula.api.code.DiffEntry(
+                                return new DiffEntry(
                                         new FileEntity(base, renaming.getBase().getName(), files.get(renaming.getBase())),
                                         new FileEntity(head, renaming.getHead().getName(), files.get(renaming.getHead())),
                                         renaming.getSimilarityIndex()
@@ -203,6 +191,23 @@ public final class GitCodeLoader implements CodeLoader {
 
                             return null;
                         }));
+    }
+
+    private static List<Snippet> convertSnippets(final List<GitFile> files, final List<SnippetMarker> markers) {
+        final var nameToFileMap = files
+                .stream()
+                .collect(toMap(GitFile::getName, file -> file));
+        return markers
+                .stream()
+                .map(marker -> {
+                    final var file = nameToFileMap.get(marker.getFilename());
+                    if (file == null) {
+                        return null;
+                    }
+                    return Snippet.of(file, marker.getFromLine(), marker.getToLine());
+                })
+                .filter(Objects::nonNull)
+                .collect(toList());
     }
 
     private static String repoGitUrl(final GithubRepo repo) {

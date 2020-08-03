@@ -7,7 +7,7 @@ import lombok.Value;
  */
 @Value(staticConstructor = "of")
 public class Snippet implements Identifiable {
-    File file;
+    GitFile file;
     int fromLine;
     int toLine;
 

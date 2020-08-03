@@ -10,25 +10,25 @@ import java.util.stream.Stream;
 /**
  * @author Anton Lamtev
  */
-public interface DiffEntry {
-    static DiffEntry modification(final String baseObjectId, final String headObjectId, final String filename) {
-        return Modification.of(File.of(baseObjectId, filename), File.of(headObjectId, filename));
+public interface GitDiffEntry {
+    static GitDiffEntry modification(final String baseObjectId, final String headObjectId, final String filename) {
+        return Modification.of(GitFile.of(baseObjectId, filename), GitFile.of(headObjectId, filename));
     }
 
-    static DiffEntry addition(final String headObjectId, final String filename) {
-        return Addition.of(File.of(headObjectId, filename));
+    static GitDiffEntry addition(final String headObjectId, final String filename) {
+        return Addition.of(GitFile.of(headObjectId, filename));
     }
 
-    static DiffEntry deletion(final String baseObjectId, final String filename) {
-        return Deletion.of(File.of(baseObjectId, filename));
+    static GitDiffEntry deletion(final String baseObjectId, final String filename) {
+        return Deletion.of(GitFile.of(baseObjectId, filename));
     }
 
-    static DiffEntry renaming(final String baseObjectId,
-                              final String baseFilename,
-                              final String headObjectId,
-                              final String headFilename,
-                              final int similarityIndex) {
-        return Renaming.of(File.of(baseObjectId, baseFilename), File.of(headObjectId, headFilename), similarityIndex);
+    static GitDiffEntry renaming(final String baseObjectId,
+                                 final String baseFilename,
+                                 final String headObjectId,
+                                 final String headFilename,
+                                 final int similarityIndex) {
+        return Renaming.of(GitFile.of(baseObjectId, baseFilename), GitFile.of(headObjectId, headFilename), similarityIndex);
     }
 
     Stream<Identifiable> objectIds();
@@ -37,9 +37,9 @@ public interface DiffEntry {
 
     @Value
     @RequiredArgsConstructor(staticName = "of", access = AccessLevel.PRIVATE)
-    class Modification implements DiffEntry {
-        File base;
-        File head;
+    class Modification implements GitDiffEntry {
+        GitFile base;
+        GitFile head;
 
         @Override
         public Stream<Identifiable> objectIds() {
@@ -54,8 +54,8 @@ public interface DiffEntry {
 
     @Value
     @RequiredArgsConstructor(staticName = "of", access = AccessLevel.PRIVATE)
-    class Addition implements DiffEntry {
-        File head;
+    class Addition implements GitDiffEntry {
+        GitFile head;
 
         @Override
         public Stream<Identifiable> objectIds() {
@@ -70,8 +70,8 @@ public interface DiffEntry {
 
     @Value
     @RequiredArgsConstructor(staticName = "of", access = AccessLevel.PRIVATE)
-    class Deletion implements DiffEntry {
-        File base;
+    class Deletion implements GitDiffEntry {
+        GitFile base;
 
         @Override
         public Stream<Identifiable> objectIds() {
@@ -86,9 +86,9 @@ public interface DiffEntry {
 
     @Value
     @RequiredArgsConstructor(staticName = "of", access = AccessLevel.PRIVATE)
-    class Renaming implements DiffEntry {
-        File base;
-        File head;
+    class Renaming implements GitDiffEntry {
+        GitFile base;
+        GitFile head;
         int similarityIndex;
 
         @Override

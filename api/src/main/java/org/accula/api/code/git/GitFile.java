@@ -10,7 +10,7 @@ import lombok.Value;
  */
 @Value
 @RequiredArgsConstructor(staticName = "of", access = AccessLevel.PACKAGE)
-public class File implements Identifiable {
+public class GitFile implements Identifiable {
     String id;
     @EqualsAndHashCode.Exclude
     String name;
