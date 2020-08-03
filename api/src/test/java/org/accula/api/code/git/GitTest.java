@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.stream.IntStream;
@@ -74,8 +75,10 @@ final class GitTest {
             final var repo = git.clone(REPO_URL, REPO_DIR).get();
             assertNotNull(repo);
 
-            final var diffEntries = repo.diff(BASE_REF, HEAD_REF, 0).get();
-            assertEquals(45, diffEntries.size());
+            final var diffEntries1 = repo.diff(BASE_REF, HEAD_REF, 0).get();
+            final var diffEntries2 = repo.diff(BASE_REF, HEAD_REF, 100).get();
+            assertEquals(45, diffEntries1.size());
+            assertEquals(diffEntries1, diffEntries2);
         });
     }
 
@@ -98,6 +101,16 @@ final class GitTest {
                                         
                     import org.springframework.lang.NonNullApi;
                     """::equals));
+        });
+    }
+
+    @Test
+    void testCatFilesEmptyInput() {
+        assertDoesNotThrow(() -> {
+            final var repo = git.clone(REPO_URL, REPO_DIR).get();
+            assertNotNull(repo);
+
+            assertTrue(repo.catFiles(Collections.emptyList()).get().isEmpty());
         });
     }
 
