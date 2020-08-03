@@ -14,7 +14,8 @@ public interface FileFilter extends Predicate<String> {
     FileFilter JAVA = file -> file.endsWith(".java");
     FileFilter SRC = file -> file.contains("src/main/java");
     FileFilter TESTS = file -> file.contains("src/test/java");
-    FileFilter SRC_JAVA = JAVA.and(SRC);
+    FileFilter INFO = file -> file.endsWith("package-info.java") && file.endsWith("module-info.java");
+    FileFilter SRC_JAVA = JAVA.and(SRC).and(INFO.negate());
 
     @Override
     default FileFilter and(Predicate<? super String> other) {

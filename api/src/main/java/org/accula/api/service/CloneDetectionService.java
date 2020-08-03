@@ -30,12 +30,12 @@ public final class CloneDetectionService {
     private final CodeLoader loader;
 
     public Flux<Clone> detectClones(final Pull pull) {
-        final var targetFiles = loader.loadFiles(pull.getHead(), FileFilter.JAVA);
+        final var targetFiles = loader.loadFiles(pull.getHead(), FileFilter.SRC_JAVA);
 
         final var sourceFiles = pullRepo
                 .findUpdatedEarlierThan(pull.getProjectId(), pull.getNumber())
                 .map(Pull::getHead)
-                .flatMap(head -> loader.loadFiles(head, FileFilter.JAVA));
+                .flatMap(head -> loader.loadFiles(head, FileFilter.SRC_JAVA));
 
         final var clones = detector
                 .findClones(targetFiles, sourceFiles)
