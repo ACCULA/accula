@@ -12,6 +12,7 @@ public final class JwtProperties {
     private Signature signature;
     private String issuer;
     private ExpiresIn expiresIn;
+    private String refreshTokenEndpointPath;
 
     @Data
     public static final class Signature {

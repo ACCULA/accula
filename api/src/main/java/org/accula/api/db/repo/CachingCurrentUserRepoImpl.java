@@ -29,11 +29,7 @@ public final class CachingCurrentUserRepoImpl implements CurrentUserRepo {
                         .justOrEmpty(cache.get(authorizedUser.getId()))
                         .switchIfEmpty(userRepo
                                 .findById(authorizedUser.getId())
-                                .doOnSuccess(user -> {
-                                    if (user != null) {
-                                        cache.put(authorizedUser.getId(), user);
-                                    }
-                                })));
+                                .doOnNext(user -> cache.put(authorizedUser.getId(), user))));
     }
 
     private void evict(final Long userId) {
