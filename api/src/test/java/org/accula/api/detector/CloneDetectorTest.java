@@ -6,6 +6,7 @@ import org.accula.api.code.FileEntity;
 import org.accula.api.code.FileFilter;
 import org.accula.api.code.GitCodeLoader;
 import org.accula.api.code.SnippetMarker;
+import org.accula.api.code.git.Git;
 import org.accula.api.db.model.CommitSnapshot;
 import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.GithubUser;
@@ -19,6 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Executors;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -148,7 +150,7 @@ class CloneDetectorTest {
 
     @Test
     void testReal(@TempDir final Path tempDir) {
-        CodeLoader codeLoader = new GitCodeLoader(tempDir);
+        CodeLoader codeLoader = new GitCodeLoader(new Git(tempDir, Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())));
 
         var repoOwner = new GithubUser(1L, "vaddya", "owner", "ava", false);
         GithubRepo repo = new GithubRepo(1L, "2017-highload-kv", "descr", repoOwner);

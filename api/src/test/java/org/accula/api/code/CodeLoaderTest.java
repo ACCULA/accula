@@ -1,5 +1,6 @@
 package org.accula.api.code;
 
+import org.accula.api.code.git.Git;
 import org.accula.api.db.model.CommitSnapshot;
 import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.GithubUser;
@@ -11,6 +12,7 @@ import reactor.test.StepVerifier;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 
@@ -40,7 +42,7 @@ class CodeLoaderTest {
 
     @BeforeAll
     static void beforeAll(@TempDir final Path tempDir) {
-        codeLoader = new GitCodeLoader(tempDir);
+        codeLoader = new GitCodeLoader(new Git(tempDir, Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())));
     }
 
     @Test

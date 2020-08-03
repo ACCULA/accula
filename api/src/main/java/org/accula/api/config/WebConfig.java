@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.accula.api.code.CodeLoader;
 import org.accula.api.code.GitCodeLoader;
+import org.accula.api.code.git.Git;
 import org.accula.api.db.repo.CurrentUserRepo;
 import org.accula.api.detector.CloneDetector;
 import org.accula.api.detector.SuffixTreeCloneDetector;
@@ -18,6 +19,7 @@ import reactor.core.publisher.Mono;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.Executors;
 
 /**
  * @author Anton Lamtev
@@ -50,12 +52,17 @@ public class WebConfig implements WebFluxConfigurer {
 
     @SneakyThrows
     @Bean
-    public CodeLoader codeLoader(@Value("${accula.reposPath}") final String reposPath) {
+    public Git git(@Value("${accula.reposPath}") final String reposPath) {
         final var reposDirectory = Path.of(reposPath);
         if (!Files.exists(reposDirectory)) {
             Files.createDirectory(reposDirectory);
         }
-        return new GitCodeLoader(reposDirectory);
+        return new Git(reposDirectory, Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2));
+    }
+
+    @Bean
+    public CodeLoader codeLoader(final Git git) {
+        return new GitCodeLoader(git);
     }
 
     @Bean

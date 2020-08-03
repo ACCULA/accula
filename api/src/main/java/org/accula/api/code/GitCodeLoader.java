@@ -1,5 +1,6 @@
 package org.accula.api.code;
 
+import lombok.RequiredArgsConstructor;
 import org.accula.api.code.git.Git;
 import org.accula.api.code.git.Git.Repo;
 import org.accula.api.code.git.GitDiffEntry;
@@ -21,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.Executors;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -31,15 +31,12 @@ import static java.util.stream.Collectors.toMap;
 /**
  * @author Anton Lamtev
  */
+@RequiredArgsConstructor
 public final class GitCodeLoader implements CodeLoader {
     private static final String GITHUB_BASE_URL = "https://github.com/";
     private static final String GIT_EXTENSION = ".git";
 
     private final Git git;
-
-    public GitCodeLoader(final Path root) {
-        this.git = new Git(root, Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 10));
-    }
 
     @Override
     public Flux<FileEntity> loadFiles(final CommitSnapshot snapshot, final FileFilter filter) {
@@ -119,7 +116,7 @@ public final class GitCodeLoader implements CodeLoader {
                         .zip(
                                 addOrUpdateRemote(repo, baseUrl, baseRemote, remotesPresent),
                                 addOrUpdateRemote(repo, headUrl, headRemote, remotesPresent),
-                                (firstRepo, secondRepo) -> firstRepo
+                                Lambda::firstArg
                         ));
     }
 
