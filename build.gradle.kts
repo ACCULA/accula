@@ -71,7 +71,7 @@ configure(subprojects.filterNot(project(":web")::equals)) {
     }
 
     tasks.withType<JavaCompile> {
-        options.compilerArgs.add("--enable-preview")
+        options.compilerArgs.addAll(listOf("--enable-preview", "-Xlint:preview"))
     }
     tasks.withType<Test> {
         jvmArgs("--enable-preview")
