@@ -19,7 +19,9 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.concurrent.Executors;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Anton Lamtev
@@ -57,7 +59,14 @@ public class WebConfig implements WebFluxConfigurer {
         if (!Files.exists(reposDirectory)) {
             Files.createDirectory(reposDirectory);
         }
-        return new Git(reposDirectory, Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2));
+        final var availableProcessors = Runtime.getRuntime().availableProcessors();
+        final var executor = new ThreadPoolExecutor(
+                availableProcessors,
+                availableProcessors * 10,
+                60L, TimeUnit.SECONDS,
+                new SynchronousQueue<>()
+        );
+        return new Git(reposDirectory, executor);
     }
 
     @Bean

@@ -45,6 +45,7 @@ public final class Git {
     private static final int SUCCESS = 0;
     private static final byte[] NEWLINE = System.lineSeparator().getBytes(UTF_8);
     private static final String ALREADY_EXISTS = "already exists";
+    private static final String JOINER_NEWLINE = "";
 
     private final Map<String, Sync> syncs = new ConcurrentHashMap<>();
     private final Path root;
@@ -114,11 +115,14 @@ public final class Git {
         }
 
         public CompletableFuture<Map<Identifiable, String>> catFiles(final List<? extends Identifiable> objectIds) {
+            if (objectIds.isEmpty()) {
+                return CompletableFuture.completedFuture(Collections.emptyMap());
+            }
             return readingAsync(() -> {
                 final var process = git("cat-file", "--batch");
 
                 return usingStdoutLines(process, lines -> {
-                    try (final var stdin = process.getOutputStream()) {
+                    try (var stdin = process.getOutputStream()) {
                         for (final var objectId : objectIds) {
                             stdin.write(objectId.getId().getBytes(UTF_8));
                             stdin.write(NEWLINE);
@@ -219,7 +223,7 @@ public final class Git {
     }
 
     private static Map<Identifiable, String> filesContent(final List<String> lines, final List<? extends Identifiable> objectIds) {
-        if (objectIds.isEmpty()) {
+        if (lines.isEmpty()) {
             return Collections.emptyMap();
         }
         final Map<Identifiable, String> filesContent = new HashMap<>(objectIds.size());
@@ -253,7 +257,7 @@ public final class Git {
                 currentFile.add(line);
             }
             if (lineNumber == toLine) {
-                currentFile.add("");
+                currentFile.add(JOINER_NEWLINE);
             }
         }
         if (fileToDiscoverIdx != 0 && currentFile.length() > 0) {
