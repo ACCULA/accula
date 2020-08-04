@@ -1,5 +1,5 @@
 plugins {
-    id("org.springframework.boot") version "2.3.1.RELEASE"
+    id("org.springframework.boot") version "2.3.2.RELEASE"
     id("io.spring.dependency-management") version "1.0.9.RELEASE"
     id("net.bytebuddy.byte-buddy-gradle-plugin") version "1.10.11"
     antlr
@@ -23,7 +23,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-security")
     testImplementation("org.springframework.security:spring-security-test")
 
-    compileOnly("io.projectreactor:reactor-tools:3.3.5.RELEASE")
+    implementation("io.projectreactor.addons:reactor-extra")
+    compileOnly("io.projectreactor:reactor-tools")
     byteBuddyPlugin(group = "io.projectreactor", name = "reactor-tools", classifier = "original")
 
     testImplementation("io.projectreactor:reactor-test")
@@ -46,10 +47,6 @@ dependencies {
     implementation("org.postgresql:postgresql")
     implementation("org.springframework:spring-jdbc")
     implementation("org.flywaydb:flyway-core")
-
-    implementation("org.eclipse.jgit:org.eclipse.jgit:5.7.0.202003110725-r") {
-        exclude(group = "org.slf4j", module = "slf4j-api")
-    }
 
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 

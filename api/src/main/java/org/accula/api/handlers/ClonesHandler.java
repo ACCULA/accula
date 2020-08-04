@@ -1,9 +1,9 @@
 package org.accula.api.handlers;
 
 import lombok.RequiredArgsConstructor;
-import lombok.Value;
 import org.accula.api.code.CodeLoader;
 import org.accula.api.code.FileEntity;
+import org.accula.api.code.SnippetMarker;
 import org.accula.api.db.model.Clone;
 import org.accula.api.db.model.CommitSnapshot;
 import org.accula.api.db.model.Pull;
@@ -21,13 +21,14 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Scheduler;
-import reactor.core.scheduler.Schedulers;
 import reactor.util.function.Tuple4;
 
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 import java.util.Objects;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 /**
@@ -42,7 +43,6 @@ public final class ClonesHandler {
 
     private static final Base64.Encoder base64 = Base64.getEncoder(); // NOPMD
 
-    private final Scheduler codeLoadingScheduler = Schedulers.boundedElastic();
     private final PullRepo pullRepo;
     private final CloneRepo cloneRepo;
     private final CurrentUserRepo currentUserRepo;
@@ -57,7 +57,7 @@ public final class ClonesHandler {
                     final var pullNumber = Integer.parseInt(request.pathVariable(PULL_NUMBER));
                     return getLastCommitClones(projectId, pullNumber);
                 })
-                .onErrorResume(NumberFormatException.class, this::notFound);
+                .onErrorResume(NumberFormatException.class, ClonesHandler::notFound);
     }
 
     public Mono<ServerResponse> refreshClones(final ServerRequest request) {
@@ -75,7 +75,7 @@ public final class ClonesHandler {
                             .then(getLastCommitClones(projectId, pullNumber)))
                             .switchIfEmpty(ServerResponse.status(HttpStatus.FORBIDDEN).build());
                 })
-                .onErrorResume(NumberFormatException.class, this::notFound);
+                .onErrorResume(NumberFormatException.class, ClonesHandler::notFound);
     }
 
     private <T> Mono<T> doIfCurrentUserHasAdminPermissionInProject(final long projectId, final Mono<T> action) {
@@ -100,31 +100,34 @@ public final class ClonesHandler {
     }
 
     private Mono<ServerResponse> toResponse(final Flux<Clone> clones, final long projectId, final int pullNumber) {
-        final var targetFileSnippetMarkers = clones
-                .map(clone -> new FileSnippetMarker(
-                        clone.getTargetSnapshot(),
-                        clone.getTargetFile(),
-                        clone.getTargetFromLine(),
-                        clone.getTargetToLine()
-                ));
+        class SnippetContainer {
+            CommitSnapshot snapshot;
+            final List<SnippetMarker> markers = new ArrayList<>();
+        }
+
+        final var targetFileSnippets = clones
+                .collect(SnippetContainer::new, (container, clone) -> {
+                    container.markers.add(SnippetMarker.of(clone.getTargetFile(), clone.getTargetFromLine(), clone.getTargetToLine()));
+                    container.snapshot = clone.getTargetSnapshot();
+                })
+                .flatMapMany(container -> codeLoader.loadSnippets(container.snapshot, container.markers));
+
+        final var sourceFileSnippets = clones
+                .groupBy(Clone::getSourceSnapshot, clone -> SnippetMarker
+                        .of(clone.getSourceFile(), clone.getSourceFromLine(), clone.getSourceToLine()))
+                .flatMapSequential(group -> group
+                        .collectList()
+                        .flatMapMany(snippetMarkers -> codeLoader.loadSnippets(Objects.requireNonNull(group.key()), snippetMarkers)));
 
         final var sourcePullNumbers = clones
                 .map(clone -> Objects.requireNonNull(clone.getSourceSnapshot().getPullId()))
                 .collectList()
                 .flatMapMany(pullRepo::numbersByIds);
 
-        final var sourceFileSnippetMarkers = clones
-                .map(clone -> new FileSnippetMarker(
-                        clone.getSourceSnapshot(),
-                        clone.getSourceFile(),
-                        clone.getSourceFromLine(),
-                        clone.getSourceToLine()
-                ));
-
         final var responseClones = Flux
                 .zip(clones,
-                        getFileSnippets(targetFileSnippetMarkers),
-                        getFileSnippets(sourceFileSnippetMarkers),
+                        targetFileSnippets,
+                        sourceFileSnippets,
                         sourcePullNumbers)
                 .map(tuple -> toCloneDto(tuple, projectId, pullNumber));
 
@@ -140,7 +143,7 @@ public final class ClonesHandler {
         final var clone = tuple.getT1();
 
         final var targetFile = tuple.getT2();
-        final var target = codeSnippetWith(targetFile.getCommitSnapshot(), targetFile.getContent())
+        final var target = codeSnippetWith(targetFile.getCommitSnapshot(), Objects.requireNonNull(targetFile.getContent()))
                 .projectId(projectId)
                 .pullNumber(targetPullNumber)
                 .file(clone.getTargetFile())
@@ -150,7 +153,7 @@ public final class ClonesHandler {
 
         final var sourceFile = tuple.getT3();
         final var sourcePullNumber = tuple.getT4();
-        final var source = codeSnippetWith(sourceFile.getCommitSnapshot(), sourceFile.getContent())
+        final var source = codeSnippetWith(sourceFile.getCommitSnapshot(), Objects.requireNonNull(sourceFile.getContent()))
                 .projectId(projectId)
                 .pullNumber(sourcePullNumber)
                 .file(clone.getSourceFile())
@@ -166,25 +169,10 @@ public final class ClonesHandler {
                 .owner(commitSnapshot.getRepo().getOwner().getLogin())
                 .repo(commitSnapshot.getRepo().getName())
                 .sha(commitSnapshot.getSha())
-                .content(base64.encodeToString(content.getBytes()));
+                .content(base64.encodeToString(content.getBytes(UTF_8)));
     }
 
-    private Flux<FileEntity> getFileSnippets(final Flux<FileSnippetMarker> markers) {
-        return markers
-                .flatMapSequential(marker -> codeLoader
-                        .getFileSnippet(marker.commitSnapshot, marker.filename, marker.fromLine, marker.toLine))
-                .subscribeOn(codeLoadingScheduler);
-    }
-
-    private <E extends Throwable> Mono<ServerResponse> notFound(final E ignored) {
+    private static <E extends Throwable> Mono<ServerResponse> notFound(final E error) {
         return ServerResponse.notFound().build();
-    }
-
-    @Value
-    private static class FileSnippetMarker {
-        CommitSnapshot commitSnapshot;
-        String filename;
-        int fromLine;
-        int toLine;
     }
 }

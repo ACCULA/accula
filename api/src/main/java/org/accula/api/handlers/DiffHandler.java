@@ -2,18 +2,18 @@ package org.accula.api.handlers;
 
 import lombok.RequiredArgsConstructor;
 import org.accula.api.code.CodeLoader;
-import org.accula.api.code.FileEntity;
+import org.accula.api.code.DiffEntry;
 import org.accula.api.code.FileFilter;
 import org.accula.api.db.model.Pull;
 import org.accula.api.db.repo.PullRepo;
 import org.accula.api.handlers.dto.DiffDto;
+import org.accula.api.util.Lambda;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple2;
 
 import java.util.Base64;
 
@@ -29,8 +29,7 @@ public final class DiffHandler {
     private static final Exception PULL_NOT_FOUND_EXCEPTION = new Exception();
     private static final String PROJECT_ID = "projectId";
     private static final String PULL_NUMBER = "pullNumber";
-    private static final String SOURCE_PULL = "source";
-    private static final String TARGET_PULL = "target";
+    private static final String PULL_TO_COMPARE_WITH = "with";
 
     private static final Base64.Encoder base64 = Base64.getEncoder(); // NOPMD
 
@@ -50,17 +49,17 @@ public final class DiffHandler {
 
     public Mono<ServerResponse> diffBetweenPulls(final ServerRequest request) {
         final var queryParams = request.queryParams();
-        if (!queryParams.containsKey(TARGET_PULL) || !queryParams.containsKey(SOURCE_PULL)) {
-            return ServerResponse.notFound().build();
+        if (!queryParams.containsKey(PULL_TO_COMPARE_WITH)) {
+            return ServerResponse.badRequest().build();
         }
 
         return Mono
                 .defer(() -> {
                     final var projectId = Long.parseLong(request.pathVariable(PROJECT_ID));
-                    final var sourcePullNumber = Integer.parseInt(queryParams.getFirst(SOURCE_PULL));
-                    final var targetPullNumber = Integer.parseInt(queryParams.getFirst(TARGET_PULL));
+                    final var basePullNumber = Integer.parseInt(request.pathVariable(PULL_NUMBER));
+                    final var headPullNumber = Integer.parseInt(queryParams.getFirst(PULL_TO_COMPARE_WITH));
 
-                    return diffBetweenPulls(projectId, sourcePullNumber, targetPullNumber);
+                    return diffBetweenPulls(projectId, basePullNumber, headPullNumber);
                 });
     }
 
@@ -73,36 +72,40 @@ public final class DiffHandler {
 
         final var diff = Mono
                 .zip(base, head)
-                .flatMapMany(baseHead -> codeLoader.getDiff(baseHead.getT1(), baseHead.getT2(), FileFilter.JAVA));
+                .flatMapMany(baseHead -> codeLoader.loadDiff(baseHead.getT1(), baseHead.getT2(), FileFilter.SRC_JAVA));
 
         return toResponse(diff);
     }
 
-    private Mono<ServerResponse> diffBetweenPulls(final long projectId, final int sourcePullNumber, final int targetPullNumber) {
-        final var sourcePull = pullRepo
-                .findByNumber(projectId, sourcePullNumber)
+    private Mono<ServerResponse> diffBetweenPulls(final long projectId, final int basePullNumber, final int headPullNumber) {
+        final var basePullSnapshot = pullRepo
+                .findByNumber(projectId, basePullNumber)
                 .map(Pull::getHead);
-        final var targetPull = pullRepo
-                .findByNumber(projectId, targetPullNumber)
+        final var headPull = pullRepo
+                .findByNumber(projectId, headPullNumber)
+                .cache();
+        final var headPullSnapshot = headPull
                 .map(Pull::getHead);
+        final var projectRepo = headPull
+                .map(pull -> pull.getBase().getRepo());
 
         final var diff = Mono
-                .zip(sourcePull, targetPull)
-                .flatMapMany(sourceTarget -> codeLoader.getRemoteDiff(sourceTarget.getT1(), sourceTarget.getT2(), FileFilter.JAVA));
+                .zip(projectRepo, basePullSnapshot, headPullSnapshot)
+                .flatMapMany(Lambda.passingLastArgument(codeLoader::loadRemoteDiff, FileFilter.SRC_JAVA));
 
         return toResponse(diff);
     }
 
-    private static Mono<ServerResponse> toResponse(final Flux<Tuple2<FileEntity, FileEntity>> diff) {
+    private static Mono<ServerResponse> toResponse(final Flux<DiffEntry> diff) {
         return ServerResponse
                 .ok()
                 .contentType(APPLICATION_JSON)
                 .body(diff.map(DiffHandler::toDto), DiffDto.class);
     }
 
-    private static DiffDto toDto(final Tuple2<FileEntity, FileEntity> diff) {
-        final var base = diff.getT1();
-        final var head = diff.getT2();
+    private static DiffDto toDto(final DiffEntry diff) {
+        final var base = diff.getBase();
+        final var head = diff.getHead();
         return DiffDto.builder()
                 .baseFilename(base.getName())
                 .baseContent(encode(base.getContent()))
