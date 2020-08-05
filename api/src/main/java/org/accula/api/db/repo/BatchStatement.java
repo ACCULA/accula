@@ -18,6 +18,10 @@ import java.util.function.Supplier;
 final class BatchStatement {
     private static final String COLLECTION_MARKER = "($collection)";
     private static final String NULL = "NULL";
+    private static final char LEFT_PARENTHESIS = '(';
+    private static final char RIGHT_PARENTHESIS = ')';
+    private static final char COMMA = ',';
+    private static final char SINGLE_QUOTATION_MARK = '\'';
     private final Connection connection;
     private final String sql;
     private final int indexOfCollectionMarker;
@@ -46,27 +50,29 @@ final class BatchStatement {
                 if (bindingsLength == 0) {
                     throw new IllegalStateException("Bindings must be present");
                 }
-                rowsWithBindings.append('(');
+                rowsWithBindings.append(LEFT_PARENTHESIS);
                 for (int i = 0; i < bindingsLength; ++i) {
                     final var binding = bindings[i];
                     if (binding == null) {
                         rowsWithBindings.append(NULL);
                     } else if (binding instanceof String || binding instanceof Instant) {
-                        rowsWithBindings.append('\'');
+                        rowsWithBindings.append(SINGLE_QUOTATION_MARK);
                         rowsWithBindings.append(binding);
-                        rowsWithBindings.append('\'');
+                        rowsWithBindings.append(SINGLE_QUOTATION_MARK);
                     } else if (isInteger(binding) || binding instanceof Boolean) {
                         rowsWithBindings.append(binding);
                     } else {
                         throw new IllegalStateException("Not yet supported class: " + binding.getClass().getName());
                     }
                     if (i != bindingsLength - 1) {
-                        rowsWithBindings.append(',');
+                        rowsWithBindings.append(COMMA);
                     }
                 }
-                rowsWithBindings.append("),");
+                rowsWithBindings
+                        .append(RIGHT_PARENTHESIS)
+                        .append(COMMA);
             }
-            if (rowsWithBindings.charAt(rowsWithBindings.length() - 1) == ',') {
+            if (rowsWithBindings.charAt(rowsWithBindings.length() - 1) == COMMA) {
                 rowsWithBindings.deleteCharAt(rowsWithBindings.length() - 1);
             }
 
