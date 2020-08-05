@@ -11,8 +11,12 @@ import org.intellij.lang.annotations.Language;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 
 import java.util.Collection;
+import java.util.Set;
+
+import static java.util.stream.Collectors.toList;
 
 /**
  * @author Anton Lamtev
@@ -24,36 +28,53 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
     private final ConnectionProvider connectionProvider;
 
     @Override
-    public Mono<Pull> upsert(final Pull pull) {
-        return withConnection(connection -> applyInsertBindings(insertStatement(connection), pull)
-                .execute()
-                .flatMap(PostgresqlResult::getRowsUpdated)
-                .then(Mono.just(pull)));
-    }
-
-    @Override
     public Flux<Pull> upsert(final Collection<Pull> pulls) {
         if (pulls.isEmpty()) {
             return Flux.empty();
         }
 
         return manyWithConnection(connection -> {
-            final var statement = insertStatement(connection);
-            pulls.forEach(pull -> applyInsertBindings(statement, pull).add());
+            final var statement = BatchStatement.of(connection, """
+                    INSERT INTO pull (id,
+                                      number,
+                                      title,
+                                      open,
+                                      created_at,
+                                      updated_at,
+                                      head_commit_snapshot_sha,
+                                      head_commit_snapshot_repo_id,
+                                      base_commit_snapshot_sha,
+                                      base_commit_snapshot_repo_id,
+                                      project_id,
+                                      author_github_id)
+                    VALUES ($collection)
+                    ON CONFLICT (id) DO UPDATE
+                       SET title = excluded.title,
+                           open = excluded.open,
+                           updated_at = excluded.updated_at,
+                           head_commit_snapshot_sha = excluded.head_commit_snapshot_sha,
+                           base_commit_snapshot_sha = excluded.base_commit_snapshot_sha
+                    """);
+            statement.bind(pulls, pull -> new Object[]{
+                    pull.getId(),
+                    pull.getNumber(),
+                    pull.getTitle(),
+                    pull.isOpen(),
+                    pull.getCreatedAt(),
+                    pull.getUpdatedAt(),
+                    pull.getHead().getSha(),
+                    pull.getHead().getRepo().getId(),
+                    pull.getBase().getSha(),
+                    pull.getBase().getRepo().getId(),
+                    pull.getProjectId(),
+                    pull.getAuthor().getId()
+            });
 
-            return statement.execute()
+            return statement
+                    .execute()
                     .flatMap(PostgresqlResult::getRowsUpdated)
                     .thenMany(Flux.fromIterable(pulls));
         });
-    }
-
-    @Override
-    public Mono<Pull> findById(final Long id) {
-        return withConnection(connection -> Mono
-                .from(selectByIdStatement(connection)
-                        .bind("$1", id)
-                        .execute())
-                .flatMap(result -> ConnectionProvidedRepo.convert(result, this::convert)));
     }
 
     @Override
@@ -62,15 +83,25 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
             return Flux.empty();
         }
 
+        final var uniqueIds = ids instanceof Set ? ids : ids.stream().distinct().collect(toList());
+
         return manyWithConnection(connection -> {
             final var statement = selectByIdStatement(connection);
-            ids.forEach(id -> statement
-                    .bind("$1", id)
-                    .add());
+            statement.bind("$1", uniqueIds.toArray(new Long[0]));
 
-            return statement
+            var pulls = statement
                     .execute()
-                    .flatMap(result -> ConnectionProvidedRepo.convert(result, this::convert));
+                    .flatMap(result -> ConnectionProvidedRepo.convertMany(result, this::convert));
+
+            if (ids.size() != uniqueIds.size()) {
+                pulls = pulls
+                        .zipWithIterable(uniqueIds)
+                        .collectMap(Tuple2::getT2, Tuple2::getT1)
+                        .map(idToNumber -> ids.stream().map(idToNumber::get))
+                        .flatMapMany(Flux::fromStream);
+            }
+
+            return pulls;
         });
     }
 
@@ -121,64 +152,33 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
         }
 
         return manyWithConnection(connection -> {
+            final var uniqueIds = ids instanceof Set ? ids : ids.stream().distinct().collect(toList());
+
             final var statement = (PostgresqlStatement) connection.createStatement("""
                     SELECT number 
                     FROM pull
-                    WHERE id = $1
+                    WHERE id = ANY($1)
                     """);
-            ids.forEach(id -> statement
-                    .bind("$1", id)
-                    .add());
+            statement.bind("$1", uniqueIds.toArray(new Long[0]));
 
-            return statement
+            var numbers = statement
                     .execute()
-                    .flatMap(result -> ConnectionProvidedRepo.column(result, "number", Integer.class));
+                    .flatMap(result -> ConnectionProvidedRepo.columnFlux(result, "number", Integer.class));
+
+            if (ids.size() != uniqueIds.size()) {
+                numbers = numbers
+                        .zipWithIterable(uniqueIds)
+                        .collectMap(Tuple2::getT2, Tuple2::getT1)
+                        .map(idToNumber -> ids.stream().map(idToNumber::get))
+                        .flatMapMany(Flux::fromStream);
+            }
+
+            return numbers;
         });
     }
 
-    private static PostgresqlStatement insertStatement(final Connection connection) {
-        return (PostgresqlStatement) connection
-                .createStatement("""
-                        INSERT INTO pull (id,
-                                          number,
-                                          title,
-                                          open,
-                                          created_at,
-                                          updated_at,
-                                          head_commit_snapshot_sha,
-                                          head_commit_snapshot_repo_id,
-                                          base_commit_snapshot_sha,
-                                          base_commit_snapshot_repo_id,
-                                          project_id,
-                                          author_github_id)
-                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-                        ON CONFLICT (id) DO UPDATE
-                           SET title = $3,
-                               open = $4,
-                               updated_at = $6,
-                               head_commit_snapshot_sha = $7,
-                               base_commit_snapshot_sha = $9
-                        """);
-    }
-
-    private static PostgresqlStatement applyInsertBindings(final PostgresqlStatement statement, final Pull pull) {
-        return statement
-                .bind("$1", pull.getId())
-                .bind("$2", pull.getNumber())
-                .bind("$3", pull.getTitle())
-                .bind("$4", pull.isOpen())
-                .bind("$5", pull.getCreatedAt())
-                .bind("$6", pull.getUpdatedAt())
-                .bind("$7", pull.getHead().getSha())
-                .bind("$8", pull.getHead().getRepo().getId())
-                .bind("$9", pull.getBase().getSha())
-                .bind("$10", pull.getBase().getRepo().getId())
-                .bind("$11", pull.getProjectId())
-                .bind("$12", pull.getAuthor().getId());
-    }
-
     private static PostgresqlStatement selectByIdStatement(final Connection connection) {
-        return selectStatement(connection, "WHERE pull.id = $1");
+        return selectStatement(connection, "WHERE pull.id = ANY($!)");
     }
 
     private static PostgresqlStatement selectByProjectIdStatement(final Connection connection) {
@@ -191,7 +191,7 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
     private static PostgresqlStatement selectByNumberStatement(final Connection connection) {
         return selectStatement(connection, "WHERE pull.project_id = $1 AND pull.number = $2");
     }
-    
+
     private static PostgresqlStatement selectPreviousByNumberAndAuthorIdStatement(final Connection connection) {
         return selectStatement(connection, """
                 WHERE pull.project_id = $1 AND pull.number < $2 AND author.id = $3

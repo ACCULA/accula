@@ -5,16 +5,21 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Anton Lamtev
  */
 public interface PullRepo {
-    Mono<Pull> upsert(Pull pull);
+    default Mono<Pull> upsert(Pull pull) {
+        return upsert(List.of(pull)).next();
+    }
 
     Flux<Pull> upsert(Collection<Pull> pulls);
 
-    Mono<Pull> findById(Long id);
+    default Mono<Pull> findById(Long id) {
+        return findById(List.of(id)).next();
+    }
 
     Flux<Pull> findById(Collection<Long> ids);
 

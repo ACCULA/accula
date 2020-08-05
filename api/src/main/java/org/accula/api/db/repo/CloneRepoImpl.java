@@ -2,7 +2,6 @@ package org.accula.api.db.repo;
 
 import io.r2dbc.postgresql.api.PostgresqlResult;
 import io.r2dbc.postgresql.api.PostgresqlStatement;
-import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.Row;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -25,25 +24,44 @@ public final class CloneRepoImpl implements CloneRepo, ConnectionProvidedRepo {
     private final ConnectionProvider connectionProvider;
 
     @Override
-    public Mono<Clone> insert(final Clone clone) {
-        return Mono.error(new OperationNotSupportedException());
-    }
-
-    @Override
     public Flux<Clone> insert(final Collection<Clone> clones) {
         if (clones.isEmpty()) {
             return Flux.empty();
         }
 
-        final var cloneList = clones instanceof ArrayList ? (ArrayList<Clone>) clones : new ArrayList<>(clones);
-
         return manyWithConnection(connection -> {
-            final var statement = insertStatement(connection);
-            cloneList.forEach(clone -> applyInsertBindings(clone, statement).add());
+            final var cloneList = clones instanceof ArrayList ? (ArrayList<Clone>) clones : new ArrayList<>(clones);
+
+            final var statement = BatchStatement.of(connection, """ 
+                    INSERT INTO clone (target_commit_sha, 
+                                       target_repo_id, 
+                                       target_file, 
+                                       target_from_line, 
+                                       target_to_line, 
+                                       source_commit_sha, 
+                                       source_repo_id, 
+                                       source_file, 
+                                       source_from_line, 
+                                       source_to_line)  
+                    VALUES ($collection) 
+                    RETURNING id
+                    """);
+            statement.bind(cloneList, clone -> new Object[]{
+                    clone.getTargetSnapshot().getSha(),
+                    clone.getTargetSnapshot().getRepo().getId(),
+                    clone.getTargetFile(),
+                    clone.getTargetFromLine(),
+                    clone.getTargetToLine(),
+                    clone.getSourceSnapshot().getSha(),
+                    clone.getSourceSnapshot().getRepo().getId(),
+                    clone.getSourceFile(),
+                    clone.getSourceFromLine(),
+                    clone.getSourceToLine()
+            });
 
             return statement
                     .execute()
-                    .flatMap(result -> ConnectionProvidedRepo.column(result, "id", Long.class))
+                    .flatMap(result -> ConnectionProvidedRepo.columnFlux(result, "id", Long.class))
                     .zipWithIterable(cloneList, (id, clone) -> clone.toBuilder().id(id).build());
         });
     }
@@ -132,38 +150,6 @@ public final class CloneRepoImpl implements CloneRepo, ConnectionProvidedRepo {
                 .execute()
                 .flatMap(PostgresqlResult::getRowsUpdated)
                 .then());
-    }
-
-    private static PostgresqlStatement insertStatement(final Connection connection) {
-        return (PostgresqlStatement) connection
-                .createStatement(""" 
-                        INSERT INTO clone (target_commit_sha, 
-                                           target_repo_id, 
-                                           target_file, 
-                                           target_from_line, 
-                                           target_to_line, 
-                                           source_commit_sha, 
-                                           source_repo_id, 
-                                           source_file, 
-                                           source_from_line, 
-                                           source_to_line)  
-                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)  
-                        RETURNING id
-                        """);
-    }
-
-    private static PostgresqlStatement applyInsertBindings(final Clone clone, final PostgresqlStatement statement) {
-        return statement
-                .bind("$1", clone.getTargetSnapshot().getSha())
-                .bind("$2", clone.getTargetSnapshot().getRepo().getId())
-                .bind("$3", clone.getTargetFile())
-                .bind("$4", clone.getTargetFromLine())
-                .bind("$5", clone.getTargetToLine())
-                .bind("$6", clone.getSourceSnapshot().getSha())
-                .bind("$7", clone.getSourceSnapshot().getRepo().getId())
-                .bind("$8", clone.getSourceFile())
-                .bind("$9", clone.getSourceFromLine())
-                .bind("$10", clone.getSourceToLine());
     }
 
     private Clone convert(final Row row) {

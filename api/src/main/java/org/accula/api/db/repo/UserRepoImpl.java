@@ -9,11 +9,13 @@ import org.accula.api.db.model.User;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 
 import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toList;
 
 /**
  * @author Anton Lamtev
@@ -80,26 +82,42 @@ public final class UserRepoImpl implements UserRepo, ConnectionProvidedRepo {
     }
 
     @Override
-    public Flux<User> findByGithubIds(Collection<Long> ids) {
-        final var adminIds = ids.stream()
-                .map(String::valueOf)
-                .collect(Collectors.joining(","));
-        return manyWithConnection(connection -> Mono
-                .from(connection
-                        .createStatement("""
-                                SELECT u.id,
-                                       ug.id                 AS github_id,
-                                       ug.login              AS github_login,
-                                       ug.name               AS github_name,
-                                       ug.avatar             AS github_avatar,
-                                       ug.is_org             AS github_org,
-                                       u.github_access_token
-                                FROM user_ u
-                                  JOIN user_github ug ON u.github_id = ug.id
-                                WHERE u.github_id IN ($1)
-                                """.replace("$1", adminIds)) // TODO: replace with bind, now it's failing
-                        .execute())
-                .flatMapMany(result -> ConnectionProvidedRepo.convertMany(result, this::convert)));
+    public Flux<User> findByGithubIds(final Collection<Long> ids) {
+        if (ids.isEmpty()) {
+            return Flux.empty();
+        }
+
+        return manyWithConnection(connection -> {
+            final var uniqueIds = ids instanceof Set ? ids : ids.stream().distinct().collect(toList());
+
+            final var statement = (PostgresqlStatement) connection.createStatement("""
+                    SELECT u.id,
+                           ug.id                 AS github_id,
+                           ug.login              AS github_login,
+                           ug.name               AS github_name,
+                           ug.avatar             AS github_avatar,
+                           ug.is_org             AS github_org,
+                           u.github_access_token
+                    FROM user_ u
+                      JOIN user_github ug ON u.github_id = ug.id
+                    WHERE u.github_id = ANY($1)
+                    """);
+            statement.bind("$1", uniqueIds.toArray(new Long[0]));
+
+            var users = statement
+                    .execute()
+                    .flatMap(result -> ConnectionProvidedRepo.convertMany(result, this::convert));
+
+            if (ids.size() != uniqueIds.size()) {
+                users = users
+                        .zipWithIterable(uniqueIds)
+                        .collectMap(Tuple2::getT2, Tuple2::getT1)
+                        .map(idToNumber -> ids.stream().map(idToNumber::get))
+                        .flatMapMany(Flux::fromStream);
+            }
+
+            return users;
+        });
     }
 
     @Override
@@ -110,9 +128,17 @@ public final class UserRepoImpl implements UserRepo, ConnectionProvidedRepo {
     private static PostgresqlStatement applyInsertBindings(final GithubUser githubUser,
                                                            final String githubAccessToken,
                                                            final PostgresqlStatement statement) {
-        return GithubUserRepoImpl
-                .applyInsertBindings(githubUser, statement)
-                .bind("$6", githubAccessToken);
+        statement.bind("$1", githubUser.getId());
+        statement.bind("$2", githubUser.getLogin());
+        if (githubUser.getName() != null && !githubUser.getName().isBlank()) {
+            statement.bind("$3", githubUser.getName());
+        } else {
+            statement.bindNull("$3", String.class);
+        }
+        statement.bind("$4", githubUser.getAvatar());
+        statement.bind("$5", githubUser.isOrganization());
+        statement.bind("$6", githubAccessToken);
+        return statement;
     }
 
     private User convert(final Row row) {

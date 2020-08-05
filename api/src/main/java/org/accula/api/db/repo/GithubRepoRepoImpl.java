@@ -23,35 +23,29 @@ public final class GithubRepoRepoImpl implements GithubRepoRepo, ConnectionProvi
     private final ConnectionProvider connectionProvider;
 
     @Override
-    public Mono<GithubRepo> upsert(final GithubRepo repo) {
-        return withConnection(connection -> Mono
-                .from(insertStatement(connection)
-                        .bind("$1", repo.getId())
-                        .bind("$2", repo.getName())
-                        .bind("$3", repo.getOwner().getId())
-                        .bind("$4", repo.getDescription())
-                        .execute())
-                .flatMap(result -> Mono.from(result.getRowsUpdated()))
-                .filter(Integer.valueOf(1)::equals)
-                .map(rowsUpdated -> repo));
-    }
-
-    @Override
     public Flux<GithubRepo> upsert(final Collection<GithubRepo> repos) {
         if (repos.isEmpty()) {
             return Flux.empty();
         }
 
         return manyWithConnection(connection -> {
-            final var statement = insertStatement(connection);
-            repos.forEach(repo -> statement
-                    .bind("$1", repo.getId())
-                    .bind("$2", repo.getName())
-                    .bind("$3", repo.getOwner().getId())
-                    .bind("$4", repo.getDescription())
-                    .add());
+            final var statement = BatchStatement.of(connection, """
+                    INSERT INTO repo_github (id, name, owner_id, description)
+                    VALUES ($collection)
+                    ON CONFLICT (id) DO UPDATE
+                       SET name = excluded.name,
+                           owner_id = excluded.owner_id,
+                           description = excluded.description
+                    """);
+            statement.bind(repos, repo -> new Object[]{
+                    repo.getId(),
+                    repo.getName(),
+                    repo.getOwner().getId(),
+                    repo.getDescription()
+            });
 
-            return statement.execute()
+            return statement
+                    .execute()
                     .flatMap(PostgresqlResult::getRowsUpdated)
                     .thenMany(Flux.fromIterable(repos));
         });
@@ -64,18 +58,6 @@ public final class GithubRepoRepoImpl implements GithubRepoRepo, ConnectionProvi
                         .bind("$1", id)
                         .execute())
                 .flatMap(result -> ConnectionProvidedRepo.convert(result, this::convert)));
-    }
-
-    private static PostgresqlStatement insertStatement(final Connection connection) {
-        return (PostgresqlStatement) connection
-                .createStatement("""
-                        INSERT INTO repo_github (id, name, owner_id, description)
-                        VALUES ($1, $2, $3, $4)
-                        ON CONFLICT (id) DO UPDATE
-                           SET name = $2,
-                               owner_id = $3,
-                               description = $4
-                        """);
     }
 
     private static PostgresqlStatement selectStatement(final Connection connection) {

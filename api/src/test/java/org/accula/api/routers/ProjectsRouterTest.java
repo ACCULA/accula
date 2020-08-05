@@ -273,8 +273,8 @@ public class ProjectsRouterTest {
 
     @Test
     public void testDeleteProject() {
-        Mockito.when(currentUser.get())
-                .thenReturn(Mono.just(CURRENT_USER));
+        Mockito.when(currentUser.get(Mockito.any()))
+                .thenReturn(Mono.just(0L));
 
         Mockito.when(projectRepo.delete(Mockito.anyLong(), Mockito.anyLong()))
                 .thenReturn(Mono.just(TRUE));
