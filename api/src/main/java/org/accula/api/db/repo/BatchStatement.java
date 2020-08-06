@@ -76,15 +76,15 @@ final class BatchStatement {
         return Flux.defer(() -> ((PostgresqlStatement) connection.createStatement(boundSqlProducer.get())).execute());
     }
 
-    private void addBinding(final StringBuilder rowsWithBindings, @Nullable final Object binding) {
+    private void addBinding(final StringBuilder sb, @Nullable final Object binding) {
         if (binding == null) {
-            rowsWithBindings.append(NULL);
+            sb.append(NULL);
         } else if (binding instanceof String || binding instanceof Instant) {
-            rowsWithBindings.append(SINGLE_QUOTATION_MARK);
-            rowsWithBindings.append(binding);
-            rowsWithBindings.append(SINGLE_QUOTATION_MARK);
+            sb.append(SINGLE_QUOTATION_MARK);
+            sb.append(binding);
+            sb.append(SINGLE_QUOTATION_MARK);
         } else if (isInteger(binding) || binding instanceof Boolean) {
-            rowsWithBindings.append(binding);
+            sb.append(binding);
         } else {
             throw new IllegalStateException("Not yet supported class: " + binding.getClass().getName());
         }
