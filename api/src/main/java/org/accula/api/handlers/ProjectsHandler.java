@@ -101,7 +101,7 @@ public final class ProjectsHandler {
                         .ok()
                         .contentType(APPLICATION_JSON)
                         .bodyValue(project))
-                .doOnSuccess(response -> log.debug("{}: {}", request, response.statusCode()))
+                .doOnNext(response -> log.debug("{}: {}", request, response.statusCode()))
                 .doOnError(t -> log.error("{}: ", request, t))
                 .onErrorResume(e -> e instanceof CreateProjectException,
                         e -> switch (CreateProjectException.error(e)) {

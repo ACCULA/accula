@@ -17,11 +17,11 @@ import java.util.function.Supplier;
  */
 final class BatchStatement {
     private static final String COLLECTION_MARKER = "($collection)";
-    private static final String NULL = "NULL";
     private static final char LEFT_PARENTHESIS = '(';
     private static final char RIGHT_PARENTHESIS = ')';
     private static final char COMMA = ',';
     private static final char SINGLE_QUOTATION_MARK = '\'';
+    private static final Object NULL = null;
     private final Connection connection;
     private final String sql;
     private final int indexOfCollectionMarker;
@@ -97,7 +97,7 @@ final class BatchStatement {
     private static void removeExtraComma(final StringBuilder sb) {
         final int lastCharIdx = sb.length() - 1;
         if (sb.charAt(lastCharIdx) == COMMA) {
-            sb.deleteCharAt(lastCharIdx - 1);
+            sb.deleteCharAt(lastCharIdx);
         }
     }
 }
