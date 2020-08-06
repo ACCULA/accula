@@ -76,7 +76,7 @@ final class BatchStatement {
         return Flux.defer(() -> ((PostgresqlStatement) connection.createStatement(boundSqlProducer.get())).execute());
     }
 
-    private void addBinding(final StringBuilder sb, @Nullable final Object binding) {
+    private static void addBinding(final StringBuilder sb, @Nullable final Object binding) {
         if (binding == null) {
             sb.append(NULL);
         } else if (binding instanceof String || binding instanceof Instant) {
@@ -94,7 +94,7 @@ final class BatchStatement {
         return o instanceof Byte || o instanceof Short || o instanceof Integer || o instanceof Long;
     }
 
-    private void removeExtraComma(final StringBuilder sb) {
+    private static void removeExtraComma(final StringBuilder sb) {
         final int lastCharIdx = sb.length() - 1;
         if (sb.charAt(lastCharIdx) == COMMA) {
             sb.deleteCharAt(lastCharIdx - 1);
