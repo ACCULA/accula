@@ -5,12 +5,15 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Anton Lamtev
  */
 public interface CloneRepo {
-    Mono<Clone> insert(Clone clone);
+    default Mono<Clone> insert(Clone clone) {
+        return insert(List.of(clone)).next();
+    }
 
     Flux<Clone> insert(Collection<Clone> clones);
 

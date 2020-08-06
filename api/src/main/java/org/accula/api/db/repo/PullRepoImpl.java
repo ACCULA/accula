@@ -20,16 +20,9 @@ import java.util.Collection;
 @Component
 @RequiredArgsConstructor
 public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
+    private static final String EMPTY_CLAUSE = "";
     @Getter
     private final ConnectionProvider connectionProvider;
-
-    @Override
-    public Mono<Pull> upsert(final Pull pull) {
-        return withConnection(connection -> applyInsertBindings(insertStatement(connection), pull)
-                .execute()
-                .flatMap(PostgresqlResult::getRowsUpdated)
-                .then(Mono.just(pull)));
-    }
 
     @Override
     public Flux<Pull> upsert(final Collection<Pull> pulls) {
@@ -38,22 +31,47 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
         }
 
         return manyWithConnection(connection -> {
-            final var statement = insertStatement(connection);
-            pulls.forEach(pull -> applyInsertBindings(statement, pull).add());
+            final var statement = BatchStatement.of(connection, """
+                    INSERT INTO pull (id,
+                                      number,
+                                      title,
+                                      open,
+                                      created_at,
+                                      updated_at,
+                                      head_commit_snapshot_sha,
+                                      head_commit_snapshot_repo_id,
+                                      base_commit_snapshot_sha,
+                                      base_commit_snapshot_repo_id,
+                                      project_id,
+                                      author_github_id)
+                    VALUES ($collection)
+                    ON CONFLICT (id) DO UPDATE
+                       SET title = excluded.title,
+                           open = excluded.open,
+                           updated_at = excluded.updated_at,
+                           head_commit_snapshot_sha = excluded.head_commit_snapshot_sha,
+                           base_commit_snapshot_sha = excluded.base_commit_snapshot_sha
+                    """);
+            statement.bind(pulls, pull -> new Object[]{
+                    pull.getId(),
+                    pull.getNumber(),
+                    pull.getTitle(),
+                    pull.isOpen(),
+                    pull.getCreatedAt(),
+                    pull.getUpdatedAt(),
+                    pull.getHead().getSha(),
+                    pull.getHead().getRepo().getId(),
+                    pull.getBase().getSha(),
+                    pull.getBase().getRepo().getId(),
+                    pull.getProjectId(),
+                    pull.getAuthor().getId()
+            });
 
-            return statement.execute()
+            return statement
+                    .execute()
                     .flatMap(PostgresqlResult::getRowsUpdated)
                     .thenMany(Flux.fromIterable(pulls));
         });
-    }
-
-    @Override
-    public Mono<Pull> findById(final Long id) {
-        return withConnection(connection -> Mono
-                .from(selectByIdStatement(connection)
-                        .bind("$1", id)
-                        .execute())
-                .flatMap(result -> ConnectionProvidedRepo.convert(result, this::convert)));
     }
 
     @Override
@@ -64,13 +82,11 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
 
         return manyWithConnection(connection -> {
             final var statement = selectByIdStatement(connection);
-            ids.forEach(id -> statement
-                    .bind("$1", id)
-                    .add());
+            statement.bind("$1", ids.toArray(new Long[0]));
 
             return statement
                     .execute()
-                    .flatMap(result -> ConnectionProvidedRepo.convert(result, this::convert));
+                    .flatMap(result -> ConnectionProvidedRepo.convertMany(result, this::convert));
         });
     }
 
@@ -124,92 +140,61 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
             final var statement = (PostgresqlStatement) connection.createStatement("""
                     SELECT number 
                     FROM pull
-                    WHERE id = $1
+                        JOIN unnest($1) WITH ORDINALITY AS arr(id, ord)
+                            ON pull.id = arr.id
+                    ORDER BY arr.ord
                     """);
-            ids.forEach(id -> statement
-                    .bind("$1", id)
-                    .add());
+            statement.bind("$1", ids.toArray(new Long[0]));
 
             return statement
                     .execute()
-                    .flatMap(result -> ConnectionProvidedRepo.column(result, "number", Integer.class));
+                    .flatMap(result -> ConnectionProvidedRepo.columnFlux(result, "number", Integer.class));
         });
     }
 
-    private static PostgresqlStatement insertStatement(final Connection connection) {
-        return (PostgresqlStatement) connection
-                .createStatement("""
-                        INSERT INTO pull (id,
-                                          number,
-                                          title,
-                                          open,
-                                          created_at,
-                                          updated_at,
-                                          head_commit_snapshot_sha,
-                                          head_commit_snapshot_repo_id,
-                                          base_commit_snapshot_sha,
-                                          base_commit_snapshot_repo_id,
-                                          project_id,
-                                          author_github_id)
-                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-                        ON CONFLICT (id) DO UPDATE
-                           SET title = $3,
-                               open = $4,
-                               updated_at = $6,
-                               head_commit_snapshot_sha = $7,
-                               base_commit_snapshot_sha = $9
-                        """);
-    }
-
-    private static PostgresqlStatement applyInsertBindings(final PostgresqlStatement statement, final Pull pull) {
-        return statement
-                .bind("$1", pull.getId())
-                .bind("$2", pull.getNumber())
-                .bind("$3", pull.getTitle())
-                .bind("$4", pull.isOpen())
-                .bind("$5", pull.getCreatedAt())
-                .bind("$6", pull.getUpdatedAt())
-                .bind("$7", pull.getHead().getSha())
-                .bind("$8", pull.getHead().getRepo().getId())
-                .bind("$9", pull.getBase().getSha())
-                .bind("$10", pull.getBase().getRepo().getId())
-                .bind("$11", pull.getProjectId())
-                .bind("$12", pull.getAuthor().getId());
-    }
-
     private static PostgresqlStatement selectByIdStatement(final Connection connection) {
-        return selectStatement(connection, "WHERE pull.id = $1");
+        return selectStatement(connection, """
+                JOIN unnest($1) WITH ORDINALITY AS arr(id, ord)
+                    ON pull.id = arr.id
+                """, EMPTY_CLAUSE, """
+                ORDER BY arr.ord
+                """);
     }
 
     private static PostgresqlStatement selectByProjectIdStatement(final Connection connection) {
-        return selectStatement(connection, """
+        return selectStatement(connection, EMPTY_CLAUSE, """
                 WHERE pull.project_id = $1
+                """, """
                 ORDER BY pull.open DESC, pull.updated_at DESC
                 """);
     }
 
     private static PostgresqlStatement selectByNumberStatement(final Connection connection) {
-        return selectStatement(connection, "WHERE pull.project_id = $1 AND pull.number = $2");
+        return selectStatement(connection, EMPTY_CLAUSE, "WHERE pull.project_id = $1 AND pull.number = $2", EMPTY_CLAUSE);
     }
-    
+
     private static PostgresqlStatement selectPreviousByNumberAndAuthorIdStatement(final Connection connection) {
-        return selectStatement(connection, """
+        return selectStatement(connection, EMPTY_CLAUSE, """
                 WHERE pull.project_id = $1 AND pull.number < $2 AND author.id = $3
+                """, """
                 ORDER BY pull.number DESC
                 """);
     }
 
     private static PostgresqlStatement selectUpdatedEarlierStatement(final Connection connection) {
-        return selectStatement(connection, """
+        return selectStatement(connection, EMPTY_CLAUSE, """
                 WHERE pull.project_id = $1 AND
                       pull.number != $2 AND
                       pull.updated_at <= (SELECT updated_at
                                           FROM pull
                                           WHERE project_id = $1 AND number = $2)
-                """);
+                """, EMPTY_CLAUSE);
     }
 
-    private static PostgresqlStatement selectStatement(final Connection connection, final String whereClause) {
+    private static PostgresqlStatement selectStatement(final Connection connection,
+                                                       final String fromClauseExtension,
+                                                       final String whereClause,
+                                                       final String orderByClause) {
         @Language("SQL") final var sql = """
                 SELECT pull.id                AS id,
                        pull.number            AS number,
@@ -259,7 +244,8 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
                    JOIN user_github author
                        ON pull.author_github_id = author.id
                 """;
-        return (PostgresqlStatement) connection.createStatement(String.format("%s %s", sql, whereClause));
+        return (PostgresqlStatement) connection
+                .createStatement(String.format("%s %s %s %s", sql, fromClauseExtension, whereClause, orderByClause));
     }
 
     private Pull convert(final Row row) {

@@ -5,12 +5,15 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Anton Lamtev
  */
 public interface GithubUserRepo {
-    Mono<GithubUser> upsert(GithubUser user);
+    default Mono<GithubUser> upsert(GithubUser user) {
+        return upsert(List.of(user)).next();
+    }
 
     Flux<GithubUser> upsert(Collection<GithubUser> users);
 

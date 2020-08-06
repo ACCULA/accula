@@ -37,6 +37,11 @@ public interface ConnectionProvidedRepo {
                 .map((row, metadata) -> Objects.requireNonNull(row.get(name, clazz))));
     }
 
+    static <T> Flux<T> columnFlux(final Result result, final String name, final Class<T> clazz) {
+        return Flux.from(result
+                .map((row, metadata) -> Objects.requireNonNull(row.get(name, clazz))));
+    }
+
     static <T> Mono<T> convert(final Result result, final Function<Row, T> transform) {
         return Mono.from(result.map((row, metadata) -> transform.apply(row)));
     }

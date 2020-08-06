@@ -5,12 +5,15 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Anton Lamtev
  */
 public interface GithubRepoRepo {
-    Mono<GithubRepo> upsert(GithubRepo repo);
+    default Mono<GithubRepo> upsert(GithubRepo repo) {
+        return upsert(List.of(repo)).next();
+    }
 
     Flux<GithubRepo> upsert(Collection<GithubRepo> repos);
 

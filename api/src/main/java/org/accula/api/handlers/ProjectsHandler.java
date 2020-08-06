@@ -27,6 +27,7 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
+import reactor.function.TupleUtils;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuple4;
 import reactor.util.function.Tuples;
@@ -100,7 +101,7 @@ public final class ProjectsHandler {
                         .ok()
                         .contentType(APPLICATION_JSON)
                         .bodyValue(project))
-                .doOnSuccess(response -> log.debug("{}: {}", request, response.statusCode()))
+                .doOnNext(response -> log.debug("{}: {}", request, response.statusCode()))
                 .doOnError(t -> log.error("{}: ", request, t))
                 .onErrorResume(e -> e instanceof CreateProjectException,
                         e -> switch (CreateProjectException.error(e)) {
@@ -115,13 +116,8 @@ public final class ProjectsHandler {
 
     public Mono<ServerResponse> delete(final ServerRequest request) {
         return withProjectId(request)
-                .zipWith(currentUser.get())
-                .flatMap(projectIdAndCurrentUser -> {
-                    final var projectId = projectIdAndCurrentUser.getT1();
-                    final var currentUserId = projectIdAndCurrentUser.getT2().getId();
-
-                    return projectRepo.delete(projectId, currentUserId);
-                })
+                .zipWith(currentUser.get(User::getId))
+                .flatMap(TupleUtils.function(projectRepo::delete))
                 .flatMap(success -> ServerResponse.ok().build())
                 .onErrorResume(PROJECT_NOT_FOUND_EXCEPTION::equals, e -> ServerResponse.notFound().build());
     }

@@ -66,24 +66,23 @@ public final class ClonesHandler {
                     final var projectId = Long.parseLong(request.pathVariable(PROJECT_ID));
                     final var pullNumber = Integer.parseInt(request.pathVariable(PULL_NUMBER));
 
-                    return doIfCurrentUserHasAdminPermissionInProject(projectId, cloneRepo
+                    final var clones = doIfCurrentUserHasAdminPermissionInProject(projectId, cloneRepo
                             .deleteByPullNumber(projectId, pullNumber)
-                            .then(pullRepo
+                            .thenMany(pullRepo
                                     .findByNumber(projectId, pullNumber)
-                                    .flatMapMany(cloneDetectionService::detectClones)
-                                    .then())
-                            .then(getLastCommitClones(projectId, pullNumber)))
+                                    .flatMapMany(cloneDetectionService::detectClones)))
+                            .cache();
+                    return toResponse(clones, projectId, pullNumber)
                             .switchIfEmpty(ServerResponse.status(HttpStatus.FORBIDDEN).build());
                 })
                 .onErrorResume(NumberFormatException.class, ClonesHandler::notFound);
     }
 
-    private <T> Mono<T> doIfCurrentUserHasAdminPermissionInProject(final long projectId, final Mono<T> action) {
+    private <T> Flux<T> doIfCurrentUserHasAdminPermissionInProject(final long projectId, final Flux<T> action) {
         return currentUserRepo
-                .get()
-                .map(User::getId)
+                .get(User::getId)
                 .filterWhen(currentUserId -> projectRepo.hasCreatorOrAdminWithId(projectId, currentUserId))
-                .flatMap(currentUserId -> action);
+                .flatMapMany(currentUserId -> action);
     }
 
     private Mono<ServerResponse> getLastCommitClones(final long projectId, final int pullNumber) {

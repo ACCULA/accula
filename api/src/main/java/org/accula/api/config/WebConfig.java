@@ -40,16 +40,12 @@ public class WebConfig implements WebFluxConfigurer {
 
     @Bean
     public GithubClient.AccessTokenProvider githubAccessTokenProvider() {
-        return () -> currentUserRepo
-                .get()
-                .map(User::getGithubAccessToken);
+        return () -> currentUserRepo.get(User::getGithubAccessToken);
     }
 
     @Bean
     public GithubClient.LoginProvider githubLoginProvider() {
-        return () -> currentUserRepo
-                .get()
-                .map(user -> user.getGithubUser().getLogin());
+        return () -> currentUserRepo.get(user -> user.getGithubUser().getLogin());
     }
 
     @SneakyThrows
@@ -64,7 +60,7 @@ public class WebConfig implements WebFluxConfigurer {
                 availableProcessors,
                 availableProcessors * 10,
                 60L, TimeUnit.SECONDS,
-                new LinkedBlockingQueue<>()
+                new LinkedBlockingQueue<>(availableProcessors * 50)
         );
         return new Git(reposDirectory, executor);
     }

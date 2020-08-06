@@ -17,19 +17,10 @@ import java.util.Objects;
  * @author Anton Lamtev
  */
 @Component
-@SuppressWarnings("PMD.ConfusingTernary")
 @RequiredArgsConstructor
 public final class GithubUserRepoImpl implements GithubUserRepo, ConnectionProvidedRepo {
     @Getter
     private final ConnectionProvidedRepo.ConnectionProvider connectionProvider;
-
-    @Override
-    public Mono<GithubUser> upsert(final GithubUser user) {
-        return withConnection(connection -> applyInsertBindings(user, insertStatement(connection))
-                .execute()
-                .flatMap(PostgresqlResult::getRowsUpdated)
-                .then(Mono.just(user)));
-    }
 
     @Override
     public Flux<GithubUser> upsert(final Collection<GithubUser> users) {
@@ -38,10 +29,24 @@ public final class GithubUserRepoImpl implements GithubUserRepo, ConnectionProvi
         }
 
         return manyWithConnection(connection -> {
-            final var statement = insertStatement(connection);
-            users.forEach(user -> applyInsertBindings(user, statement).add());
+            final var statement = BatchStatement.of(connection, """
+                    INSERT INTO user_github (id, login, name, avatar, is_org)
+                    VALUES ($collection)
+                    ON CONFLICT (id) DO UPDATE
+                       SET login = excluded.login,
+                           name = COALESCE(excluded.name, user_github.name),
+                           avatar = excluded.avatar
+                    """);
+            statement.bind(users, user -> new Object[]{
+                    user.getId(),
+                    user.getLogin(),
+                    user.getName(),
+                    user.getAvatar(),
+                    user.isOrganization()
+            });
 
-            return statement.execute()
+            return statement
+                    .execute()
                     .flatMap(PostgresqlResult::getRowsUpdated)
                     .thenMany(Flux.fromIterable(users));
         });
@@ -62,18 +67,6 @@ public final class GithubUserRepoImpl implements GithubUserRepo, ConnectionProvi
                 ))));
     }
 
-    private static PostgresqlStatement insertStatement(final Connection connection) {
-        return (PostgresqlStatement) connection
-                .createStatement("""
-                        INSERT INTO user_github (id, login, name, avatar, is_org)
-                        VALUES ($1, $2, $3, $4, $5)
-                        ON CONFLICT (id) DO UPDATE
-                           SET login = $2,
-                               name = COALESCE($3, user_github.name),
-                               avatar = $4
-                        """);
-    }
-
     private static PostgresqlStatement selectStatement(final Connection connection) {
         return (PostgresqlStatement) connection
                 .createStatement("""
@@ -81,18 +74,5 @@ public final class GithubUserRepoImpl implements GithubUserRepo, ConnectionProvi
                         FROM user_github
                         WHERE id = $1
                         """);
-    }
-
-    static PostgresqlStatement applyInsertBindings(final GithubUser user, final PostgresqlStatement statement) {
-        statement.bind("$1", user.getId());
-        statement.bind("$2", user.getLogin());
-        if (user.getName() != null && !user.getName().isBlank()) {
-            statement.bind("$3", user.getName());
-        } else {
-            statement.bindNull("$3", String.class);
-        }
-        statement.bind("$4", user.getAvatar());
-        statement.bind("$5", user.isOrganization());
-        return statement;
     }
 }
