@@ -52,18 +52,7 @@ final class BatchStatement {
                 }
                 rowsWithBindings.append(LEFT_PARENTHESIS);
                 for (int i = 0; i < bindingsLength; ++i) {
-                    final var binding = bindings[i];
-                    if (binding == null) {
-                        rowsWithBindings.append(NULL);
-                    } else if (binding instanceof String || binding instanceof Instant) {
-                        rowsWithBindings.append(SINGLE_QUOTATION_MARK);
-                        rowsWithBindings.append(binding);
-                        rowsWithBindings.append(SINGLE_QUOTATION_MARK);
-                    } else if (isInteger(binding) || binding instanceof Boolean) {
-                        rowsWithBindings.append(binding);
-                    } else {
-                        throw new IllegalStateException("Not yet supported class: " + binding.getClass().getName());
-                    }
+                    addBinding(rowsWithBindings, bindings[i]);
                     if (i != bindingsLength - 1) {
                         rowsWithBindings.append(COMMA);
                     }
@@ -72,9 +61,7 @@ final class BatchStatement {
                         .append(RIGHT_PARENTHESIS)
                         .append(COMMA);
             }
-            if (rowsWithBindings.charAt(rowsWithBindings.length() - 1) == COMMA) {
-                rowsWithBindings.deleteCharAt(rowsWithBindings.length() - 1);
-            }
+            removeExtraComma(rowsWithBindings);
 
             return sql.substring(0, indexOfCollectionMarker)
                    + rowsWithBindings.toString()
@@ -89,7 +76,28 @@ final class BatchStatement {
         return Flux.defer(() -> ((PostgresqlStatement) connection.createStatement(boundSqlProducer.get())).execute());
     }
 
+    private void addBinding(final StringBuilder rowsWithBindings, @Nullable final Object binding) {
+        if (binding == null) {
+            rowsWithBindings.append(NULL);
+        } else if (binding instanceof String || binding instanceof Instant) {
+            rowsWithBindings.append(SINGLE_QUOTATION_MARK);
+            rowsWithBindings.append(binding);
+            rowsWithBindings.append(SINGLE_QUOTATION_MARK);
+        } else if (isInteger(binding) || binding instanceof Boolean) {
+            rowsWithBindings.append(binding);
+        } else {
+            throw new IllegalStateException("Not yet supported class: " + binding.getClass().getName());
+        }
+    }
+
     private static boolean isInteger(final Object o) {
         return o instanceof Byte || o instanceof Short || o instanceof Integer || o instanceof Long;
+    }
+
+    private void removeExtraComma(final StringBuilder sb) {
+        final int lastCharIdx = sb.length() - 1;
+        if (sb.charAt(lastCharIdx) == COMMA) {
+            sb.deleteCharAt(lastCharIdx - 1);
+        }
     }
 }
