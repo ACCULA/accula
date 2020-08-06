@@ -44,6 +44,8 @@ final class BatchStatement {
     <T> void bind(final Collection<T> collection, final Function<T, Object[]> bind) {
         boundSqlProducer = () -> {
             final StringBuilder rowsWithBindings = new StringBuilder();
+            final int collectionSize = collection.size();
+            int collectionIdx = 0;
             for (final var el : collection) {
                 final var bindings = bind.apply(el);
                 final var bindingsLength = bindings.length;
@@ -57,11 +59,12 @@ final class BatchStatement {
                         rowsWithBindings.append(COMMA);
                     }
                 }
-                rowsWithBindings
-                        .append(RIGHT_PARENTHESIS)
-                        .append(COMMA);
+                rowsWithBindings.append(RIGHT_PARENTHESIS);
+                if (collectionIdx != collectionSize - 1) {
+                    rowsWithBindings.append(COMMA);
+                }
+                ++collectionIdx;
             }
-            removeExtraComma(rowsWithBindings);
 
             return sql.substring(0, indexOfCollectionMarker)
                    + rowsWithBindings.toString()
@@ -92,12 +95,5 @@ final class BatchStatement {
 
     private static boolean isInteger(final Object o) {
         return o instanceof Byte || o instanceof Short || o instanceof Integer || o instanceof Long;
-    }
-
-    private static void removeExtraComma(final StringBuilder sb) {
-        final int lastCharIdx = sb.length() - 1;
-        if (sb.charAt(lastCharIdx) == COMMA) {
-            sb.deleteCharAt(lastCharIdx);
-        }
     }
 }

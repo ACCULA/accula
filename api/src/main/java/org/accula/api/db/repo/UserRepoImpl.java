@@ -9,13 +9,10 @@ import org.accula.api.db.model.User;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple2;
 
 import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-
-import static java.util.stream.Collectors.toList;
 
 /**
  * @author Anton Lamtev
@@ -88,35 +85,26 @@ public final class UserRepoImpl implements UserRepo, ConnectionProvidedRepo {
         }
 
         return manyWithConnection(connection -> {
-            final var uniqueIds = ids instanceof Set ? ids : ids.stream().distinct().collect(toList());
-
             final var statement = (PostgresqlStatement) connection.createStatement("""
                     SELECT u.id,
-                           ug.id                 AS github_id,
-                           ug.login              AS github_login,
-                           ug.name               AS github_name,
-                           ug.avatar             AS github_avatar,
-                           ug.is_org             AS github_org,
+                           ug.id     AS github_id,
+                           ug.login  AS github_login,
+                           ug.name   AS github_name,
+                           ug.avatar AS github_avatar,
+                           ug.is_org AS github_org,
                            u.github_access_token
                     FROM user_ u
-                      JOIN user_github ug ON u.github_id = ug.id
-                    WHERE u.github_id = ANY($1)
+                             JOIN user_github ug
+                                  ON u.github_id = ug.id
+                             JOIN unnest($1) WITH ORDINALITY AS arr(id, ord)
+                                  ON ug.id = arr.id
+                    ORDER BY arr.ord
                     """);
-            statement.bind("$1", uniqueIds.toArray(new Long[0]));
+            statement.bind("$1", ids.toArray(new Long[0]));
 
-            var users = statement
+            return statement
                     .execute()
                     .flatMap(result -> ConnectionProvidedRepo.convertMany(result, this::convert));
-
-            if (ids.size() != uniqueIds.size()) {
-                users = users
-                        .zipWithIterable(uniqueIds)
-                        .collectMap(Tuple2::getT2, Tuple2::getT1)
-                        .map(idToNumber -> ids.stream().map(idToNumber::get))
-                        .flatMapMany(Flux::fromStream);
-            }
-
-            return users;
         });
     }
 

@@ -11,12 +11,8 @@ import org.intellij.lang.annotations.Language;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple2;
 
 import java.util.Collection;
-import java.util.Set;
-
-import static java.util.stream.Collectors.toList;
 
 /**
  * @author Anton Lamtev
@@ -24,6 +20,7 @@ import static java.util.stream.Collectors.toList;
 @Component
 @RequiredArgsConstructor
 public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
+    private static final String EMPTY_CLAUSE = "";
     @Getter
     private final ConnectionProvider connectionProvider;
 
@@ -83,25 +80,13 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
             return Flux.empty();
         }
 
-        final var uniqueIds = ids instanceof Set ? ids : ids.stream().distinct().collect(toList());
-
         return manyWithConnection(connection -> {
             final var statement = selectByIdStatement(connection);
-            statement.bind("$1", uniqueIds.toArray(new Long[0]));
+            statement.bind("$1", ids.toArray(new Long[0]));
 
-            var pulls = statement
+            return statement
                     .execute()
                     .flatMap(result -> ConnectionProvidedRepo.convertMany(result, this::convert));
-
-            if (ids.size() != uniqueIds.size()) {
-                pulls = pulls
-                        .zipWithIterable(uniqueIds)
-                        .collectMap(Tuple2::getT2, Tuple2::getT1)
-                        .map(idToNumber -> ids.stream().map(idToNumber::get))
-                        .flatMapMany(Flux::fromStream);
-            }
-
-            return pulls;
         });
     }
 
@@ -152,64 +137,64 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
         }
 
         return manyWithConnection(connection -> {
-            final var uniqueIds = ids instanceof Set ? ids : ids.stream().distinct().collect(toList());
-
             final var statement = (PostgresqlStatement) connection.createStatement("""
                     SELECT number 
                     FROM pull
-                    WHERE id = ANY($1)
+                        JOIN unnest($1) WITH ORDINALITY AS arr(id, ord)
+                            ON pull.id = arr.id
+                    ORDER BY arr.ord
                     """);
-            statement.bind("$1", uniqueIds.toArray(new Long[0]));
+            statement.bind("$1", ids.toArray(new Long[0]));
 
-            var numbers = statement
+            return statement
                     .execute()
                     .flatMap(result -> ConnectionProvidedRepo.columnFlux(result, "number", Integer.class));
-
-            if (ids.size() != uniqueIds.size()) {
-                numbers = numbers
-                        .zipWithIterable(uniqueIds)
-                        .collectMap(Tuple2::getT2, Tuple2::getT1)
-                        .map(idToNumber -> ids.stream().map(idToNumber::get))
-                        .flatMapMany(Flux::fromStream);
-            }
-
-            return numbers;
         });
     }
 
     private static PostgresqlStatement selectByIdStatement(final Connection connection) {
-        return selectStatement(connection, "WHERE pull.id = ANY($!)");
+        return selectStatement(connection, """
+                JOIN unnest($1) WITH ORDINALITY AS arr(id, ord)
+                    ON pull.id = arr.id
+                """, EMPTY_CLAUSE, """
+                ORDER BY arr.ord
+                """);
     }
 
     private static PostgresqlStatement selectByProjectIdStatement(final Connection connection) {
-        return selectStatement(connection, """
+        return selectStatement(connection, EMPTY_CLAUSE, """
                 WHERE pull.project_id = $1
+                """, """
                 ORDER BY pull.open DESC, pull.updated_at DESC
                 """);
     }
 
     private static PostgresqlStatement selectByNumberStatement(final Connection connection) {
-        return selectStatement(connection, "WHERE pull.project_id = $1 AND pull.number = $2");
+        return selectStatement(connection, EMPTY_CLAUSE, "WHERE pull.project_id = $1 AND pull.number = $2", EMPTY_CLAUSE);
     }
 
     private static PostgresqlStatement selectPreviousByNumberAndAuthorIdStatement(final Connection connection) {
-        return selectStatement(connection, """
+        return selectStatement(connection, EMPTY_CLAUSE, """
                 WHERE pull.project_id = $1 AND pull.number < $2 AND author.id = $3
+                """, """
                 ORDER BY pull.number DESC
                 """);
     }
 
     private static PostgresqlStatement selectUpdatedEarlierStatement(final Connection connection) {
-        return selectStatement(connection, """
+        return selectStatement(connection, EMPTY_CLAUSE, """
                 WHERE pull.project_id = $1 AND
                       pull.number != $2 AND
                       pull.updated_at <= (SELECT updated_at
                                           FROM pull
                                           WHERE project_id = $1 AND number = $2)
-                """);
+                """, EMPTY_CLAUSE);
     }
 
-    private static PostgresqlStatement selectStatement(final Connection connection, final String whereClause) {
+    private static PostgresqlStatement selectStatement(final Connection connection,
+                                                       final String fromClauseExtension,
+                                                       final String whereClause,
+                                                       final String orderByClause) {
         @Language("SQL") final var sql = """
                 SELECT pull.id                AS id,
                        pull.number            AS number,
@@ -259,7 +244,8 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
                    JOIN user_github author
                        ON pull.author_github_id = author.id
                 """;
-        return (PostgresqlStatement) connection.createStatement(String.format("%s %s", sql, whereClause));
+        return (PostgresqlStatement) connection
+                .createStatement(String.format("%s %s %s %s", sql, fromClauseExtension, whereClause, orderByClause));
     }
 
     private Pull convert(final Row row) {
