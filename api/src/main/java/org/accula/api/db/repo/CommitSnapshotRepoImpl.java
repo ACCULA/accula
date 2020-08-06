@@ -108,7 +108,7 @@ public final class CommitSnapshotRepoImpl implements CommitSnapshotRepo, Connect
                                ON snap.repo_id = repo.id
                            JOIN user_github repo_owner
                                ON repo.owner_id = repo_owner.id 
-                        WHERE snap.sha = ANY($1) AND snap.repo_id = $2
+                        WHERE snap.sha = $1 AND snap.repo_id = $2
                         """);
     }
 
