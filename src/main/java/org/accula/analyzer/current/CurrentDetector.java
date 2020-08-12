@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.OptionalLong;
 import java.util.stream.LongStream;
 
 import static org.accula.analyzer.current.SuffixTreeUtils.edgesFromTreeCloneClassForMethod;
@@ -129,7 +130,9 @@ public final class CurrentDetector implements CloneDetector {
      */
     private static long addFilesIntoTree(final List<FileEntity> files, final SuffixTree<Token> suffixTree) {
         return files.stream()
-                .mapToLong(file -> addFileIntoTree(file, suffixTree))
+                .map(file -> addFileIntoTree(file, suffixTree))
+                .filter(OptionalLong::isPresent)
+                .mapToLong(OptionalLong::getAsLong)
                 .max()
                 .orElseThrow();
     }
@@ -139,13 +142,12 @@ public final class CurrentDetector implements CloneDetector {
      *
      * @param file       - FileEntity object to parse into tokenized methods and then insert into tree
      * @param suffixTree - tree object reference
-     * @return - index of the last sequence (tokenized method) inserted into the tree
+     * @return - Optional of the index of the last sequence (tokenized method) inserted into the tree
      */
-    private static long addFileIntoTree(final FileEntity file, final SuffixTree<Token> suffixTree) {
+    private static OptionalLong addFileIntoTree(final FileEntity file, final SuffixTree<Token> suffixTree) {
         return Parser.getFunctionsAsTokensV2(file)
                 .mapToLong(suffixTree::addSequence)
-                .max()
-                .orElseThrow();
+                .max();
     }
 
     @Value
