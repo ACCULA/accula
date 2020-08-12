@@ -1,5 +1,5 @@
 plugins {
-    id("org.springframework.boot") version "2.3.1.RELEASE"
+    id("org.springframework.boot") version "2.3.2.RELEASE"
     antlr
     java
 }
@@ -22,6 +22,7 @@ dependencies {
 
     antlr("org.antlr:antlr4:4.8-1")
     compileOnly("org.antlr:antlr4-runtime:4.8-1")
+    implementation("com.github.javaparser:javaparser-core:3.16.1")
 
     implementation("com.suhininalex:suffixtree:1.0.2")
     implementation("org.accula:clone-detector:1.0.1")

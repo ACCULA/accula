@@ -8,10 +8,10 @@ import java.util.concurrent.TimeUnit;
 
 public class RunCurrentDetector {
     public static void main(String[] args) {
-        final String SOURCE = "https://github.com/polis-mail-ru/2020-db-lsm";
+        final String SOURCE = "https://github.com/ACCULA/accula";
         final String TOKEN = "YOUR_TOKEN";
         final var dataProvider = new GitHubApiClient(SOURCE, TOKEN);
-        final var detector = new CurrentDetector(5);
+        final var detector = new CurrentDetector(15);
         final var start = System.nanoTime();
         final var clones = detector
                 .findClones(dataProvider.getFiles().take(1), dataProvider.getFiles().skip(1))
@@ -24,6 +24,6 @@ public class RunCurrentDetector {
 
         clones.count().subscribe(x -> System.err.println("Found " + x + " clones!"));
 
-        clones.subscribe();
+        clones.subscribe(System.err::println);
     }
 }
