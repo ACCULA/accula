@@ -116,7 +116,7 @@ public final class GitCodeLoader implements CodeLoader {
                         .zip(
                                 addOrUpdateRemote(repo, baseUrl, baseRemote, remotesPresent),
                                 addOrUpdateRemote(repo, headUrl, headRemote, remotesPresent),
-                                Lambda::firstArg
+                                Lambda.firstArg()
                         ));
     }
 
@@ -148,10 +148,8 @@ public final class GitCodeLoader implements CodeLoader {
                         .flatMapMany(Flux::fromStream));
     }
 
-    private static Function<
-            Mono<Map<Identifiable, String>>,
-            Mono<Stream<DiffEntry>>
-            > convertDiffEntries(final List<GitDiffEntry> diffEntries, final CommitSnapshot base, final CommitSnapshot head) {
+    private static Function<Mono<Map<Identifiable, String>>, Mono<Stream<DiffEntry>>>
+    convertDiffEntries(final List<GitDiffEntry> diffEntries, final CommitSnapshot base, final CommitSnapshot head) {
         return filesMono -> filesMono
                 .map(files -> diffEntries
                         .stream()
@@ -193,7 +191,7 @@ public final class GitCodeLoader implements CodeLoader {
     private static List<Snippet> convertSnippets(final List<GitFile> files, final List<SnippetMarker> markers) {
         final var nameToFileMap = files
                 .stream()
-                .collect(toMap(GitFile::getName, file -> file));
+                .collect(toMap(GitFile::getName, Lambda.identity()));
         return markers
                 .stream()
                 .map(marker -> {

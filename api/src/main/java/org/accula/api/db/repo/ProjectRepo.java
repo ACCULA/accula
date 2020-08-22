@@ -25,5 +25,11 @@ public interface ProjectRepo {
 
     Mono<Boolean> delete(Long id, Long creatorId);
 
-    Mono<Boolean> hasCreatorOrAdminWithId(Long projectId, Long userId);
+    Mono<Boolean> hasAdmin(Long projectId, Long userId);
+
+    Mono<Boolean> hasCreator(Long projectId, Long userId);
+
+    Mono<Project.Conf> upsertConf(Long id, Project.Conf conf);
+
+    Mono<Project.Conf> confById(Long id);
 }

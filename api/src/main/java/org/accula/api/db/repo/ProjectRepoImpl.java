@@ -121,7 +121,7 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
     }
 
     @Override
-    public Mono<Boolean> hasCreatorOrAdminWithId(final Long projectId, final Long userId) {
+    public Mono<Boolean> hasAdmin(final Long projectId, final Long userId) {
         return withConnection(connection -> Mono
                 .from(((PostgresqlStatement) connection
                         .createStatement("""
@@ -140,16 +140,105 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
                 .flatMap(result -> ConnectionProvidedRepo.column(result, "exists", Boolean.class)));
     }
 
+    @Override
+    public Mono<Boolean> hasCreator(final Long projectId, final Long userId) {
+        return withConnection(connection -> Mono
+                .from(((PostgresqlStatement) connection
+                        .createStatement("""
+                                SELECT exists(SELECT 1
+                                              FROM project
+                                              WHERE id = $1 AND creator_id = $2)
+                                """))
+                        .bind("$1", projectId)
+                        .bind("$2", userId)
+                        .execute())
+                .flatMap(result -> ConnectionProvidedRepo.column(result, "exists", Boolean.class)));
+    }
+
+    @Override
+    public Mono<Project.Conf> upsertConf(final Long id, final Project.Conf conf) {
+        return withConnection(connection ->
+                Mono.usingWhen(
+                        Mono.fromDirect(connection.beginTransaction()).then(Mono.just(connection)),
+                        conn -> {
+                            final var deleteProjectAdmins = ((PostgresqlStatement) conn.createStatement("""
+                                    DELETE FROM project_admin 
+                                    WHERE project_id = $1
+                                    """))
+                                    .bind("$1", id)
+                                    .execute()
+                                    .flatMap(PostgresqlResult::getRowsUpdated)
+                                    .then();
+
+                            final Mono<Void> insertAdminsBack;
+                            if (conf.getAdminIds().isEmpty()) {
+                                insertAdminsBack = Mono.empty();
+                            } else {
+                                final var insertAdminsBackStatement = BatchStatement.of(connection, """
+                                        INSERT INTO project_admin (project_id, admin_id)
+                                        VALUES ($collection)
+                                        """);
+                                insertAdminsBackStatement.bind(conf.getAdminIds(), adminId -> new Object[]{
+                                        id,
+                                        adminId
+                                });
+                                insertAdminsBack = insertAdminsBackStatement
+                                        .execute()
+                                        .flatMap(PostgresqlResult::getRowsUpdated)
+                                        .then();
+                            }
+
+                            final var upsertConf = ((PostgresqlStatement) conn.createStatement("""
+                                    INSERT INTO project_conf (project_id, clone_min_line_count)             
+                                    VALUES ($1, $2)
+                                    ON CONFLICT (project_id) DO UPDATE
+                                          SET clone_min_line_count = $2            
+                                    """))
+                                    .bind("$1", id)
+                                    .bind("$2", conf.getCloneMinLineCount())
+                                    .execute()
+                                    .flatMap(PostgresqlResult::getRowsUpdated)
+                                    .then();
+
+                            return deleteProjectAdmins
+                                    .then(insertAdminsBack)
+                                    .then(upsertConf)
+                                    .onErrorResume(e -> Mono.fromDirect(conn.rollbackTransaction()))
+                                    .thenReturn(conf);
+                        },
+                        Connection::commitTransaction
+                )
+        );
+    }
+
+    @Override
+    public Mono<Project.Conf> confById(final Long id) {
+        return withConnection(connection -> Mono.from(((PostgresqlStatement) connection.createStatement("""
+                SELECT conf.clone_min_line_count                AS clone_min_line_count,
+                       COALESCE(admins.ids, Array []::BIGINT[]) AS admin_ids
+                FROM project_conf conf
+                         LEFT JOIN (SELECT this.project_id,
+                                           array_agg(this.admin_id) AS ids
+                                    FROM project_admin this
+                                    GROUP BY this.project_id) admins
+                                   ON conf.project_id = admins.project_id
+                WHERE conf.project_id = $1
+                """))
+                .bind("$1", id)
+                .execute())
+                .flatMap(result -> ConnectionProvidedRepo.convert(result, this::convertConf)));
+    }
+
     private static PostgresqlStatement selectByIdStatement(final Connection connection) {
         return selectStatement(connection, """
                 WHERE p.id = $1
-                GROUP BY p.id, project_repo.id, project_repo_owner.id, project_creator.id, project_creator_github_user.id, pulls.count
+                GROUP BY p.id, project_repo.id, project_repo_owner.id, project_creator.id, project_creator_github_user.id, pulls.count, admins.ids
                 """);
     }
 
     private static PostgresqlStatement selectTopStatement(final Connection connection) {
         return selectStatement(connection, """
-                GROUP BY p.id, project_repo.id, project_repo_owner.id, project_creator.id, project_creator_github_user.id, pulls.count
+                GROUP BY p.id, project_repo.id, project_repo_owner.id, project_creator.id, project_creator_github_user.id, pulls.count, admins.ids
                 LIMIT $1
                 """);
     }
@@ -172,7 +261,8 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
                        project_creator_github_user.name    AS project_creator_github_user_name,
                        project_creator_github_user.avatar  AS project_creator_github_user_avatar,
                        project_creator_github_user.is_org  AS project_creator_github_user_is_org,
-                       pulls.count                         AS project_open_pull_count
+                       pulls.count                         AS project_open_pull_count,
+                       admins.ids                          AS project_admins
 
                 FROM project p
                          JOIN repo_github project_repo
@@ -188,6 +278,11 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
                                FROM pull
                                GROUP BY project_id) pulls
                               ON p.id = pulls.project_id
+                         LEFT JOIN (SELECT this.project_id,
+                                           array_agg(this.admin_id) AS ids
+                                    FROM project_admin this
+                                    GROUP BY this.project_id) admins
+                                   ON p.id = admins.project_id
                 """;
         return (PostgresqlStatement) connection.createStatement(String.format("%s %s", sql, terminatingCondition));
     }
@@ -213,6 +308,14 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
                         "project_creator_github_user_avatar",
                         "project_creator_github_user_is_org"))
                 .openPullCount(Converters.integer(row, "project_open_pull_count"))
+                .adminIds(Converters.ids(row, "project_admins"))
+                .build();
+    }
+
+    private Project.Conf convertConf(final Row row) {
+        return Project.Conf.builder()
+                .adminIds(Converters.ids(row, "admin_ids"))
+                .cloneMinLineCount(Converters.integer(row, "clone_min_line_count"))
                 .build();
     }
 }

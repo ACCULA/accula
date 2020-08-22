@@ -13,11 +13,15 @@ public final class ReactorSchedulers {
     private ReactorSchedulers() {
     }
 
-    public static Scheduler newBoundedElastic(final String name) {
+    public static Scheduler boundedElastic(final Object owner) {
+        return boundedElastic(owner.getClass().getSimpleName());
+    }
+
+    public static Scheduler boundedElastic(final String name) {
         return Schedulers.newBoundedElastic(
                 DEFAULT_BOUNDED_ELASTIC_SIZE,
                 DEFAULT_BOUNDED_ELASTIC_QUEUESIZE,
-                String.format("%s-boundedElastic", name),
+                name + "-boundedElastic",
                 60,
                 true
         );

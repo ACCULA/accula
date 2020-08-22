@@ -1,5 +1,7 @@
 package org.accula.api.github.api;
 
+import reactor.core.publisher.Mono;
+
 /**
  * @author Anton Lamtev
  */
@@ -8,5 +10,9 @@ public final class GithubClientException extends RuntimeException {
 
     GithubClientException(final Throwable t) {
         super(t);
+    }
+
+    static <T> Mono<T> wrap(final Throwable error) {
+        return Mono.error(new GithubClientException(error));
     }
 }

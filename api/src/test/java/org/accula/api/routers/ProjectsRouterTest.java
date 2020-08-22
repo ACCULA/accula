@@ -119,6 +119,9 @@ public class ProjectsRouterTest {
         Mockito.when(projectRepo.notExists(Mockito.anyLong()))
                 .thenReturn(Mono.just(TRUE));
 
+        Mockito.when(projectRepo.upsertConf(Mockito.anyLong(), Mockito.any(Project.Conf.class)))
+                .thenReturn(Mono.just(Project.Conf.DEFAULT));
+
         Mockito.when(pullRepo.upsert(Mockito.anyCollection()))
                 .thenReturn(Flux.fromIterable(PULLS));
 

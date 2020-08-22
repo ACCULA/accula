@@ -6,6 +6,7 @@ import org.accula.api.db.model.Project;
 import org.accula.api.db.model.Pull;
 import org.accula.api.db.model.User;
 import org.accula.api.handlers.dto.GithubUserDto;
+import org.accula.api.handlers.dto.ProjectConfDto;
 import org.accula.api.handlers.dto.ProjectDto;
 import org.accula.api.handlers.dto.PullDto;
 import org.accula.api.handlers.dto.ShortPullDto;
@@ -45,6 +46,14 @@ public final class ModelToDtoConverter {
                         project.getGithubRepo().getName()))
                 .repoOpenPullCount(openPullCount)
                 .creatorId(project.getCreator().getId())
+                .adminIds(project.getAdminIds())
+                .build();
+    }
+
+    public static ProjectConfDto convert(final Project.Conf conf) {
+        return ProjectConfDto.builder()
+                .admins(conf.getAdminIds())
+                .cloneMinLineCount(conf.getCloneMinLineCount())
                 .build();
     }
 

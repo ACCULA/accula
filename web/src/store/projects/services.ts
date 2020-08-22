@@ -72,7 +72,7 @@ export const getRepoAdmins = async (id: number, token: IToken): Promise<IUser[]>
     return Promise.resolve([])
   }
   return axios
-    .get(`${API_URL}/api/projects/${id}/admins`, {
+    .get(`${API_URL}/api/projects/${id}/githubAdmins`, {
       headers: {
         Accept: 'application/json',
         Authorization: `Bearer ${token.accessToken}`

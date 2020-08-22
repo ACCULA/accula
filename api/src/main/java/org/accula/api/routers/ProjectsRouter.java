@@ -10,6 +10,7 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.web.reactive.function.server.RequestPredicates.accept;
+import static org.springframework.web.reactive.function.server.RequestPredicates.path;
 
 /**
  * @author Anton Lamtev
@@ -25,13 +26,14 @@ public final class ProjectsRouter {
                 .route()
                 .path("/api/projects", b1 -> b1
                         .GET("", projectsHandler::getTop)
-                        .GET("/{id}", projectsHandler::get)
-                        .GET("/{id}/admins", projectsHandler::getRepoAdmins)
-                        .GET("/{id}/conf", projectsHandler::getConf)
-                        .nest(accept(APPLICATION_JSON), b2 -> b2
-                                .POST("", projectsHandler::create)
-                                .PUT("/{id}/conf", projectsHandler::updateConf)
-                                .DELETE("/{id}", projectsHandler::delete)))
+                        .POST("", accept(APPLICATION_JSON), projectsHandler::create)
+                        .nest(path("/{id}"), b2 -> b2
+                                .GET("", projectsHandler::get)
+                                .DELETE("", projectsHandler::delete)
+                                .GET("/githubAdmins", projectsHandler::githubAdmins)
+                                .nest(path("/conf"), b3 -> b3
+                                        .GET("", projectsHandler::getConf)
+                                        .PUT("", accept(APPLICATION_JSON), projectsHandler::updateConf))))
                 .build();
     }
 }

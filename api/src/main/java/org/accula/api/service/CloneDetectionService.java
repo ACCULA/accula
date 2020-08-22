@@ -14,6 +14,7 @@ import org.accula.api.util.ReactorSchedulers;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Scheduler;
+import reactor.function.TupleUtils;
 import reactor.util.function.Tuple2;
 
 /**
@@ -23,7 +24,7 @@ import reactor.util.function.Tuple2;
 @Service
 @RequiredArgsConstructor
 public final class CloneDetectionService {
-    private final Scheduler processingScheduler = ReactorSchedulers.newBoundedElastic(getClass().getSimpleName());
+    private final Scheduler processingScheduler = ReactorSchedulers.boundedElastic(this);
     private final PullRepo pullRepo;
     private final CloneRepo cloneRepo;
     private final CloneDetector detector;
@@ -40,7 +41,7 @@ public final class CloneDetectionService {
         final var clones = detector
                 .findClones(targetFiles, sourceFiles)
                 .subscribeOn(processingScheduler)
-                .map(this::convert);
+                .map(TupleUtils.function(this::convert));
 
         return clones
                 .collectList()
@@ -48,9 +49,7 @@ public final class CloneDetectionService {
                 .flatMapMany(cloneRepo::insert);
     }
 
-    private Clone convert(final Tuple2<CodeSnippet, CodeSnippet> clone) {
-        final CodeSnippet target = clone.getT1();
-        final CodeSnippet source = clone.getT2();
+    private Clone convert(final CodeSnippet target, final CodeSnippet source) {
         return Clone.builder()
                 .targetSnapshot(target.getCommitSnapshot())
                 .targetFile(target.getFile())

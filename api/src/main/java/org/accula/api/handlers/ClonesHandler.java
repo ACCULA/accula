@@ -15,13 +15,13 @@ import org.accula.api.db.repo.PullRepo;
 import org.accula.api.handlers.dto.CloneDto;
 import org.accula.api.handlers.dto.CloneDto.FlatCodeSnippet.FlatCodeSnippetBuilder;
 import org.accula.api.service.CloneDetectionService;
+import org.accula.api.util.Lambda;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple4;
 
 import java.util.ArrayList;
 import java.util.Base64;
@@ -81,7 +81,7 @@ public final class ClonesHandler {
     private <T> Flux<T> doIfCurrentUserHasAdminPermissionInProject(final long projectId, final Flux<T> action) {
         return currentUserRepo
                 .get(User::getId)
-                .filterWhen(currentUserId -> projectRepo.hasCreatorOrAdminWithId(projectId, currentUserId))
+                .filterWhen(currentUserId -> projectRepo.hasAdmin(projectId, currentUserId))
                 .flatMapMany(currentUserId -> action);
     }
 
@@ -128,7 +128,7 @@ public final class ClonesHandler {
                         targetFileSnippets,
                         sourceFileSnippets,
                         sourcePullNumbers)
-                .map(tuple -> toCloneDto(tuple, projectId, pullNumber));
+                .map(Lambda.passingTailArgs(ClonesHandler::toCloneDto, projectId, pullNumber));
 
         return ServerResponse
                 .ok()
@@ -136,12 +136,12 @@ public final class ClonesHandler {
                 .body(responseClones, CloneDto.class);
     }
 
-    private CloneDto toCloneDto(final Tuple4<Clone, FileEntity, FileEntity, Integer> tuple,
-                                final long projectId,
-                                final int targetPullNumber) {
-        final var clone = tuple.getT1();
-
-        final var targetFile = tuple.getT2();
+    private static CloneDto toCloneDto(final Clone clone,
+                                       final FileEntity targetFile,
+                                       final FileEntity sourceFile,
+                                       final Integer sourcePullNumber,
+                                       final long projectId,
+                                       final int targetPullNumber) {
         final var target = codeSnippetWith(targetFile.getCommitSnapshot(), Objects.requireNonNull(targetFile.getContent()))
                 .projectId(projectId)
                 .pullNumber(targetPullNumber)
@@ -150,8 +150,6 @@ public final class ClonesHandler {
                 .toLine(clone.getTargetToLine())
                 .build();
 
-        final var sourceFile = tuple.getT3();
-        final var sourcePullNumber = tuple.getT4();
         final var source = codeSnippetWith(sourceFile.getCommitSnapshot(), Objects.requireNonNull(sourceFile.getContent()))
                 .projectId(projectId)
                 .pullNumber(sourcePullNumber)

@@ -93,7 +93,7 @@ export const ProjectConfigurationTab = ({
           className="pull-right"
           onClick={() =>
             updateConf({
-              admins: admins.map(u => u.id),
+              admins: admins.map(u => u.value),
               cloneMinLineCount
             })
           }
