@@ -22,7 +22,7 @@ public interface InputDto {
                 if (field.get(this) == null) {
                     return false;
                 }
-            } catch (Throwable e) {
+            } catch (Exception e) {
                 return false;
             }
         }
