@@ -130,8 +130,13 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
                 .from(((PostgresqlStatement) connection
                         .createStatement("""
                                 SELECT exists(SELECT 1
+                                              FROM project
+                                              WHERE id = $1 AND creator_id = $2)
+                                           OR
+                                       exists(SELECT 1
                                               FROM project_admin
                                               WHERE project_id = $1 AND admin_id = $2)
+                                           AS exists
                                 """))
                         .bind("$1", projectId)
                         .bind("$2", userId)
