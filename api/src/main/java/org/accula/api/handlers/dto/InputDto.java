@@ -1,5 +1,7 @@
 package org.accula.api.handlers.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
@@ -7,6 +9,7 @@ import java.lang.annotation.RetentionPolicy;
  * @author Anton Lamtev
  */
 public interface InputDto {
+    @JsonIgnore
     default boolean isValid() {
         for (final var field : this.getClass().getDeclaredFields()) {
             if (field.getAnnotation(OptionalField.class) != null) {

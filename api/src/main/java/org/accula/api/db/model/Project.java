@@ -23,7 +23,7 @@ public class Project {
     @Builder.Default
     List<Long> adminIds = Collections.emptyList();
 
-    @Builder
+    @Builder(toBuilder = true)
     @Value
     public static class Conf {
         public static final Conf DEFAULT = builder()

@@ -1,6 +1,7 @@
 package org.accula.api.converter;
 
 import org.accula.api.db.model.Project;
+import org.accula.api.handlers.dto.InputDto;
 import org.accula.api.handlers.dto.ProjectConfDto;
 
 /**
@@ -11,13 +12,17 @@ public final class DtoToModelConverter {
     }
 
     public static Project.Conf convert(final ProjectConfDto conf) {
-        if (!conf.isValid()) {
-            throw new ValidationException();
-        }
+        validate(conf);
         return Project.Conf.builder()
                 .adminIds(conf.getAdmins())
                 .cloneMinLineCount(conf.getCloneMinLineCount())
                 .build();
+    }
+
+    private static void validate(final InputDto dto) {
+        if (!dto.isValid()) {
+            throw new ValidationException();
+        }
     }
 
     public static class ValidationException extends RuntimeException {
