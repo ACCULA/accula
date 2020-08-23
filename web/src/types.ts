@@ -70,7 +70,7 @@ export interface IPull {
   open: boolean
   createdAt: string
   updatedAt: string
-  status: string
+  cloneDetectionState: string
   cloneCount: number
   previousPulls: IShortPull[]
 }

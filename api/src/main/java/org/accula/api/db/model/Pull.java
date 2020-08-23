@@ -6,6 +6,9 @@ import lombok.Value;
 
 import java.time.Instant;
 
+/**
+ * @author Anton Lamtev
+ */
 @Builder
 @Value
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
@@ -21,4 +24,15 @@ public class Pull {
     CommitSnapshot base;
     GithubUser author;
     Long projectId;
+    CloneDetectionState cloneDetectionState;
+
+    public enum CloneDetectionState {
+        NOT_YET_RUN,
+        PENDING,
+        RUNNING,
+        FINISHED,
+        ;
+
+        public static String POSTGRES_NAME = "clone_detection_state_e";
+    }
 }

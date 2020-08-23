@@ -21,8 +21,7 @@ public class PullDto {
     Boolean open;
     Instant createdAt;
     Instant updatedAt;
-    @Builder.Default
-    CloneStatus status = CloneStatus.FINISHED;
+    CloneDetectionState cloneDetectionState;
     @Builder.Default
     Integer cloneCount = 0;
     GithubUserDto author;
@@ -34,8 +33,10 @@ public class PullDto {
         String label;
     }
 
-    public enum CloneStatus {
+    public enum CloneDetectionState {
+        NOT_YET_RUN,
         PENDING,
+        RUNNING,
         FINISHED,
         ;
     }

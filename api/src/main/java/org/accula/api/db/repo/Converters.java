@@ -198,7 +198,8 @@ final class Converters {
                             final String authorName,
                             final String authorAvatar,
                             final String authorIsOrg,
-                            final String projectId) {
+                            final String projectId,
+                            final String cloneDetectionState) {
         return Pull.builder()
                 .id(Converters.value(row, id, Long.class))
                 .number(Converters.value(row, number, Integer.class))
@@ -237,6 +238,7 @@ final class Converters {
                         authorAvatar,
                         authorIsOrg))
                 .projectId(Converters.value(row, projectId, Long.class))
+                .cloneDetectionState(Converters.value(row, cloneDetectionState, Pull.CloneDetectionState.class))
                 .build();
     }
 

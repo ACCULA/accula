@@ -76,6 +76,8 @@ CREATE TABLE IF NOT EXISTS commit_snapshot
     CONSTRAINT commit_snapshot_pk PRIMARY KEY (sha, repo_id)
 );
 
+CREATE TYPE clone_detection_state_e AS ENUM ('NOT_YET_RUN', 'PENDING', 'RUNNING', 'FINISHED');
+
 CREATE TABLE IF NOT EXISTS pull
 (
     id                           BIGINT PRIMARY KEY,
@@ -93,6 +95,8 @@ CREATE TABLE IF NOT EXISTS pull
 
     project_id                   BIGINT                   NOT NULL,
     author_github_id             BIGINT                   NOT NULL,
+
+    clone_detection_state        CLONE_DETECTION_STATE_E  NOT NULL DEFAULT 'NOT_YET_RUN',
 
     FOREIGN KEY (head_commit_snapshot_sha, head_commit_snapshot_repo_id) REFERENCES commit_snapshot (sha, repo_id),
     FOREIGN KEY (base_commit_snapshot_sha, base_commit_snapshot_repo_id) REFERENCES commit_snapshot (sha, repo_id),

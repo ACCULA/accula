@@ -55,7 +55,7 @@ export const pulls: IPull[] = [
     open: false,
     createdAt: '2019-09-30T06:09:57Z',
     updatedAt: '2019-10-06T09:00:40Z',
-    status: 'Read',
+    cloneDetectionState: 'FINISHED',
     cloneCount: 100,
     previousPulls: []
   },
@@ -80,7 +80,7 @@ export const pulls: IPull[] = [
     open: true,
     createdAt: '2020-05-06T13:02:18Z',
     updatedAt: '2020-05-11T04:02:18Z',
-    status: 'Processing',
+    cloneDetectionState: 'RUNNING',
     cloneCount: 0,
     previousPulls: []
   }

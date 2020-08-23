@@ -76,6 +76,7 @@ public final class ModelToDtoConverter {
                 .open(pull.isOpen())
                 .createdAt(pull.getCreatedAt())
                 .updatedAt(pull.getUpdatedAt())
+                .cloneDetectionState(convert(pull.getCloneDetectionState()))
                 .author(convert(pull.getAuthor()))
                 .previousPulls(convertShort(previousPulls))
                 .build();
@@ -91,6 +92,15 @@ public final class ModelToDtoConverter {
                 ),
                 String.format("%s:%s", snapshot.getRepo().getOwner().getLogin(), snapshot.getBranch())
         );
+    }
+
+    public static PullDto.CloneDetectionState convert(final Pull.CloneDetectionState state) {
+        return switch (state) {
+            case NOT_YET_RUN -> PullDto.CloneDetectionState.NOT_YET_RUN;
+            case PENDING -> PullDto.CloneDetectionState.PENDING;
+            case RUNNING -> PullDto.CloneDetectionState.RUNNING;
+            case FINISHED -> PullDto.CloneDetectionState.FINISHED;
+        };
     }
 
     public static List<ShortPullDto> convertShort(final List<Pull> pulls) {
