@@ -194,13 +194,15 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
     private static PostgresqlStatement selectByIdStatement(final Connection connection) {
         return selectStatement(connection, """
                 WHERE p.id = $1
-                GROUP BY p.id, project_repo.id, project_repo_owner.id, project_creator.id, project_creator_github_user.id, pulls.count, admins.ids
+                GROUP BY p.id, project_repo.id, project_repo_owner.id, project_creator.id, project_creator_github_user.id,
+                         pulls.count, admins.ids
                 """);
     }
 
     private static PostgresqlStatement selectTopStatement(final Connection connection) {
         return selectStatement(connection, """
-                GROUP BY p.id, project_repo.id, project_repo_owner.id, project_creator.id, project_creator_github_user.id, pulls.count, admins.ids
+                GROUP BY p.id, project_repo.id, project_repo_owner.id, project_creator.id, project_creator_github_user.id,
+                         pulls.count, admins.ids
                 LIMIT $1
                 """);
     }

@@ -7,7 +7,7 @@ import reactor.function.TupleUtils;
 /**
  * @author Anton Lamtev
  */
-public class RLambda {
+public final class RLambda {
     private RLambda() {
     }
 

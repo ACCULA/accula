@@ -44,6 +44,10 @@ plugins:
         enabled: false
       AvoidInstantiatingObjectsInLoops:
         enabled: false
+      AvoidFieldNameMatchingMethodName:
+         enabled: false
+      AvoidCatchingGenericException:
+        enabled: false
 
     config:
       file: pmd.xml
