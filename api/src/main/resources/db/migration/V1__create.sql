@@ -58,6 +58,14 @@ CREATE TABLE IF NOT EXISTS project_admin
     CONSTRAINT project_admin_pk PRIMARY KEY (project_id, admin_id)
 );
 
+CREATE TABLE IF NOT EXISTS project_conf
+(
+    project_id           BIGINT PRIMARY KEY,
+    clone_min_line_count INT NOT NULL,
+
+    FOREIGN KEY (project_id) REFERENCES project (id)
+);
+
 CREATE TABLE IF NOT EXISTS commit_snapshot
 (
     sha     CHAR(40)     NOT NULL,

@@ -12,6 +12,6 @@ import static lombok.AccessLevel.PRIVATE;
 @Value
 @NoArgsConstructor(force = true, access = PRIVATE)
 @AllArgsConstructor
-public class CreateProjectRequestBody implements RequestBody{
+public class CreateProjectRequestBody implements RequestBody {
     String githubRepoUrl;
 }

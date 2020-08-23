@@ -23,7 +23,9 @@ import org.accula.api.github.model.GithubApiPull.State;
 import org.accula.api.github.model.GithubApiRepo;
 import org.accula.api.github.model.GithubApiUser;
 import org.accula.api.handlers.ProjectsHandler;
+import org.accula.api.handlers.dto.ProjectConfDto;
 import org.accula.api.handlers.dto.ProjectDto;
+import org.accula.api.handlers.dto.UserDto;
 import org.accula.api.handlers.request.CreateProjectRequestBody;
 import org.accula.api.handlers.request.RequestBody;
 import org.accula.api.handlers.util.ProjectUpdater;
@@ -45,68 +47,71 @@ import java.util.List;
 
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 @WebFluxTest
-@ContextConfiguration(classes = {ProjectsHandler.class, ProjectsRouter.class, GithubApiToModelConverter.class, ModelToDtoConverter.class, WebhookProperties.class})
-public class ProjectsRouterTest {
-    private static final String REPO_URL = "https://github.com/accula/accula";
-    private static final String REPO_NAME = "accula";
-    private static final String REPO_OWNER = "accula";
+@ContextConfiguration(classes = {ProjectsHandler.class, ProjectsRouter.class, GithubApiToModelConverter.class, WebhookProperties.class})
+class ProjectsRouterTest {
+    static final String REPO_URL = "https://github.com/accula/accula";
+    static final String REPO_NAME = "accula";
+    static final String REPO_OWNER = "accula";
 
-    private static final Pull PULL = Pull.builder()
+    static final Pull PULL = Pull.builder()
             .id(1L)
             .projectId(1L)
             .open(true)
             .head(CommitSnapshot.builder().build())
             .base(CommitSnapshot.builder().build())
             .build();
-    private static final List<Pull> PULLS = List.of(PULL, PULL, PULL);
-    private static final String EMPTY = "";
-    private static final GithubUser GITHUB_USER = new GithubUser(1L, "login", "name", "avatar", false);
-    private static final User CURRENT_USER = new User(0L, "", GITHUB_USER);
-    private static final GithubApiUser GH_OWNER = new GithubApiUser(1L, REPO_OWNER, EMPTY, EMPTY, EMPTY, GithubApiUser.Type.USER);
-    private static final GithubApiRepo GH_REPO = new GithubApiRepo(1L, REPO_URL, REPO_NAME, EMPTY, GH_OWNER);
-    private static final GithubApiCommitSnapshot MARKER = new GithubApiCommitSnapshot("", "", GH_OWNER, GH_REPO, "");
-    private static final GithubApiPull GH_PULL = new GithubApiPull(0L, "", MARKER, MARKER, GH_OWNER, 0, "", State.OPEN, Instant.now(), Instant.now());
-    private static final GithubApiPull[] OPEN_PULLS = new GithubApiPull[]{GH_PULL, GH_PULL, GH_PULL};
-    private static final GithubRepo REPO = new GithubRepo(1L, "name", "description", GITHUB_USER);
-    private static final Project PROJECT = Project.builder().id(1L).githubRepo(REPO).creator(CURRENT_USER).openPullCount(OPEN_PULLS.length).build();
-    private static final RequestBody REQUEST_BODY = new CreateProjectRequestBody(REPO_URL);
-    private static final String INVALID_REPO_URL = "htps://bad_url";
-    private static final RequestBody REQUEST_BODY_INVALID_URL = new CreateProjectRequestBody(INVALID_REPO_URL);
-    private static final String ERROR_FORMAT = "{\"error\":\"%s\"}";
-    private static final GithubClientException GH_EXCEPTION = newGithubException();
+    static final List<Pull> PULLS = List.of(PULL, PULL, PULL);
+    static final String EMPTY = "";
+    static final GithubUser GITHUB_USER = new GithubUser(1L, "login", "name", "avatar", false);
+    static final User CURRENT_USER = new User(0L, "", GITHUB_USER);
+    static final GithubUser GH_USER_2 = new GithubUser(2L, "l", "n", "a", false);
+    static final User USER_2 = new User(1L, "", GH_USER_2);
+    static final GithubUser GH_USER_3 = new GithubUser(3L, "l", "n", "a", false);
+    static final User USER_3 = new User(2L, "", GH_USER_3);
+    static final GithubApiUser GH_OWNER = new GithubApiUser(1L, REPO_OWNER, EMPTY, EMPTY, EMPTY, GithubApiUser.Type.USER);
+    static final GithubApiRepo GH_REPO = new GithubApiRepo(1L, REPO_URL, REPO_NAME, EMPTY, GH_OWNER);
+    static final GithubApiCommitSnapshot MARKER = new GithubApiCommitSnapshot("", "", GH_OWNER, GH_REPO, "");
+    static final GithubApiPull GH_PULL = new GithubApiPull(0L, "", MARKER, MARKER, GH_OWNER, 0, "", State.OPEN, Instant.now(), Instant.now());
+    static final GithubApiPull[] OPEN_PULLS = new GithubApiPull[]{GH_PULL, GH_PULL, GH_PULL};
+    static final GithubRepo REPO = new GithubRepo(1L, "name", "description", GITHUB_USER);
+    static final Project PROJECT = Project.builder().id(1L).githubRepo(REPO).creator(CURRENT_USER).openPullCount(OPEN_PULLS.length).build();
+    static final RequestBody REQUEST_BODY = new CreateProjectRequestBody(REPO_URL);
+    static final String INVALID_REPO_URL = "htps://bad_url";
+    static final RequestBody REQUEST_BODY_INVALID_URL = new CreateProjectRequestBody(INVALID_REPO_URL);
+    static final String ERROR_FORMAT = "{\"error\":\"%s\"}";
+    static final GithubClientException GH_EXCEPTION = newGithubException();
 
     @MockBean
-    private ProjectUpdater projectUpdater;
+    ProjectUpdater projectUpdater;
     @MockBean
-    private GithubUserRepo githubUserRepo;
+    GithubUserRepo githubUserRepo;
     @MockBean
-    private CurrentUserRepo currentUser;
+    CurrentUserRepo currentUser;
     @MockBean
-    private ProjectRepo projectRepo;
+    ProjectRepo projectRepo;
     @MockBean
-    private UserRepo userRepo;
+    UserRepo userRepo;
     @MockBean
-    private PullRepo pullRepo;
+    PullRepo pullRepo;
     @MockBean
-    private GithubClient githubClient;
+    GithubClient githubClient;
     @Autowired
-    private ModelToDtoConverter converter;
-    @Autowired
-    private RouterFunction<ServerResponse> projectsRoute;
-    private WebTestClient client;
+    RouterFunction<ServerResponse> projectsRoute;
+    WebTestClient client;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         client = WebTestClient
                 .bindToRouterFunction(projectsRoute)
                 .build();
     }
 
     @Test
-    public void testCreateProjectSuccess() {
+    void testCreateProjectSuccess() {
         Mockito.when(currentUser.get())
                 .thenReturn(Mono.just(CURRENT_USER));
 
@@ -118,6 +123,9 @@ public class ProjectsRouterTest {
 
         Mockito.when(projectRepo.notExists(Mockito.anyLong()))
                 .thenReturn(Mono.just(TRUE));
+
+        Mockito.when(projectRepo.upsertConf(Mockito.anyLong(), Mockito.any(Project.Conf.class)))
+                .thenReturn(Mono.just(Project.Conf.DEFAULT));
 
         Mockito.when(pullRepo.upsert(Mockito.anyCollection()))
                 .thenReturn(Flux.fromIterable(PULLS));
@@ -137,7 +145,7 @@ public class ProjectsRouterTest {
         Mockito.when(githubClient.createHook(Mockito.any(), Mockito.any(), Mockito.any()))
                 .thenReturn(Mono.empty());
 
-        final var expectedBody = converter.convert(PROJECT);
+        final var expectedBody = ModelToDtoConverter.convert(PROJECT);
 
         client.post().uri("/api/projects")
                 .contentType(APPLICATION_JSON)
@@ -149,7 +157,7 @@ public class ProjectsRouterTest {
     }
 
     @Test
-    public void testCreateProjectFailureInvalidUrl() {
+    void testCreateProjectFailureInvalidUrl() {
         client.post().uri("/api/projects")
                 .contentType(APPLICATION_JSON)
                 .bodyValue(REQUEST_BODY_INVALID_URL)
@@ -159,7 +167,7 @@ public class ProjectsRouterTest {
     }
 
     @Test
-    public void testCreateProjectFailureWrongUrl() {
+    void testCreateProjectFailureWrongUrl() {
         Mockito.when(currentUser.get())
                 .thenReturn(Mono.just(CURRENT_USER));
 
@@ -182,7 +190,7 @@ public class ProjectsRouterTest {
     }
 
     @Test
-    public void testCreateProjectFailureAlreadyExists() {
+    void testCreateProjectFailureAlreadyExists() {
         Mockito.when(currentUser.get())
                 .thenReturn(Mono.just(CURRENT_USER));
 
@@ -209,7 +217,7 @@ public class ProjectsRouterTest {
     }
 
     @Test
-    public void testCreateProjectFailureNoPermission() {
+    void testCreateProjectFailureNoPermission() {
         Mockito.when(currentUser.get())
                 .thenReturn(Mono.just(CURRENT_USER));
 
@@ -233,7 +241,7 @@ public class ProjectsRouterTest {
     }
 
     @Test
-    public void testGetProjectSuccess() {
+    void testGetProjectSuccess() {
         Mockito.when(githubUserRepo.upsert(Mockito.any(GithubUser.class)))
                 .thenReturn(Mono.just(GITHUB_USER));
 
@@ -249,7 +257,7 @@ public class ProjectsRouterTest {
     }
 
     @Test
-    public void testGetProjectFailure() {
+    void testGetProjectFailure() {
         Mockito.when(projectRepo.findById(0L))
                 .thenReturn(Mono.empty());
 
@@ -259,7 +267,7 @@ public class ProjectsRouterTest {
     }
 
     @Test
-    public void testGetAllProjects() {
+    void testGetAllProjects() {
         Mockito.when(projectRepo.getTop(Mockito.anyInt()))
                 .thenReturn(Flux.fromArray(new Project[]{PROJECT, PROJECT}));
 
@@ -272,7 +280,7 @@ public class ProjectsRouterTest {
     }
 
     @Test
-    public void testDeleteProject() {
+    void testDeleteProject() {
         Mockito.when(currentUser.get(Mockito.any()))
                 .thenReturn(Mono.just(0L));
 
@@ -282,6 +290,79 @@ public class ProjectsRouterTest {
         client.delete().uri("/api/projects/{id}", PROJECT.getId())
                 .exchange()
                 .expectStatus().isOk();
+    }
+
+    @Test
+    void testGetGithubAdmins() {
+        Mockito.when(currentUser.get(Mockito.any()))
+                .thenReturn(Mono.just(0L));
+        Mockito.when(projectRepo.hasCreator(Mockito.anyLong(), Mockito.anyLong()))
+                .thenReturn(Mono.just(TRUE));
+        Mockito.when(projectRepo.findById(Mockito.anyLong()))
+                .thenReturn(Mono.just(PROJECT));
+        Mockito.when(githubClient.getRepoAdmins(Mockito.anyString(), Mockito.anyString()))
+                .thenReturn(Mono.just(List.of(1L, 2L)));
+        Mockito.when(userRepo.findByGithubIds(Mockito.anyCollection()))
+                .thenReturn(Flux.fromIterable(List.of(USER_2, USER_3)));
+
+        client.get().uri("/api/projects/{id}/githubAdmins", PROJECT.getId())
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(UserDto[].class).value(it -> assertEquals(2, it.length));
+    }
+
+    @Test
+    void testGetConf() {
+        Mockito.when(currentUser.get(Mockito.any()))
+                .thenReturn(Mono.just(0L));
+        Mockito.when(projectRepo.hasAdmin(Mockito.anyLong(), Mockito.anyLong()))
+                .thenReturn(Mono.just(TRUE));
+        final var adminIds = List.of(1L, 2L);
+        Mockito.when(projectRepo.confById(Mockito.anyLong()))
+                .thenReturn(Mono.just(Project.Conf.DEFAULT.toBuilder().adminIds(adminIds).build()));
+
+        client.get().uri("/api/projects/{id}/conf", PROJECT.getId())
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(ProjectConfDto.class)
+                .isEqualTo(ProjectConfDto.builder()
+                        .admins(adminIds)
+                        .cloneMinLineCount(Project.Conf.DEFAULT.getCloneMinLineCount())
+                        .build());
+    }
+
+    @Test
+    void testPutConf() {
+        Mockito.when(currentUser.get(Mockito.any()))
+                .thenReturn(Mono.just(0L));
+        Mockito.when(projectRepo.hasAdmin(Mockito.anyLong(), Mockito.anyLong()))
+                .thenReturn(Mono.just(TRUE));
+        final var adminIds = List.of(1L, 2L);
+        Mockito.when(projectRepo.upsertConf(Mockito.anyLong(), Mockito.any(Project.Conf.class)))
+                .thenReturn(Mono.just(Project.Conf.DEFAULT.toBuilder().adminIds(adminIds).build()));
+
+        client.put().uri("/api/projects/{id}/conf", PROJECT.getId())
+                .contentType(APPLICATION_JSON)
+                .bodyValue(ProjectConfDto.builder()
+                        .admins(adminIds)
+                        .cloneMinLineCount(Project.Conf.DEFAULT.getCloneMinLineCount())
+                        .build())
+                .exchange()
+                .expectStatus().isOk();
+    }
+
+    @Test
+    void testPutConfBadRequest() {
+        Mockito.when(currentUser.get(Mockito.any()))
+                .thenReturn(Mono.just(0L));
+        Mockito.when(projectRepo.hasAdmin(Mockito.anyLong(), Mockito.anyLong()))
+                .thenReturn(Mono.just(TRUE));
+
+        client.put().uri("/api/projects/{id}/conf", PROJECT.getId())
+                .contentType(APPLICATION_JSON)
+                .bodyValue(ProjectConfDto.builder().build())
+                .exchange()
+                .expectStatus().isBadRequest();
     }
 
     @SneakyThrows

@@ -12,10 +12,10 @@ import org.accula.api.db.repo.GithubRepoRepo;
 import org.accula.api.db.repo.GithubUserRepo;
 import org.accula.api.db.repo.PullRepo;
 import org.accula.api.github.model.GithubApiPull;
+import org.accula.api.util.ReactorSchedulers;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
-import reactor.core.scheduler.Schedulers;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -28,7 +28,7 @@ import java.util.Set;
 @Slf4j
 @RequiredArgsConstructor
 public final class ProjectUpdater {
-    private final Scheduler processingScheduler = Schedulers.boundedElastic();
+    private final Scheduler processingScheduler = ReactorSchedulers.boundedElastic(this);
     private final GithubApiToModelConverter converter;
     private final GithubUserRepo githubUserRepo;
     private final GithubRepoRepo githubRepoRepo;

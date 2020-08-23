@@ -1,12 +1,12 @@
 plugins {
-    id("org.springframework.boot") version "2.3.2.RELEASE"
+    id("org.springframework.boot") version "2.3.3.RELEASE"
     id("io.spring.dependency-management") version "1.0.9.RELEASE"
-    id("net.bytebuddy.byte-buddy-gradle-plugin") version "1.10.11"
+    id("net.bytebuddy.byte-buddy-gradle-plugin") version "1.10.14"
     antlr
 }
 
 repositories {
-    maven(url = "https://dl.bintray.com/vorpal-research/kotlin-maven/")
+    maven(url = "https://dl.bintray.com/vorpal-research/kotlin-maven")
     maven(url =  "https://dl.bintray.com/accula/clone-detector")
 }
 

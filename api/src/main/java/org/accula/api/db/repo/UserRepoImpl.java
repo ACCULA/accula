@@ -53,7 +53,7 @@ public final class UserRepoImpl implements UserRepo, ConnectionProvidedRepo {
                                 githubAccessToken,
                                 githubUser
                         ))))
-                .doOnSuccess(user -> onUpserts
+                .doOnNext(user -> onUpserts
                         .forEach(onUpsert -> onUpsert.onUpsert(user.getId())));
     }
 

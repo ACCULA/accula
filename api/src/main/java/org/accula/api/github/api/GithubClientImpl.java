@@ -7,11 +7,14 @@ import org.accula.api.github.model.GithubApiPull;
 import org.accula.api.github.model.GithubApiRepo;
 import org.accula.api.github.model.GithubApiUserPermission;
 import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+import reactor.function.TupleUtils;
 
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import static java.lang.Boolean.FALSE;
@@ -29,10 +32,9 @@ public final class GithubClientImpl implements GithubClient {
     private final LoginProvider loginProvider;
     private final WebClient githubApiWebClient;
 
-    public GithubClientImpl(final AccessTokenProvider accessTokenProvider,
-                            final LoginProvider loginProvider,
-                            final WebClient webClient) {
+    public GithubClientImpl(final AccessTokenProvider accessTokenProvider, final LoginProvider loginProvider, final WebClient webClient) {
         this.accessTokenProvider = accessTokenProvider;
+        this.loginProvider = loginProvider;
         this.githubApiWebClient = webClient
                 .mutate()
                 .baseUrl("https://api.github.com")
@@ -41,28 +43,28 @@ public final class GithubClientImpl implements GithubClient {
                         .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(10_000_000))
                         .build())
                 .build();
-        this.loginProvider = loginProvider;
     }
 
     @Override
     public Mono<Boolean> hasAdminPermission(final String owner, final String repo) {
-        return Mono
-                .zip(accessTokenProvider.accessToken(), loginProvider.login())
-                .flatMap(accessTokenAndLogin -> githubApiWebClient
-                        .get()
-                        .uri("/repos/{owner}/{repo}/collaborators/{user}/permission", owner, repo, accessTokenAndLogin.getT2())
-                        .headers(h -> h.setBearerAuth(accessTokenAndLogin.getT1()))
-                        .exchange()
-                        .flatMap(response -> {
-                            if (response.statusCode() != OK) {
-                                return Mono.just(FALSE);
-                            }
+        final BiFunction<String, String, Mono<ClientResponse>> requestUserPermissions = (accessToken, login) -> githubApiWebClient
+                .get()
+                .uri("/repos/{owner}/{repo}/collaborators/{user}/permission", owner, repo, login)
+                .headers(h -> h.setBearerAuth(accessToken))
+                .exchange();
+        return accessTokenProvider.accessToken()
+                .zipWith(loginProvider.login())
+                .flatMap(TupleUtils.function(requestUserPermissions))
+                .flatMap(response -> {
+                    if (response.statusCode() != OK) {
+                        return Mono.just(FALSE);
+                    }
 
-                            return response
-                                    .bodyToMono(GithubApiUserPermission.class)
-                                    .map(permission -> permission.getPermission() == ADMIN);
-                        })
-                        .onErrorResume(e -> Mono.error(new GithubClientException(e))));
+                    return response
+                            .bodyToMono(GithubApiUserPermission.class)
+                            .map(permission -> permission.getPermission() == ADMIN);
+                })
+                .onErrorResume(GithubClientException::wrap);
     }
 
     @Override
@@ -73,7 +75,7 @@ public final class GithubClientImpl implements GithubClient {
                 .headers(h -> h.setBearerAuth(accessToken))
                 .retrieve()
                 .bodyToMono(GithubApiRepo.class)
-                .onErrorResume(e -> Mono.error(new GithubClientException(e))));
+                .onErrorResume(GithubClientException::wrap));
     }
 
     @Override
@@ -87,7 +89,7 @@ public final class GithubClientImpl implements GithubClient {
                 .filter(GithubApiCollaborator::hasAdminPermissions)
                 .map(GithubApiCollaborator::getId)
                 .collectList()
-                .onErrorResume(e -> Mono.error(new GithubClientException(e))));
+                .onErrorResume(GithubClientException::wrap));
     }
 
     @Override
@@ -98,7 +100,7 @@ public final class GithubClientImpl implements GithubClient {
                 .headers(h -> h.setBearerAuth(accessToken))
                 .retrieve()
                 .bodyToMono(GithubApiPull[].class)
-                .onErrorResume(e -> Mono.error(new GithubClientException(e))));
+                .onErrorResume(GithubClientException::wrap));
     }
 
     @Override
@@ -109,7 +111,7 @@ public final class GithubClientImpl implements GithubClient {
                 .headers(h -> h.setBearerAuth(accessToken))
                 .retrieve()
                 .bodyToMono(GithubApiPull.class)
-                .onErrorResume(e -> Mono.error(new GithubClientException(e))));
+                .onErrorResume(GithubClientException::wrap));
     }
 
     @Override

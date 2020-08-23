@@ -16,7 +16,7 @@ import static lombok.AccessLevel.PRIVATE;
 @Value
 @AllArgsConstructor
 @NoArgsConstructor(force = true, access = PRIVATE)
-public class ProjectConfDto {
+public class ProjectConfDto implements InputDto {
     List<Long> admins;
-    int cloneMinLineCount;
+    Integer cloneMinLineCount;
 }

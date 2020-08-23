@@ -91,7 +91,7 @@ public final class DiffHandler {
 
         final var diff = Mono
                 .zip(projectRepo, basePullSnapshot, headPullSnapshot)
-                .flatMapMany(Lambda.passingLastArgument(codeLoader::loadRemoteDiff, FileFilter.SRC_JAVA));
+                .flatMapMany(Lambda.passingTailArg(codeLoader::loadRemoteDiff, FileFilter.SRC_JAVA));
 
         return toResponse(diff);
     }

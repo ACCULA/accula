@@ -4,6 +4,9 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 
+import java.util.Collections;
+import java.util.List;
+
 /**
  * @author Anton Lamtev
  */
@@ -17,4 +20,18 @@ public class Project {
     User creator;
     @Builder.Default
     Integer openPullCount = 0;
+    @Builder.Default
+    List<Long> adminIds = Collections.emptyList();
+
+    @Builder(toBuilder = true)
+    @Value
+    public static class Conf {
+        public static final Conf DEFAULT = builder()
+                .adminIds(Collections.emptyList())
+                .cloneMinLineCount(5)
+                .build();
+
+        List<Long> adminIds;
+        Integer cloneMinLineCount;
+    }
 }

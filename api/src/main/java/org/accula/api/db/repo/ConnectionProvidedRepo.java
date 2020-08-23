@@ -3,6 +3,7 @@ package org.accula.api.db.repo;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.Result;
 import io.r2dbc.spi.Row;
+import org.accula.api.util.Lambda;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -20,6 +21,8 @@ public interface ConnectionProvidedRepo {
         return Mono.usingWhen(
                 getConnectionProvider().get(),
                 connectionUse,
+                Connection::close,
+                Lambda.firstArg(Connection::close),
                 Connection::close
         );
     }
@@ -28,8 +31,22 @@ public interface ConnectionProvidedRepo {
         return Flux.usingWhen(
                 getConnectionProvider().get(),
                 connectionUse,
+                Connection::close,
+                Lambda.firstArg(Connection::close),
                 Connection::close
         );
+    }
+
+    default <T> Mono<T> transactional(final Function<? super Connection, ? extends Mono<T>> connectionUse) {
+        return withConnection(connection -> Mono
+                .usingWhen(
+                        Mono.fromDirect(connection.beginTransaction())
+                                .then(Mono.just(connection)),
+                        connectionUse,
+                        Connection::commitTransaction,
+                        Lambda.firstArg(Connection::rollbackTransaction),
+                        Connection::rollbackTransaction
+                ));
     }
 
     static <T> Mono<T> column(final Result result, final String name, final Class<T> clazz) {
