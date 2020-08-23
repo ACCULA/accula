@@ -14,7 +14,7 @@ import java.util.function.Supplier;
  * @author Anton Lamtev
  */
 public final class Lambda {
-    private static final BiFunction<Object, Object, Object> FIRST_ARG = (first, second) -> first;
+    private static final BiFunction<Object, Object, Object> FIRST_ARG = (fst, snd) -> fst;
     private static final Function<Object, Object> IDENTITY = arg -> arg;
 
     private Lambda() {
@@ -41,8 +41,12 @@ public final class Lambda {
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> BiFunction<T, T, T> firstArg() {
-        return (BiFunction<T, T, T>) FIRST_ARG;
+    public static <T1, T2> BiFunction<T1, T2, T1> firstArg() {
+        return (BiFunction<T1, T2, T1>) FIRST_ARG;
+    }
+
+    public static <T1, T2, R> BiFunction<T1, T2, R> firstArg(final Function<T1, R> keyPath) {
+        return (fst, snd) -> keyPath.apply(fst);
     }
 
     @SuppressWarnings("unchecked")

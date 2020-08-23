@@ -199,9 +199,7 @@ public final class ProjectsHandler {
                             .doOnError(e -> log.error("Error saving github user: {}", projectGithubRepo.getOwner(), e)))
                     .flatMap(repoOwner -> projectRepo.upsert(projectGithubRepo, currentUser)
                             .doOnError(e -> log.error("Error saving Project: {}-{}", projectGithubRepo.getOwner(), currentUser, e)))
-                    .flatMap(project -> projectRepo.
-                            upsertConf(project.getId(), Project.Conf.DEFAULT)
-                            .map(conf -> project))
+                    .transform(this::saveDefaultConf)
                     .flatMap(project -> projectUpdater.update(project.getId(), githubApiPulls)
                             .map(openPullCount -> ModelToDtoConverter.convert(project, openPullCount)));
         });
@@ -263,6 +261,14 @@ public final class ProjectsHandler {
     private Mono<List<Long>> githubRepoAdmins(final Project project) {
         final var repo = project.getGithubRepo();
         return githubClient.getRepoAdmins(repo.getOwner().getLogin(), repo.getName());
+    }
+
+    private Mono<Project> saveDefaultConf(final Mono<Project> projectMono) {
+        return Mono.usingWhen(
+                projectMono,
+                Mono::just,
+                project -> projectRepo.upsertConf(project.getId(), Project.Conf.DEFAULT)
+        );
     }
 
     private static Mono<ServerResponse> notFound(final Throwable error) {

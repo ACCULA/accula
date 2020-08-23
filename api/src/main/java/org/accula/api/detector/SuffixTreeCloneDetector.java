@@ -9,6 +9,7 @@ import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.accula.api.code.FileEntity;
 import org.accula.api.detector.parser.Parser;
+import org.accula.api.util.RLambda;
 import reactor.core.publisher.Flux;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
@@ -29,22 +30,24 @@ import static org.accula.api.detector.util.SuffixTreeUtils.extractEndToken;
 import static org.accula.api.detector.util.SuffixTreeUtils.getCodeSnippetFromEdge;
 
 /**
- * @author VanyaKrylov
+ * @author Vanya Krylov
  */
 @Slf4j
 @RequiredArgsConstructor
 public final class SuffixTreeCloneDetector implements CloneDetector {
-    private final int minCloneLength;
+    private final ConfigProvider configProvider;
     private static final long SRC_FIRST_METHOD_ID = 2;
 
     @Override
     public Flux<Tuple2<CodeSnippet, CodeSnippet>> findClones(final Flux<FileEntity> targetFiles, final Flux<FileEntity> sourceFiles) {
-        return targetFiles.collectList()
-                .zipWith(sourceFiles.collectList(), this::clones)
+        return RLambda
+                .zip(targetFiles.collectList(), sourceFiles.collectList(), configProvider.get(), this::clones)
                 .flatMapMany(Flux::fromIterable);
     }
 
-    private List<Tuple2<CodeSnippet, CodeSnippet>> clones(final List<FileEntity> targetFiles, final List<FileEntity> sourceFiles) {
+    private List<Tuple2<CodeSnippet, CodeSnippet>> clones(final List<FileEntity> targetFiles,
+                                                          final List<FileEntity> sourceFiles,
+                                                          final Config config) {
         final var cloneDetectorInstance = new CloneIndexer();
         final var cloneClassCodeSnippetsMap = new HashMap<CloneClass, List<CodeSnippet>>();
         final var resultList = new ArrayList<Tuple2<CodeSnippet, CodeSnippet>>();
@@ -56,9 +59,9 @@ public final class SuffixTreeCloneDetector implements CloneDetector {
             final long targetLastMethodId = addFilesIntoTree(targetFiles, suffixTree);
 
             LongStream.rangeClosed(SRC_FIRST_METHOD_ID, srcLastMethodId).forEach(methodId ->
-                    extractClonesIntoMapForSourceMethod(methodId, cloneDetectorInstance, cloneClassCodeSnippetsMap));
+                    extractClonesIntoMapForSourceMethod(methodId, cloneDetectorInstance, cloneClassCodeSnippetsMap, config));
             LongStream.rangeClosed(targetFirstMethodId, targetLastMethodId).forEach(targetMethodId ->
-                    addClonesToListForTargetMethod(targetMethodId, cloneDetectorInstance, resultList, cloneClassCodeSnippetsMap));
+                    addClonesToListForTargetMethod(targetMethodId, cloneDetectorInstance, resultList, cloneClassCodeSnippetsMap, config));
         } catch (NoSuchElementException e) {
             log.error("Invalid data from parser! Failed to get last index with: " + e.getMessage());
         }
@@ -68,8 +71,9 @@ public final class SuffixTreeCloneDetector implements CloneDetector {
 
     private void extractClonesIntoMapForSourceMethod(final Long methodId,
                                                      final CloneIndexer cloneDetectorInstance,
-                                                     final Map<CloneClass, List<CodeSnippet>> cloneClassCodeSnippetsMap) {
-        getTreeCloneClassForMethod(methodId, cloneDetectorInstance)
+                                                     final Map<CloneClass, List<CodeSnippet>> cloneClassCodeSnippetsMap,
+                                                     final Config config) {
+        getTreeCloneClassForMethod(methodId, cloneDetectorInstance, config)
                 .ifPresent(treeCloneClass -> {
                     final var cloneClass = new CloneClass(extractBeginToken(treeCloneClass), extractEndToken(treeCloneClass));
                     edgesFromTreeCloneClassForMethod(treeCloneClass, methodId).forEach(edge -> {
@@ -82,8 +86,9 @@ public final class SuffixTreeCloneDetector implements CloneDetector {
     private void addClonesToListForTargetMethod(final Long methodId,
                                                 final CloneIndexer cloneDetectorInstance,
                                                 final List<Tuple2<CodeSnippet, CodeSnippet>> clones,
-                                                final Map<CloneClass, List<CodeSnippet>> cloneClassCodeSnippetsMap) {
-       getTreeCloneClassForMethod(methodId, cloneDetectorInstance)
+                                                final Map<CloneClass, List<CodeSnippet>> cloneClassCodeSnippetsMap,
+                                                final Config config) {
+       getTreeCloneClassForMethod(methodId, cloneDetectorInstance, config)
                .ifPresent(treeCloneClass -> {
                    final var cloneClass = new CloneClass(extractBeginToken(treeCloneClass), extractEndToken(treeCloneClass));
                    edgesFromTreeCloneClassForMethod(treeCloneClass, methodId).forEach(edge -> {
@@ -93,8 +98,10 @@ public final class SuffixTreeCloneDetector implements CloneDetector {
                });
     }
 
-    private Optional<TreeCloneClass> getTreeCloneClassForMethod(final Long methodId, final CloneIndexer cloneDetectorInstance) {
-        return cloneDetectorInstance.getAllSequenceCloneClasses(methodId, minCloneLength).stream().findFirst();
+    private Optional<TreeCloneClass> getTreeCloneClassForMethod(final Long methodId,
+                                                                final CloneIndexer cloneDetectorInstance,
+                                                                final Config config) {
+        return cloneDetectorInstance.getAllSequenceCloneClasses(methodId, config.getMinCloneLength()).stream().findFirst();
     }
 
     private static void putCodeSnippetIntoCloneClassCodeSnippetsMap(final CodeSnippet codeSnippetValue,
@@ -116,7 +123,8 @@ public final class SuffixTreeCloneDetector implements CloneDetector {
 
     /**
      * Utility method to insert list of FileEntities into SuffixTree
-     * @param files - list of FileEntities
+     *
+     * @param files      - list of FileEntities
      * @param suffixTree - tree object reference
      * @return index of the last sequence (last tokenized method of the last FileEntity) inserted into the tree
      */
@@ -131,7 +139,8 @@ public final class SuffixTreeCloneDetector implements CloneDetector {
 
     /**
      * Utility method to insert parsed FileEntity's methods into SuffixTree
-     * @param file - FileEntity object to parse into tokenized methods and then insert into tree
+     *
+     * @param file       - FileEntity object to parse into tokenized methods and then insert into tree
      * @param suffixTree - tree object reference
      * @return - Optional of the index of the last sequence (tokenized method) inserted into the tree
      */

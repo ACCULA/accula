@@ -13,6 +13,7 @@ import org.accula.api.db.model.GithubUser;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
@@ -85,7 +86,7 @@ class CloneDetectorTest {
      */
     @Test
     void testSuffixTreeDetector() {
-        CloneDetector detector = new SuffixTreeCloneDetector(3);
+        CloneDetector detector = new SuffixTreeCloneDetector(() -> Mono.just(CloneDetector.Config.builder().minCloneLength(3).build()));
 
         //@formatter:off
         var repoOwner       = new GithubUser(1L, "owner", "owner", "ava", false);

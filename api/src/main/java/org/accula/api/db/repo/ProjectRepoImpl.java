@@ -14,12 +14,16 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
  * @author Anton Lamtev
  */
 @Component
 @RequiredArgsConstructor
 public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRepo {
+    private final Set<OnConfUpdate> onConfUpdates = ConcurrentHashMap.newKeySet();
     @Getter
     private final ConnectionProvider connectionProvider;
 
@@ -157,58 +161,11 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
 
     @Override
     public Mono<Project.Conf> upsertConf(final Long id, final Project.Conf conf) {
-        return withConnection(connection ->
-                Mono.usingWhen(
-                        Mono.fromDirect(connection.beginTransaction()).then(Mono.just(connection)),
-                        conn -> {
-                            final var deleteProjectAdmins = ((PostgresqlStatement) conn.createStatement("""
-                                    DELETE FROM project_admin 
-                                    WHERE project_id = $1
-                                    """))
-                                    .bind("$1", id)
-                                    .execute()
-                                    .flatMap(PostgresqlResult::getRowsUpdated)
-                                    .then();
-
-                            final Mono<Void> insertAdminsBack;
-                            if (conf.getAdminIds().isEmpty()) {
-                                insertAdminsBack = Mono.empty();
-                            } else {
-                                final var insertAdminsBackStatement = BatchStatement.of(connection, """
-                                        INSERT INTO project_admin (project_id, admin_id)
-                                        VALUES ($collection)
-                                        """);
-                                insertAdminsBackStatement.bind(conf.getAdminIds(), adminId -> new Object[]{
-                                        id,
-                                        adminId
-                                });
-                                insertAdminsBack = insertAdminsBackStatement
-                                        .execute()
-                                        .flatMap(PostgresqlResult::getRowsUpdated)
-                                        .then();
-                            }
-
-                            final var upsertConf = ((PostgresqlStatement) conn.createStatement("""
-                                    INSERT INTO project_conf (project_id, clone_min_line_count)             
-                                    VALUES ($1, $2)
-                                    ON CONFLICT (project_id) DO UPDATE
-                                          SET clone_min_line_count = $2            
-                                    """))
-                                    .bind("$1", id)
-                                    .bind("$2", conf.getCloneMinLineCount())
-                                    .execute()
-                                    .flatMap(PostgresqlResult::getRowsUpdated)
-                                    .then();
-
-                            return deleteProjectAdmins
-                                    .then(insertAdminsBack)
-                                    .then(upsertConf)
-                                    .onErrorResume(e -> Mono.fromDirect(conn.rollbackTransaction()))
-                                    .thenReturn(conf);
-                        },
-                        Connection::commitTransaction
-                )
-        );
+        return transactional(connection -> upsertAdmins(connection, id, conf)
+                .then(upsertConf(connection, id, conf))
+                .thenReturn(conf))
+                .doOnNext(c -> onConfUpdates
+                        .forEach(onConfUpdate -> onConfUpdate.onConfUpdate(id)));
     }
 
     @Override
@@ -227,6 +184,11 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
                 .bind("$1", id)
                 .execute())
                 .flatMap(result -> ConnectionProvidedRepo.convert(result, this::convertConf)));
+    }
+
+    @Override
+    public void addOnConfUpdate(final OnConfUpdate onConfUpdate) {
+        onConfUpdates.add(onConfUpdate);
     }
 
     private static PostgresqlStatement selectByIdStatement(final Connection connection) {
@@ -285,6 +247,51 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
                                    ON p.id = admins.project_id
                 """;
         return (PostgresqlStatement) connection.createStatement(String.format("%s %s", sql, terminatingCondition));
+    }
+
+    private Mono<Void> upsertAdmins(final Connection connection, final Long projectId, final Project.Conf conf) {
+        final var deleteProjectAdmins = ((PostgresqlStatement) connection.createStatement("""
+                DELETE FROM project_admin 
+                WHERE project_id = $1
+                """))
+                .bind("$1", projectId)
+                .execute()
+                .flatMap(PostgresqlResult::getRowsUpdated)
+                .then();
+
+        final Mono<Void> insertNewAdmins;
+        if (conf.getAdminIds().isEmpty()) {
+            insertNewAdmins = Mono.empty();
+        } else {
+            final var insertAdminsBackStatement = BatchStatement.of(connection, """
+                    INSERT INTO project_admin (project_id, admin_id)
+                    VALUES ($collection)
+                    """);
+            insertAdminsBackStatement.bind(conf.getAdminIds(), adminId -> new Object[]{
+                    projectId,
+                    adminId
+            });
+            insertNewAdmins = insertAdminsBackStatement
+                    .execute()
+                    .flatMap(PostgresqlResult::getRowsUpdated)
+                    .then();
+        }
+
+        return deleteProjectAdmins.then(insertNewAdmins);
+    }
+
+    private Mono<Void> upsertConf(final Connection connection, final Long projectId, final Project.Conf conf) {
+        return ((PostgresqlStatement) connection.createStatement("""
+                INSERT INTO project_conf (project_id, clone_min_line_count)             
+                VALUES ($1, $2)
+                ON CONFLICT (project_id) DO UPDATE
+                      SET clone_min_line_count = $2            
+                """))
+                .bind("$1", projectId)
+                .bind("$2", conf.getCloneMinLineCount())
+                .execute()
+                .flatMap(PostgresqlResult::getRowsUpdated)
+                .then();
     }
 
     private Project convert(final Row row) {
