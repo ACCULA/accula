@@ -145,21 +145,6 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
     }
 
     @Override
-    public Mono<Boolean> hasCreator(final Long projectId, final Long userId) {
-        return withConnection(connection -> Mono
-                .from(((PostgresqlStatement) connection
-                        .createStatement("""
-                                SELECT exists(SELECT 1
-                                              FROM project
-                                              WHERE id = $1 AND creator_id = $2)
-                                """))
-                        .bind("$1", projectId)
-                        .bind("$2", userId)
-                        .execute())
-                .flatMap(result -> ConnectionProvidedRepo.column(result, "exists", Boolean.class)));
-    }
-
-    @Override
     public Mono<Project.Conf> upsertConf(final Long id, final Project.Conf conf) {
         return transactional(connection -> upsertAdmins(connection, id, conf)
                 .then(upsertConf(connection, id, conf))

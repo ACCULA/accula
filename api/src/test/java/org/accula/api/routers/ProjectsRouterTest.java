@@ -296,7 +296,7 @@ class ProjectsRouterTest {
     void testGetGithubAdmins() {
         Mockito.when(currentUser.get(Mockito.any()))
                 .thenReturn(Mono.just(0L));
-        Mockito.when(projectRepo.hasCreator(Mockito.anyLong(), Mockito.anyLong()))
+        Mockito.when(projectRepo.hasAdmin(Mockito.anyLong(), Mockito.anyLong()))
                 .thenReturn(Mono.just(TRUE));
         Mockito.when(projectRepo.findById(Mockito.anyLong()))
                 .thenReturn(Mono.just(PROJECT));

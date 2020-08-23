@@ -126,7 +126,7 @@ public final class ProjectsHandler {
 
     public Mono<ServerResponse> githubAdmins(final ServerRequest request) {
         final var admins = withProjectId(request)
-                .filterWhen(this::isCurrentUserCreator)
+                .filterWhen(this::isCurrentUserAdmin)
                 //TODO: not enough rights
                 .flatMap(projectRepo::findById)
                 .switchIfEmpty(Mono.error(PROJECT_NOT_FOUND_EXCEPTION))
@@ -244,12 +244,6 @@ public final class ProjectsHandler {
                 .justOrEmpty(request.pathVariable("id"))
                 .map(Long::parseLong)
                 .onErrorMap(NumberFormatException.class, e -> PROJECT_NOT_FOUND_EXCEPTION);
-    }
-
-    private Mono<Boolean> isCurrentUserCreator(final Long projectId) {
-        return currentUser
-                .get(User::getId)
-                .flatMap(currentUserId -> projectRepo.hasCreator(projectId, currentUserId));
     }
 
     private Mono<Boolean> isCurrentUserAdmin(final Long projectId) {
