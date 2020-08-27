@@ -1,6 +1,6 @@
 package org.accula.api.code.git;
 
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -27,10 +27,10 @@ final class GitTest {
     static final String HEAD_REF = "69f552851f0f6093816c3064b6e00438e0ff3b19";
     static final String REMOTE_URL = "https://github.com/lamtev/poker.git";
     static final String REMOTE_NAME = "newRemote";
-    static Git git;
+    Git git;
 
-    @BeforeAll
-    static void setUp(@TempDir final Path dir) {
+    @BeforeEach
+    void setUp(@TempDir final Path dir) {
         git = new Git(dir, Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 3));
     }
 
