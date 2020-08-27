@@ -4,7 +4,7 @@ import org.accula.api.code.git.Git;
 import org.accula.api.db.model.CommitSnapshot;
 import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.GithubUser;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import reactor.test.StepVerifier;
@@ -38,10 +38,10 @@ class CodeLoaderTest {
             .repo(REPO)
             .build();
 
-    private static CodeLoader codeLoader;
+    CodeLoader codeLoader;
 
-    @BeforeAll
-    static void beforeAll(@TempDir final Path tempDir) {
+    @BeforeEach
+    void beforeAll(@TempDir final Path tempDir) {
         codeLoader = new GitCodeLoader(new Git(tempDir, Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())));
     }
 

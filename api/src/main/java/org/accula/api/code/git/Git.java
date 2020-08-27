@@ -2,7 +2,6 @@ package org.accula.api.code.git;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
-import org.accula.api.util.Lambda;
 import org.accula.api.util.Sync;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,6 +10,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -46,8 +46,9 @@ public final class Git {
     private static final byte[] NEWLINE = System.lineSeparator().getBytes(UTF_8);
     private static final String ALREADY_EXISTS = "already exists";
     private static final String JOINER_NEWLINE = "";
+    private static final long INTERVAL_SINCE_LAST_FETCH_THRESHOLD = Duration.ofSeconds(5L).toMillis();
 
-    private final Map<String, Sync> syncs = new ConcurrentHashMap<>();
+    private final Map<Path, Repo> repos = new ConcurrentHashMap<>();
     private final Path root;
     private final ExecutorService executor;
 
@@ -55,7 +56,7 @@ public final class Git {
         return readingAsync(directory, () -> {
             final var completePath = root.resolve(directory);
             if (Files.exists(completePath) && Files.isDirectory(completePath)) {
-                return new Repo(directory);
+                return repoOf(directory);
             }
             return null;
         });
@@ -64,7 +65,7 @@ public final class Git {
     public CompletableFuture<Repo> clone(final String url, final String subdirectory) {
         return writingAsync(subdirectory, () -> {
             if (Files.exists(root.resolve(subdirectory))) {
-                return new Repo(Path.of(subdirectory));
+                return repoOf(Path.of(subdirectory));
             }
             try {
                 final var process = new ProcessBuilder()
@@ -72,7 +73,7 @@ public final class Git {
                         .command("git", "clone", url, subdirectory)
                         .start();
                 //TODO: clone timeout
-                return process.waitFor() == SUCCESS ? new Repo(Path.of(subdirectory)) : null;
+                return process.waitFor() == SUCCESS ? repoOf(Path.of(subdirectory)) : null;
             } catch (IOException | InterruptedException e) {
                 throw wrap(e);
             }
@@ -82,13 +83,19 @@ public final class Git {
     @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
     public final class Repo {
         private final Path directory;
+        private final Sync sync = new Sync();
+        private long lastFetchTs = 0L;
 
         public CompletableFuture<Repo> fetch() {
             return writingAsync(() -> {
+                if (System.currentTimeMillis() - lastFetchTs < INTERVAL_SINCE_LAST_FETCH_THRESHOLD) {
+                    return this;
+                }
                 final var process = git("fetch");
                 try {
                     //TODO: fetch timeout
                     final var ret = process.waitFor();
+                    lastFetchTs = System.currentTimeMillis();
                     return ret == SUCCESS ? this : null;
                 } catch (InterruptedException e) {
                     throw wrap(e);
@@ -214,11 +221,11 @@ public final class Git {
         }
 
         private <T> CompletableFuture<T> readingAsync(final Supplier<T> readOp) {
-            return Git.this.readingAsync(directory, readOp);
+            return CompletableFuture.supplyAsync(sync.reading(readOp), executor);
         }
 
         private <T> CompletableFuture<T> writingAsync(final Supplier<T> writeOp) {
-            return Git.this.writingAsync(directory, writeOp);
+            return CompletableFuture.supplyAsync(sync.writing(writeOp), executor);
         }
     }
 
@@ -361,20 +368,20 @@ public final class Git {
         return CompletableFuture.supplyAsync(safe(directory).reading(readOp), executor);
     }
 
-    private <T> CompletableFuture<T> writingAsync(final Path directory, final Supplier<T> writeOp) {
-        return CompletableFuture.supplyAsync(safe(directory).writing(writeOp), executor);
-    }
-
     private <T> CompletableFuture<T> writingAsync(final String directory, final Supplier<T> writeOp) {
         return CompletableFuture.supplyAsync(safe(directory).writing(writeOp), executor);
     }
 
     private Sync safe(final String key) {
-        return syncs.computeIfAbsent(key, Lambda.expandingWithArg(Sync::new));
+        return safe(Path.of(key));
     }
 
     private Sync safe(final Path path) {
-        return safe(path.toString());
+        return repoOf(path).sync;
+    }
+
+    private Repo repoOf(final Path path) {
+        return repos.computeIfAbsent(path, Repo::new);
     }
 
     private static GitException wrap(final Throwable e) {
