@@ -3,6 +3,8 @@ package org.accula.api.detector;
 import lombok.Builder;
 import lombok.Value;
 import org.accula.api.code.FileEntity;
+import org.accula.api.psi.Clone;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
@@ -22,6 +24,14 @@ public interface CloneDetector {
      */
     Flux<Tuple2<CodeSnippet, CodeSnippet>> findClones(Flux<FileEntity> targetFiles, Flux<FileEntity> sourceFiles);
 
+    default Flux<Clone> findClones(Flux<FileEntity> files) {
+        return Flux.empty();
+    }
+
+    default Publisher<Void> fill(Flux<FileEntity> files) {
+        return Mono.empty();
+    }
+
     interface ConfigProvider extends Supplier<Mono<Config>> {
         @Override
         Mono<Config> get();
@@ -32,4 +42,5 @@ public interface CloneDetector {
     class Config {
         int minCloneLength;
     }
+
 }

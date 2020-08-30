@@ -20,6 +20,10 @@ public final class Lambda {
     private Lambda() {
     }
 
+    public static <T, Last, R> Function<T, R> passingTailArg(final BiFunction<T, Last, R> f2, final Last last) {
+        return t -> f2.apply(t, last);
+    }
+
     public static <T1, T2, T3, Last, R>
     Function<Tuple3<T1, T2, T3>, R> passingTailArg(final Function4<T1, T2, T3, Last, R> f4, final Last last) {
         return tuple -> f4.apply(tuple.getT1(), tuple.getT2(), tuple.getT3(), last);

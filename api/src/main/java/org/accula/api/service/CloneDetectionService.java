@@ -9,14 +9,13 @@ import org.accula.api.db.repo.CloneRepo;
 import org.accula.api.db.repo.ProjectRepo;
 import org.accula.api.db.repo.PullRepo;
 import org.accula.api.detector.CloneDetector;
+import org.accula.api.detector.CloneDetectorImpl;
 import org.accula.api.detector.CodeSnippet;
-import org.accula.api.detector.SuffixTreeCloneDetector;
 import org.accula.api.util.ReactorSchedulers;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
-import reactor.function.TupleUtils;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -54,15 +53,16 @@ public final class CloneDetectionService {
                 .map(Pull::getHead)
                 .flatMap(head -> loader.loadFiles(head, FileFilter.SRC_JAVA));
 
-        final var clones = cloneDetector(pull.getProjectId())
-                .findClones(targetFiles, sourceFiles)
-                .subscribeOn(processingScheduler)
-                .map(TupleUtils.function(this::convert));
-
-        return clones
-                .collectList()
-                .doOnNext(cloneList -> log.info("{} clones have been detected", cloneList.size()))
-                .flatMapMany(cloneRepo::insert);
+//        final var clones = cloneDetector(pull.getProjectId())
+//                .findClones(targetFiles, sourceFiles)
+//                .subscribeOn(processingScheduler)
+//                .map(TupleUtils.function(this::convert));
+//
+//        return clones
+//                .collectList()
+//                .doOnNext(cloneList -> log.info("{} clones have been detected", cloneList.size()))
+//                .flatMapMany(cloneRepo::insert);
+        return cloneDetector(pull.getProjectId()).findClones(targetFiles).thenMany(Flux.empty());
     }
 
     private Clone convert(final CodeSnippet target, final CodeSnippet source) {
@@ -79,7 +79,7 @@ public final class CloneDetectionService {
     }
 
     private CloneDetector cloneDetector(final Long projectId) {
-        return cloneDetectors.computeIfAbsent(projectId, id -> new SuffixTreeCloneDetector(cloneDetectorConfigProvider(id)));
+        return cloneDetectors.computeIfAbsent(projectId, id -> new CloneDetectorImpl(cloneDetectorConfigProvider(id)));
     }
 
     private CloneDetector.ConfigProvider cloneDetectorConfigProvider(final Long projectId) {
