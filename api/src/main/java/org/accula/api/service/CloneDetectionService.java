@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
+import reactor.function.TupleUtils;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -53,16 +54,19 @@ public final class CloneDetectionService {
                 .map(Pull::getHead)
                 .flatMap(head -> loader.loadFiles(head, FileFilter.SRC_JAVA));
 
+        final var clones = cloneDetector(pull.getProjectId())
+                .findClones(pull.getHead(), targetFiles)
+                .map(TupleUtils.function(this::convert));
+
 //        final var clones = cloneDetector(pull.getProjectId())
 //                .findClones(targetFiles, sourceFiles)
 //                .subscribeOn(processingScheduler)
 //                .map(TupleUtils.function(this::convert));
 //
-//        return clones
-//                .collectList()
-//                .doOnNext(cloneList -> log.info("{} clones have been detected", cloneList.size()))
-//                .flatMapMany(cloneRepo::insert);
-        return cloneDetector(pull.getProjectId()).findClones(targetFiles).thenMany(Flux.empty());
+        return clones
+                .collectList()
+                .doOnNext(cloneList -> log.info("{} clones have been detected", cloneList.size()))
+                .flatMapMany(cloneRepo::insert);
     }
 
     private Clone convert(final CodeSnippet target, final CodeSnippet source) {

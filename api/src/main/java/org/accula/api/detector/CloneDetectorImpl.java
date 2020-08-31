@@ -8,7 +8,7 @@ import com.suhininalex.suffixtree.SuffixTree;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.accula.api.code.FileEntity;
-import org.accula.api.psi.Clone;
+import org.accula.api.db.model.CommitSnapshot;
 import org.accula.api.psi.CloneClass;
 import org.accula.api.psi.PsiUtils;
 import org.accula.api.psi.SuffixTreeUtils;
@@ -19,6 +19,7 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
+import reactor.util.function.Tuples;
 
 import java.util.Objects;
 
@@ -31,6 +32,7 @@ import static java.util.stream.Collectors.toList;
 @RequiredArgsConstructor
 public final class CloneDetectorImpl implements CloneDetector {
     private final ConfigProvider configProvider;
+    //FIXME: synchronize access
     private final SuffixTree<Token> suffixTree = new SuffixTree<>();
 
     @Override
@@ -39,9 +41,9 @@ public final class CloneDetectorImpl implements CloneDetector {
     }
 
     @Override
-    public Flux<Clone> findClones(final Flux<FileEntity> files) {
+    public Flux<Tuple2<CodeSnippet, CodeSnippet>> findClones(final CommitSnapshot commitSnapshot, final Flux<FileEntity> files) {
         return addFilesToSuffixTree(files)
-                .thenMany(readClonesFromSuffixTree());
+                .thenMany(readClonesFromSuffixTree(commitSnapshot));
     }
 
     @Override
@@ -68,7 +70,7 @@ public final class CloneDetectorImpl implements CloneDetector {
     }
 
     @SuppressWarnings("UnstableApiUsage")
-    private Flux<Clone> readClonesFromSuffixTree() {
+    private Flux<Tuple2<CodeSnippet, CodeSnippet>> readClonesFromSuffixTree(final CommitSnapshot commitSnapshot) {
         return Flux.defer(() -> {
             final var clones = TraverseUtils
                     .dfs(suffixTree.getRoot(), node -> node
@@ -97,9 +99,24 @@ public final class CloneDetectorImpl implements CloneDetector {
                         final boolean common = components[components.length - 2].equals("polis");
                         return !common && clone.getLineCount() > 3;
                     })
-                    .flatMap(it -> Flux
-                            .fromStream(it.getClones()
-                                    .stream()));
+                    .filter(cloneClass -> cloneClass
+                            .getClones()
+                            .stream()
+                            .anyMatch(clone -> clone.getTo().getCommitSnapshot().equals(commitSnapshot)))
+                    .filter(cloneClass -> cloneClass
+                            .getClones()
+                            .stream()
+                            .anyMatch(clone -> !clone.getTo().getCommitSnapshot().equals(commitSnapshot)))
+                    .map(cloneClass -> {
+                        //FIXME: issues with line numbers (many clones in same file, incorrect mapping)
+                        //TODO: more efficient + take commit date into account
+                        final var clns = cloneClass.getClones();
+                        final var from = clns.stream().filter(clone -> !clone.getFrom().getCommitSnapshot().equals(commitSnapshot)).findFirst().get();
+                        final var to = clns.stream().filter(clone -> clone.getFrom().getCommitSnapshot().equals(commitSnapshot)).findFirst().get();
+                        return Tuples.of(
+                                new CodeSnippet(commitSnapshot, to.getTo().getFilename(), to.getFromLine(), to.getToLine()),
+                                new CodeSnippet(from.getFrom().getCommitSnapshot(), from.getFrom().getFilename(), from.getFromLine(), from.getToLine()));
+                    });
         });
     }
 }

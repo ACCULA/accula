@@ -3,6 +3,7 @@ package org.accula.api.detector;
 import lombok.Builder;
 import lombok.Value;
 import org.accula.api.code.FileEntity;
+import org.accula.api.db.model.CommitSnapshot;
 import org.accula.api.psi.Clone;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
@@ -24,7 +25,7 @@ public interface CloneDetector {
      */
     Flux<Tuple2<CodeSnippet, CodeSnippet>> findClones(Flux<FileEntity> targetFiles, Flux<FileEntity> sourceFiles);
 
-    default Flux<Clone> findClones(Flux<FileEntity> files) {
+    default Flux<Tuple2<CodeSnippet, CodeSnippet>> findClones(CommitSnapshot commitSnapshot, Flux<FileEntity> files) {
         return Flux.empty();
     }
 
