@@ -4,7 +4,6 @@ import lombok.Builder;
 import lombok.Value;
 import org.accula.api.code.FileEntity;
 import org.accula.api.db.model.CommitSnapshot;
-import org.accula.api.psi.Clone;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;

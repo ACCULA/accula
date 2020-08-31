@@ -13,12 +13,14 @@ import com.intellij.psi.JavaModuleSystem;
 import com.intellij.psi.PsiElementFinder;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.compiled.ClsCustomNavigationPolicy;
+import com.intellij.psi.impl.source.PsiClassImpl;
 import com.intellij.psi.meta.MetaDataContributor;
 
 /**
  * {@link org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreApplicationEnvironment}-like
  * core application environment that registers all extensions required
  * to enable access to useful {@link com.intellij.psi.impl.source.PsiClassImpl} methods
+ * like {@link PsiClassImpl#getAllMethods()}, {@link PsiClassImpl#getAllInnerClasses()}, etc.
  *
  * @author Anton Lamtev
  */

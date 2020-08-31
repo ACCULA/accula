@@ -4,7 +4,6 @@ import org.accula.api.util.Lambda;
 
 import java.util.Arrays;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 /**
@@ -23,11 +22,5 @@ public final class TraverseUtils {
 
     public static <T> Function<T, Stream<T>> stream(final Function<T, T[]> array) {
         return t -> Arrays.stream(array.apply(t));
-    }
-
-    public static <T> Function<T, Stream<T>> stream(final Function<T, T[]> array, final Predicate<T> filter) {
-        return t -> Arrays
-                .stream(array.apply(t))
-                .filter(filter);
     }
 }

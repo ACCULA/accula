@@ -1,4 +1,4 @@
-package org.accula.api.psi;
+package org.accula.api.detector;
 
 import com.suhininalex.suffixtree.Node;
 import lombok.Getter;

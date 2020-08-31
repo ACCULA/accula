@@ -3,7 +3,6 @@ package org.accula.api.psi;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
-import org.accula.api.db.model.CommitSnapshot;
 
 /**
  * @author Anton Lamtev
@@ -11,8 +10,8 @@ import org.accula.api.db.model.CommitSnapshot;
 @Builder
 @Value
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public class Token implements Comparable<Token> {
-    CommitSnapshot commitSnapshot;
+public class Token<Ref> implements Comparable<Token<Ref>> {
+    Ref ref;
     @EqualsAndHashCode.Include
     String string;
     String methodName;

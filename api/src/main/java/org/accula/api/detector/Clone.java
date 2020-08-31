@@ -1,8 +1,10 @@
-package org.accula.api.psi;
+package org.accula.api.detector;
 
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Value;
+import org.accula.api.db.model.CommitSnapshot;
+import org.accula.api.psi.Token;
 
 /**
  * @author Anton Lamtev
@@ -12,8 +14,8 @@ import lombok.Value;
 public
 class Clone {
     CloneClass parent;
-    Token from;
-    Token to;
+    Token<CommitSnapshot> from;
+    Token<CommitSnapshot> to;
     @Getter(lazy = true)
     int lineCount = getToLine() - getFromLine() + 1;
     @Getter(lazy = true)

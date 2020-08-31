@@ -1,23 +1,17 @@
 package org.accula.api.psi;
 
-import com.intellij.core.JavaCoreProjectEnvironment;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementFinder;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.impl.java.stubs.JavaAnnotationElementType;
 import com.intellij.psi.tree.TokenSet;
-import org.accula.api.db.model.CommitSnapshot;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
 /**
@@ -33,6 +27,8 @@ public final class PsiUtils {
                     JavaTokenType.LBRACE,
                     JavaTokenType.RBRACE,
                     JavaTokenType.SEMICOLON,
+                    JavaTokenType.COLON,
+                    JavaTokenType.COMMA,
                     JavaTokenType.LPARENTH,
                     JavaTokenType.RPARENTH
             ),
@@ -78,7 +74,7 @@ public final class PsiUtils {
         return !TOKENS_TO_EXCLUDE.contains(token.getNode().getElementType());
     }
 
-    public static Token token(final PsiElement token, final CommitSnapshot commitSnapshot) {
+    public static <Ref> Token<Ref> token(final PsiElement token, final Ref ref) {
         final var methodName = parentsWithSelf(token)
                 .filter(PsiUtils::isMethod)
                 .findFirst()
@@ -89,8 +85,8 @@ public final class PsiUtils {
         final var textRange = token.getTextRange();
         final var fromLine = document.getLineNumber(textRange.getStartOffset()) + 1;
         final var toLine = document.getLineNumber(textRange.getStartOffset()) + 1;
-        return Token.builder()
-                .commitSnapshot(commitSnapshot)
+        return Token.<Ref>builder()
+                .ref(ref)
                 .string(token.getNode().getElementType().toString())
                 .methodName(methodName)
                 .filename(file.getName())
@@ -111,18 +107,5 @@ public final class PsiUtils {
 
     public static boolean isMethod(final PsiElement psiElement) {
         return psiElement instanceof PsiMethod;
-    }
-
-    //FIXME: to use correctly inside reactive streams, dispose should happen after onComplete
-    public static <T> T withFileFactory(final Function<PsiFileFactory, T> fileFactoryUse) {
-        final var disposable = Disposer.newDisposable();
-        final var appEnv = JavaApplicationEnvironment.of(disposable, true);
-        final var env = new JavaCoreProjectEnvironment(disposable, appEnv);
-        env.registerProjectExtensionPoint(PsiElementFinder.EP_NAME, PsiElementFinder.class);
-        try {
-            return fileFactoryUse.apply(PsiFileFactory.getInstance(env.getProject()));
-        } finally {
-            disposable.dispose();
-        }
     }
 }

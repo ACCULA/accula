@@ -1,7 +1,9 @@
-package org.accula.api.psi;
+package org.accula.api.detector;
 
 import com.suhininalex.suffixtree.Edge;
 import com.suhininalex.suffixtree.Node;
+import org.accula.api.psi.Token;
+import org.accula.api.psi.TraverseUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -61,7 +63,8 @@ public final class SuffixTreeUtils {
         return terminalMap;
     }
 
-    public static Token get(final Edge edge, final int index) {
-        return (Token) edge.getSequence().get(index);
+    @SuppressWarnings("unchecked")
+    public static <Ref> Token<Ref> get(final Edge edge, final int index) {
+        return (Token<Ref>) edge.getSequence().get(index);
     }
 }

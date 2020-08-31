@@ -9,12 +9,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.accula.api.code.FileEntity;
 import org.accula.api.db.model.CommitSnapshot;
-import org.accula.api.psi.CloneClass;
+import org.accula.api.psi.PsiFileFactoryProvider;
 import org.accula.api.psi.PsiUtils;
-import org.accula.api.psi.SuffixTreeUtils;
 import org.accula.api.psi.Token;
 import org.accula.api.psi.TraverseUtils;
 import org.accula.api.util.Lambda;
+import org.accula.api.util.Sync;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -32,8 +32,9 @@ import static java.util.stream.Collectors.toList;
 @RequiredArgsConstructor
 public final class CloneDetectorImpl implements CloneDetector {
     private final ConfigProvider configProvider;
-    //FIXME: synchronize access
-    private final SuffixTree<Token> suffixTree = new SuffixTree<>();
+    //FIXME: blocking code on reactor threads is bad, schedule it on another executor
+    private final Sync sync = new Sync();
+    private final SuffixTree<Token<CommitSnapshot>> suffixTree = new SuffixTree<>();
 
     @Override
     public Flux<Tuple2<CodeSnippet, CodeSnippet>> findClones(final Flux<FileEntity> targetFiles, final Flux<FileEntity> sourceFiles) {
@@ -52,8 +53,8 @@ public final class CloneDetectorImpl implements CloneDetector {
     }
 
     private Mono<Void> addFilesToSuffixTree(final Flux<FileEntity> files) {
-        return PsiUtils
-                .withFileFactory(psiFileFactory -> files
+        return PsiFileFactoryProvider
+                .using(psiFileFactory -> files
                         .flatMap(file -> Mono
                                 .fromSupplier(() -> psiFileFactory.createFileFromText(file.getName(), JavaLanguage.INSTANCE, file.getContent()))
                                 .flatMap(psiFile -> Mono
@@ -64,15 +65,16 @@ public final class CloneDetectorImpl implements CloneDetector {
                                                                 .filter(PsiUtils::isValuableToken)
                                                                 .map(Lambda.passingTailArg(PsiUtils::token, file.getCommitSnapshot()))
                                                                 .collect(toList()))
-                                                        .forEach(suffixTree::addSequence)
-                                        ))))
-                .then();
+                                                        .forEach(sync.writing(suffixTree::addSequence))
+                                        )
+                                        .then()))
+                        .then());
     }
 
     @SuppressWarnings("UnstableApiUsage")
     private Flux<Tuple2<CodeSnippet, CodeSnippet>> readClonesFromSuffixTree(final CommitSnapshot commitSnapshot) {
         return Flux.defer(() -> {
-            final var clones = TraverseUtils
+            final var clones = sync.reading(() -> TraverseUtils
                     .dfs(suffixTree.getRoot(), node -> node
                             .getEdges()
                             .stream()
@@ -84,14 +86,13 @@ public final class CloneDetectorImpl implements CloneDetector {
                             .allMatch(edge -> edge.getBegin() == edge.getEnd() && edge.getBegin() == edge.getSequence().size() - 1))
                     .filter(node -> 0 == Streams.findLast(SuffixTreeUtils.parentEdges(node))
                             .map(Edge::getBegin)
-                            .orElse(1));
-
-            final var filtered = clones
+                            .orElse(1))
                     .map(CloneClass::new)
-                    .filter(cc -> !cc.getClones().isEmpty());
+                    .filter(cc -> !cc.getClones().isEmpty())
+                    .collect(toList()));
 
             return Flux
-                    .fromStream(filtered)
+                    .fromIterable(clones.get())
                     .filter(it -> {
                         final var clone = it.getClones().get(0);
                         final var filename = clone.getTo().getFilename();
@@ -102,20 +103,20 @@ public final class CloneDetectorImpl implements CloneDetector {
                     .filter(cloneClass -> cloneClass
                             .getClones()
                             .stream()
-                            .anyMatch(clone -> clone.getTo().getCommitSnapshot().equals(commitSnapshot)))
+                            .anyMatch(clone -> clone.getTo().getRef().equals(commitSnapshot)))
                     .filter(cloneClass -> cloneClass
                             .getClones()
                             .stream()
-                            .anyMatch(clone -> !clone.getTo().getCommitSnapshot().equals(commitSnapshot)))
+                            .anyMatch(clone -> !clone.getTo().getRef().equals(commitSnapshot)))
                     .map(cloneClass -> {
                         //FIXME: issues with line numbers (many clones in same file, incorrect mapping)
                         //TODO: more efficient + take commit date into account
                         final var clns = cloneClass.getClones();
-                        final var from = clns.stream().filter(clone -> !clone.getFrom().getCommitSnapshot().equals(commitSnapshot)).findFirst().get();
-                        final var to = clns.stream().filter(clone -> clone.getFrom().getCommitSnapshot().equals(commitSnapshot)).findFirst().get();
+                        final var from = clns.stream().filter(clone -> !clone.getFrom().getRef().equals(commitSnapshot)).findFirst().get();
+                        final var to = clns.stream().filter(clone -> clone.getFrom().getRef().equals(commitSnapshot)).findFirst().get();
                         return Tuples.of(
                                 new CodeSnippet(commitSnapshot, to.getTo().getFilename(), to.getFromLine(), to.getToLine()),
-                                new CodeSnippet(from.getFrom().getCommitSnapshot(), from.getFrom().getFilename(), from.getFromLine(), from.getToLine()));
+                                new CodeSnippet(from.getFrom().getRef(), from.getFrom().getFilename(), from.getFromLine(), from.getToLine()));
                     });
         });
     }
