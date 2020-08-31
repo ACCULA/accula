@@ -2,7 +2,6 @@ plugins {
     id("org.springframework.boot") version "2.3.3.RELEASE"
     id("io.spring.dependency-management") version "1.0.9.RELEASE"
     id("net.bytebuddy.byte-buddy-gradle-plugin") version "1.10.14"
-    antlr
 }
 
 repositories {
@@ -15,7 +14,6 @@ repositories {
 version = "1.0-SNAPSHOT"
 
 val byteBuddyPlugin: Configuration by configurations.creating
-val antlrVersion = "4.8-1"
 
 dependencies {
     implementation("com.jetbrains.intellij.java:java-psi-impl:202.6948.69")
@@ -55,11 +53,7 @@ dependencies {
 
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
-    antlr("org.antlr:antlr4:$antlrVersion")
-    compileOnly("org.antlr:antlr4-runtime:$antlrVersion")
-
     implementation("com.suhininalex:suffixtree:1.0.2")
-    implementation("org.accula:clone-detector:1.0.1")
 }
 
 byteBuddy {
@@ -67,10 +61,4 @@ byteBuddy {
         plugin = "reactor.tools.agent.ReactorDebugByteBuddyPlugin"
         setClassPath(byteBuddyPlugin)
     })
-}
-
-tasks.generateGrammarSource {
-    maxHeapSize = "64m"
-    arguments = arguments + listOf("-package", "generated")
-    outputDirectory = File("src/main/java/generated")
 }
