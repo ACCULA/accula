@@ -6,7 +6,6 @@ plugins {
 
 repositories {
     maven(url = "https://dl.bintray.com/vorpal-research/kotlin-maven")
-    maven(url = "https://dl.bintray.com/accula/clone-detector")
     maven(url = "https://www.jetbrains.com/intellij-repository/releases")
     maven(url = "https://jetbrains.bintray.com/intellij-third-party-dependencies")
 }
@@ -16,9 +15,6 @@ version = "1.0-SNAPSHOT"
 val byteBuddyPlugin: Configuration by configurations.creating
 
 dependencies {
-    implementation("com.jetbrains.intellij.java:java-psi-impl:202.6948.69")
-    implementation("com.google.guava:guava:29.0-jre")
-
     implementation("org.springframework.boot:spring-boot-starter-webflux")
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
         exclude(group = "org.junit.vintage", module = "junit-vintage-engine")
@@ -54,6 +50,8 @@ dependencies {
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
     implementation("com.suhininalex:suffixtree:1.0.2")
+    implementation("com.jetbrains.intellij.java:java-psi-impl:202.6948.69")
+    implementation("com.google.guava:guava:29.0-jre")
 }
 
 byteBuddy {
