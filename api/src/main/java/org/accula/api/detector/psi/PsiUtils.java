@@ -1,4 +1,4 @@
-package org.accula.api.psi;
+package org.accula.api.detector.psi;
 
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
@@ -6,6 +6,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.impl.java.stubs.JavaAnnotationElementType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.TokenSet;
 
 import java.util.ArrayList;
@@ -30,7 +31,8 @@ public final class PsiUtils {
                     JavaTokenType.COLON,
                     JavaTokenType.COMMA,
                     JavaTokenType.LPARENTH,
-                    JavaTokenType.RPARENTH
+                    JavaTokenType.RPARENTH,
+                    JavaElementType.CODE_BLOCK
             ),
             TokenSet.create(
                     JavaTokenType.C_STYLE_COMMENT,

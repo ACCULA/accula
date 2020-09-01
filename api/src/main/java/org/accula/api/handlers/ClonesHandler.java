@@ -22,6 +22,8 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.function.TupleUtils;
+import reactor.util.function.Tuples;
 
 import java.util.ArrayList;
 import java.util.Base64;
@@ -112,12 +114,24 @@ public final class ClonesHandler {
                 })
                 .flatMapMany(container -> codeLoader.loadSnippets(container.snapshot, container.markers));
 
+        // The code below is an attempt to group snippet markers by commit snapshot to read files in a batch mode
+        // Unfortunately it brakes an original order of sequence.
+        // TODO: Think out how to read files in a batch mode without losing an original order
+        /*
         final var sourceFileSnippets = clones
                 .groupBy(Clone::getSourceSnapshot, clone -> SnippetMarker
                         .of(clone.getSourceFile(), clone.getSourceFromLine(), clone.getSourceToLine()))
                 .flatMapSequential(group -> group
                         .collectList()
                         .flatMapMany(snippetMarkers -> codeLoader.loadSnippets(Objects.requireNonNull(group.key()), snippetMarkers)));
+         */
+
+        final var sourceFileSnippets = clones
+                .map(clone -> Tuples.of(
+                        clone.getSourceSnapshot(),
+                        List.of(SnippetMarker.of(clone.getSourceFile(), clone.getSourceFromLine(), clone.getSourceToLine()))
+                ))
+                .flatMapSequential(TupleUtils.function(codeLoader::loadSnippets));
 
         final var sourcePullNumbers = clones
                 .map(clone -> Objects.requireNonNull(clone.getSourceSnapshot().getPullId()))

@@ -1,10 +1,11 @@
 package org.accula.api.detector;
 
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Value;
 import org.accula.api.db.model.CommitSnapshot;
-import org.accula.api.psi.Token;
+import org.accula.api.detector.psi.Token;
 
 /**
  * @author Anton Lamtev
@@ -13,6 +14,7 @@ import org.accula.api.psi.Token;
 @Value
 public
 class Clone {
+    @EqualsAndHashCode.Exclude
     CloneClass parent;
     Token<CommitSnapshot> from;
     Token<CommitSnapshot> to;

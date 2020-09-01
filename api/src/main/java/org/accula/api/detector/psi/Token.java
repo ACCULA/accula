@@ -1,4 +1,4 @@
-package org.accula.api.psi;
+package org.accula.api.detector.psi;
 
 import lombok.Builder;
 import lombok.EqualsAndHashCode;

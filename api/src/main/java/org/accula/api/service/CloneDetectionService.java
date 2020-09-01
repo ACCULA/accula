@@ -69,6 +69,17 @@ public final class CloneDetectionService {
                 .flatMapMany(cloneRepo::insert);
     }
 
+    public Mono<Void> fillSuffixTree() {
+        return projectRepo
+                .getTop(100)
+                .flatMap(project -> pullRepo.findByProjectId(project.getId()))
+                .groupBy(Pull::getProjectId)
+                .flatMap(projectPulls -> cloneDetector(projectPulls.key())
+                        .fill(projectPulls
+                                .flatMap(pull -> loader.loadFiles(pull.getHead(), FileFilter.SRC_JAVA))))
+                .then();
+    }
+
     private Clone convert(final CodeSnippet target, final CodeSnippet source) {
         return Clone.builder()
                 .targetSnapshot(target.getCommitSnapshot())

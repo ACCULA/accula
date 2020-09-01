@@ -17,7 +17,7 @@ export const PullClonesTab = ({
   refreshClones,
   isAdmin
 }: PullClonesTabProps) => {
-  const [splitView, setSplitView] = useState(false)
+  const [splitView, setSplitView] = useState(true)
 
   return (
     <LoadingWrapper deps={[clones]}>

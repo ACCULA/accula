@@ -2,7 +2,6 @@ package org.accula.api.util;
 
 import reactor.function.Function4;
 import reactor.function.Function6;
-import reactor.util.function.Tuple2;
 import reactor.util.function.Tuple3;
 import reactor.util.function.Tuple4;
 
@@ -36,8 +35,8 @@ public final class Lambda {
         return tuple -> f6.apply(tuple.getT1(), tuple.getT2(), tuple.getT3(), tuple.getT4(), last1, last2);
     }
 
-    public static <T1, T2, R> Function<Tuple2<T1, T2>, R> passingFirstArg(final Function<T1, R> f) {
-        return tuple -> f.apply(tuple.getT1());
+    public static <T1, T2, R> Function<T2, R> passingFirstArg(final BiFunction<T1, T2, R> f, final T1 t1) {
+        return t2 -> f.apply(t1, t2);
     }
 
     public static <T, R> Function<T, R> expandingWithArg(final Supplier<R> noArgFun) {

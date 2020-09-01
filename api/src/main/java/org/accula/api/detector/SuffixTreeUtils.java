@@ -2,8 +2,8 @@ package org.accula.api.detector;
 
 import com.suhininalex.suffixtree.Edge;
 import com.suhininalex.suffixtree.Node;
-import org.accula.api.psi.Token;
-import org.accula.api.psi.TraverseUtils;
+import org.accula.api.detector.psi.Token;
+import org.accula.api.detector.psi.TraverseUtils;
 
 import java.util.HashMap;
 import java.util.Map;

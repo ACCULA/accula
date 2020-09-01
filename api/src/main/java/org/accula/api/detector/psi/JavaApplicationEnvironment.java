@@ -1,4 +1,4 @@
-package org.accula.api.psi;
+package org.accula.api.detector.psi;
 
 import com.intellij.DynamicBundle;
 import com.intellij.codeInsight.ContainerProvider;

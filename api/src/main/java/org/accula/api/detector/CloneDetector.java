@@ -4,7 +4,6 @@ import lombok.Builder;
 import lombok.Value;
 import org.accula.api.code.FileEntity;
 import org.accula.api.db.model.CommitSnapshot;
-import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
@@ -28,7 +27,7 @@ public interface CloneDetector {
         return Flux.empty();
     }
 
-    default Publisher<Void> fill(Flux<FileEntity> files) {
+    default Mono<Void> fill(Flux<FileEntity> files) {
         return Mono.empty();
     }
 
