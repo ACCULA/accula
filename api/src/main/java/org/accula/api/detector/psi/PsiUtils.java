@@ -31,8 +31,8 @@ public final class PsiUtils {
                     JavaTokenType.COLON,
                     JavaTokenType.COMMA,
                     JavaTokenType.LPARENTH,
-                    JavaTokenType.RPARENTH,
-                    JavaElementType.CODE_BLOCK
+                    JavaTokenType.RPARENTH//,
+//                    JavaElementType.CODE_BLOCK// TODO: do we actually need this?
             ),
             TokenSet.create(
                     JavaTokenType.C_STYLE_COMMENT,
@@ -62,14 +62,14 @@ public final class PsiUtils {
     }
 
     public static List<PsiElement> methodBodies(final PsiElement root) {
-        final var methods = new ArrayList<PsiElement>();
+        final var methodBodies = new ArrayList<PsiElement>();
         forEachDescendantOfType(root, PsiMethod.class, method -> {
             final var body = method.getBody();
             if (body != null) {
-                methods.add(body);
+                methodBodies.add(body);
             }
         });
-        return methods;
+        return methodBodies;
     }
 
     public static boolean isValuableToken(final PsiElement token) {
@@ -78,7 +78,7 @@ public final class PsiUtils {
 
     public static <Ref> Token<Ref> token(final PsiElement token, final Ref ref) {
         final var methodName = parentsWithSelf(token)
-                .filter(PsiUtils::isMethod)
+                .filter(PsiMethod.class::isInstance)
                 .findFirst()
                 .map(method -> ((PsiMethod) method).getName())
                 .orElseThrow();
@@ -86,7 +86,7 @@ public final class PsiUtils {
         final var document = Objects.requireNonNull(file.getViewProvider().getDocument());
         final var textRange = token.getTextRange();
         final var fromLine = document.getLineNumber(textRange.getStartOffset()) + 1;
-        final var toLine = document.getLineNumber(textRange.getStartOffset()) + 1;
+        final var toLine = document.getLineNumber(textRange.getEndOffset()) + 1;
         return Token.<Ref>builder()
                 .ref(ref)
                 .string(token.getNode().getElementType().toString())
@@ -105,9 +105,5 @@ public final class PsiUtils {
         return Stream.concat(
                 Stream.of(parent),
                 parentsWithSelf(parent));
-    }
-
-    public static boolean isMethod(final PsiElement psiElement) {
-        return psiElement instanceof PsiMethod;
     }
 }

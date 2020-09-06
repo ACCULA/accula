@@ -18,6 +18,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 import reactor.function.TupleUtils;
 
+import javax.annotation.PostConstruct;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -67,6 +68,11 @@ public final class CloneDetectionService {
                 .collectList()
                 .doOnNext(cloneList -> log.info("{} clones have been detected", cloneList.size()))
                 .flatMapMany(cloneRepo::insert);
+    }
+
+    @PostConstruct
+    private void fillTheSuffixTree() {
+        fillSuffixTree().block();
     }
 
     public Mono<Void> fillSuffixTree() {

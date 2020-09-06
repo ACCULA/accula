@@ -11,10 +11,6 @@ final class RefreshTokenException extends RuntimeException {
         this.reason = reason.name();
     }
 
-    static boolean isInstanceOf(final Throwable t) {
-        return t instanceof RefreshTokenException;
-    }
-
     enum Reason {
         MISSING_TOKEN,
         TOKEN_VERIFICATION_FAILED,
