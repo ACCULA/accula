@@ -11,15 +11,14 @@ import org.accula.api.db.repo.PullRepo;
 import org.accula.api.detector.CloneDetector;
 import org.accula.api.detector.CloneDetectorImpl;
 import org.accula.api.detector.CodeSnippet;
-import org.accula.api.util.ReactorSchedulers;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Scheduler;
 import reactor.function.TupleUtils;
 
 import javax.annotation.PostConstruct;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -28,7 +27,6 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 @Service
 public final class CloneDetectionService {
-    private final Scheduler processingScheduler = ReactorSchedulers.boundedElastic(this);
     private final Map<Long, CloneDetector.Config> cloneDetectorConfigs = new ConcurrentHashMap<>();
     private final Map<Long, CloneDetector> cloneDetectors = new ConcurrentHashMap<>();
     private final ProjectRepo projectRepo;
@@ -50,20 +48,11 @@ public final class CloneDetectionService {
     public Flux<Clone> detectClones(final Pull pull) {
         final var targetFiles = loader.loadFiles(pull.getHead(), FileFilter.SRC_JAVA);
 
-        final var sourceFiles = pullRepo
-                .findUpdatedEarlierThan(pull.getProjectId(), pull.getNumber())
-                .map(Pull::getHead)
-                .flatMap(head -> loader.loadFiles(head, FileFilter.SRC_JAVA));
-
         final var clones = cloneDetector(pull.getProjectId())
                 .findClones(pull.getHead(), targetFiles)
+                .distinct()
                 .map(TupleUtils.function(this::convert));
 
-//        final var clones = cloneDetector(pull.getProjectId())
-//                .findClones(targetFiles, sourceFiles)
-//                .subscribeOn(processingScheduler)
-//                .map(TupleUtils.function(this::convert));
-//
         return clones
                 .collectList()
                 .doOnNext(cloneList -> log.info("{} clones have been detected", cloneList.size()))
@@ -75,12 +64,12 @@ public final class CloneDetectionService {
         fillSuffixTree().block();
     }
 
-    public Mono<Void> fillSuffixTree() {
+    private Mono<Void> fillSuffixTree() {
         return projectRepo
                 .getTop(100)
                 .flatMap(project -> pullRepo.findByProjectId(project.getId()))
                 .groupBy(Pull::getProjectId)
-                .flatMap(projectPulls -> cloneDetector(projectPulls.key())
+                .flatMap(projectPulls -> cloneDetector(Objects.requireNonNull(projectPulls.key()))
                         .fill(projectPulls
                                 .flatMap(pull -> loader.loadFiles(pull.getHead(), FileFilter.SRC_JAVA))))
                 .then();

@@ -27,7 +27,7 @@ public class CommitSnapshot {
 
     @Override
     public String toString() {
-        return "#" + pullId + "|" + repo.getOwner().getLogin() + "/" + repo.getName() + "/" + sha;
+        return repo.getOwner().getLogin() + "/" + repo.getName() + "/" + sha;
     }
 
     @SuppressWarnings("PMD.ShortClassName")

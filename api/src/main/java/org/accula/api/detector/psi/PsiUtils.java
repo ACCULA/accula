@@ -22,24 +22,19 @@ public final class PsiUtils {
     private static final TokenSet TOKENS_TO_EXCLUDE = TokenSet.orSet(
             TokenSet.WHITE_SPACE,
             TokenSet.create(
-                    new JavaAnnotationElementType()
-            ),
-            TokenSet.create(
+                    new JavaAnnotationElementType(),
+                    JavaTokenType.FINAL_KEYWORD,
+                    JavaTokenType.VAR_KEYWORD,
+                    JavaTokenType.C_STYLE_COMMENT,
+                    JavaTokenType.END_OF_LINE_COMMENT,
                     JavaTokenType.LBRACE,
                     JavaTokenType.RBRACE,
                     JavaTokenType.SEMICOLON,
                     JavaTokenType.COLON,
                     JavaTokenType.COMMA,
                     JavaTokenType.LPARENTH,
-                    JavaTokenType.RPARENTH//,
-//                    JavaElementType.CODE_BLOCK// TODO: do we actually need this?
-            ),
-            TokenSet.create(
-                    JavaTokenType.C_STYLE_COMMENT,
-                    JavaTokenType.END_OF_LINE_COMMENT
-            ),
-            TokenSet.create(
-                    JavaTokenType.FINAL_KEYWORD
+                    JavaTokenType.RPARENTH,
+                    JavaElementType.CODE_BLOCK
             )
     );
 
@@ -47,14 +42,14 @@ public final class PsiUtils {
     }
 
     public static <T extends PsiElement> void forEachDescendantOfType(final PsiElement root,
-                                                                      final Class<T> clazz,
+                                                                      final Class<T> type,
                                                                       final Consumer<? super T> onEach) {
         root.accept(new PsiRecursiveElementVisitor() {
             @SuppressWarnings("unchecked")
             @Override
             public void visitElement(final PsiElement element) {
                 super.visitElement(element);
-                if (clazz.isAssignableFrom(element.getClass())) {
+                if (type.isAssignableFrom(element.getClass())) {
                     onEach.accept((T) element);
                 }
             }

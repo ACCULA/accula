@@ -12,16 +12,29 @@ import org.accula.api.detector.psi.Token;
  */
 @Builder
 @Value
-public
-class Clone {
+public class Clone {
     @EqualsAndHashCode.Exclude
     CloneClass parent;
-    Token<CommitSnapshot> from;
-    Token<CommitSnapshot> to;
+    Token<CommitSnapshot> start;
+    Token<CommitSnapshot> end;
     @Getter(lazy = true)
     int lineCount = getToLine() - getFromLine() + 1;
     @Getter(lazy = true)
-    int fromLine = getFrom().getFromLine();
+    int fromLine = getStart().getFromLine();
     @Getter(lazy = true)
-    int toLine = getTo().getToLine();
+    int toLine = getEnd().getToLine();
+
+    public CommitSnapshot commitSnapshot() {
+        if (!start.getRef().equals(end.getRef())) {
+            throw new IllegalStateException("start.ref MUST be equal to end.ref");
+        }
+        return start.getRef();
+    }
+
+    public String filename() {
+        if (!start.getFilename().equals(end.getFilename())) {
+            throw new IllegalStateException("start.filename MUST be equal to end.filename");
+        }
+        return start.getFilename();
+    }
 }

@@ -1,14 +1,13 @@
 package org.accula.api.detector;
 
-import com.google.common.collect.Streams;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.PsiElement;
-import com.suhininalex.suffixtree.Edge;
 import com.suhininalex.suffixtree.SuffixTree;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.accula.api.code.FileEntity;
 import org.accula.api.db.model.CommitSnapshot;
+import org.accula.api.db.model.GithubRepo;
 import org.accula.api.detector.psi.PsiFileFactoryProvider;
 import org.accula.api.detector.psi.PsiUtils;
 import org.accula.api.detector.psi.Token;
@@ -22,8 +21,6 @@ import reactor.core.scheduler.Scheduler;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
-import java.util.Objects;
-
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -36,11 +33,6 @@ public final class CloneDetectorImpl implements CloneDetector {
     private final Sync sync = new Sync();
     private final SuffixTree<Token<CommitSnapshot>> suffixTree = new SuffixTree<>();
     private final ConfigProvider configProvider;
-
-    @Override
-    public Flux<Tuple2<CodeSnippet, CodeSnippet>> findClones(final Flux<FileEntity> targetFiles, final Flux<FileEntity> sourceFiles) {
-        return Flux.empty();
-    }
 
     @Override
     public Flux<Tuple2<CodeSnippet, CodeSnippet>> findClones(final CommitSnapshot commitSnapshot, final Flux<FileEntity> files) {
@@ -57,13 +49,15 @@ public final class CloneDetectorImpl implements CloneDetector {
         return PsiFileFactoryProvider
                 .using(psiFileFactory -> files
                         .flatMap(file -> Mono
-                                .fromSupplier(() -> psiFileFactory.createFileFromText(file.getName(), JavaLanguage.INSTANCE, file.getContent()))
+                                .fromSupplier(() -> psiFileFactory
+                                        .createFileFromText(file.getName(), JavaLanguage.INSTANCE, file.getContent()))
                                 .subscribeOn(scheduler)
                                 .flatMap(psiFile -> Mono
                                         .fromRunnable(() ->
                                                 PsiUtils.methodBodies(psiFile)
                                                         .stream()
-                                                        .map(method -> TraverseUtils.dfs(method, TraverseUtils.stream(PsiElement::getChildren))
+                                                        .map(method -> TraverseUtils
+                                                                .dfs(method, TraverseUtils.stream(PsiElement::getChildren))
                                                                 .filter(PsiUtils::isValuableToken)
                                                                 .map(Lambda.passingTailArg(PsiUtils::token, file.getCommitSnapshot()))
                                                                 .collect(toList()))
@@ -74,50 +68,65 @@ public final class CloneDetectorImpl implements CloneDetector {
                         .then());
     }
 
-    @SuppressWarnings("UnstableApiUsage")
     private Flux<Tuple2<CodeSnippet, CodeSnippet>> readClonesFromSuffixTree(final CommitSnapshot commitSnapshot, final Config config) {
         final var cloneNodes = TraverseUtils
-                .dfs(suffixTree.getRoot(), node -> node
-                        .getEdges()
-                        .stream()
-                        .map(Edge::getTerminal)
-                        .filter(Objects::nonNull))
-                .filter(node -> node
-                        .getEdges()
-                        .stream()
-                        .allMatch(edge -> edge.getBegin() == edge.getEnd() && edge.getBegin() == edge.getSequence().size() - 1))
-                .filter(node -> 0 == Streams.findLast(SuffixTreeUtils.parentEdges(node))
-                        .map(Edge::getBegin)
-                        .orElse(1));
+                .dfs(suffixTree.getRoot(), SuffixTreeUtils::terminalNodes)
+                .filter(SuffixTreeUtils::isCloneNode);
 
         final var cloneClasses = sync.reading(() -> cloneNodes
                 .map(CloneClass::new)
-                .filter(cc -> !cc.getClones().isEmpty())
+                .filter(cloneClass -> !cloneClass.getClones().isEmpty())
                 .collect(toList()));
 
         return Mono
                 .fromSupplier(cloneClasses)
                 .subscribeOn(scheduler)
                 .flatMapMany(Flux::fromIterable)
-                .filter(it -> {
-                    final var clone = it.getClones().get(0);
-                    final var filename = clone.getTo().getFilename();
-                    final var components = filename.split("/");
-                    final boolean common = components[components.length - 2].equals("polis");
-                    return !common && clone.getLineCount() >= config.getMinCloneLength();
-                })
-                .filter(cloneClass -> cloneClass.getClones().stream().anyMatch(clone -> !clone.getTo().getRef().getRepo().equals(commitSnapshot.getRepo())))
-                .filter(cloneClass -> cloneClass.getClones().stream().distinct().count() > 1)
-                .filter(cloneClass -> cloneClass.getClones().stream().anyMatch(clone -> clone.getFrom().getRef().equals(commitSnapshot)))
+                .filter(cloneClass -> cloneClassMatchesRules(cloneClass, config)
+                                      && cloneClassContainsClonesFromCommit(cloneClass, commitSnapshot)
+                                      && cloneClassContainsClonesFromReposOtherThan(cloneClass, commitSnapshot.getRepo()))
                 .map(cloneClass -> {
-                    //FIXME: issues with line numbers (many clones in same file, incorrect mapping)
-                    //TODO: more efficient + take commit date into account
-                    final var clns = cloneClass.getClones();
-                    final var from = clns.stream().filter(clone -> !clone.getFrom().getRef().getRepo().equals(commitSnapshot.getRepo())).findFirst().get();
-                    final var to = clns.stream().filter(clone -> clone.getFrom().getRef().equals(commitSnapshot)).findFirst().get();
+                    //TODO: take commit date into account
+                    //TODO: May be we need to return all the clone classes with all clones here,
+                    // and then filter them in next place, CloneDetectionService, e.g.
+                    final var clones = cloneClass.getClones();
+                    @SuppressWarnings("OptionalGetWithoutIsPresent")//
+                    final var from = clones
+                            .stream()
+                            .filter(clone -> !clone.commitSnapshot().getRepo().equals(commitSnapshot.getRepo()))
+                            .findFirst()
+                            .get();
+                    @SuppressWarnings("OptionalGetWithoutIsPresent")//
+                    final var to = clones
+                            .stream()
+                            .filter(clone -> clone.commitSnapshot().equals(commitSnapshot))
+                            .findFirst()
+                            .get();
                     return Tuples.of(
-                            new CodeSnippet(to.getTo().getRef(), to.getTo().getFilename(), to.getFromLine(), to.getToLine()),
-                            new CodeSnippet(from.getFrom().getRef(), from.getFrom().getFilename(), from.getFromLine(), from.getToLine()));
+                            new CodeSnippet(to.commitSnapshot(), to.filename(), to.getFromLine(), to.getToLine()),
+                            new CodeSnippet(from.commitSnapshot(), from.filename(), from.getFromLine(), from.getToLine()));
                 });
+    }
+
+    private static boolean cloneClassMatchesRules(final CloneClass cloneClass, final Config rules) {
+        return cloneClass.getLength() >= rules.getMinCloneLength()
+               && cloneClass
+                       .getClones()
+                       .stream()
+                       .anyMatch(clone -> rules.getFilter().test(clone.getStart().getFilename()));
+    }
+
+    private static boolean cloneClassContainsClonesFromCommit(final CloneClass cloneClass, final CommitSnapshot commit) {
+        return cloneClass
+                .getClones()
+                .stream()
+                .anyMatch(clone -> clone.commitSnapshot().equals(commit));
+    }
+
+    private static boolean cloneClassContainsClonesFromReposOtherThan(final CloneClass cloneClass, final GithubRepo repo) {
+        return cloneClass
+                .getClones()
+                .stream()
+                .anyMatch(clone -> !clone.commitSnapshot().getRepo().equals(repo));
     }
 }

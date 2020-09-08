@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 /**
  * @author Anton Lamtev
  */
-@RequiredArgsConstructor(onConstructor = @__(@JsonCreator))
+@RequiredArgsConstructor(onConstructor_ = @JsonCreator)
 public final class ErrorBody implements ResponseBody {
     private final String error;
 }

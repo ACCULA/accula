@@ -39,8 +39,8 @@ public class CloneClass {
                     final var from = to - getLength() + 1;
                     return Clone.builder()
                             .parent(this)
-                            .to(SuffixTreeUtils.get(edge, to))
-                            .from(SuffixTreeUtils.get(edge, from))
+                            .end(SuffixTreeUtils.get(edge, to))
+                            .start(SuffixTreeUtils.get(edge, from))
                             .build();
                 })
                 .collect(toList());
