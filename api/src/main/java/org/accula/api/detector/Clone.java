@@ -5,7 +5,6 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Value;
 import org.accula.api.db.model.CommitSnapshot;
-import org.accula.api.detector.psi.Token;
 
 /**
  * @author Anton Lamtev

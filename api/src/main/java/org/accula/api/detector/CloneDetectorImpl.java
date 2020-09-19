@@ -10,7 +10,6 @@ import org.accula.api.db.model.CommitSnapshot;
 import org.accula.api.db.model.GithubRepo;
 import org.accula.api.detector.psi.PsiFileFactoryProvider;
 import org.accula.api.detector.psi.PsiUtils;
-import org.accula.api.detector.psi.Token;
 import org.accula.api.detector.psi.TraverseUtils;
 import org.accula.api.util.Lambda;
 import org.accula.api.util.ReactorSchedulers;
@@ -59,7 +58,7 @@ public final class CloneDetectorImpl implements CloneDetector {
                                                         .map(method -> TraverseUtils
                                                                 .dfs(method, TraverseUtils.stream(PsiElement::getChildren))
                                                                 .filter(PsiUtils::isValuableToken)
-                                                                .map(Lambda.passingTailArg(PsiUtils::token, file.getCommitSnapshot()))
+                                                                .map(Lambda.passingTailArg(Token::of, file.getCommitSnapshot()))
                                                                 .collect(toList()))
                                                         .forEach(sync.writing(suffixTree::addSequence))
                                         )

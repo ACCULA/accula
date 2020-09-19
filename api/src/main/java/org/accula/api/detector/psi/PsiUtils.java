@@ -11,7 +11,6 @@ import com.intellij.psi.tree.TokenSet;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -69,27 +68,6 @@ public final class PsiUtils {
 
     public static boolean isValuableToken(final PsiElement token) {
         return !TOKENS_TO_EXCLUDE.contains(token.getNode().getElementType());
-    }
-
-    public static <Ref> Token<Ref> token(final PsiElement token, final Ref ref) {
-        final var methodName = parentsWithSelf(token)
-                .filter(PsiMethod.class::isInstance)
-                .findFirst()
-                .map(method -> ((PsiMethod) method).getName())
-                .orElseThrow();
-        final var file = token.getContainingFile();
-        final var document = Objects.requireNonNull(file.getViewProvider().getDocument());
-        final var textRange = token.getTextRange();
-        final var fromLine = document.getLineNumber(textRange.getStartOffset()) + 1;
-        final var toLine = document.getLineNumber(textRange.getEndOffset()) + 1;
-        return Token.<Ref>builder()
-                .ref(ref)
-                .string(token.getNode().getElementType().toString())
-                .methodName(methodName)
-                .filename(file.getName())
-                .fromLine(fromLine)
-                .toLine(toLine)
-                .build();
     }
 
     public static Stream<PsiElement> parentsWithSelf(final PsiElement self) {

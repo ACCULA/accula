@@ -2,6 +2,9 @@ package org.accula.api.code;
 
 import lombok.Value;
 
+/**
+ * @author Anton Lamtev
+ */
 @Value
 public class DiffEntry {
     FileEntity base;
