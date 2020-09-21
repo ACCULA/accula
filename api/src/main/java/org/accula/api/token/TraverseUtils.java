@@ -1,4 +1,4 @@
-package org.accula.api.detector.psi;
+package org.accula.api.token;
 
 import org.accula.api.util.Lambda;
 

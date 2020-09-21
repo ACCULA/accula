@@ -1,4 +1,4 @@
-package org.accula.api.detector;
+package org.accula.api.clone.suffixtree;
 
 import com.suhininalex.suffixtree.Node;
 import lombok.Getter;
@@ -13,14 +13,14 @@ import static java.util.stream.Collectors.toList;
  * @author Anton Lamtev
  */
 @Value
-public class CloneClass {
+public class CloneClass<Ref> {
     @ToString.Exclude
     Node node;
     @Getter(lazy = true)
     int length = length();
     @ToString.Exclude
     @Getter(lazy = true)
-    List<Clone> clones = clones();
+    List<Clone<Ref>> clones = clones();
 
     private int length() {
         return SuffixTreeUtils.parentEdges(node)
@@ -28,7 +28,7 @@ public class CloneClass {
                 .sum();
     }
 
-    private List<Clone> clones() {
+    private List<Clone<Ref>> clones() {
         return SuffixTreeUtils.terminalMap(node)
                 .entrySet()
                 .stream()
@@ -37,7 +37,7 @@ public class CloneClass {
                     final var offset = entry.getValue();
                     final var to = edge.getEnd() - offset;
                     final var from = to - getLength() + 1;
-                    return Clone.builder()
+                    return Clone.<Ref>builder()
                             .parent(this)
                             .end(SuffixTreeUtils.get(edge, to))
                             .start(SuffixTreeUtils.get(edge, from))

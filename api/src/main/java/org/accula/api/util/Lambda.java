@@ -1,5 +1,6 @@
 package org.accula.api.util;
 
+import reactor.function.Function3;
 import reactor.function.Function4;
 import reactor.function.Function6;
 import reactor.util.function.Tuple3;
@@ -26,6 +27,11 @@ public final class Lambda {
     public static <T1, T2, T3, Last, R>
     Function<Tuple3<T1, T2, T3>, R> passingTailArg(final Function4<T1, T2, T3, Last, R> f4, final Last last) {
         return tuple -> f4.apply(tuple.getT1(), tuple.getT2(), tuple.getT3(), last);
+    }
+
+    public static <T, Last1, Last2, R>
+    Function<T, R> passingTailArgs(final Function3<T, Last1, Last2, R> f3, final Last1 last1, final Last2 last2) {
+        return t -> f3.apply(t, last1, last2);
     }
 
     public static <T1, T2, T3, T4, Last1, Last2, R>

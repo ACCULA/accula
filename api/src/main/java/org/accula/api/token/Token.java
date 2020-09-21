@@ -1,11 +1,9 @@
-package org.accula.api.detector;
+package org.accula.api.token;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
-import org.accula.api.detector.psi.PsiUtils;
 
 import java.util.Objects;
 
@@ -26,12 +24,7 @@ public class Token<Ref> implements Comparable<Token<Ref>> {
     int fromLine;
     int toLine;
 
-    public static <Ref> Token<Ref> of(final PsiElement token, final Ref ref) {
-        final var methodName = PsiUtils.parentsWithSelf(token)
-                .filter(PsiMethod.class::isInstance)
-                .findFirst()
-                .map(method -> ((PsiMethod) method).getName())
-                .orElseThrow();
+    public static <Ref> Token<Ref> of(final PsiElement token, final String methodName, final Ref ref) {
         final var file = token.getContainingFile();
         final var document = Objects.requireNonNull(file.getViewProvider().getDocument());
         final var textRange = token.getTextRange();

@@ -185,8 +185,7 @@ public final class ProjectsHandler {
                                              final GithubApiPull[] githubApiPulls,
                                              final User currentUser) {
         return Mono.defer(() -> {
-            //FIXME
-            if (false) {
+            if (!isAdmin) {
                 return Mono.error(CreateProjectException.NO_PERMISSION);
             }
 

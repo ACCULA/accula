@@ -2,7 +2,6 @@ package org.accula.api.util;
 
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
@@ -35,27 +34,23 @@ public final class Sync {
         };
     }
 
-    public <T> Consumer<T> reading(final Consumer<T> readOp) {
-        return t -> {
-            final var readLock = lock.readLock();
-            readLock.lock();
-            try {
-                readOp.accept(t);
-            } finally {
-                readLock.unlock();
-            }
-        };
+    public void reading(final Runnable readOp) {
+        final var readLock = lock.readLock();
+        readLock.lock();
+        try {
+            readOp.run();
+        } finally {
+            readLock.unlock();
+        }
     }
 
-    public <T> Consumer<T> writing(final Consumer<T> writeOp) {
-        return t -> {
-            final var writeLock = lock.writeLock();
-            writeLock.lock();
-            try {
-                writeOp.accept(t);
-            } finally {
-                writeLock.unlock();
-            }
-        };
+    public void writing(final Runnable writeOp) {
+        final var writeLock = lock.writeLock();
+        writeLock.lock();
+        try {
+            writeOp.run();
+        } finally {
+            writeLock.unlock();
+        }
     }
 }

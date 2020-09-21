@@ -1,21 +1,21 @@
-package org.accula.api.detector;
+package org.accula.api.clone.suffixtree;
 
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Value;
-import org.accula.api.db.model.CommitSnapshot;
+import org.accula.api.token.Token;
 
 /**
  * @author Anton Lamtev
  */
 @Builder
 @Value
-public class Clone {
+public class Clone<Ref> {
     @EqualsAndHashCode.Exclude
-    CloneClass parent;
-    Token<CommitSnapshot> start;
-    Token<CommitSnapshot> end;
+    CloneClass<Ref> parent;
+    Token<Ref> start;
+    Token<Ref> end;
     @Getter(lazy = true)
     int lineCount = getToLine() - getFromLine() + 1;
     @Getter(lazy = true)
@@ -23,7 +23,7 @@ public class Clone {
     @Getter(lazy = true)
     int toLine = getEnd().getToLine();
 
-    public CommitSnapshot commitSnapshot() {
+    public Ref ref() {
         if (!start.getRef().equals(end.getRef())) {
             throw new IllegalStateException("start.ref MUST be equal to end.ref");
         }

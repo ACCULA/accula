@@ -83,8 +83,7 @@ public final class ClonesHandler {
     private <T> Flux<T> doIfCurrentUserHasAdminPermissionInProject(final long projectId, final Flux<T> action) {
         return currentUserRepo
                 .get(User::getId)
-                //FIXME
-                .filterWhen(currentUserId -> Mono.just(Boolean.TRUE))
+                .filterWhen(currentUserId -> projectRepo.hasAdmin(projectId, currentUserId))
                 .flatMapMany(currentUserId -> action);
     }
 
@@ -140,12 +139,12 @@ public final class ClonesHandler {
     }
 
     private static CloneDto toCloneDto(final Clone clone,
-                                       final FileEntity targetFile,
-                                       final FileEntity sourceFile,
+                                       final FileEntity<CommitSnapshot> targetFile,
+                                       final FileEntity<CommitSnapshot> sourceFile,
                                        final Integer sourcePullNumber,
                                        final long projectId,
                                        final int targetPullNumber) {
-        final var target = codeSnippetWith(targetFile.getCommitSnapshot(), Objects.requireNonNull(targetFile.getContent()))
+        final var target = codeSnippetWith(targetFile.getRef(), Objects.requireNonNull(targetFile.getContent()))
                 .projectId(projectId)
                 .pullNumber(targetPullNumber)
                 .file(clone.getTargetFile())
@@ -153,7 +152,7 @@ public final class ClonesHandler {
                 .toLine(clone.getTargetToLine())
                 .build();
 
-        final var source = codeSnippetWith(sourceFile.getCommitSnapshot(), Objects.requireNonNull(sourceFile.getContent()))
+        final var source = codeSnippetWith(sourceFile.getRef(), Objects.requireNonNull(sourceFile.getContent()))
                 .projectId(projectId)
                 .pullNumber(sourcePullNumber)
                 .file(clone.getSourceFile())

@@ -14,20 +14,20 @@ public interface CodeLoader {
     /**
      * Loads all file entities by the commit snapshot
      */
-    default Flux<FileEntity> loadFiles(CommitSnapshot snapshot) {
+    default Flux<FileEntity<CommitSnapshot>> loadFiles(CommitSnapshot snapshot) {
         return loadFiles(snapshot, FileFilter.ALL);
     }
 
     /**
      * Loads all file entities that satisfies the filter by the commit snapshot
      */
-    Flux<FileEntity> loadFiles(CommitSnapshot snapshot, FileFilter filter);
+    Flux<FileEntity<CommitSnapshot>> loadFiles(CommitSnapshot snapshot, FileFilter filter);
 
     /**
      * Loads the file snippets (file entities with content of the specified line range)
      * by the commit snapshot, the file names and the line ranges
      */
-    Flux<FileEntity> loadSnippets(CommitSnapshot snapshot, List<SnippetMarker> markers);
+    Flux<FileEntity<CommitSnapshot>> loadSnippets(CommitSnapshot snapshot, List<SnippetMarker> markers);
 
     /**
      * Loads diff between two commits as {@link DiffEntry} of file entities,

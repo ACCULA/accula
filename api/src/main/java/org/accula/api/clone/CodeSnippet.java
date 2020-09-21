@@ -1,4 +1,4 @@
-package org.accula.api.detector;
+package org.accula.api.clone;
 
 import lombok.Value;
 import org.accula.api.db.model.CommitSnapshot;

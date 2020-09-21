@@ -49,12 +49,12 @@ export const PullClonesTab = ({
                 into <span className="right-title right-title-colored">{clone.target.file}</span>
               </>
             }
-            oldValue={clone.target.content}
-            newValue={clone.source.content}
+            oldValue={clone.source.content}
+            newValue={clone.target.content}
             splitView={splitView}
             showDiffOnly
-            leftOffset={clone.target.fromLine}
-            rightOffset={clone.source.fromLine}
+            leftOffset={clone.source.fromLine}
+            rightOffset={clone.target.fromLine}
             compareMethod={DiffMethod.WORDS_WITH_SPACE}
             // disableWordDiff
           />

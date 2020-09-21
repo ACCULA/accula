@@ -1,4 +1,4 @@
 @NonNullApi
-package org.accula.api.detector.psi;
+package org.accula.api.token.psi.java;
 
 import org.springframework.lang.NonNullApi;

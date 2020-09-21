@@ -1,4 +1,4 @@
-package org.accula.api.detector;
+package org.accula.api.clone;
 
 import lombok.Builder;
 import lombok.Value;
@@ -16,9 +16,9 @@ import java.util.function.Supplier;
  * @author Anton Lamtev
  */
 public interface CloneDetector {
-    Flux<Tuple2<CodeSnippet, CodeSnippet>> findClones(CommitSnapshot commitSnapshot, Flux<FileEntity> files);
+    Flux<Tuple2<CodeSnippet, CodeSnippet>> findClones(CommitSnapshot commitSnapshot, Flux<FileEntity<CommitSnapshot>> files);
 
-    Mono<Void> fill(Flux<FileEntity> files);
+    Mono<Void> fill(Flux<FileEntity<CommitSnapshot>> files);
 
     interface ConfigProvider extends Supplier<Mono<Config>> {
         @Override

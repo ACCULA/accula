@@ -39,7 +39,7 @@ public final class GitCodeLoader implements CodeLoader {
     private final Git git;
 
     @Override
-    public Flux<FileEntity> loadFiles(final CommitSnapshot snapshot, final FileFilter filter) {
+    public Flux<FileEntity<CommitSnapshot>> loadFiles(final CommitSnapshot snapshot, final FileFilter filter) {
         return withCommonGitRepo(snapshot)
                 .flatMap(repo -> Mono
                         .fromFuture(repo.lsTree(snapshot.getSha()))
@@ -48,12 +48,12 @@ public final class GitCodeLoader implements CodeLoader {
                                 .fromFuture(repo.catFiles(files))
                                 .map(filesContent -> files
                                         .stream()
-                                        .map(file -> new FileEntity(snapshot, file.getName(), filesContent.get(file))))))
+                                        .map(file -> new FileEntity<>(snapshot, file.getName(), filesContent.get(file))))))
                 .flatMapMany(Flux::fromStream);
     }
 
     @Override
-    public Flux<FileEntity> loadSnippets(final CommitSnapshot snapshot, final List<SnippetMarker> markers) {
+    public Flux<FileEntity<CommitSnapshot>> loadSnippets(final CommitSnapshot snapshot, final List<SnippetMarker> markers) {
         return withCommonGitRepo(snapshot)
                 .flatMap(repo -> Mono
                         .fromFuture(repo.lsTree(snapshot.getSha()))
@@ -62,7 +62,7 @@ public final class GitCodeLoader implements CodeLoader {
                                 .fromFuture(repo.catFiles(snippets))
                                 .map(filesContent -> snippets
                                         .stream()
-                                        .map(snippet -> new FileEntity(
+                                        .map(snippet -> new FileEntity<>(
                                                 snapshot, snippet.getFile().getName(),
                                                 filesContent.get(snippet))))))
                 .flatMapMany(Flux::fromStream);
@@ -154,32 +154,28 @@ public final class GitCodeLoader implements CodeLoader {
                 .map(files -> diffEntries
                         .stream()
                         .map(diffEntry -> {
-                            if (diffEntry instanceof Addition) {
-                                final var addition = (Addition) diffEntry;
+                            if (diffEntry instanceof Addition addition) {
                                 return DiffEntry.of(
                                         FileEntity.absent(base),
-                                        new FileEntity(head, addition.getHead().getName(), files.get(addition.getHead()))
+                                        new FileEntity<>(head, addition.getHead().getName(), files.get(addition.getHead()))
                                 );
                             }
-                            if (diffEntry instanceof Deletion) {
-                                final var deletion = (Deletion) diffEntry;
+                            if (diffEntry instanceof Deletion deletion) {
                                 return DiffEntry.of(
-                                        new FileEntity(base, deletion.getBase().getName(), files.get(deletion.getBase())),
+                                        new FileEntity<>(base, deletion.getBase().getName(), files.get(deletion.getBase())),
                                         FileEntity.absent(head)
                                 );
                             }
-                            if (diffEntry instanceof Modification) {
-                                final var modification = (Modification) diffEntry;
+                            if (diffEntry instanceof Modification modification) {
                                 return DiffEntry.of(
-                                        new FileEntity(base, modification.getBase().getName(), files.get(modification.getBase())),
-                                        new FileEntity(head, modification.getHead().getName(), files.get(modification.getHead()))
+                                        new FileEntity<>(base, modification.getBase().getName(), files.get(modification.getBase())),
+                                        new FileEntity<>(head, modification.getHead().getName(), files.get(modification.getHead()))
                                 );
                             }
-                            if (diffEntry instanceof Renaming) {
-                                final var renaming = (Renaming) diffEntry;
+                            if (diffEntry instanceof Renaming renaming) {
                                 return new DiffEntry(
-                                        new FileEntity(base, renaming.getBase().getName(), files.get(renaming.getBase())),
-                                        new FileEntity(head, renaming.getHead().getName(), files.get(renaming.getHead())),
+                                        new FileEntity<>(base, renaming.getBase().getName(), files.get(renaming.getBase())),
+                                        new FileEntity<>(head, renaming.getHead().getName(), files.get(renaming.getHead())),
                                         renaming.getSimilarityIndex()
                                 );
                             }
