@@ -2,6 +2,9 @@ package org.accula.api.auth.jwt.refresh;
 
 import lombok.Getter;
 
+/**
+ * @author Anton Lamtev
+ */
 @Getter
 final class RefreshTokenException extends RuntimeException {
     private static final long serialVersionUID = -1081904770207522419L;
@@ -9,10 +12,6 @@ final class RefreshTokenException extends RuntimeException {
 
     RefreshTokenException(final Reason reason) {
         this.reason = reason.name();
-    }
-
-    static boolean isInstanceOf(final Throwable t) {
-        return t instanceof RefreshTokenException;
     }
 
     enum Reason {

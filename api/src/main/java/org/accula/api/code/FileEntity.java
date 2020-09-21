@@ -2,7 +2,6 @@ package org.accula.api.code;
 
 import lombok.EqualsAndHashCode;
 import lombok.Value;
-import org.accula.api.db.model.CommitSnapshot;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -10,20 +9,20 @@ import org.jetbrains.annotations.Nullable;
  * @author Anton Lamtev
  */
 @Value
-public class FileEntity {
-    CommitSnapshot commitSnapshot;
+public class FileEntity<Ref> {
+    Ref ref;
     @Nullable
     String name;
     @EqualsAndHashCode.Exclude
     @Nullable
     String content;
 
-    public static FileEntity absent(final CommitSnapshot commitSnapshot) {
-        return new FileEntity(commitSnapshot, null, null);
+    public static <Ref> FileEntity<Ref> absent(final Ref ref) {
+        return new FileEntity<>(ref, null, null);
     }
 
     @Override
     public String toString() {
-        return commitSnapshot + ":" + name;
+        return ref + ":" + name;
     }
 }

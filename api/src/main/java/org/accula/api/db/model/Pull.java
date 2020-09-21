@@ -6,6 +6,9 @@ import lombok.Value;
 
 import java.time.Instant;
 
+/**
+ * @author Anton Lamtev
+ */
 @Builder
 @Value
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)

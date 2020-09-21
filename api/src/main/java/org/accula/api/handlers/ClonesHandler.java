@@ -22,6 +22,8 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.function.TupleUtils;
+import reactor.util.function.Tuples;
 
 import java.util.ArrayList;
 import java.util.Base64;
@@ -111,12 +113,12 @@ public final class ClonesHandler {
                 })
                 .flatMapMany(container -> codeLoader.loadSnippets(container.snapshot, container.markers));
 
+        // TODO: Think out how to read files in a batch mode without losing an original order
         final var sourceFileSnippets = clones
-                .groupBy(Clone::getSourceSnapshot, clone -> SnippetMarker
-                        .of(clone.getSourceFile(), clone.getSourceFromLine(), clone.getSourceToLine()))
-                .flatMapSequential(group -> group
-                        .collectList()
-                        .flatMapMany(snippetMarkers -> codeLoader.loadSnippets(Objects.requireNonNull(group.key()), snippetMarkers)));
+                .map(clone -> Tuples.of(
+                        clone.getSourceSnapshot(),
+                        List.of(SnippetMarker.of(clone.getSourceFile(), clone.getSourceFromLine(), clone.getSourceToLine()))))
+                .flatMapSequential(TupleUtils.function(codeLoader::loadSnippets));
 
         final var sourcePullNumbers = clones
                 .map(clone -> Objects.requireNonNull(clone.getSourceSnapshot().getPullId()))
@@ -137,12 +139,12 @@ public final class ClonesHandler {
     }
 
     private static CloneDto toCloneDto(final Clone clone,
-                                       final FileEntity targetFile,
-                                       final FileEntity sourceFile,
+                                       final FileEntity<CommitSnapshot> targetFile,
+                                       final FileEntity<CommitSnapshot> sourceFile,
                                        final Integer sourcePullNumber,
                                        final long projectId,
                                        final int targetPullNumber) {
-        final var target = codeSnippetWith(targetFile.getCommitSnapshot(), Objects.requireNonNull(targetFile.getContent()))
+        final var target = codeSnippetWith(targetFile.getRef(), Objects.requireNonNull(targetFile.getContent()))
                 .projectId(projectId)
                 .pullNumber(targetPullNumber)
                 .file(clone.getTargetFile())
@@ -150,7 +152,7 @@ public final class ClonesHandler {
                 .toLine(clone.getTargetToLine())
                 .build();
 
-        final var source = codeSnippetWith(sourceFile.getCommitSnapshot(), Objects.requireNonNull(sourceFile.getContent()))
+        final var source = codeSnippetWith(sourceFile.getRef(), Objects.requireNonNull(sourceFile.getContent()))
                 .projectId(projectId)
                 .pullNumber(sourcePullNumber)
                 .file(clone.getSourceFile())

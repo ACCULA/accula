@@ -157,7 +157,7 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
     public Mono<Project.Conf> confById(final Long id) {
         return withConnection(connection -> Mono.from(((PostgresqlStatement) connection.createStatement("""
                 SELECT conf.clone_min_line_count                AS clone_min_line_count,
-                       COALESCE(admins.ids, Array []::BIGINT[]) AS admin_ids
+                       COALESCE(admins.ids, Array[]::BIGINT[])  AS admin_ids
                 FROM project_conf conf
                          LEFT JOIN (SELECT this.project_id,
                                            array_agg(this.admin_id) AS ids

@@ -75,7 +75,7 @@ public final class JwtRefreshFilter implements WebFilter {
                             .onErrorMap(e -> UNABLE_REPLACE_IN_DB_EXCEPTION)
                             .then(responseProducer.formSuccessBody(exchange, userId, newRefreshToken));
                 })
-                .onErrorMap(not(RefreshTokenException::isInstanceOf), e -> TOKEN_VERIFICATION_EXCEPTION)
+                .onErrorMap(not(RefreshTokenException.class::isInstance), e -> TOKEN_VERIFICATION_EXCEPTION)
                 .onErrorResume(RefreshTokenException.class, e -> handleRefreshTokenFailure(e, exchange));
     }
 

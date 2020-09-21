@@ -1,8 +1,10 @@
-package org.accula.api.detector;
+package org.accula.api.clone;
 
 import lombok.Builder;
 import lombok.Value;
 import org.accula.api.code.FileEntity;
+import org.accula.api.code.FileFilter;
+import org.accula.api.db.model.CommitSnapshot;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
@@ -14,13 +16,9 @@ import java.util.function.Supplier;
  * @author Anton Lamtev
  */
 public interface CloneDetector {
-    /**
-     * Find clones inside {@code targetFiles} that could be copied from {@code sourceFiles}.
-     * Each element emitted by the resulting {@code Flux} is a pair of:
-     * - a snippet from target file
-     * - a snippet from source file
-     */
-    Flux<Tuple2<CodeSnippet, CodeSnippet>> findClones(Flux<FileEntity> targetFiles, Flux<FileEntity> sourceFiles);
+    Flux<Tuple2<CodeSnippet, CodeSnippet>> findClones(CommitSnapshot commitSnapshot, Flux<FileEntity<CommitSnapshot>> files);
+
+    Mono<Void> fill(Flux<FileEntity<CommitSnapshot>> files);
 
     interface ConfigProvider extends Supplier<Mono<Config>> {
         @Override
@@ -31,5 +29,7 @@ public interface CloneDetector {
     @Value
     class Config {
         int minCloneLength;
+        @Builder.Default
+        FileFilter filter = FileFilter.SRC_JAVA;
     }
 }
