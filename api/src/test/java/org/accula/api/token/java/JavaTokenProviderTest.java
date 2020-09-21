@@ -9,8 +9,6 @@ import reactor.test.StepVerifier;
 
 import java.util.Collection;
 
-import static java.util.stream.Collectors.toList;
-
 /**
  * @author Anton Lamtev
  */
@@ -68,7 +66,6 @@ class JavaTokenProviderTest {
                 """);
 
         StepVerifier.create(tokenProvider.tokensByMethods(Flux.just(f1, f2, f3))
-                .map(stream -> stream.collect(toList()))
                 .collectList())
                 .expectNextMatches(methods -> {
                     if (methods.size() != 9) {

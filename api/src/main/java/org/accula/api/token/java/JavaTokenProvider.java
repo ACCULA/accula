@@ -20,7 +20,9 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 
-import java.util.stream.Stream;
+import java.util.List;
+
+import static java.util.stream.Collectors.toList;
 
 /**
  * @author Anton Lamtev
@@ -29,10 +31,11 @@ public final class JavaTokenProvider<Ref> implements TokenProvider<Ref> {
     private final Scheduler scheduler = ReactorSchedulers.boundedElastic(this);
 
     @Override
-    public Flux<Stream<Token<Ref>>> tokensByMethods(final Flux<FileEntity<Ref>> files) {
+    public Flux<List<Token<Ref>>> tokensByMethods(final Flux<FileEntity<Ref>> files) {
         return javaPsiFileFactory().flatMapMany(psiFileFactory ->
                 files.flatMap(file ->
-                        Mono.fromSupplier(() -> psiFileFactory.createFileFromText(file.getName(), JavaLanguage.INSTANCE, file.getContent()))
+                        Mono.fromSupplier(() ->
+                                psiFileFactory.createFileFromText(file.getName(), JavaLanguage.INSTANCE, file.getContent()))
                                 .subscribeOn(scheduler)
                                 .flatMapMany(JavaTokenProvider::psiMethods)
                                 .map(Lambda.passingTailArg(JavaTokenProvider::methodTokens, file))));
@@ -42,11 +45,12 @@ public final class JavaTokenProvider<Ref> implements TokenProvider<Ref> {
         return Flux.fromIterable(JavaPsiUtils.methods(psiFile));
     }
 
-    private static <Ref> Stream<Token<Ref>> methodTokens(final PsiMethod method, final FileEntity<Ref> file) {
+    private static <Ref> List<Token<Ref>> methodTokens(final PsiMethod method, final FileEntity<Ref> file) {
         return TraverseUtils
                 .dfs(method.getBody(), TraverseUtils.stream(PsiElement::getChildren))
                 .filter(JavaPsiUtils::isValuableToken)
-                .map(Lambda.passingTailArgs(Token::of, method.getName(), file.getRef()));
+                .map(Lambda.passingTailArgs(Token::of, method.getName(), file.getRef()))
+                .collect(toList());
     }
 
     private static Mono<PsiFileFactory> javaPsiFileFactory() {

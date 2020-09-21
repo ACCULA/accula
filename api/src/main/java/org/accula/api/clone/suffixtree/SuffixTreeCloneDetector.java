@@ -17,10 +17,8 @@ public final class SuffixTreeCloneDetector<Token extends Comparable<Token>, Ref>
     private final SuffixTree<Token> suffixTree = new SuffixTree<>();
     private final Sync sync = new Sync();
 
-    public void addTokens(final List<Token> tokens) {
-        sync.writing(() -> {
-            suffixTree.addSequence(tokens);
-        });
+    public long addTokens(final List<Token> tokens) {
+        return sync.writing(() -> suffixTree.addSequence(tokens)).get();
     }
 
     public List<CloneClass<Ref>> cloneClassesAfterTransform(final Function<Stream<CloneClass<Ref>>, Stream<CloneClass<Ref>>> transform) {

@@ -2,11 +2,11 @@ package org.accula.api.clone;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.accula.api.clone.suffixtree.CloneClass;
+import org.accula.api.clone.suffixtree.SuffixTreeCloneDetector;
 import org.accula.api.code.FileEntity;
 import org.accula.api.db.model.CommitSnapshot;
 import org.accula.api.db.model.GithubRepo;
-import org.accula.api.clone.suffixtree.CloneClass;
-import org.accula.api.clone.suffixtree.SuffixTreeCloneDetector;
 import org.accula.api.token.Token;
 import org.accula.api.token.TokenProvider;
 import org.accula.api.util.Lambda;
@@ -19,8 +19,6 @@ import reactor.util.function.Tuples;
 
 import java.util.List;
 import java.util.function.Supplier;
-
-import static java.util.stream.Collectors.toList;
 
 /**
  * @author Anton Lamtev
@@ -47,9 +45,8 @@ public final class CloneDetectorImpl implements CloneDetector {
 
     private Mono<Void> addFilesToSuffixTree(final Flux<FileEntity<CommitSnapshot>> files) {
         return tokenProvider.tokensByMethods(files)
-                .map(stream -> stream.collect(toList()))
                 .flatMap(methods ->
-                        Mono.fromRunnable(() -> suffixTreeCloneDetector.addTokens(methods))
+                        Mono.fromSupplier(() -> suffixTreeCloneDetector.addTokens(methods))
                                 .subscribeOn(scheduler))
                 .then();
     }
