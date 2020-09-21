@@ -48,6 +48,8 @@ plugins:
          enabled: false
       AvoidCatchingGenericException:
         enabled: false
+      GenericsNaming:
+        enabled: false # why can not we give our generics clear names?
 
     config:
       file: pmd.xml
