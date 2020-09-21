@@ -1,5 +1,6 @@
 package org.accula.api.token.java;
 
+import org.accula.api.clone.suffixtree.SuffixTreeCloneDetectorTest;
 import org.accula.api.code.FileEntity;
 import org.accula.api.token.TokenProvider;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,38 +23,8 @@ class JavaTokenProviderTest {
 
     @Test
     void test() {
-        final var f1 = new FileEntity<>("ref1", "Cell.java", """
-                public class Cell {
-                    public Cell(@NotNull final ByteBuffer key, @NotNull final Value value) {
-                        this.key = key;
-                        this.value = value;
-                    }
-                    public Value getValue() {
-                        return value;
-                    }
-                    public ByteBuffer getKey() {
-                        println(k);
-                        //comment
-                        return key.asReadOnlyBuffer();
-                    }
-                }
-                """);
-        final var f2 = new FileEntity<>("ref2", "Cell.java", """
-                public class Cell {
-                    public Cell(@Another ByteBuffer k, final Value v) {
-                        Objects.requireNonNull(key);
-                        Objects.requireNonNull(value);
-                        this.k = k;
-                        this.v = v;
-                    }
-                    public ByteBuffer k() {
-                        return k.asReadOnlyBuffer();
-                    }
-                    public Value v() {
-                        return v;
-                    }
-                }
-                """);
+        final var f1 = new FileEntity<>("ref1", "Cell.java", SuffixTreeCloneDetectorTest.F1);
+        final var f2 = new FileEntity<>("ref2", "Cell.java", SuffixTreeCloneDetectorTest.F2);
         final var f3 = new FileEntity<>("ref3", "Cell.java", """
                 public class Cell {
                     public Cell(@Another ByteBuffer k, final Value v) {
