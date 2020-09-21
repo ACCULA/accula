@@ -33,24 +33,4 @@ public final class Sync {
             }
         };
     }
-
-    public void reading(final Runnable readOp) {
-        final var readLock = lock.readLock();
-        readLock.lock();
-        try {
-            readOp.run();
-        } finally {
-            readLock.unlock();
-        }
-    }
-
-    public void writing(final Runnable writeOp) {
-        final var writeLock = lock.writeLock();
-        writeLock.lock();
-        try {
-            writeOp.run();
-        } finally {
-            writeLock.unlock();
-        }
-    }
 }

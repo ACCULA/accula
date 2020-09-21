@@ -3,7 +3,6 @@ package org.accula.api.token.psi.java;
 import com.intellij.DynamicBundle;
 import com.intellij.codeInsight.ContainerProvider;
 import com.intellij.codeInsight.runner.JavaMainMethodProvider;
-import com.intellij.core.CoreApplicationEnvironment;
 import com.intellij.core.JavaCoreApplicationEnvironment;
 import com.intellij.lang.MetaLanguage;
 import com.intellij.openapi.Disposable;
@@ -45,7 +44,7 @@ public final class JavaApplicationEnvironment extends JavaCoreApplicationEnviron
         registerApplicationExtensionPoint(JavaMainMethodProvider.EP_NAME, JavaMainMethodProvider.class);
         registerApplicationExtensionPoint(ContainerProvider.EP_NAME, ContainerProvider.class);
         registerApplicationExtensionPoint(MetaLanguage.EP_NAME, MetaLanguage.class);
-        CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), ClsCustomNavigationPolicy.EP_NAME, ClsCustomNavigationPolicy.class);
-        CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), JavaModuleSystem.EP_NAME, JavaModuleSystem.class);
+        registerExtensionPoint(Extensions.getRootArea(), ClsCustomNavigationPolicy.EP_NAME, ClsCustomNavigationPolicy.class);
+        registerExtensionPoint(Extensions.getRootArea(), JavaModuleSystem.EP_NAME, JavaModuleSystem.class);
     }
 }

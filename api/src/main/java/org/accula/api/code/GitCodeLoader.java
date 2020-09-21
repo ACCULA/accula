@@ -154,25 +154,29 @@ public final class GitCodeLoader implements CodeLoader {
                 .map(files -> diffEntries
                         .stream()
                         .map(diffEntry -> {
-                            if (diffEntry instanceof Addition addition) {
+                            if (diffEntry instanceof Addition) {
+                                final var addition = (Addition) diffEntry;
                                 return DiffEntry.of(
                                         FileEntity.absent(base),
                                         new FileEntity<>(head, addition.getHead().getName(), files.get(addition.getHead()))
                                 );
                             }
-                            if (diffEntry instanceof Deletion deletion) {
+                            if (diffEntry instanceof Deletion) {
+                                final var deletion = (Deletion) diffEntry;
                                 return DiffEntry.of(
                                         new FileEntity<>(base, deletion.getBase().getName(), files.get(deletion.getBase())),
                                         FileEntity.absent(head)
                                 );
                             }
-                            if (diffEntry instanceof Modification modification) {
+                            if (diffEntry instanceof Modification) {
+                                final var modification = (Modification) diffEntry;
                                 return DiffEntry.of(
                                         new FileEntity<>(base, modification.getBase().getName(), files.get(modification.getBase())),
                                         new FileEntity<>(head, modification.getHead().getName(), files.get(modification.getHead()))
                                 );
                             }
-                            if (diffEntry instanceof Renaming renaming) {
+                            if (diffEntry instanceof Renaming) {
+                                final var renaming = (Renaming) diffEntry;
                                 return new DiffEntry(
                                         new FileEntity<>(base, renaming.getBase().getName(), files.get(renaming.getBase())),
                                         new FileEntity<>(head, renaming.getHead().getName(), files.get(renaming.getHead())),
