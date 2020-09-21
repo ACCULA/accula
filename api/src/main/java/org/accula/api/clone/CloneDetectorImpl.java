@@ -10,10 +10,8 @@ import org.accula.api.db.model.GithubRepo;
 import org.accula.api.token.Token;
 import org.accula.api.token.TokenProvider;
 import org.accula.api.util.Lambda;
-import org.accula.api.util.ReactorSchedulers;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Scheduler;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
@@ -26,7 +24,7 @@ import java.util.function.Supplier;
 @Slf4j
 @RequiredArgsConstructor
 public final class CloneDetectorImpl implements CloneDetector {
-    private final Scheduler scheduler = ReactorSchedulers.boundedElastic(this);
+    //FIXME: avoid blocking
     private final SuffixTreeCloneDetector<Token<CommitSnapshot>, CommitSnapshot> suffixTreeCloneDetector = new SuffixTreeCloneDetector<>();
     private final TokenProvider<CommitSnapshot> tokenProvider = TokenProvider.of(TokenProvider.Language.JAVA);
     private final ConfigProvider configProvider;
@@ -45,9 +43,8 @@ public final class CloneDetectorImpl implements CloneDetector {
 
     private Mono<Void> addFilesToSuffixTree(final Flux<FileEntity<CommitSnapshot>> files) {
         return tokenProvider.tokensByMethods(files)
-                .flatMap(methods ->
-                        Mono.fromSupplier(() -> suffixTreeCloneDetector.addTokens(methods))
-                                .subscribeOn(scheduler))
+                .flatMap(method ->
+                        Mono.fromSupplier(() -> suffixTreeCloneDetector.addTokens(method)))
                 .then();
     }
 
@@ -61,7 +58,6 @@ public final class CloneDetectorImpl implements CloneDetector {
 
         return Mono
                 .fromSupplier(cloneClassesSupplier)
-                .subscribeOn(scheduler)
                 .flatMapMany(Flux::fromIterable)
                 .map(cloneClass -> {
                     //TODO: take commit date into account

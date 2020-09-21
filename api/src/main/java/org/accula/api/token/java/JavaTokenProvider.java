@@ -5,7 +5,6 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFinder;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiMethod;
 import org.accula.api.code.FileEntity;
@@ -15,10 +14,8 @@ import org.accula.api.token.TraverseUtils;
 import org.accula.api.token.psi.java.JavaApplicationEnvironment;
 import org.accula.api.token.psi.java.JavaPsiUtils;
 import org.accula.api.util.Lambda;
-import org.accula.api.util.ReactorSchedulers;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Scheduler;
 
 import java.util.List;
 
@@ -28,21 +25,15 @@ import static java.util.stream.Collectors.toList;
  * @author Anton Lamtev
  */
 public final class JavaTokenProvider<Ref> implements TokenProvider<Ref> {
-    private final Scheduler scheduler = ReactorSchedulers.boundedElastic(this);
-
     @Override
     public Flux<List<Token<Ref>>> tokensByMethods(final Flux<FileEntity<Ref>> files) {
         return javaPsiFileFactory().flatMapMany(psiFileFactory ->
-                files.flatMap(file ->
-                        Mono.fromSupplier(() ->
-                                psiFileFactory.createFileFromText(file.getName(), JavaLanguage.INSTANCE, file.getContent()))
-                                .subscribeOn(scheduler)
-                                .flatMapMany(JavaTokenProvider::psiMethods)
-                                .map(Lambda.passingTailArg(JavaTokenProvider::methodTokens, file))));
-    }
-
-    private static Flux<PsiMethod> psiMethods(final PsiFile psiFile) {
-        return Flux.fromIterable(JavaPsiUtils.methods(psiFile));
+                files.flatMapIterable(file ->
+                        JavaPsiUtils
+                                .methods(psiFileFactory.createFileFromText(file.getName(), JavaLanguage.INSTANCE, file.getContent()))
+                                .stream()
+                                .map(Lambda.passingTailArg(JavaTokenProvider::methodTokens, file))
+                                .collect(toList())));
     }
 
     private static <Ref> List<Token<Ref>> methodTokens(final PsiMethod method, final FileEntity<Ref> file) {
