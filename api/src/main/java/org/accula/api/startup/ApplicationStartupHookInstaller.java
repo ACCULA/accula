@@ -1,28 +1,26 @@
 package org.accula.api.startup;
 
 import org.accula.api.service.CloneDetectionService;
-import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.stereotype.Component;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Anton Lamtev
  */
-public final class ApplicationStartupHookInstaller {
+@Component
+public final class ApplicationStartupHookInstaller implements ApplicationListener<ContextRefreshedEvent> {
     private static final AtomicBoolean contextRefreshed = new AtomicBoolean(false);
 
-    private ApplicationStartupHookInstaller() {
-    }
-
-    public static void installInto(final SpringApplication app) {
-        app.addListeners((final ContextRefreshedEvent event) -> {
-            if (!contextRefreshed.compareAndSet(false, true)) {
-                return;
-            }
-            fillSuffixTree(event.getApplicationContext());
-        });
+    @Override
+    public void onApplicationEvent(final ContextRefreshedEvent event) {
+        if (!contextRefreshed.compareAndSet(false, true)) {
+            return;
+        }
+        fillSuffixTree(event.getApplicationContext());
     }
 
     private static void fillSuffixTree(final ApplicationContext ctx) {
