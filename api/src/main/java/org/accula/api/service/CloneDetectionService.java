@@ -59,12 +59,7 @@ public final class CloneDetectionService {
                 .flatMapMany(cloneRepo::insert);
     }
 
-    @PostConstruct
-    private void fillTheSuffixTree() {
-        fillSuffixTree().block();
-    }
-
-    private Mono<Void> fillSuffixTree() {
+    public Mono<Void> fillSuffixTree() {
         return projectRepo
                 .getTop(100)
                 .flatMap(project -> pullRepo.findByProjectId(project.getId()))
