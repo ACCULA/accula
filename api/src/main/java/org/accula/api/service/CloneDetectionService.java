@@ -1,6 +1,9 @@
 package org.accula.api.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.accula.api.clone.CloneDetector;
+import org.accula.api.clone.CloneDetectorImpl;
+import org.accula.api.clone.CodeSnippet;
 import org.accula.api.code.CodeLoader;
 import org.accula.api.code.FileFilter;
 import org.accula.api.db.model.Clone;
@@ -8,15 +11,11 @@ import org.accula.api.db.model.Pull;
 import org.accula.api.db.repo.CloneRepo;
 import org.accula.api.db.repo.ProjectRepo;
 import org.accula.api.db.repo.PullRepo;
-import org.accula.api.clone.CloneDetector;
-import org.accula.api.clone.CloneDetectorImpl;
-import org.accula.api.clone.CodeSnippet;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.function.TupleUtils;
 
-import javax.annotation.PostConstruct;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -59,12 +58,7 @@ public final class CloneDetectionService {
                 .flatMapMany(cloneRepo::insert);
     }
 
-    @PostConstruct
-    private void fillTheSuffixTree() {
-        fillSuffixTree().block();
-    }
-
-    private Mono<Void> fillSuffixTree() {
+    public Mono<Void> fillSuffixTree() {
         return projectRepo
                 .getTop(100)
                 .flatMap(project -> pullRepo.findByProjectId(project.getId()))
