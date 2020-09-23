@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.accula.api.code.CodeLoader;
 import org.accula.api.code.DiffEntry;
 import org.accula.api.code.FileFilter;
+import org.accula.api.db.model.CommitSnapshot;
 import org.accula.api.db.model.Pull;
 import org.accula.api.db.repo.PullRepo;
 import org.accula.api.handlers.dto.DiffDto;
@@ -96,14 +97,14 @@ public final class DiffHandler {
         return toResponse(diff);
     }
 
-    private static Mono<ServerResponse> toResponse(final Flux<DiffEntry> diff) {
+    private static Mono<ServerResponse> toResponse(final Flux<DiffEntry<CommitSnapshot>> diff) {
         return ServerResponse
                 .ok()
                 .contentType(APPLICATION_JSON)
                 .body(diff.map(DiffHandler::toDto), DiffDto.class);
     }
 
-    private static DiffDto toDto(final DiffEntry diff) {
+    private static DiffDto toDto(final DiffEntry<CommitSnapshot> diff) {
         final var base = diff.getBase();
         final var head = diff.getHead();
         return DiffDto.builder()

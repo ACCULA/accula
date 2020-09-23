@@ -6,6 +6,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import java.nio.file.Path;
 import java.time.Duration;
 
+/**
+ * @author Anton Lamtev
+ */
 @ConfigurationProperties("accula.jwt")
 @Data
 public final class JwtProperties {

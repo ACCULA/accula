@@ -6,12 +6,12 @@ import lombok.Value;
  * @author Anton Lamtev
  */
 @Value
-public class DiffEntry {
-    FileEntity base;
-    FileEntity head;
+public class DiffEntry<Ref> {
+    FileEntity<Ref> base;
+    FileEntity<Ref> head;
     int similarityIndex;
 
-    public static DiffEntry of(final FileEntity base, final FileEntity head) {
-        return new DiffEntry(base, head, 0);
+    public static <Ref> DiffEntry<Ref> of(final FileEntity<Ref> base, final FileEntity<Ref> head) {
+        return new DiffEntry<>(base, head, 0);
     }
 }
