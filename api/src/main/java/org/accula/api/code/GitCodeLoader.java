@@ -43,7 +43,10 @@ public final class GitCodeLoader implements CodeLoader {
         return withCommonGitRepo(snapshot)
                 .flatMap(repo -> Mono
                         .fromFuture(repo.lsTree(snapshot.getSha()))
-                        .map(files -> files.stream().filter(file -> filter.test(file.getName())).collect(toList()))
+                        .map(files -> files
+                                .stream()
+                                .filter(file -> filter.test(file.getName()))
+                                .collect(toList()))
                         .flatMap(files -> Mono
                                 .fromFuture(repo.catFiles(files))
                                 .map(filesContent -> files
@@ -69,16 +72,16 @@ public final class GitCodeLoader implements CodeLoader {
     }
 
     @Override
-    public Flux<DiffEntry> loadDiff(final CommitSnapshot base, final CommitSnapshot head, final FileFilter filter) {
+    public Flux<DiffEntry<CommitSnapshot>> loadDiff(final CommitSnapshot base, final CommitSnapshot head, final FileFilter filter) {
         return withCommonGitRepo(head)
                 .flatMapMany(repo -> loadDiff(repo, base, head, filter, 0));
     }
 
     @Override
-    public Flux<DiffEntry> loadRemoteDiff(final GithubRepo projectRepo,
-                                          final CommitSnapshot base,
-                                          final CommitSnapshot head,
-                                          final FileFilter filter) {
+    public Flux<DiffEntry<CommitSnapshot>> loadRemoteDiff(final GithubRepo projectRepo,
+                                                          final CommitSnapshot base,
+                                                          final CommitSnapshot head,
+                                                          final FileFilter filter) {
         return withProjectGitRepo(projectRepo)
                 .flatMap(repo -> addOrUpdateRemotes(repo, base, head))
                 .flatMapMany(repo -> loadDiff(repo, base, head, filter, 1));
@@ -127,11 +130,11 @@ public final class GitCodeLoader implements CodeLoader {
         return Mono.fromFuture(remotesPresent.contains(remote) ? repo.remoteUpdate(remote) : repo.remoteAdd(remoteUrl, remote));
     }
 
-    private static Flux<DiffEntry> loadDiff(final Repo repo,
-                                            final CommitSnapshot base,
-                                            final CommitSnapshot head,
-                                            final FileFilter filter,
-                                            final int findRenamesMinSimilarityIndex) {
+    private static Flux<DiffEntry<CommitSnapshot>> loadDiff(final Repo repo,
+                                                            final CommitSnapshot base,
+                                                            final CommitSnapshot head,
+                                                            final FileFilter filter,
+                                                            final int findRenamesMinSimilarityIndex) {
         return Mono
                 .fromFuture(repo.diff(base.getSha(), head.getSha(), findRenamesMinSimilarityIndex))
                 .map(diffEntries -> diffEntries
@@ -148,7 +151,7 @@ public final class GitCodeLoader implements CodeLoader {
                         .flatMapMany(Flux::fromStream));
     }
 
-    private static Function<Mono<Map<Identifiable, String>>, Mono<Stream<DiffEntry>>>
+    private static Function<Mono<Map<Identifiable, String>>, Mono<Stream<DiffEntry<CommitSnapshot>>>>
     convertDiffEntries(final List<GitDiffEntry> diffEntries, final CommitSnapshot base, final CommitSnapshot head) {
         return filesMono -> filesMono
                 .map(files -> diffEntries
@@ -177,7 +180,7 @@ public final class GitCodeLoader implements CodeLoader {
                             }
                             if (diffEntry instanceof Renaming) {
                                 final var renaming = (Renaming) diffEntry;
-                                return new DiffEntry(
+                                return new DiffEntry<>(
                                         new FileEntity<>(base, renaming.getBase().getName(), files.get(renaming.getBase())),
                                         new FileEntity<>(head, renaming.getHead().getName(), files.get(renaming.getHead())),
                                         renaming.getSimilarityIndex()

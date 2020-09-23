@@ -83,7 +83,7 @@ class CodeLoaderTest {
 
     @Test
     void testGetFileSnippetSingleLine() {
-        FileEntity snippet = codeLoader.loadSnippets(COMMIT, List.of(SnippetMarker.of(README, 4, 4))).blockFirst();
+        var snippet = codeLoader.loadSnippets(COMMIT, List.of(SnippetMarker.of(README, 4, 4))).blockFirst();
         assertNotNull(snippet);
         assertEquals("""
                 ## Этап 1. HTTP + storage (deadline 2019-10-05)
