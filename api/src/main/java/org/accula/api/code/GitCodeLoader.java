@@ -88,7 +88,7 @@ public final class GitCodeLoader implements CodeLoader {
     }
 
     @Override
-    public Flux<String> loadFilenames(CommitSnapshot snapshot) {
+    public Flux<String> loadFilenames(final CommitSnapshot snapshot) {
         return withProjectGitRepo(snapshot.getRepo())
                 .flatMap(repo -> Mono.fromFuture(repo.lsTree(snapshot.getBranch())))
                 .flatMapMany(Flux::fromIterable)
