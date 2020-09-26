@@ -35,7 +35,11 @@ export const getProject = async (id: number, token: IToken): Promise<IProject> =
 
 export const getProjectConf = async (id: number, token: IToken): Promise<IProjectConf> => {
   if (DEBUG) {
-    return Promise.resolve({ admins: [], cloneMinLineCount: 0 })
+    return Promise.resolve({
+      admins: [],
+      cloneMinTokenCount: 0,
+      excludedFiles: []
+    })
   }
   return axios
     .get(`${API_URL}/api/projects/${id}/conf`, {
@@ -53,7 +57,6 @@ export const putProjectConf = async (
   token: IToken,
   conf: IProjectConf
 ): Promise<void> => {
-  console.log(conf)
   if (DEBUG) {
     return Promise.resolve()
   }
@@ -80,6 +83,21 @@ export const getRepoAdmins = async (id: number, token: IToken): Promise<IUser[]>
       withCredentials: true
     })
     .then(resp => resp.data as IUser[])
+}
+
+export const getBaseFiles = async (id: number, token: IToken): Promise<string[]> => {
+  if (DEBUG) {
+    return Promise.resolve([])
+  }
+  return axios
+    .get(`${API_URL}/api/projects/${id}/baseFiles`, {
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token.accessToken}`
+      },
+      withCredentials: true
+    })
+    .then(resp => resp.data as string[])
 }
 
 export const postProject = async (url: string, token: IToken): Promise<IProject | string> => {

@@ -92,7 +92,7 @@ public final class CloneDetectionService {
                 .switchIfEmpty(projectRepo
                         .confById(projectId)
                         .map(conf -> CloneDetector.Config.builder()
-                                .minCloneLength(conf.getCloneMinLineCount())
+                                .minCloneLength(conf.getCloneMinTokenCount())
                                 .build()))
                 .doOnNext(conf -> cloneDetectorConfigs.put(projectId, conf));
     }

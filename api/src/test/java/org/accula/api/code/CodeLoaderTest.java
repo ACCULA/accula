@@ -70,7 +70,7 @@ class CodeLoaderTest {
     @Test
     void testGetMultipleFilteredFiles() {
         Pattern excludeRegex = Pattern.compile(".*Test.*");
-        FileFilter filter = fileName -> fileName.endsWith(".java") && !excludeRegex.matcher(fileName).matches();
+        FileFilter filter = filename -> filename.endsWith(".java") && !excludeRegex.matcher(filename).matches();
         Map<String, String> files = codeLoader.loadFiles(COMMIT, filter)
                 .collectMap(FileEntity::getName, FileEntity::getContent).block();
         assertNotNull(files);

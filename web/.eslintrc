@@ -30,7 +30,8 @@
     "import/no-unresolved": "off",
     "no-plusplus": "off",
     "no-console": "off",
-    "no-nested-ternary": "off"
+    "no-nested-ternary": "off",
+    "react/destructuring-assignment": "off"
   },
   "settings": {
     "import/resolver": {

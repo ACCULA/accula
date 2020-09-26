@@ -87,6 +87,14 @@ public final class GitCodeLoader implements CodeLoader {
                 .flatMapMany(repo -> loadDiff(repo, base, head, filter, 1));
     }
 
+    @Override
+    public Flux<String> loadFilenames(CommitSnapshot snapshot) {
+        return withProjectGitRepo(snapshot.getRepo())
+                .flatMap(repo -> Mono.fromFuture(repo.lsTree(snapshot.getBranch())))
+                .flatMapMany(Flux::fromIterable)
+                .map(GitFile::getName);
+    }
+
     /// We name each common repo git folder like that: <owner-login>_<repo-name>
     private Mono<Repo> withCommonGitRepo(final CommitSnapshot snapshot) {
         final var snapshotRepo = snapshot.getRepo();

@@ -156,8 +156,9 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
     @Override
     public Mono<Project.Conf> confById(final Long id) {
         return withConnection(connection -> Mono.from(((PostgresqlStatement) connection.createStatement("""
-                SELECT conf.clone_min_line_count                AS clone_min_line_count,
-                       COALESCE(admins.ids, Array[]::BIGINT[])  AS admin_ids
+                SELECT conf.clone_min_token_count               AS clone_min_token_count,
+                       COALESCE(admins.ids, Array[]::BIGINT[])  AS admin_ids,
+                       conf.excluded_files                      AS excluded_files
                 FROM project_conf conf
                          LEFT JOIN (SELECT this.project_id,
                                            array_agg(this.admin_id) AS ids
@@ -269,13 +270,15 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
 
     private Mono<Void> upsertConf(final Connection connection, final Long projectId, final Project.Conf conf) {
         return ((PostgresqlStatement) connection.createStatement("""
-                INSERT INTO project_conf (project_id, clone_min_line_count)             
-                VALUES ($1, $2)
+                INSERT INTO project_conf (project_id, clone_min_token_count, excluded_files)             
+                VALUES ($1, $2, $3)
                 ON CONFLICT (project_id) DO UPDATE
-                      SET clone_min_line_count = $2            
+                      SET clone_min_token_count = $2,
+                          excluded_files = $3
                 """))
                 .bind("$1", projectId)
-                .bind("$2", conf.getCloneMinLineCount())
+                .bind("$2", conf.getCloneMinTokenCount())
+                .bind("$3", conf.getExcludedFiles().toArray(new String[0]))
                 .execute()
                 .flatMap(PostgresqlResult::getRowsUpdated)
                 .then();
@@ -309,7 +312,8 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
     private Project.Conf convertConf(final Row row) {
         return Project.Conf.builder()
                 .adminIds(Converters.ids(row, "admin_ids"))
-                .cloneMinLineCount(Converters.integer(row, "clone_min_line_count"))
+                .cloneMinTokenCount(Converters.integer(row, "clone_min_token_count"))
+                .excludedFiles(Converters.strings(row, "excluded_files"))
                 .build();
     }
 }

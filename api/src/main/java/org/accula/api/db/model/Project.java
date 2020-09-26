@@ -28,10 +28,12 @@ public class Project {
     public static class Conf {
         public static final Conf DEFAULT = builder()
                 .adminIds(Collections.emptyList())
-                .cloneMinLineCount(5)
+                .cloneMinTokenCount(5)
+                .excludedFiles(Collections.emptyList())
                 .build();
 
         List<Long> adminIds;
-        Integer cloneMinLineCount;
+        Integer cloneMinTokenCount;
+        List<String> excludedFiles;
     }
 }

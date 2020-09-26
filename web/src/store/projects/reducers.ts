@@ -3,6 +3,7 @@ import {
   CREATE_PROJECT,
   ProjectsActionTypes,
   ProjectsState,
+  SET_BASE_FILES,
   SET_PROJECT,
   SET_PROJECT_CONF,
   SET_PROJECTS,
@@ -14,6 +15,7 @@ const initialState: ProjectsState = {
   projects: notFetching,
   project: notFetching,
   projectConf: notFetching,
+  baseFiles: notFetching,
   updateProjectConf: [false, null],
   repoAdmins: notFetching,
   createProject: [false, null]
@@ -52,6 +54,12 @@ export function projectsReducer(
       return {
         ...state,
         repoAdmins: action.payload
+      }
+    }
+    case SET_BASE_FILES: {
+      return {
+        ...state,
+        baseFiles: action.payload
       }
     }
     case CREATE_PROJECT: {

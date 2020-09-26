@@ -55,4 +55,9 @@ public interface CodeLoader {
      * @see #loadDiff(CommitSnapshot, CommitSnapshot, FileFilter)
      */
     Flux<DiffEntry<CommitSnapshot>> loadRemoteDiff(GithubRepo projectRepo, CommitSnapshot base, CommitSnapshot head, FileFilter filter);
+
+    /**
+     * Loads filenames by the commit snapshot.
+     */
+    Flux<String> loadFilenames(CommitSnapshot snapshot);
 }

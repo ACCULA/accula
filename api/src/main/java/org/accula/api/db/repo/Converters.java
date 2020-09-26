@@ -261,6 +261,11 @@ final class Converters {
         return ids != null ? List.of(ids) : Collections.emptyList();
     }
 
+    static List<String> strings(final Row row, final String name) {
+        final var strings = row.get(name, String[].class);
+        return strings != null ? List.of(strings) : Collections.emptyList();
+    }
+
     private static <T> T or(@Nullable final T value, final T defaultValue) {
         return value != null ? value : defaultValue;
     }

@@ -7,6 +7,7 @@ import { bindActionCreators } from 'redux'
 import { Breadcrumbs } from 'components/Breadcrumbs'
 import { AppDispatch, AppState } from 'store'
 import {
+  getBaseFilesAction,
   getProjectAction,
   getProjectConfAction,
   getRepoAdminsAction,
@@ -24,6 +25,7 @@ const mapStateToProps = (state: AppState) => ({
   projectConf: state.projects.projectConf,
   updateProjectConfState: state.projects.updateProjectConf,
   repoAdmins: state.projects.repoAdmins,
+  baseFiles: state.projects.baseFiles,
   pulls: state.pulls.pulls,
   user: state.users.user
 })
@@ -32,6 +34,7 @@ const mapDispatchToProps = (dispatch: AppDispatch) => ({
   getProject: bindActionCreators(getProjectAction, dispatch),
   getProjectConf: bindActionCreators(getProjectConfAction, dispatch),
   getRepoAdmins: bindActionCreators(getRepoAdminsAction, dispatch),
+  getBaseFiles: bindActionCreators(getBaseFilesAction, dispatch),
   getPulls: bindActionCreators(getPullsAction, dispatch),
   updateProjectConf: bindActionCreators(updateProjectConfAction, dispatch)
 })
@@ -44,11 +47,13 @@ const Project = ({
   projectConf,
   updateProjectConfState,
   repoAdmins,
+  baseFiles,
   pulls,
   user,
   getProject,
   getProjectConf,
   getRepoAdmins,
+  getBaseFiles,
   getPulls,
   updateProjectConf
 }: ProjectProps) => {
@@ -60,8 +65,9 @@ const Project = ({
     getProject(projectId)
     getProjectConf(projectId)
     getRepoAdmins(projectId)
+    getBaseFiles(projectId)
     getPulls(projectId)
-  }, [getProject, getProjectConf, getRepoAdmins, getPulls, projectId])
+  }, [getProject, getProjectConf, getRepoAdmins, getBaseFiles, getPulls, projectId])
 
   return (
     <div className="content">
@@ -115,6 +121,7 @@ const Project = ({
               <ProjectConfigurationTab
                 project={project} //
                 repoAdmins={repoAdmins}
+                baseFiles={baseFiles}
                 projectConf={projectConf}
                 updateConf={conf => updateProjectConf(projectId, conf)}
                 updateConfState={updateProjectConfState}

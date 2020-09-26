@@ -53,7 +53,8 @@ public final class ModelToDtoConverter {
     public static ProjectConfDto convert(final Project.Conf conf) {
         return ProjectConfDto.builder()
                 .admins(conf.getAdminIds())
-                .cloneMinLineCount(conf.getCloneMinLineCount())
+                .cloneMinTokenCount(conf.getCloneMinTokenCount())
+                .excludedFiles(conf.getExcludedFiles())
                 .build();
     }
 

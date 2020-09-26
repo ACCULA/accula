@@ -327,7 +327,7 @@ class ProjectsRouterTest {
                 .expectBody(ProjectConfDto.class)
                 .isEqualTo(ProjectConfDto.builder()
                         .admins(adminIds)
-                        .cloneMinLineCount(Project.Conf.DEFAULT.getCloneMinLineCount())
+                        .cloneMinTokenCount(Project.Conf.DEFAULT.getCloneMinTokenCount())
                         .build());
     }
 
@@ -345,7 +345,7 @@ class ProjectsRouterTest {
                 .contentType(APPLICATION_JSON)
                 .bodyValue(ProjectConfDto.builder()
                         .admins(adminIds)
-                        .cloneMinLineCount(Project.Conf.DEFAULT.getCloneMinLineCount())
+                        .cloneMinTokenCount(Project.Conf.DEFAULT.getCloneMinTokenCount())
                         .build())
                 .exchange()
                 .expectStatus().isOk();
