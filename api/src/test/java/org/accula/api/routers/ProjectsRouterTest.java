@@ -1,6 +1,7 @@
 package org.accula.api.routers;
 
 import lombok.SneakyThrows;
+import org.accula.api.config.WebConfig;
 import org.accula.api.config.WebhookProperties;
 import org.accula.api.converter.GithubApiToModelConverter;
 import org.accula.api.converter.ModelToDtoConverter;
@@ -51,7 +52,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 @WebFluxTest
-@ContextConfiguration(classes = {ProjectsHandler.class, ProjectsRouter.class, GithubApiToModelConverter.class, WebhookProperties.class})
+@ContextConfiguration(classes = {ProjectsHandler.class, ProjectsRouter.class, GithubApiToModelConverter.class, WebhookProperties.class, WebConfig.class})
 class ProjectsRouterTest {
     static final String REPO_URL = "https://github.com/accula/accula";
     static final String REPO_NAME = "accula";
@@ -328,6 +329,7 @@ class ProjectsRouterTest {
                 .isEqualTo(ProjectConfDto.builder()
                         .admins(adminIds)
                         .cloneMinTokenCount(Project.Conf.DEFAULT.getCloneMinTokenCount())
+                        .excludedFiles(Project.Conf.DEFAULT.getExcludedFiles())
                         .build());
     }
 
@@ -346,6 +348,7 @@ class ProjectsRouterTest {
                 .bodyValue(ProjectConfDto.builder()
                         .admins(adminIds)
                         .cloneMinTokenCount(Project.Conf.DEFAULT.getCloneMinTokenCount())
+                        .excludedFiles(Project.Conf.DEFAULT.getExcludedFiles())
                         .build())
                 .exchange()
                 .expectStatus().isOk();

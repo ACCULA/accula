@@ -28,7 +28,7 @@ public class Project {
     public static class Conf {
         public static final Conf DEFAULT = builder()
                 .adminIds(Collections.emptyList())
-                .cloneMinTokenCount(5)
+                .cloneMinTokenCount(25)
                 .excludedFiles(Collections.emptyList())
                 .build();
 
