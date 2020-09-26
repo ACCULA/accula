@@ -149,7 +149,7 @@ public final class ProjectsHandler {
     }
 
     public Mono<ServerResponse> baseFiles(ServerRequest request) {
-        Mono<List<String>> files = withProjectId(request)
+        final var files = withProjectId(request)
                 .flatMap(projectRepo::findById)
                 .map(project -> CommitSnapshot.builder()
                         .branch(MASTER_BRANCH)
