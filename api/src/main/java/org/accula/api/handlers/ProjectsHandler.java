@@ -7,7 +7,6 @@ import org.accula.api.config.WebhookProperties;
 import org.accula.api.converter.DtoToModelConverter;
 import org.accula.api.converter.GithubApiToModelConverter;
 import org.accula.api.converter.ModelToDtoConverter;
-import org.accula.api.db.model.CommitSnapshot;
 import org.accula.api.db.model.Project;
 import org.accula.api.db.model.User;
 import org.accula.api.db.repo.CurrentUserRepo;
@@ -54,7 +53,6 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 @RequiredArgsConstructor
 public final class ProjectsHandler {
     private static final Exception PROJECT_NOT_FOUND_EXCEPTION = new Exception();
-    private static final String MASTER_BRANCH = "master"; // TODO: move it to project conf one day
 
     private final Scheduler remoteCallsScheduler = ReactorSchedulers.boundedElastic(this);
     private final WebhookProperties webhookProperties;
@@ -151,10 +149,7 @@ public final class ProjectsHandler {
     public Mono<ServerResponse> baseFiles(ServerRequest request) {
         final var files = withProjectId(request)
                 .flatMap(projectRepo::findById)
-                .map(project -> CommitSnapshot.builder()
-                        .branch(MASTER_BRANCH)
-                        .repo(project.getGithubRepo())
-                        .build())
+                .map(Project::getGithubRepo)
                 .flatMapMany(codeLoader::loadFilenames)
                 .collectList();
         return ServerResponse

@@ -35,6 +35,7 @@ import static java.util.stream.Collectors.toMap;
 public final class GitCodeLoader implements CodeLoader {
     private static final String GITHUB_BASE_URL = "https://github.com/";
     private static final String GIT_EXTENSION = ".git";
+    private static final String HEAD = "HEAD";
 
     private final Git git;
 
@@ -88,9 +89,9 @@ public final class GitCodeLoader implements CodeLoader {
     }
 
     @Override
-    public Flux<String> loadFilenames(final CommitSnapshot snapshot) {
-        return withProjectGitRepo(snapshot.getRepo())
-                .flatMap(repo -> Mono.fromFuture(repo.lsTree(snapshot.getBranch())))
+    public Flux<String> loadFilenames(final GithubRepo projectRepo) {
+        return withProjectGitRepo(projectRepo)
+                .flatMap(repo -> Mono.fromFuture(repo.lsTree(HEAD)))
                 .flatMapMany(Flux::fromIterable)
                 .map(GitFile::getName);
     }
