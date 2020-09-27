@@ -11,13 +11,13 @@ import java.util.List;
  * @author Anton Lamtev
  */
 public interface PullRepo {
-    default Mono<Pull> upsert(Pull pull) {
+    default Mono<Pull> upsert(final Pull pull) {
         return upsert(List.of(pull)).next();
     }
 
     Flux<Pull> upsert(Collection<Pull> pulls);
 
-    default Mono<Pull> findById(Long id) {
+    default Mono<Pull> findById(final Long id) {
         return findById(List.of(id)).next();
     }
 

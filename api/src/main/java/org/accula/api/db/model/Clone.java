@@ -15,11 +15,11 @@ public class Clone {
     @EqualsAndHashCode.Include
     @Builder.Default
     Long id = -1L;
-    CommitSnapshot targetSnapshot;
+    Snapshot targetSnapshot;
     String targetFile;
     Integer targetFromLine;
     Integer targetToLine;
-    CommitSnapshot sourceSnapshot;
+    Snapshot sourceSnapshot;
     String sourceFile;
     Integer sourceFromLine;
     Integer sourceToLine;

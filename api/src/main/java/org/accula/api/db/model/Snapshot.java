@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 @Builder
 @Value
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public class CommitSnapshot {
+public class Snapshot {
     @EqualsAndHashCode.Include
     String sha;
     String branch;

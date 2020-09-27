@@ -1,7 +1,7 @@
 package org.accula.api.code;
 
-import org.accula.api.db.model.CommitSnapshot;
 import org.accula.api.db.model.GithubRepo;
+import org.accula.api.db.model.Snapshot;
 import reactor.core.publisher.Flux;
 
 import java.util.List;
@@ -14,20 +14,20 @@ public interface CodeLoader {
     /**
      * Loads all file entities by the commit snapshot
      */
-    default Flux<FileEntity<CommitSnapshot>> loadFiles(CommitSnapshot snapshot) {
+    default Flux<FileEntity<Snapshot>> loadFiles(Snapshot snapshot) {
         return loadFiles(snapshot, FileFilter.ALL);
     }
 
     /**
      * Loads all file entities that satisfies the filter by the commit snapshot
      */
-    Flux<FileEntity<CommitSnapshot>> loadFiles(CommitSnapshot snapshot, FileFilter filter);
+    Flux<FileEntity<Snapshot>> loadFiles(Snapshot snapshot, FileFilter filter);
 
     /**
      * Loads the file snippets (file entities with content of the specified line range)
      * by the commit snapshot, the file names and the line ranges
      */
-    Flux<FileEntity<CommitSnapshot>> loadSnippets(CommitSnapshot snapshot, List<SnippetMarker> markers);
+    Flux<FileEntity<Snapshot>> loadSnippets(Snapshot snapshot, List<SnippetMarker> markers);
 
     /**
      * Loads diff between two commits as {@link DiffEntry} of file entities,
@@ -36,7 +36,7 @@ public interface CodeLoader {
      * of the first element of the tuple return {@code null}.
      * If file was removed in {@code head}, then second tuple element values are equal to {@code null}.
      */
-    default Flux<DiffEntry<CommitSnapshot>> loadDiff(CommitSnapshot base, CommitSnapshot head) {
+    default Flux<DiffEntry<Snapshot>> loadDiff(Snapshot base, Snapshot head) {
         return loadDiff(base, head, FileFilter.ALL);
     }
 
@@ -47,12 +47,12 @@ public interface CodeLoader {
      * of the first element of the tuple return {@code null}.
      * If file was removed in {@code head}, then second tuple element values are equal to {@code null}.
      */
-    Flux<DiffEntry<CommitSnapshot>> loadDiff(CommitSnapshot base, CommitSnapshot head, FileFilter filter);
+    Flux<DiffEntry<Snapshot>> loadDiff(Snapshot base, Snapshot head, FileFilter filter);
 
     /**
      * Loads diff between two commits of remote repositories.
      *
-     * @see #loadDiff(CommitSnapshot, CommitSnapshot, FileFilter)
+     * @see #loadDiff(Snapshot, Snapshot, FileFilter)
      */
-    Flux<DiffEntry<CommitSnapshot>> loadRemoteDiff(GithubRepo projectRepo, CommitSnapshot base, CommitSnapshot head, FileFilter filter);
+    Flux<DiffEntry<Snapshot>> loadRemoteDiff(GithubRepo projectRepo, Snapshot base, Snapshot head, FileFilter filter);
 }

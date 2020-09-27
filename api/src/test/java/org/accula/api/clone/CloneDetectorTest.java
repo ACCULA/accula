@@ -2,9 +2,9 @@ package org.accula.api.clone;
 
 import org.accula.api.clone.suffixtree.SuffixTreeCloneDetectorTest;
 import org.accula.api.code.FileEntity;
-import org.accula.api.db.model.CommitSnapshot;
 import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.GithubUser;
+import org.accula.api.db.model.Snapshot;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
@@ -32,8 +32,8 @@ class CloneDetectorTest {
         var repoOwner2 = new GithubUser(3L, "owner2", "owner2", "ava2", false);
         var repo1 = new GithubRepo(2L, "repo1", "descr1", repoOwner1);
         var repo2 = new GithubRepo(3L, "repo2", "descr2", repoOwner2);
-        var commitSnapshot1 = CommitSnapshot.builder().sha("sha1").branch("branch1").repo(repo1).build();
-        var commitSnapshot2 = CommitSnapshot.builder().sha("sha2").branch("branch2").repo(repo2).build();
+        var commitSnapshot1 = Snapshot.builder().sha("sha1").branch("branch1").repo(repo1).build();
+        var commitSnapshot2 = Snapshot.builder().sha("sha2").branch("branch2").repo(repo2).build();
 
         var source1 = new FileEntity<>(commitSnapshot1, "owner1/repo1/src/main/java/Cell.java", SuffixTreeCloneDetectorTest.F1);
         var target1 = new FileEntity<>(commitSnapshot2, "owner2/repo2/src/main/java/Cell.java", SuffixTreeCloneDetectorTest.F2);

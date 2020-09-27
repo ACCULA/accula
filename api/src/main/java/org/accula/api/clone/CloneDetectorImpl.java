@@ -5,8 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.accula.api.clone.suffixtree.CloneClass;
 import org.accula.api.clone.suffixtree.SuffixTreeCloneDetector;
 import org.accula.api.code.FileEntity;
-import org.accula.api.db.model.CommitSnapshot;
 import org.accula.api.db.model.GithubRepo;
+import org.accula.api.db.model.Snapshot;
 import org.accula.api.token.Token;
 import org.accula.api.token.TokenProvider;
 import org.accula.api.util.Lambda;
@@ -25,36 +25,35 @@ import java.util.function.Supplier;
 @RequiredArgsConstructor
 public final class CloneDetectorImpl implements CloneDetector {
     //FIXME: avoid blocking
-    private final SuffixTreeCloneDetector<Token<CommitSnapshot>, CommitSnapshot> suffixTreeCloneDetector = new SuffixTreeCloneDetector<>();
-    private final TokenProvider<CommitSnapshot> tokenProvider = TokenProvider.of(TokenProvider.Language.JAVA);
+    private final SuffixTreeCloneDetector<Token<Snapshot>, Snapshot> suffixTreeCloneDetector = new SuffixTreeCloneDetector<>();
+    private final TokenProvider<Snapshot> tokenProvider = TokenProvider.of(TokenProvider.Language.JAVA);
     private final ConfigProvider configProvider;
 
     @Override
-    public Flux<Tuple2<CodeSnippet, CodeSnippet>> findClones(final CommitSnapshot commitSnapshot,
-                                                             final Flux<FileEntity<CommitSnapshot>> files) {
+    public Flux<Tuple2<CodeSnippet, CodeSnippet>> findClones(final Snapshot snapshot, final Flux<FileEntity<Snapshot>> files) {
         return addFilesToSuffixTree(files)
-                .thenMany(configProvider.get().flatMapMany(Lambda.passingFirstArg(this::readClonesFromSuffixTree, commitSnapshot)));
+                .thenMany(configProvider.get().flatMapMany(Lambda.passingFirstArg(this::readClonesFromSuffixTree, snapshot)));
     }
 
     @Override
-    public Mono<Void> fill(final Flux<FileEntity<CommitSnapshot>> files) {
+    public Mono<Void> fill(final Flux<FileEntity<Snapshot>> files) {
         return addFilesToSuffixTree(files);
     }
 
-    private Mono<Void> addFilesToSuffixTree(final Flux<FileEntity<CommitSnapshot>> files) {
+    private Mono<Void> addFilesToSuffixTree(final Flux<FileEntity<Snapshot>> files) {
         return tokenProvider.tokensByMethods(files)
                 .flatMap(method ->
                         Mono.fromSupplier(() -> suffixTreeCloneDetector.addTokens(method)))
                 .then();
     }
 
-    private Flux<Tuple2<CodeSnippet, CodeSnippet>> readClonesFromSuffixTree(final CommitSnapshot commitSnapshot, final Config config) {
-        final Supplier<List<CloneClass<CommitSnapshot>>> cloneClassesSupplier = () ->
+    private Flux<Tuple2<CodeSnippet, CodeSnippet>> readClonesFromSuffixTree(final Snapshot snapshot, final Config config) {
+        final Supplier<List<CloneClass<Snapshot>>> cloneClassesSupplier = () ->
                 suffixTreeCloneDetector.cloneClassesAfterTransform(cloneClasses ->
                         cloneClasses.filter(cloneClass ->
                                 cloneClassMatchesRules(cloneClass, config)
-                                && cloneClassContainsClonesFromCommit(cloneClass, commitSnapshot)
-                                && cloneClassContainsClonesFromReposOtherThan(cloneClass, commitSnapshot.getRepo())));
+                                && cloneClassContainsClonesFromCommit(cloneClass, snapshot)
+                                && cloneClassContainsClonesFromReposOtherThan(cloneClass, snapshot.getRepo())));
 
         return Mono
                 .fromSupplier(cloneClassesSupplier)
@@ -65,13 +64,13 @@ public final class CloneDetectorImpl implements CloneDetector {
                     @SuppressWarnings("OptionalGetWithoutIsPresent")//
                     final var from = clones
                             .stream()
-                            .filter(clone -> !clone.ref().getRepo().equals(commitSnapshot.getRepo()))
+                            .filter(clone -> !clone.ref().getRepo().equals(snapshot.getRepo()))
                             .findFirst()
                             .get();
                     @SuppressWarnings("OptionalGetWithoutIsPresent")//
                     final var to = clones
                             .stream()
-                            .filter(clone -> clone.ref().equals(commitSnapshot))
+                            .filter(clone -> clone.ref().equals(snapshot))
                             .findFirst()
                             .get();
                     return Tuples.of(
@@ -80,7 +79,7 @@ public final class CloneDetectorImpl implements CloneDetector {
                 });
     }
 
-    private static boolean cloneClassMatchesRules(final CloneClass<CommitSnapshot> cloneClass, final Config rules) {
+    private static boolean cloneClassMatchesRules(final CloneClass<Snapshot> cloneClass, final Config rules) {
         return cloneClass.getLength() >= rules.getMinCloneLength()
                && cloneClass
                        .getClones()
@@ -88,14 +87,14 @@ public final class CloneDetectorImpl implements CloneDetector {
                        .anyMatch(clone -> rules.getFilter().test(clone.getStart().getFilename()));
     }
 
-    private static boolean cloneClassContainsClonesFromCommit(final CloneClass<CommitSnapshot> cloneClass, final CommitSnapshot commit) {
+    private static boolean cloneClassContainsClonesFromCommit(final CloneClass<Snapshot> cloneClass, final Snapshot commit) {
         return cloneClass
                 .getClones()
                 .stream()
                 .anyMatch(clone -> clone.ref().equals(commit));
     }
 
-    private static boolean cloneClassContainsClonesFromReposOtherThan(final CloneClass<CommitSnapshot> cloneClass, final GithubRepo repo) {
+    private static boolean cloneClassContainsClonesFromReposOtherThan(final CloneClass<Snapshot> cloneClass, final GithubRepo repo) {
         return cloneClass
                 .getClones()
                 .stream()
