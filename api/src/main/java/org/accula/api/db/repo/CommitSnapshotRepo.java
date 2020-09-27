@@ -1,6 +1,6 @@
 package org.accula.api.db.repo;
 
-import org.accula.api.db.model.CommitSnapshot;
+import org.accula.api.db.model.Snapshot;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -11,17 +11,17 @@ import java.util.List;
  * @author Anton Lamtev
  */
 public interface CommitSnapshotRepo {
-    default Mono<CommitSnapshot> insert(CommitSnapshot commitSnapshot) {
-        return insert(List.of(commitSnapshot)).next();
+    default Mono<Snapshot> insert(Snapshot snapshot) {
+        return insert(List.of(snapshot)).next();
     }
 
-    Flux<CommitSnapshot> insert(Collection<CommitSnapshot> commitSnapshots);
+    Flux<Snapshot> insert(Collection<Snapshot> snapshots);
 
-    Flux<CommitSnapshot> mapToPulls(Collection<CommitSnapshot> commitSnapshots);
+    Flux<Snapshot> mapToPulls(Collection<Snapshot> snapshots);
 
-    default Mono<CommitSnapshot> findById(CommitSnapshot.Id id) {
+    default Mono<Snapshot> findById(Snapshot.Id id) {
         return findById(List.of(id)).next();
     }
 
-    Flux<CommitSnapshot> findById(Collection<CommitSnapshot.Id> ids);
+    Flux<Snapshot> findById(Collection<Snapshot.Id> ids);
 }

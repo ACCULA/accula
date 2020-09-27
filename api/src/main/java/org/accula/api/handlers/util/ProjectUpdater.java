@@ -3,10 +3,10 @@ package org.accula.api.handlers.util;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.accula.api.converter.GithubApiToModelConverter;
-import org.accula.api.db.model.CommitSnapshot;
 import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.GithubUser;
 import org.accula.api.db.model.Pull;
+import org.accula.api.db.model.Snapshot;
 import org.accula.api.db.repo.CommitSnapshotRepo;
 import org.accula.api.db.repo.GithubRepoRepo;
 import org.accula.api.db.repo.GithubUserRepo;
@@ -44,8 +44,8 @@ public final class ProjectUpdater {
                 .defer(() -> {
                     final var users = new HashSet<GithubUser>();
                     final var repos = new HashSet<GithubRepo>();
-                    final var heads = new HashSet<CommitSnapshot>();
-                    final var bases = new HashSet<CommitSnapshot>();
+                    final var heads = new HashSet<Snapshot>();
+                    final var bases = new HashSet<Snapshot>();
                     final var pulls = new HashSet<Pull>();
                     int openPullCount = 0;
 
@@ -85,8 +85,8 @@ public final class ProjectUpdater {
 
                     final var users = new HashSet<GithubUser>();
                     final var repos = new HashSet<GithubRepo>();
-                    final var heads = new HashSet<CommitSnapshot>();
-                    final var bases = new HashSet<CommitSnapshot>();
+                    final var heads = new HashSet<Snapshot>();
+                    final var bases = new HashSet<Snapshot>();
 
                     final var pull = processGithubApiPull(projectId, githubApiPull, users, repos, heads, bases);
                     final var allCommitSnapshots = combine(heads, bases);
@@ -107,8 +107,8 @@ public final class ProjectUpdater {
                                       final GithubApiPull githubApiPull,
                                       final Set<GithubUser> users,
                                       final Set<GithubRepo> repos,
-                                      final Set<CommitSnapshot> heads,
-                                      final Set<CommitSnapshot> bases) {
+                                      final Set<Snapshot> heads,
+                                      final Set<Snapshot> bases) {
         final var pull = converter.convert(githubApiPull, projectId);
 
         final var head = pull.getHead();

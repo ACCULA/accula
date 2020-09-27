@@ -1,9 +1,9 @@
 package org.accula.api.converter;
 
-import org.accula.api.db.model.CommitSnapshot;
 import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.GithubUser;
 import org.accula.api.db.model.Pull;
+import org.accula.api.db.model.Snapshot;
 import org.accula.api.github.model.GithubApiCommitSnapshot;
 import org.accula.api.github.model.GithubApiPull;
 import org.accula.api.github.model.GithubApiRepo;
@@ -49,8 +49,8 @@ public final class GithubApiToModelConverter {
         return new GithubUser(id, login, name, avatar, false);
     }
 
-    public CommitSnapshot convert(final GithubApiCommitSnapshot snapshot, final Long pullId) {
-        return CommitSnapshot.builder()
+    public Snapshot convert(final GithubApiCommitSnapshot snapshot, final Long pullId) {
+        return Snapshot.builder()
                 .sha(snapshot.getSha())
                 .branch(snapshot.getRef())
                 .pullId(pullId)

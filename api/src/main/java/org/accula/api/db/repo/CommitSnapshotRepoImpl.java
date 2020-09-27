@@ -6,7 +6,7 @@ import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.Row;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.accula.api.db.model.CommitSnapshot;
+import org.accula.api.db.model.Snapshot;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 
@@ -22,8 +22,8 @@ public final class CommitSnapshotRepoImpl implements CommitSnapshotRepo, Connect
     private final ConnectionProvider connectionProvider;
 
     @Override
-    public Flux<CommitSnapshot> insert(final Collection<CommitSnapshot> commitSnapshots) {
-        if (commitSnapshots.isEmpty()) {
+    public Flux<Snapshot> insert(final Collection<Snapshot> snapshots) {
+        if (snapshots.isEmpty()) {
             return Flux.empty();
         }
 
@@ -33,7 +33,7 @@ public final class CommitSnapshotRepoImpl implements CommitSnapshotRepo, Connect
                     VALUES ($collection)
                     ON CONFLICT (sha, repo_id) DO NOTHING
                     """);
-            statement.bind(commitSnapshots, commitSnapshot -> new Object[]{
+            statement.bind(snapshots, commitSnapshot -> new Object[]{
                     commitSnapshot.getSha(),
                     commitSnapshot.getRepo().getId(),
                     commitSnapshot.getBranch()
@@ -42,17 +42,17 @@ public final class CommitSnapshotRepoImpl implements CommitSnapshotRepo, Connect
             return statement
                     .execute()
                     .flatMap(PostgresqlResult::getRowsUpdated)
-                    .thenMany(Flux.fromIterable(commitSnapshots));
+                    .thenMany(Flux.fromIterable(snapshots));
         });
     }
 
     @Override
-    public Flux<CommitSnapshot> mapToPulls(final Collection<CommitSnapshot> commitSnapshots) {
-        if (commitSnapshots.isEmpty()) {
+    public Flux<Snapshot> mapToPulls(final Collection<Snapshot> snapshots) {
+        if (snapshots.isEmpty()) {
             return Flux.empty();
         }
 
-        if (commitSnapshots.stream().anyMatch(commitSnapshot -> commitSnapshot.getPullId() == null)) {
+        if (snapshots.stream().anyMatch(commitSnapshot -> commitSnapshot.getPullId() == null)) {
             return Flux.empty();
         }
 
@@ -62,7 +62,7 @@ public final class CommitSnapshotRepoImpl implements CommitSnapshotRepo, Connect
                     VALUES ($collection)
                     ON CONFLICT (commit_snapshot_sha, commit_snapshot_repo_id, pull_id) DO NOTHING
                     """);
-            statement.bind(commitSnapshots, commitSnapshot -> new Object[]{
+            statement.bind(snapshots, commitSnapshot -> new Object[]{
                     commitSnapshot.getSha(),
                     commitSnapshot.getRepo().getId(),
                     commitSnapshot.getPullId()
@@ -71,12 +71,12 @@ public final class CommitSnapshotRepoImpl implements CommitSnapshotRepo, Connect
             return statement
                     .execute()
                     .flatMap(PostgresqlResult::getRowsUpdated)
-                    .thenMany(Flux.fromIterable(commitSnapshots));
+                    .thenMany(Flux.fromIterable(snapshots));
         });
     }
 
     @Override
-    public Flux<CommitSnapshot> findById(final Collection<CommitSnapshot.Id> ids) {
+    public Flux<Snapshot> findById(final Collection<Snapshot.Id> ids) {
         if (ids.isEmpty()) {
             return Flux.empty();
         }
@@ -112,13 +112,13 @@ public final class CommitSnapshotRepoImpl implements CommitSnapshotRepo, Connect
                         """);
     }
 
-    private static PostgresqlStatement applySelectBindings(final CommitSnapshot.Id id, final PostgresqlStatement statement) {
+    private static PostgresqlStatement applySelectBindings(final Snapshot.Id id, final PostgresqlStatement statement) {
         return statement
                 .bind("$1", id.getSha())
                 .bind("$2", id.getRepoId());
     }
 
-    private CommitSnapshot convert(final Row row) {
+    private Snapshot convert(final Row row) {
         return Converters.convertCommitSnapshot(row,
                 "snap_sha",
                 "snap_branch",

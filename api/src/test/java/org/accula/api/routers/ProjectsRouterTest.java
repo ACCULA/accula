@@ -4,7 +4,7 @@ import lombok.SneakyThrows;
 import org.accula.api.config.WebhookProperties;
 import org.accula.api.converter.GithubApiToModelConverter;
 import org.accula.api.converter.ModelToDtoConverter;
-import org.accula.api.db.model.CommitSnapshot;
+import org.accula.api.db.model.Snapshot;
 import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.GithubUser;
 import org.accula.api.db.model.Project;
@@ -61,8 +61,8 @@ class ProjectsRouterTest {
             .id(1L)
             .projectId(1L)
             .open(true)
-            .head(CommitSnapshot.builder().build())
-            .base(CommitSnapshot.builder().build())
+            .head(Snapshot.builder().build())
+            .base(Snapshot.builder().build())
             .build();
     static final List<Pull> PULLS = List.of(PULL, PULL, PULL);
     static final String EMPTY = "";

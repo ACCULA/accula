@@ -2,10 +2,10 @@ package org.accula.api.db.repo;
 
 import io.r2dbc.spi.Row;
 import org.accula.api.db.model.Clone;
-import org.accula.api.db.model.CommitSnapshot;
 import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.GithubUser;
 import org.accula.api.db.model.Pull;
+import org.accula.api.db.model.Snapshot;
 import org.accula.api.db.model.User;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,19 +56,19 @@ final class Converters {
         );
     }
 
-    static CommitSnapshot convertCommitSnapshot(final Row row,
-                                                final String sha,
-                                                final String branch,
-                                                final String pullId,
-                                                final String repoId,
-                                                final String repoName,
-                                                final String repoDescription,
-                                                final String repoOwnerId,
-                                                final String repoOwnerLogin,
-                                                final String repoOwnerName,
-                                                final String repoOwnerAvatar,
-                                                final String repoOwnerOrganization) {
-        return CommitSnapshot.builder()
+    static Snapshot convertCommitSnapshot(final Row row,
+                                          final String sha,
+                                          final String branch,
+                                          final String pullId,
+                                          final String repoId,
+                                          final String repoName,
+                                          final String repoDescription,
+                                          final String repoOwnerId,
+                                          final String repoOwnerLogin,
+                                          final String repoOwnerName,
+                                          final String repoOwnerAvatar,
+                                          final String repoOwnerOrganization) {
+        return Snapshot.builder()
                 .sha(value(row, sha, String.class))
                 .branch(value(row, branch, String.class))
                 .pullId(nullable(row, pullId, Long.class))

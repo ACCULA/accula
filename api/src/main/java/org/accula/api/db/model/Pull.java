@@ -20,8 +20,8 @@ public class Pull {
     boolean open;
     Instant createdAt;
     Instant updatedAt;
-    CommitSnapshot head;
-    CommitSnapshot base;
+    Snapshot head;
+    Snapshot base;
     GithubUser author;
     Long projectId;
 }
