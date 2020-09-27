@@ -29,7 +29,7 @@ public final class SnapshotRepoImpl implements SnapshotRepo, ConnectionProvidedR
 
         return manyWithConnection(connection -> {
             final var statement = BatchStatement.of(connection, """
-                    INSERT INTO commit_snapshot (sha, repo_id, branch)
+                    INSERT INTO snapshot (sha, repo_id, branch)
                     VALUES ($collection)
                     ON CONFLICT (sha, repo_id) DO NOTHING
                     """);
@@ -58,9 +58,9 @@ public final class SnapshotRepoImpl implements SnapshotRepo, ConnectionProvidedR
 
         return manyWithConnection(connection -> {
             final var statement = BatchStatement.of(connection, """
-                    INSERT INTO commit_snapshot_pull (commit_snapshot_sha, commit_snapshot_repo_id, pull_id)
+                    INSERT INTO snapshot_pull (snapshot_sha, snapshot_repo_id, pull_id)
                     VALUES ($collection)
-                    ON CONFLICT (commit_snapshot_sha, commit_snapshot_repo_id, pull_id) DO NOTHING
+                    ON CONFLICT (snapshot_sha, snapshot_repo_id, pull_id) DO NOTHING
                     """);
             statement.bind(snapshots, commitSnapshot -> new Object[]{
                     commitSnapshot.getSha(),
@@ -103,7 +103,7 @@ public final class SnapshotRepoImpl implements SnapshotRepo, ConnectionProvidedR
                                repo_owner.name     AS repo_owner_name,
                                repo_owner.avatar   AS repo_owner_avatar,
                                repo_owner.is_org   AS repo_owner_is_org
-                        FROM commit_snapshot snap
+                        FROM snapshot snap
                            JOIN repo_github repo
                                ON snap.repo_id = repo.id
                            JOIN user_github repo_owner
