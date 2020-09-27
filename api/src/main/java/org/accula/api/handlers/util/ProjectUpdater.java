@@ -7,10 +7,10 @@ import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.GithubUser;
 import org.accula.api.db.model.Pull;
 import org.accula.api.db.model.Snapshot;
-import org.accula.api.db.repo.CommitSnapshotRepo;
 import org.accula.api.db.repo.GithubRepoRepo;
 import org.accula.api.db.repo.GithubUserRepo;
 import org.accula.api.db.repo.PullRepo;
+import org.accula.api.db.repo.SnapshotRepo;
 import org.accula.api.github.model.GithubApiPull;
 import org.accula.api.util.ReactorSchedulers;
 import org.springframework.stereotype.Component;
@@ -32,7 +32,7 @@ public final class ProjectUpdater {
     private final GithubApiToModelConverter converter;
     private final GithubUserRepo githubUserRepo;
     private final GithubRepoRepo githubRepoRepo;
-    private final CommitSnapshotRepo commitSnapshotRepo;
+    private final SnapshotRepo snapshotRepo;
     private final PullRepo pullRepo;
 
     public Mono<Integer> update(final Long projectId, final GithubApiPull[] githubApiPulls) { // NOPMD
@@ -66,9 +66,9 @@ public final class ProjectUpdater {
 
                     return githubUserRepo.upsert(users)
                             .thenMany(githubRepoRepo.upsert(repos))
-                            .thenMany(commitSnapshotRepo.insert(allCommitSnapshots))
+                            .thenMany(snapshotRepo.insert(allCommitSnapshots))
                             .thenMany(pullRepo.upsert(pulls))
-                            .thenMany(commitSnapshotRepo.mapToPulls(heads))
+                            .thenMany(snapshotRepo.mapToPulls(heads))
                             .then(Mono.just(openPullCount));
                 })
                 .doOnSuccess(success -> log.info("Project has been updated successfully with {} pulls", githubApiPulls.length))
@@ -93,9 +93,9 @@ public final class ProjectUpdater {
 
                     return githubUserRepo.upsert(users)
                             .thenMany(githubRepoRepo.upsert(repos))
-                            .thenMany(commitSnapshotRepo.insert(allCommitSnapshots))
+                            .thenMany(snapshotRepo.insert(allCommitSnapshots))
                             .then(pullRepo.upsert(pull))
-                            .thenMany(commitSnapshotRepo.mapToPulls(heads))
+                            .thenMany(snapshotRepo.mapToPulls(heads))
                             .then(Mono.just(pull));
                 })
                 .doOnSuccess(success -> log.info("Project has been updated successfully with pull={}", githubApiPull))

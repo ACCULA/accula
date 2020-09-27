@@ -17,7 +17,7 @@ import java.util.Collection;
  */
 @Component
 @RequiredArgsConstructor
-public final class CommitSnapshotRepoImpl implements CommitSnapshotRepo, ConnectionProvidedRepo {
+public final class SnapshotRepoImpl implements SnapshotRepo, ConnectionProvidedRepo {
     @Getter
     private final ConnectionProvider connectionProvider;
 

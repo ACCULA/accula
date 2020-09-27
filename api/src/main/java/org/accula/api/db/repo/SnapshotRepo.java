@@ -10,8 +10,8 @@ import java.util.List;
 /**
  * @author Anton Lamtev
  */
-public interface CommitSnapshotRepo {
-    default Mono<Snapshot> insert(Snapshot snapshot) {
+public interface SnapshotRepo {
+    default Mono<Snapshot> insert(final Snapshot snapshot) {
         return insert(List.of(snapshot)).next();
     }
 
@@ -19,7 +19,7 @@ public interface CommitSnapshotRepo {
 
     Flux<Snapshot> mapToPulls(Collection<Snapshot> snapshots);
 
-    default Mono<Snapshot> findById(Snapshot.Id id) {
+    default Mono<Snapshot> findById(final Snapshot.Id id) {
         return findById(List.of(id)).next();
     }
 
