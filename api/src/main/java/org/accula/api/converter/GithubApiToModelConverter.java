@@ -4,9 +4,9 @@ import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.GithubUser;
 import org.accula.api.db.model.Pull;
 import org.accula.api.db.model.Snapshot;
-import org.accula.api.github.model.GithubApiCommitSnapshot;
 import org.accula.api.github.model.GithubApiPull;
 import org.accula.api.github.model.GithubApiRepo;
+import org.accula.api.github.model.GithubApiSnapshot;
 import org.accula.api.github.model.GithubApiUser;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Component;
@@ -49,7 +49,7 @@ public final class GithubApiToModelConverter {
         return new GithubUser(id, login, name, avatar, false);
     }
 
-    public Snapshot convert(final GithubApiCommitSnapshot snapshot, final Long pullId) {
+    public Snapshot convert(final GithubApiSnapshot snapshot, final Long pullId) {
         return Snapshot.builder()
                 .sha(snapshot.getSha())
                 .branch(snapshot.getRef())

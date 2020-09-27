@@ -30,8 +30,7 @@ public final class CloneDetectorImpl implements CloneDetector {
     private final ConfigProvider configProvider;
 
     @Override
-    public Flux<Tuple2<CodeSnippet, CodeSnippet>> findClones(final Snapshot snapshot,
-                                                             final Flux<FileEntity<Snapshot>> files) {
+    public Flux<Tuple2<CodeSnippet, CodeSnippet>> findClones(final Snapshot snapshot, final Flux<FileEntity<Snapshot>> files) {
         return addFilesToSuffixTree(files)
                 .thenMany(configProvider.get().flatMapMany(Lambda.passingFirstArg(this::readClonesFromSuffixTree, snapshot)));
     }

@@ -21,8 +21,8 @@ public class GithubApiPull {
     Long id;
     @JsonProperty("html_url")
     String htmlUrl;
-    GithubApiCommitSnapshot head;
-    GithubApiCommitSnapshot base;
+    GithubApiSnapshot head;
+    GithubApiSnapshot base;
     GithubApiUser user;
     Integer number;
     String title;
