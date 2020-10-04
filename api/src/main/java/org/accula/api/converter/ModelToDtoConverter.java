@@ -58,7 +58,7 @@ public final class ModelToDtoConverter {
     }
 
     public static UserDto convert(final User user) {
-        return new UserDto(user.getId(), user.getGithubUser().getLogin(), user.getGithubUser().getName());
+        return new UserDto(user.getId(), user.getGithubUser().getLogin(), user.getGithubUser().getName(), user.getGithubUser().getAvatar());
     }
 
     public static GithubUserDto convert(final GithubUser user) {
