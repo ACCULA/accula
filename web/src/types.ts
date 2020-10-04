@@ -8,6 +8,13 @@ export interface IUser {
   id: number
   login: string
   name: string
+  avatar: string
+}
+
+export type ThemeMode = 'dark' | 'light'
+
+export interface ISettings {
+  themeMode: ThemeMode
 }
 
 export interface IRouteInfo {

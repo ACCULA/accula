@@ -1,14 +1,26 @@
 import jwtDecode from 'jwt-decode'
 
 import { AppDispatch, AppStateSupplier } from 'store'
-import { IToken } from 'types'
+import { ISettings, IToken } from 'types'
 import { failed, fetched, fetching } from 'store/wrapper'
-import { SET_ACCESS_TOKEN, SET_USER, SetAccessToken, SetUser } from './types'
+import {
+  SET_ACCESS_TOKEN,
+  SET_USER,
+  CHANGE_SETTINGS,
+  SetAccessToken,
+  SetUser,
+  ChangeSettings
+} from './types'
 import { getUserById, refreshToken } from './services'
 
 export const setAccessTokenAction = (token: IToken): SetAccessToken => ({
   type: SET_ACCESS_TOKEN,
   token
+})
+
+export const changeSettingsAction = (settings: ISettings): ChangeSettings => ({
+  type: CHANGE_SETTINGS,
+  settings
 })
 
 const setUser = (payload): SetUser => ({
