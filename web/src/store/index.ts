@@ -1,28 +1,11 @@
-import { applyMiddleware, combineReducers, createStore } from 'redux'
-import { composeWithDevTools } from 'redux-devtools-extension'
-import thunk from 'redux-thunk'
-import logger from 'redux-logger'
+import { configureStoreDev } from './configureStore.dev'
+import { configureStoreProd } from './configureStore.prod'
+import { rootReducer } from './reducers'
 
-import { usersReducer } from './users/reducers'
-import { projectsReducer } from './projects/reducers'
-import { pullsReducer } from './pulls/reducers'
+const configureStore =
+  process.env.NODE_ENV === 'production' ? configureStoreProd : configureStoreDev
 
-const rootReducer = combineReducers({
-  users: usersReducer,
-  projects: projectsReducer,
-  pulls: pullsReducer
-})
-
-export const store = createStore(
-  rootReducer,
-  composeWithDevTools(
-    applyMiddleware(
-      thunk, //
-      logger
-    )
-  )
-)
-
+export const store = configureStore()
 export type AppDispatch = typeof store.dispatch
 export type AppState = ReturnType<typeof rootReducer>
 export type AppStateSupplier = () => AppState
