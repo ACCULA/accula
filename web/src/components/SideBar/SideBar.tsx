@@ -28,13 +28,14 @@ interface SideBarProps extends PropsFromRedux {
 const SideBar = ({ routes, settings, changeSettings }: SideBarProps) => {
   const theme = useTheme()
   const history = useHistory()
-  const classes = useStyles(theme.palette.type)
+  const classes = useStyles()
   const settingsRoute = routes[routes.findIndex(r => r.path === '/settings')]
   const [currentRoute, setRoute] = useState<IRouteInfo>(
     routes.find(route => route.path === history.location.pathname)
   )
   const isMdDown = useMediaQuery(theme.breakpoints.down('md'))
   const isMdUp = useMediaQuery(theme.breakpoints.up('md'))
+
   const handleDrawerOpen = () => {
     changeSettings({ ...settings, isDrawerOpen: true })
   }
