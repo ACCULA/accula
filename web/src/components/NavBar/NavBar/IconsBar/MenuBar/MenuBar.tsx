@@ -24,6 +24,13 @@ const MenuBar: React.FC<MenuBarProps> = ({ user }: MenuBarProps) => {
     setAnchorEl(null)
   }
 
+  const handleClickListItem = (onClick?: () => void) => {
+    if (onClick) {
+      onClick()
+    }
+    handleMenuClose()
+  }
+
   const menuId = 'more-actions-menu'
   const renderMenu = (
     <Menu
@@ -36,7 +43,7 @@ const MenuBar: React.FC<MenuBarProps> = ({ user }: MenuBarProps) => {
       open={isMenuOpen}
       onClose={handleMenuClose}
     >
-      <MenuItem onClick={() => historyPush(history, '/profile')}>
+      <MenuItem onClick={() => handleClickListItem(() => historyPush(history, '/profile'))}>
         <ListItemIcon aria-label="Account of current user" color="inherit">
           <AccountCircle />
         </ListItemIcon>
