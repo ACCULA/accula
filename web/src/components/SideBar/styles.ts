@@ -2,6 +2,7 @@ import { makeStyles, PaletteType, Theme } from '@material-ui/core'
 import { colors } from 'theme'
 import { drawerWidth } from 'utils'
 
+// TODO: Simplify the type of return value
 export const useStyles = (
   theme: PaletteType
 ): Record<
@@ -65,8 +66,8 @@ export const useStyles = (
       }
     },
     itemText: {
-      fontSize: '1.2rem',
-      fontWeight: 500
+      fontSize: '1rem',
+      fontWeight: 700
     },
     drawerBottom: {
       marginTop: 'auto',
