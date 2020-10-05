@@ -1,41 +1,74 @@
 import React, { useEffect } from 'react'
+import clsx from 'clsx'
 import { connect, ConnectedProps } from 'react-redux'
 import { Redirect, Route, Switch, useHistory } from 'react-router-dom'
-import { useLocation, useWindowSize } from 'react-use'
+import { useLocation } from 'react-use'
 import { Helmet } from 'react-helmet'
 import { bindActionCreators } from 'redux'
 
-import Navbar from 'components/Navbars'
-import Sidebar from 'components/Sidebar'
-import Footer from 'components/Footer'
 import { routes } from 'routes'
-import { AppDispatch, AppState } from 'store'
 import { getCurrentUserAction } from 'store/users/actions'
+import { changeSettingsAction } from 'store/settings/actions'
 import { PrivateRoute } from 'components/PrivateRoute'
+import { useTheme } from 'hooks'
+import {
+  createMuiTheme,
+  createStyles,
+  makeStyles,
+  Theme,
+  ThemeProvider
+} from '@material-ui/core/styles'
+import { CssBaseline } from '@material-ui/core'
+import { NavBar } from 'components/NavBar/NavBar'
+import { SnackbarProvider } from 'notistack'
+import { AppDispatch, AppState } from 'store'
+import SideBar from 'components/SideBar'
+import { drawerWidth } from 'utils'
 
-const mapStateToProps = (state: AppState) => ({
-  isFetching: state.users.user.isFetching,
-  auth: state.users.user.value !== null,
-  user: state.users.user.value
-})
+const useStyles = makeStyles((theme: Theme) =>
+  createStyles({
+    root: {
+      display: 'flex'
+    },
+    content: {
+      flexGrow: 1,
+      height: '100vh',
+      position: 'relative',
+      padding: '63px 147px',
+      [theme.breakpoints.down('sm')]: {
+        padding: '63px 73px'
+      },
+      transition: theme.transitions.create('margin', {
+        easing: theme.transitions.easing.sharp,
+        duration: theme.transitions.duration.leavingScreen
+      }),
+      marginLeft: -drawerWidth
+    },
+    contentShift: {
+      transition: theme.transitions.create('margin', {
+        easing: theme.transitions.easing.easeOut,
+        duration: theme.transitions.duration.enteringScreen
+      }),
+      marginLeft: 0
+    },
+    drawerHeader: {
+      display: 'flex',
+      alignItems: 'center',
+      padding: theme.spacing(0, 1),
+      ...theme.mixins.toolbar,
+      justifyContent: 'flex-end'
+    }
+  })
+)
 
-const mapDispatchToProps = (dispatch: AppDispatch) => ({
-  getCurrentUser: bindActionCreators(getCurrentUserAction, dispatch)
-})
+type AppProps = PropsFromRedux
 
-const connector = connect(mapStateToProps, mapDispatchToProps)
-type AppProps = ConnectedProps<typeof connector>
-
-const App = ({ auth, isFetching, user, getCurrentUser }: AppProps) => {
+const App = ({ auth, getCurrentUser, settings, changeSettings }: AppProps) => {
   const location = useLocation()
   const history = useHistory()
-  const { width } = useWindowSize()
-
-  useEffect(() => {
-    if (width < 991 && document.documentElement.className.indexOf('nav-open') !== -1) {
-      document.documentElement.classList.toggle('nav-open')
-    }
-  }, [width, location])
+  const [theme, toggleTheme] = useTheme(settings.themeMode)
+  const customTheme = createMuiTheme(theme)
+  const classes = useStyles()
 
   useEffect(() => {
     if (history.action === 'PUSH') {
@@ -48,48 +81,78 @@ const App = ({ auth, isFetching, user, getCurrentUser }: AppProps) => {
     getCurrentUser()
   }, [getCurrentUser])
 
-  if (isFetching) {
-    return <></>
+  const changeTheme = () => {
+    changeSettings({ ...settings, themeMode: theme.palette!.type! === 'dark' ? 'light' : 'dark' })
+    toggleTheme()
   }
 
-  const availableRoutes = routes.filter(r => user || !r.authRequired)
+  const sideBarRoutes = routes.filter(r => r.sidebar)
 
   return (
-    <div className="wrapper">
-      <Helmet>
-        <title>ACCULA</title>
-      </Helmet>
-      <Sidebar user={user} routes={availableRoutes} />
-      <div id="main-panel" className="main-panel">
-        <Navbar user={user} />
-        <Switch>
-          {routes.map(route =>
-            route.authRequired ? (
-              <PrivateRoute
-                key={route.path}
-                path={route.path}
-                component={route.component}
-                exact={route.exact}
-                auth={auth}
-              />
-            ) : (
-              <Route
-                key={route.path}
-                path={route.path}
-                component={route.component}
-                exact={route.exact}
-              />
-            )
-          )}
-          <Redirect to="/projects" path="/" exact />
-          <Route>
-            <h1 className="text-center">404</h1>
-          </Route>
-        </Switch>
-        <Footer />
-      </div>
+    <div className={classes.root}>
+      <ThemeProvider theme={customTheme}>
+        <SnackbarProvider
+          maxSnack={3}
+          anchorOrigin={{
+            vertical: 'bottom',
+            horizontal: 'right'
+          }}
+        >
+          <CssBaseline />
+          <Helmet>
+            <title>ACCULA</title>
+          </Helmet>
+          <NavBar setTheme={changeTheme} />
+          <SideBar routes={sideBarRoutes} />
+          <main
+            className={clsx(classes.content, {
+              [classes.contentShift]: settings.isDrawerOpen
+            })}
+          >
+            <div className={classes.drawerHeader} />
+            <Switch>
+              {routes.map(route =>
+                route.authRequired ? (
+                  <PrivateRoute
+                    key={route.path}
+                    path={route.path}
+                    component={route.component}
+                    exact={route.exact}
+                    auth={auth}
+                  />
+                ) : (
+                  <Route
+                    key={route.path}
+                    path={route.path}
+                    component={route.component}
+                    exact={route.exact}
+                  />
+                )
+              )}
+              <Redirect to="/projects" path="/" exact />
+              <Route>
+                <h1 className="text-center">404</h1>
+              </Route>
+            </Switch>
+          </main>
+        </SnackbarProvider>
+      </ThemeProvider>
     </div>
   )
 }
+
+const mapStateToProps = (state: AppState) => ({
+  auth: state.users.user.value !== null,
+  settings: state.settings.settings
+})
+
+const mapDispatchToProps = (dispatch: AppDispatch) => ({
+  getCurrentUser: bindActionCreators(getCurrentUserAction, dispatch),
+  changeSettings: bindActionCreators(changeSettingsAction, dispatch)
+})
+
+const connector = connect(mapStateToProps, mapDispatchToProps)
+
+type PropsFromRedux = ConnectedProps<typeof connector>
 
 export default connector(App)
