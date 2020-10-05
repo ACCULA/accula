@@ -28,6 +28,7 @@
     "@typescript-eslint/parser": "2.34.0",
     "axios": "^0.19.2",
     "classnames": "^2.2.6",
+    "clsx": "^1.1.1",
     "date-fns": "^2.13.0",
     "diff": "^4.0.2",
     "enzyme": "3.11.0",

@@ -2,7 +2,8 @@ import { CHANGE_SETTINGS, SettingsState, SettingsActionTypes } from './types'
 
 const initialState: SettingsState = {
   settings: {
-    themeMode: 'light'
+    themeMode: 'light',
+    isDrawerOpen: true
   }
 }
 

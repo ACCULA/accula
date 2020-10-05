@@ -11,10 +11,20 @@ export interface IUser {
   avatar: string
 }
 
+export interface IColors {
+  bgLight: string
+  bgDark: string
+  primaryLight: string
+  primaryDark: string
+  secondaryLight: string
+  secondaryDark: string
+}
+
 export type ThemeMode = 'dark' | 'light'
 
 export interface ISettings {
   themeMode: ThemeMode
+  isDrawerOpen: boolean
 }
 
 export interface IRouteInfo {
@@ -25,6 +35,7 @@ export interface IRouteInfo {
   icon?: string
   hidden?: boolean
   authRequired?: boolean
+  sidebar?: boolean
 }
 
 export interface IProject {
