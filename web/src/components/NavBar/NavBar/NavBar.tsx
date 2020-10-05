@@ -4,7 +4,7 @@ import { connect, ConnectedProps } from 'react-redux'
 import { AppDispatch, AppState } from 'store'
 import { bindActionCreators } from 'redux'
 import { changeSettingsAction } from 'store/settings/actions'
-import { AppBar, Toolbar, useTheme } from '@material-ui/core'
+import { AppBar, LinearProgress, Toolbar, useTheme } from '@material-ui/core'
 import { IconsBar } from './IconsBar'
 import { useStyles } from './styles'
 
@@ -12,7 +12,7 @@ interface NavBarProps extends PropsFromRedux {
   setTheme: () => void
 }
 
-const NavBar: React.FC<NavBarProps> = ({ settings, setTheme }: NavBarProps) => {
+const NavBar: React.FC<NavBarProps> = ({ settings, setTheme, isFetching }: NavBarProps) => {
   const theme = useTheme()
   const classes = useStyles(theme.palette.type)
   return (
@@ -25,12 +25,14 @@ const NavBar: React.FC<NavBarProps> = ({ settings, setTheme }: NavBarProps) => {
       <Toolbar className={clsx(settings.isDrawerOpen && classes.toolBarShifted)}>
         <IconsBar setTheme={setTheme} />
       </Toolbar>
+      {isFetching && <LinearProgress color="secondary" />}
     </AppBar>
   )
 }
 
 const mapStateToProps = (state: AppState) => ({
-  settings: state.settings.settings
+  settings: state.settings.settings,
+  isFetching: state.projects.projects.isFetching
 })
 
 const mapDispatchToProps = (dispatch: AppDispatch) => ({

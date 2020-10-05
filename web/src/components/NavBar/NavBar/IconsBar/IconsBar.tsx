@@ -43,10 +43,6 @@ const IconsBar: React.FC<IconsBarProps> = ({
     changeSettings({ ...settings, isDrawerOpen: false })
   }
 
-  if (user.isFetching == null || user.isFetching) {
-    return <></>
-  }
-
   return (
     <>
       {(!settings.isDrawerOpen && (
@@ -64,24 +60,26 @@ const IconsBar: React.FC<IconsBarProps> = ({
           {theme.direction === 'ltr' ? <ChevronLeftRounded /> : <ChevronRightRounded />}
         </IconButton>
       )}
-      <div className={classes.mainTools}>
-        <Tooltip title="Toggle light/dark theme">
-          <IconButton color="default" aria-label="Toggle light/dark theme" onClick={toggleTheme}>
-            {(lightTheme && <Brightness4Rounded />) || <Brightness7Rounded />}
-          </IconButton>
-        </Tooltip>
-        {user.value ? (
-          <MenuBar />
-        ) : (
-          <Tooltip title="Log in with GitHub">
-            <a href={`${API_URL}/api/login/github`} className={classes.login}>
-              <IconButton color="default" aria-label="Log in with GitHub">
-                <GitHubIcon />
-              </IconButton>
-            </a>
+      {!(user.isFetching == null || user.isFetching) && (
+        <div className={classes.mainTools}>
+          <Tooltip title="Toggle light/dark theme">
+            <IconButton color="default" aria-label="Toggle light/dark theme" onClick={toggleTheme}>
+              {(lightTheme && <Brightness4Rounded />) || <Brightness7Rounded />}
+            </IconButton>
           </Tooltip>
-        )}
-      </div>
+          {user.value ? (
+            <MenuBar />
+          ) : (
+            <Tooltip title="Log in with GitHub">
+              <a href={`${API_URL}/api/login/github`} className={classes.login}>
+                <IconButton color="default" aria-label="Log in with GitHub">
+                  <GitHubIcon />
+                </IconButton>
+              </a>
+            </Tooltip>
+          )}
+        </div>
+      )}
     </>
   )
 }
