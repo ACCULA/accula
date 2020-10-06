@@ -12,5 +12,8 @@ export const useStyles = makeStyles(() => ({
       top: '95%',
       zIndex: '-1'
     }
+  },
+  dummyTab: {
+    display: 'none'
   }
 }))

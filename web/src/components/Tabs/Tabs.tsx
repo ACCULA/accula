@@ -30,7 +30,12 @@ const Tabs = ({ tabs, onChange }: TabsProps) => {
   }
 
   return (
-    <MuiTabs className={classes.tabs} value={activeTab} onChange={handleChange} aria-label="tabs">
+    <MuiTabs
+      className={classes.tabs}
+      value={tabs ? activeTab : false}
+      onChange={handleChange}
+      aria-label="tabs"
+    >
       {tabs ? (
         <>
           {tabs.map(({ text }, index) => (
@@ -38,7 +43,7 @@ const Tabs = ({ tabs, onChange }: TabsProps) => {
           ))}
         </>
       ) : (
-        <></>
+        <Tab className={classes.dummyTab} />
       )}
     </MuiTabs>
   )
