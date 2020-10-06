@@ -59,7 +59,7 @@ const createProject = (isCreating: boolean, error: string): CreateProject => ({
 
 export const resetCreateProject = (): CreateProject => createProject(false, '')
 
-export const getProjectsAction = () => async (
+export const getProjectsAction = (handleError?: (message: string) => void) => async (
   dispatch: AppDispatch, //
   getState: AppStateSupplier
 ) => {
@@ -72,6 +72,9 @@ export const getProjectsAction = () => async (
     const result = await getProjects()
     dispatch(setProjects(fetched(result)))
   } catch (e) {
+    if (handleError) {
+      handleError(e.message)
+    }
     dispatch(setProjects(failed(e)))
   }
 }
