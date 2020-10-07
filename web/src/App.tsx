@@ -27,29 +27,26 @@ import { drawerWidth } from 'utils'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
-    root: {
-      display: 'flex'
-    },
     content: {
       flexGrow: 1,
       height: '100vh',
       position: 'relative',
       padding: '63px 147px',
       [theme.breakpoints.down('sm')]: {
+        marginLeft: 0,
         padding: '63px 73px'
       },
       transition: theme.transitions.create('margin', {
         easing: theme.transitions.easing.sharp,
         duration: theme.transitions.duration.leavingScreen
-      }),
-      marginLeft: -drawerWidth
+      })
     },
     contentShift: {
       transition: theme.transitions.create('margin', {
         easing: theme.transitions.easing.easeOut,
         duration: theme.transitions.duration.enteringScreen
       }),
-      marginLeft: 0
+      marginLeft: drawerWidth
     },
     drawerHeader: {
       display: 'flex',
@@ -89,7 +86,7 @@ const App = ({ auth, getCurrentUser, settings, changeSettings }: AppProps) => {
   const sideBarRoutes = routes.filter(r => r.sidebar)
 
   return (
-    <div className={classes.root}>
+    <div>
       <ThemeProvider theme={customTheme}>
         <SnackbarProvider
           maxSnack={3}
