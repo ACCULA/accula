@@ -60,26 +60,32 @@ const IconsBar: React.FC<IconsBarProps> = ({
           {theme.direction === 'ltr' ? <ChevronLeftRounded /> : <ChevronRightRounded />}
         </IconButton>
       )}
-      {!(user.isFetching == null || user.isFetching) && (
-        <div className={classes.mainTools}>
-          <Tooltip title="Toggle light/dark theme">
-            <IconButton color="default" aria-label="Toggle light/dark theme" onClick={toggleTheme}>
-              {(lightTheme && <Brightness4Rounded />) || <Brightness7Rounded />}
-            </IconButton>
+      <div className={classes.mainTools}>
+        {!user.value ? (
+          <Tooltip title="Log in with GitHub">
+            <a href={`${API_URL}/api/login/github`} className={classes.login}>
+              <IconButton color="default" aria-label="Log in with GitHub">
+                <GitHubIcon />
+              </IconButton>
+            </a>
           </Tooltip>
-          {user.value ? (
-            <MenuBar />
-          ) : (
-            <Tooltip title="Log in with GitHub">
-              <a href={`${API_URL}/api/login/github`} className={classes.login}>
-                <IconButton color="default" aria-label="Log in with GitHub">
-                  <GitHubIcon />
+        ) : (
+          !(user.isFetching == null || user.isFetching) && (
+            <>
+              <Tooltip title="Toggle light/dark theme">
+                <IconButton
+                  color="default"
+                  aria-label="Toggle light/dark theme"
+                  onClick={toggleTheme}
+                >
+                  {(lightTheme && <Brightness4Rounded />) || <Brightness7Rounded />}
                 </IconButton>
-              </a>
-            </Tooltip>
-          )}
-        </div>
-      )}
+              </Tooltip>
+              <MenuBar />
+            </>
+          )
+        )}
+      </div>
     </>
   )
 }
