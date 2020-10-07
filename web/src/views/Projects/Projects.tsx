@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useSnackbar } from 'notistack'
+import { historyPush } from 'utils'
+import { useHistory } from 'react-router'
 import { bindActionCreators } from 'redux'
 import { connect, ConnectedProps } from 'react-redux'
 import { Helmet } from 'react-helmet'
@@ -16,8 +18,8 @@ import layersImg from 'images/layers.svg'
 import GitHubIcon from '@material-ui/icons/GitHub'
 import { Avatar, IconButton, TableCell } from '@material-ui/core'
 import { StyledTableRow } from 'components/Table/styles'
-import { useStyles } from './styles'
 import AddProjectDialog from './components/AddProjectDialog'
+import { useStyles } from './styles'
 
 type ProjectsProps = PropsFromRedux
 
@@ -27,7 +29,8 @@ const headCells: HeadCell<IProject>[] = [
   { id: 'repoUrl', numeric: true, disablePadding: false, label: '' }
 ]
 
-const Projects = ({ projects, getProjects }: ProjectsProps) => {
+const Projects = ({ user, projects, getProjects }: ProjectsProps) => {
+  const history = useHistory()
   const { enqueueSnackbar, closeSnackbar } = useSnackbar()
   const classes = useStyles()
   const [isCreateProjectDialogOpen, setCreateProjectDialogOpen] = useState(false)
@@ -44,20 +47,37 @@ const Projects = ({ projects, getProjects }: ProjectsProps) => {
       })
     )
     // eslint-disable-next-line
-  }, [getProjects])
+  }, [])
 
   if (!projects) {
     return <></>
   }
+
+  const addProjectDialog = (
+    <AddProjectDialog
+      open={isCreateProjectDialogOpen}
+      onClose={() => setCreateProjectDialogOpen(false)}
+    />
+  )
 
   if (projects.length === 0) {
     return (
       <div className={classes.emptyContent}>
         <img className={classes.layersImg} src={layersImg} alt="Projects" />
         <span className={classes.projectsText}>Projects</span>
-        <Button className={classes.addProjectBtn} variant="contained" color="secondary">
-          Add project
-        </Button>
+        {user && (
+          <>
+            <Button
+              className={classes.addProjectBtn}
+              variant="contained"
+              color="secondary"
+              onClick={() => setCreateProjectDialogOpen(true)}
+            >
+              Add project
+            </Button>
+            {addProjectDialog}
+          </>
+        )}
       </div>
     )
   }
@@ -87,7 +107,7 @@ const Projects = ({ projects, getProjects }: ProjectsProps) => {
         {projects.map(project => (
           <StyledTableRow
             hover
-            onClick={() => console.log('Click on', project.repoName)}
+            onClick={() => historyPush(history, `projects/${project.id}/pulls`)}
             tabIndex={-1}
             key={project.id}
           >
@@ -126,15 +146,13 @@ const Projects = ({ projects, getProjects }: ProjectsProps) => {
           </StyledTableRow>
         ))}
       </Table>
-      <AddProjectDialog
-        open={isCreateProjectDialogOpen}
-        onClose={() => setCreateProjectDialogOpen(false)}
-      />
+      {addProjectDialog}
     </div>
   )
 }
 
 const mapStateToProps = (state: AppState) => ({
+  user: state.users.user.value,
   projects: state.projects.projects.value
 })
 
