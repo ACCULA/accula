@@ -49,6 +49,7 @@ export const useStyles = makeStyles((theme: Theme) => ({
   repoFullName: {
     marginLeft: '10px',
     display: 'flex',
+    justifyContent: 'center',
     flexDirection: 'column'
   },
   repoDescription: {

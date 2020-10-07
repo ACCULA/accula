@@ -1,9 +1,9 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useSnackbar } from 'notistack'
 import { bindActionCreators } from 'redux'
 import { connect, ConnectedProps } from 'react-redux'
 import { Helmet } from 'react-helmet'
-import { AddBoxOutlined } from '@material-ui/icons'
+import { AddBoxOutlined, CloseRounded } from '@material-ui/icons'
 import { AppDispatch, AppState } from 'store'
 import { getProjectsAction } from 'store/projects/actions'
 import Button from '@material-ui/core/Button'
@@ -17,6 +17,7 @@ import GitHubIcon from '@material-ui/icons/GitHub'
 import { Avatar, IconButton, TableCell } from '@material-ui/core'
 import { StyledTableRow } from 'components/Table/styles'
 import { useStyles } from './styles'
+import AddProjectDialog from './components/AddProjectDialog'
 
 type ProjectsProps = PropsFromRedux
 
@@ -27,11 +28,21 @@ const headCells: HeadCell<IProject>[] = [
 ]
 
 const Projects = ({ projects, getProjects }: ProjectsProps) => {
-  const { enqueueSnackbar } = useSnackbar()
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar()
   const classes = useStyles()
+  const [isCreateProjectDialogOpen, setCreateProjectDialogOpen] = useState(false)
 
   useEffect(() => {
-    getProjects(message => enqueueSnackbar(message, { variant: 'error' }))
+    getProjects(message =>
+      enqueueSnackbar(message, {
+        variant: 'error',
+        action: key => (
+          <IconButton onClick={() => closeSnackbar(key)} aria-label="Close notification">
+            <CloseRounded />
+          </IconButton>
+        )
+      })
+    )
     // eslint-disable-next-line
   }, [getProjects])
 
@@ -69,7 +80,7 @@ const Projects = ({ projects, getProjects }: ProjectsProps) => {
           {
             toolTip: 'Add project',
             iconButton: <AddBoxOutlined />,
-            onClick: () => console.log('Add project')
+            onClick: () => setCreateProjectDialogOpen(true)
           }
         ]}
       >
@@ -91,7 +102,9 @@ const Projects = ({ projects, getProjects }: ProjectsProps) => {
                   <span
                     className={classes.cellText}
                   >{`${project.repoOwner}/${project.repoName}`}</span>
-                  <span className={classes.repoDescription}>{project.repoDescription || ''}</span>
+                  {project.repoDescription !== '' && (
+                    <span className={classes.repoDescription}>{project.repoDescription}</span>
+                  )}
                 </div>
               </div>
             </TableCell>
@@ -113,6 +126,10 @@ const Projects = ({ projects, getProjects }: ProjectsProps) => {
           </StyledTableRow>
         ))}
       </Table>
+      <AddProjectDialog
+        open={isCreateProjectDialogOpen}
+        onClose={() => setCreateProjectDialogOpen(false)}
+      />
     </div>
   )
 }

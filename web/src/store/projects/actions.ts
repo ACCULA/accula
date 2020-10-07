@@ -3,13 +3,11 @@ import { requireToken } from 'store/users/actions'
 import { failed, fetched, fetching } from 'store/wrapper'
 import { IProjectConf } from 'types'
 import {
-  CREATE_PROJECT,
   SET_PROJECT,
   SET_PROJECT_CONF,
   SET_PROJECTS,
   SET_REPO_ADMINS,
   UPDATE_PROJECT_CONF,
-  CreateProject,
   SetProject,
   SetProjectConf,
   SetProjects,
@@ -51,13 +49,6 @@ const setRepoAdmins = (payload): SetRepoAdmins => ({
   type: SET_REPO_ADMINS,
   payload
 })
-
-const createProject = (isCreating: boolean, error: string): CreateProject => ({
-  type: CREATE_PROJECT,
-  payload: [isCreating, error]
-})
-
-export const resetCreateProject = (): CreateProject => createProject(false, '')
 
 export const getProjectsAction = (handleError?: (message: string) => void) => async (
   dispatch: AppDispatch, //
@@ -165,7 +156,26 @@ export const getRepoAdminsAction = (id: number) => async (
   }
 }
 
-export const createProjectAction = (url: string) => async (
+const messageFromError = (error: string): string => {
+  switch (error) {
+    case 'NO_PERMISSION':
+      return 'Only the admin of the repository can create a project for it!'
+    case 'WRONG_URL':
+      return 'URL to the repository is wrong!'
+    case 'ALREADY_EXISTS':
+      return 'Project for this repository is already exists!'
+    case 'INVALID_URL':
+      return 'URL to the repository is invalid!'
+    default:
+      return 'Unknown error has occurred'
+  }
+}
+
+export const createProjectAction = (
+  url: string,
+  handleSuccess?: () => void,
+  handleError?: (msg: string) => void
+) => async (
   dispatch: AppDispatch, //
   getState: AppStateSupplier
 ) => {
@@ -174,10 +184,14 @@ export const createProjectAction = (url: string) => async (
   if (users.token.accessToken) {
     const result = await postProject(url, users.token)
     if (typeof result === 'string') {
-      dispatch(createProject(false, result))
+      if (handleError) {
+        handleError(messageFromError(result))
+      }
     } else {
       dispatch(setProjects(fetched([...projects.projects.value, result])))
-      dispatch(createProject(false, null))
+      if (handleSuccess) {
+        handleSuccess()
+      }
     }
   }
 }
