@@ -3,6 +3,7 @@ import { Tabs as MuiTabs, Tab } from '@material-ui/core'
 import { useStyles } from './styles'
 
 export interface Tab {
+  id: string
   text: string
 }
 

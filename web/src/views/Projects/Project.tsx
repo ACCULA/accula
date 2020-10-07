@@ -1,10 +1,7 @@
 import React, { useEffect } from 'react'
 import { connect, ConnectedProps } from 'react-redux'
-import { Grid, Tab, Tabs } from 'react-bootstrap'
 import { useHistory, useParams } from 'react-router-dom'
 import { bindActionCreators } from 'redux'
-
-import { Breadcrumbs } from 'components/Breadcrumbs'
 import { AppDispatch, AppState } from 'store'
 import {
   getProjectAction,
@@ -13,19 +10,78 @@ import {
   updateProjectConfAction
 } from 'store/projects/actions'
 import { getPullsAction } from 'store/pulls/actions'
-import { ProjectPullsTab } from 'views/Projects/ProjectPullsTab'
-import { ProjectConfigurationTab } from 'views/Projects/ProjectConfigurationTab'
-import { ProjectOverviewTab } from 'views/Projects/ProjectOverviewTab'
-import { isProjectAdmin } from 'utils'
+import { historyPush, isProjectAdmin } from 'utils'
 import { PageTitle } from 'components/PageTitle'
+import BreadCrumbs from 'components/BreadCrumbs'
+import Tabs, { Tab } from 'components/Tabs/Tabs'
+import { useSnackbar } from 'notistack'
+import { IconButton } from '@material-ui/core'
+import { CloseRounded } from '@material-ui/icons'
+import ProjectPullsTab from './ProjectPullsTab/ProjectPullsTab'
+
+interface ProjectProps extends PropsFromRedux {}
+
+const Project = ({ project, projectConf, user, getProject, getProjectConf }: ProjectProps) => {
+  const history = useHistory()
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar()
+  const { prId, tab }: any = useParams()
+  const projectId = parseInt(prId, 10)
+
+  const showErrorNotification = (msg: string) =>
+    enqueueSnackbar(msg, {
+      variant: 'error',
+      action: key => (
+        <IconButton onClick={() => closeSnackbar(key)} aria-label="Close notification">
+          <CloseRounded />
+        </IconButton>
+      )
+    })
+
+  useEffect(() => {
+    getProject(projectId, showErrorNotification)
+    getProjectConf(projectId, showErrorNotification)
+    // eslint-disable-next-line
+  }, [projectId])
+
+  if (!user || !project || !projectConf) {
+    return <></>
+  }
+
+  const handleChangeTab = (t: Tab) => {
+    historyPush(history, `/projects/${projectId}/${t.id}`)
+  }
+
+  const isAdmin = isProjectAdmin(user, project, projectConf)
+  const tabs = [{ id: 'pulls', text: 'Pull requests' }] as Tab[]
+  if (isAdmin) {
+    tabs.push({ id: 'configuration', text: 'Configuration' })
+  }
+
+  return (
+    <div>
+      <BreadCrumbs
+        breadcrumbs={[{ text: 'Projects', to: '/projects' }, { text: project.repoName }]}
+      />
+      <PageTitle title={project && project.repoName} />
+      <Tabs tabs={tabs} onChange={handleChangeTab} />
+      {tab === 'pulls' && <ProjectPullsTab project={project} />}
+      {isAdmin && tab === 'configuration' && (
+        <></>
+        // <ProjectConfigurationTab
+        //   project={project} //
+        // />
+      )}
+    </div>
+  )
+}
 
 const mapStateToProps = (state: AppState) => ({
-  project: state.projects.project,
-  projectConf: state.projects.projectConf,
+  project: state.projects.project.value,
+  projectConf: state.projects.projectConf.value,
   updateProjectConfState: state.projects.updateProjectConf,
   repoAdmins: state.projects.repoAdmins,
   pulls: state.pulls.pulls,
-  user: state.users.user
+  user: state.users.user.value
 })
 
 const mapDispatchToProps = (dispatch: AppDispatch) => ({
@@ -37,94 +93,6 @@ const mapDispatchToProps = (dispatch: AppDispatch) => ({
 })
 
 const connector = connect(mapStateToProps, mapDispatchToProps)
-type ProjectProps = ConnectedProps<typeof connector>
-
-const Project = ({
-  project,
-  projectConf,
-  updateProjectConfState,
-  repoAdmins,
-  pulls,
-  user,
-  getProject,
-  getProjectConf,
-  getRepoAdmins,
-  getPulls,
-  updateProjectConf
-}: ProjectProps) => {
-  const history = useHistory()
-  const { prId, tab } = useParams()
-  const projectId = parseInt(prId, 10)
-
-  useEffect(() => {
-    getProject(projectId)
-    getProjectConf(projectId)
-    getRepoAdmins(projectId)
-    getPulls(projectId)
-  }, [getProject, getProjectConf, getRepoAdmins, getPulls, projectId])
-
-  return (
-    <div className="content">
-      <PageTitle title={project.value && project.value.repoName} />
-      <Grid fluid className="tight">
-        <Breadcrumbs
-          breadcrumbs={
-            project.value && [
-              { text: 'Projects', to: '/projects' },
-              { text: project.value.repoName }
-            ]
-          }
-        />
-        <Tabs
-          activeKey={tab || 'overview'} //
-          onSelect={key => {
-            const tabPath = key === 'overview' ? '' : `/${key}`
-            history.push(`/projects/${projectId}${tabPath}`)
-          }}
-          id="pull-tabs"
-        >
-          <Tab
-            eventKey="overview"
-            title={
-              <>
-                <i className="fas fa-fw fa-eye" /> Overview
-              </>
-            }
-          >
-            <ProjectOverviewTab project={project} />
-          </Tab>
-          <Tab
-            eventKey="pulls"
-            title={
-              <>
-                <i className="fas fa-fw fa-code-branch" /> Pull requests
-              </>
-            }
-          >
-            <ProjectPullsTab project={project} pulls={pulls} />
-          </Tab>
-          {isProjectAdmin(user.value, project.value, projectConf.value) && (
-            <Tab
-              eventKey="configuration"
-              title={
-                <>
-                  <i className="fas fa-fw fa-cog" /> Configuration
-                </>
-              }
-            >
-              <ProjectConfigurationTab
-                project={project} //
-                repoAdmins={repoAdmins}
-                projectConf={projectConf}
-                updateConf={conf => updateProjectConf(projectId, conf)}
-                updateConfState={updateProjectConfState}
-              />
-            </Tab>
-          )}
-        </Tabs>
-      </Grid>
-    </div>
-  )
-}
+type PropsFromRedux = ConnectedProps<typeof connector>
 
 export default connector(Project)

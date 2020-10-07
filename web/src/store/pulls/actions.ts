@@ -44,7 +44,7 @@ const setClones = (payload: IPullClonesState): SetClones => ({
   payload
 })
 
-export const getPullsAction = (projectId: number) => async (
+export const getPullsAction = (projectId: number, handleError?: (msg: string) => void) => async (
   dispatch: AppDispatch, //
   getState: AppStateSupplier
 ) => {
@@ -64,6 +64,9 @@ export const getPullsAction = (projectId: number) => async (
     dispatch(setPulls(fetched(result)))
   } catch (e) {
     dispatch(setPulls(failed(e)))
+    if (handleError) {
+      handleError(e.message)
+    }
   }
 }
 

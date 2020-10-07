@@ -70,7 +70,7 @@ export const getProjectsAction = (handleError?: (message: string) => void) => as
   }
 }
 
-export const getProjectAction = (id: number) => async (
+export const getProjectAction = (id: number, handleError?: (msg: string) => void) => async (
   dispatch: AppDispatch, //
   getState: AppStateSupplier
 ) => {
@@ -93,10 +93,13 @@ export const getProjectAction = (id: number) => async (
     dispatch(setProject(fetched(project)))
   } catch (e) {
     dispatch(setProjects(failed(e)))
+    if (handleError) {
+      handleError(e.message)
+    }
   }
 }
 
-export const getProjectConfAction = (id: number) => async (
+export const getProjectConfAction = (id: number, handleError?: (msg: string) => void) => async (
   dispatch: AppDispatch, //
   getState: AppStateSupplier
 ) => {
@@ -115,6 +118,9 @@ export const getProjectConfAction = (id: number) => async (
     dispatch(setProjectConf(fetched(conf)))
   } catch (e) {
     dispatch(setProjectConf(failed(e)))
+    if (handleError) {
+      handleError(e.message)
+    }
   }
 }
 

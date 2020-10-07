@@ -2,23 +2,23 @@ import React, { useEffect, useState } from 'react'
 import { useSnackbar } from 'notistack'
 import { historyPush } from 'utils'
 import { useHistory } from 'react-router'
+import { AppDispatch, AppState } from 'store'
 import { bindActionCreators } from 'redux'
 import { connect, ConnectedProps } from 'react-redux'
 import { Helmet } from 'react-helmet'
 import { AddBoxOutlined, CloseRounded } from '@material-ui/icons'
-import { AppDispatch, AppState } from 'store'
 import { getProjectsAction } from 'store/projects/actions'
 import Button from '@material-ui/core/Button'
 import BreadCrumbs from 'components/BreadCrumbs'
 import Tabs from 'components/Tabs'
 import Table from 'components/Table'
-import { HeadCell } from 'components/Table/components/TableHeader/TableHeader'
 import { IProject } from 'types'
+import { HeadCell } from 'components/Table/TableHeader/TableHeader'
 import layersImg from 'images/layers.svg'
 import GitHubIcon from '@material-ui/icons/GitHub'
 import { Avatar, IconButton, TableCell } from '@material-ui/core'
 import { StyledTableRow } from 'components/Table/styles'
-import AddProjectDialog from './components/AddProjectDialog'
+import AddProjectDialog from './AddProjectDialog'
 import { useStyles } from './styles'
 
 type ProjectsProps = PropsFromRedux
@@ -36,8 +36,8 @@ const Projects = ({ user, projects, getProjects }: ProjectsProps) => {
   const [isCreateProjectDialogOpen, setCreateProjectDialogOpen] = useState(false)
 
   useEffect(() => {
-    getProjects(message =>
-      enqueueSnackbar(message, {
+    getProjects(msg =>
+      enqueueSnackbar(msg, {
         variant: 'error',
         action: key => (
           <IconButton onClick={() => closeSnackbar(key)} aria-label="Close notification">
