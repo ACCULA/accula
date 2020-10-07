@@ -52,8 +52,8 @@ const AddProjectDialog = ({ open, onClose, addProject }: CreateProjectDialogProp
       addProject(
         url,
         () => {
-          handleClose()
           setFetching(false)
+          handleClose()
         },
         msg => {
           enqueueSnackbar(msg, {
