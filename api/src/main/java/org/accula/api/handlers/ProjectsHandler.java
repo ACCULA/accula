@@ -170,19 +170,19 @@ public final class ProjectsHandler {
                 .onErrorResume(DtoToModelConverter.ValidationException.class, ProjectsHandler::badRequest);
     }
 
-    private Mono<Tuple4<Boolean, GithubApiRepo, GithubApiPull[], User>> retrieveGithubInfoForProjectCreation(final String owner,
-                                                                                                             final String repo) {
+    private Mono<Tuple4<Boolean, GithubApiRepo, List<GithubApiPull>, User>> retrieveGithubInfoForProjectCreation(final String owner,
+                                                                                                                 final String repo) {
         //@formatter:off
         return Mono.zip(githubClient.hasAdminPermission(owner, repo).subscribeOn(remoteCallsScheduler),
                         githubClient.getRepo(owner, repo).subscribeOn(remoteCallsScheduler),
-                        githubClient.getRepositoryPulls(owner, repo, State.ALL).subscribeOn(remoteCallsScheduler),
+                        githubClient.getRepositoryPulls(owner, repo, State.ALL, 100).collectList().subscribeOn(remoteCallsScheduler),
                         currentUser.get());
         //@formatter:on
     }
 
     private Mono<ProjectDto> saveProjectData(final boolean isAdmin,
                                              final GithubApiRepo githubApiRepo,
-                                             final GithubApiPull[] githubApiPulls,
+                                             final List<GithubApiPull> githubApiPulls,
                                              final User currentUser) {
         return Mono.defer(() -> {
             if (!isAdmin) {
