@@ -31,7 +31,10 @@ const NavBar: React.FC<NavBarProps> = ({ settings, setTheme, isFetching }: NavBa
 
 const mapStateToProps = (state: AppState) => ({
   settings: state.settings.settings,
-  isFetching: state.projects.projects.isFetching
+  isFetching:
+    state.projects.projects.isFetching ||
+    state.projects.project.isFetching ||
+    state.pulls.pulls.isFetching
 })
 
 const mapDispatchToProps = (dispatch: AppDispatch) => ({
