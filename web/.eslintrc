@@ -1,44 +1,45 @@
 {
-  "root": true,
-  "parser": "@typescript-eslint/parser",
-  "plugins": [
-    "@typescript-eslint"
-  ],
-  "parserOptions": {
-    "project": "./tsconfig.json"
-  },
-  "extends": [
-    "plugin:prettier/recommended",
-    "airbnb-typescript",
-    "prettier",
-    "prettier/@typescript-eslint",
-    "prettier/react"
-  ],
-  "rules": {
-    // Make prettier code formatting suggestions more verbose.
-    "prettier/prettier": [
-      "warn"
+    "root": true,
+    "parser": "@typescript-eslint/parser",
+    "plugins": [
+        "@typescript-eslint"
     ],
-    // Disable <Fragment> => <> replacement. Feel free to change
-    "react/jsx-fragments": "off",
-    "react/no-array-index-key": "off",
-    // Disable prefer default export
-    "import/prefer-default-export": "off",
-    "react/jsx-props-no-spreading": "off",
-    // Disable for aliases
-    "import/extensions": "off",
-    "import/no-unresolved": "off",
-    "no-plusplus": "off",
-    "no-console": "off",
-    "no-nested-ternary": "off"
-  },
-  "settings": {
-    "import/resolver": {
-      "node": {
-        "paths": [
-          "./src"
-        ]
-      }
+    "parserOptions": {
+        "project": "./tsconfig.json"
+    },
+    "extends": [
+        "plugin:prettier/recommended",
+        "airbnb-typescript",
+        "prettier",
+        "prettier/@typescript-eslint",
+        "prettier/react"
+    ],
+    "rules": {
+        // Make prettier code formatting suggestions more verbose.
+        "prettier/prettier": [
+            "warn"
+        ],
+        // Disable <Fragment> => <> replacement. Feel free to change
+        "react/jsx-fragments": "off",
+        "react/no-array-index-key": "off",
+        // Disable prefer default export
+        "import/prefer-default-export": "off",
+        "react/jsx-props-no-spreading": "off",
+        // Disable for aliases
+        "import/extensions": "off",
+        "import/no-unresolved": "off",
+        "no-plusplus": "off",
+        "no-console": "off",
+        "no-nested-ternary": "off",
+        "react/self-closing-comp": "off"
+    },
+    "settings": {
+        "import/resolver": {
+            "node": {
+                "paths": [
+                    "./src"
+                ]
+            }
+        }
     }
-  }
 }
