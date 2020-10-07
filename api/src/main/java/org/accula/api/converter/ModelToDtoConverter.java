@@ -109,6 +109,8 @@ public final class ModelToDtoConverter {
                 .number(pull.getNumber())
                 .url(pullUrl(pull))
                 .title(pull.getTitle())
+                .createdAt(pull.getCreatedAt())
+                .updatedAt(pull.getUpdatedAt())
                 .open(pull.isOpen())
                 .author(convert(pull.getAuthor()))
                 .build();

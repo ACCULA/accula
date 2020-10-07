@@ -60,6 +60,8 @@ export interface IShortPull {
   url: string
   title: string
   open: boolean
+  createdAt: string
+  updatedAt: string
   author: {
     url: string
     login: string
