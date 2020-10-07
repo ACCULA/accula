@@ -126,10 +126,10 @@ public final class GitCodeLoader implements CodeLoader {
 
     private Mono<Repo> addOrUpdateRemote(final Repo repo, final Snapshot remote) {
         final var url = repoGitUrl(remote.getRepo());
-        final var remoteName = remote.getRepo().getOwner().getLogin();
+        final var name = remote.getRepo().getOwner().getLogin();
         return Mono
                 .fromFuture(repo.remote())
-                .flatMap(remotesPresent -> addOrUpdateRemote(repo, url, remoteName, remotesPresent));
+                .flatMap(remotesPresent -> addOrUpdateRemote(repo, url, name, remotesPresent));
     }
 
     private static Mono<Repo> addOrUpdateRemote(final Repo repo,
