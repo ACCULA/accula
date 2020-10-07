@@ -1,8 +1,8 @@
 import React from 'react'
 import { Paper, TableContainer, Table as MuiTable, TableBody } from '@material-ui/core'
-import TableHeader, { HeadCell } from './components/TableHeader/TableHeader'
-import TableToolbar, { ToolBarButton } from './components/TableToolbar/TableToolbar'
 import { useStyles } from './styles'
+import TableToolbar, { ToolBarButton } from './TableToolbar/TableToolbar'
+import TableHeader, { HeadCell } from './TableHeader/TableHeader'
 
 interface TableProps<DataItem> {
   headCells: HeadCell<DataItem>[]

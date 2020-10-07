@@ -21,18 +21,19 @@ const TableToolbar = ({ title, toolBarButtons }: TableToolbarProps) => {
       <Typography className={classes.title} variant="h6" id="tableTitle" component="div">
         {title}
       </Typography>
-      {toolBarButtons.map(({ onClick, toolTip, iconButton }, index) => {
-        const button = (
-          <IconButton onClick={() => onClick()} aria-label={toolTip}>
-            {iconButton}
-          </IconButton>
-        )
-        return (
-          <div key={index}>
-            {toolTip ? <Tooltip title={toolTip}>{button}</Tooltip> : <>{button}</>}
-          </div>
-        )
-      })}
+      {toolBarButtons &&
+        toolBarButtons.map(({ onClick, toolTip, iconButton }, index) => {
+          const button = (
+            <IconButton onClick={() => onClick()} aria-label={toolTip}>
+              {iconButton}
+            </IconButton>
+          )
+          return (
+            <div key={index}>
+              {toolTip ? <Tooltip title={toolTip}>{button}</Tooltip> : <>{button}</>}
+            </div>
+          )
+        })}
     </Toolbar>
   )
 }
