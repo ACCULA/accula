@@ -28,12 +28,6 @@ export const useStyles = makeStyles((theme: Theme) => ({
       boxShadow: 'none'
     }
   },
-  breadcrumbs: {
-    marginBottom: '24px'
-  },
-  tabs: {
-    marginBottom: '53px'
-  },
   repoUrlImg: {
     width: '33px',
     height: '33px'

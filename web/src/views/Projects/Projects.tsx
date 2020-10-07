@@ -87,12 +87,8 @@ const Projects = ({ user, projects, getProjects }: ProjectsProps) => {
       <Helmet>
         <title>Projects - ACCULA</title>
       </Helmet>
-      <div className={classes.breadcrumbs}>
-        <BreadCrumbs breadcrumbs={[{ text: 'Projects' }]} />
-      </div>
-      <div className={classes.tabs}>
-        <Tabs />
-      </div>
+      <BreadCrumbs breadcrumbs={[{ text: 'Projects' }]} />
+      <Tabs />
       <Table<IProject>
         headCells={headCells}
         toolBarTitle=""
