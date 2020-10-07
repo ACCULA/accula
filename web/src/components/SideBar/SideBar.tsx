@@ -50,7 +50,7 @@ const SideBar = ({ routes, settings, changeSettings }: SideBarProps) => {
   }
 
   useEffect(() => {
-    setRoute(routes.find(route => route.path === history.location.pathname))
+    setRoute(routes.find(route => history.location.pathname.startsWith(route.path)))
     // eslint-disable-next-line
   }, [history.location.pathname])
 
