@@ -2,6 +2,7 @@ import { makeStyles } from '@material-ui/core'
 
 export const useStyles = makeStyles(() => ({
   tabs: {
+    marginBottom: '53px',
     position: 'relative',
     '&::after': {
       content: '""',

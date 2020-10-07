@@ -2,7 +2,7 @@ import React from 'react'
 import { Tabs as MuiTabs, Tab } from '@material-ui/core'
 import { useStyles } from './styles'
 
-interface Tab {
+export interface Tab {
   text: string
 }
 
@@ -29,6 +29,12 @@ const Tabs = ({ tabs, onChange }: TabsProps) => {
     }
   }
 
+  const tabItems = tabs ? (
+    tabs.map(({ text }, index) => <Tab key={text} label={`${text}`} {...a11yProps(index)} />)
+  ) : (
+    <Tab className={classes.dummyTab} />
+  )
+
   return (
     <MuiTabs
       className={classes.tabs}
@@ -36,15 +42,7 @@ const Tabs = ({ tabs, onChange }: TabsProps) => {
       onChange={handleChange}
       aria-label="tabs"
     >
-      {tabs ? (
-        <>
-          {tabs.map(({ text }, index) => (
-            <Tab key={text} label={`${text}`} {...a11yProps(index)} />
-          ))}
-        </>
-      ) : (
-        <Tab className={classes.dummyTab} />
-      )}
+      {tabItems}
     </MuiTabs>
   )
 }
