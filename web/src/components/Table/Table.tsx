@@ -5,7 +5,7 @@ import TableToolbar, { ToolBarButton } from './components/TableToolbar/TableTool
 import { useStyles } from './styles'
 
 interface TableProps<DataItem> {
-  headCells: HeadCell[]
+  headCells: HeadCell<DataItem>[]
   toolBarTitle: string
   toolBarButtons?: ToolBarButton[]
   children?: React.ReactNode

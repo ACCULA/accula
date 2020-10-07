@@ -32,7 +32,7 @@ export const useStyles = makeStyles((theme: Theme) => ({
     marginBottom: '24px'
   },
   tabs: {
-    marginBottom: '63px'
+    marginBottom: '53px'
   },
   repoUrlImg: {
     width: '33px',

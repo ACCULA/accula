@@ -2,15 +2,15 @@ import React from 'react'
 import { TableHead, TableRow } from '@material-ui/core'
 import { StyledTableCell } from './styles'
 
-export interface HeadCell {
+export interface HeadCell<DataItem> {
   disablePadding: boolean
-  id: string
+  id: keyof DataItem
   label: string
   numeric: boolean
 }
 
 interface TableHeaderProps<DataItem> {
-  headCells: HeadCell[]
+  headCells: HeadCell<DataItem>[]
 }
 
 const TableHeader = <DataItem extends object>({ headCells }: TableHeaderProps<DataItem>) => {

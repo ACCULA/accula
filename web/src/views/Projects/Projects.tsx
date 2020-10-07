@@ -20,10 +20,10 @@ import { useStyles } from './styles'
 
 type ProjectsProps = PropsFromRedux
 
-const headCells: HeadCell[] = [
-  { id: 'name', numeric: false, disablePadding: false, label: 'Name' },
-  { id: 'open pr', numeric: true, disablePadding: false, label: 'Open pr' },
-  { id: 'link', numeric: true, disablePadding: false, label: '' }
+const headCells: HeadCell<IProject>[] = [
+  { id: 'repoName', numeric: false, disablePadding: false, label: 'Name' },
+  { id: 'repoOpenPullCount', numeric: true, disablePadding: false, label: 'Open pr' },
+  { id: 'repoUrl', numeric: true, disablePadding: false, label: '' }
 ]
 
 const Projects = ({ projects, getProjects }: ProjectsProps) => {
@@ -50,7 +50,7 @@ const Projects = ({ projects, getProjects }: ProjectsProps) => {
       </div>
     )
   }
-  const el = <AddBoxOutlined />
+
   return (
     <div>
       <Helmet>
@@ -68,7 +68,7 @@ const Projects = ({ projects, getProjects }: ProjectsProps) => {
         toolBarButtons={[
           {
             toolTip: 'Add project',
-            iconButton: el,
+            iconButton: <AddBoxOutlined />,
             onClick: () => console.log('Add project')
           }
         ]}
