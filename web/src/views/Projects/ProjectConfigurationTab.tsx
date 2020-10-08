@@ -4,7 +4,6 @@ import { Wrapper } from 'store/wrapper'
 import { IProject, IProjectConf, IUser } from 'types'
 import { Loader } from 'components/Loader'
 import Select from 'react-select'
-import { LoadingButton } from 'components/LoadingButton'
 
 interface ProjectConfigurationTabProps {
   project: Wrapper<IProject>
@@ -88,7 +87,7 @@ export const ProjectConfigurationTab = ({
           />
           <HelpBlock>Minimum source code line count to be considered as a clone</HelpBlock>
         </FormGroup>
-        <LoadingButton
+        {/* <LoadingButton
           bsStyle="info" //
           className="pull-right"
           onClick={() =>
@@ -100,7 +99,7 @@ export const ProjectConfigurationTab = ({
           isLoading={updateConfState[0]}
         >
           Save
-        </LoadingButton>
+        </LoadingButton> */}
       </Panel.Body>
     </Panel>
   )
