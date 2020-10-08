@@ -26,7 +26,8 @@ export const useStyles = makeStyles((theme: Theme) => ({
   },
   logoImg: {
     width: '42px',
-    height: '42px'
+    height: '42px',
+    fill: colors.secondaryLight
   },
   logoText: {
     color: '#fff',

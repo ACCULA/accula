@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Link, useHistory } from 'react-router-dom'
 
 import { IRouteInfo } from 'types'
-import logo from 'images/fin_tango.svg'
+import { ReactComponent as FinImg } from 'images/fin.svg'
 import {
   Drawer,
   IconButton,
@@ -68,7 +68,7 @@ const SideBar = ({ routes, settings, changeSettings }: SideBarProps) => {
     <>
       <div className={classes.drawerHeader}>
         <Link to="/" className={classes.logo}>
-          <img src={logo} alt="A" className={classes.logoImg} />
+          <FinImg className={classes.logoImg} />
           <span className={classes.logoText}>CCULA</span>
         </Link>
       </div>
