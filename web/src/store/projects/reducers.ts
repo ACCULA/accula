@@ -7,7 +7,8 @@ import {
   SET_PROJECTS,
   SET_REPO_ADMINS,
   UPDATE_PROJECT_CONF,
-  RESET_PROJECT_INFO
+  RESET_PROJECT_INFO,
+  RESET_PROJECTS
 } from './types'
 
 const initialState: ProjectsState = {
@@ -58,6 +59,9 @@ export function projectsReducer(
         ...initialState,
         projects: state.projects
       }
+    }
+    case RESET_PROJECTS: {
+      return initialState
     }
     default:
       return state

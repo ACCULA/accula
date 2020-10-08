@@ -9,12 +9,14 @@ import {
   SET_REPO_ADMINS,
   UPDATE_PROJECT_CONF,
   RESET_PROJECT_INFO,
+  RESET_PROJECTS,
   SetProject,
   SetProjectConf,
   SetProjects,
   SetRepoAdmins,
   UpdateProjectConf,
-  ResetProjectInfo
+  ResetProjectInfo,
+  ResetProjects
 } from './types'
 import {
   postProject,
@@ -47,6 +49,10 @@ const updateProjectConf = (isCreating: boolean, error: string): UpdateProjectCon
 
 export const resetProjectInfo = (): ResetProjectInfo => ({
   type: RESET_PROJECT_INFO
+})
+
+export const resetProjects = (): ResetProjects => ({
+  type: RESET_PROJECTS
 })
 
 export const resetUpdateProjectConf = (): UpdateProjectConf => updateProjectConf(false, '')

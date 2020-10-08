@@ -7,7 +7,7 @@ import { bindActionCreators } from 'redux'
 import { connect, ConnectedProps } from 'react-redux'
 import { Helmet } from 'react-helmet'
 import { AddBoxOutlined, CloseRounded } from '@material-ui/icons'
-import { getProjectsAction } from 'store/projects/actions'
+import { getProjectsAction, resetProjects } from 'store/projects/actions'
 import Button from '@material-ui/core/Button'
 import BreadCrumbs from 'components/BreadCrumbs'
 import Tabs from 'components/Tabs'
@@ -29,7 +29,7 @@ const headCells: HeadCell<IProject>[] = [
   { id: 'repoUrl', numeric: true, disablePadding: false, label: '' }
 ]
 
-const Projects = ({ user, projects, getProjects }: ProjectsProps) => {
+const Projects = ({ user, projects, getProjects, resetProjects }: ProjectsProps) => {
   const history = useHistory()
   const { enqueueSnackbar, closeSnackbar } = useSnackbar()
   const classes = useStyles()
@@ -46,6 +46,9 @@ const Projects = ({ user, projects, getProjects }: ProjectsProps) => {
         )
       })
     )
+    return () => {
+      resetProjects()
+    }
     // eslint-disable-next-line
   }, [])
 
@@ -158,7 +161,8 @@ const mapStateToProps = (state: AppState) => ({
 })
 
 const mapDispatchToProps = (dispatch: AppDispatch) => ({
-  getProjects: bindActionCreators(getProjectsAction, dispatch)
+  getProjects: bindActionCreators(getProjectsAction, dispatch),
+  resetProjects: bindActionCreators(resetProjects, dispatch)
 })
 
 const connector = connect(mapStateToProps, mapDispatchToProps)
