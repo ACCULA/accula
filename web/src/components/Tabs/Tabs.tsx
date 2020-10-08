@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Tabs as MuiTabs, Tab, Badge } from '@material-ui/core'
 import { useStyles } from './styles'
 
@@ -17,7 +17,7 @@ interface TabsProps {
 
 const Tabs = ({ tabs, onChange }: TabsProps) => {
   const classes = useStyles()
-  const [activeTab, setActiveTab] = React.useState(0)
+  const [activeTab, setActiveTab] = useState(0)
 
   const handleChange = (event: React.ChangeEvent<{}>, newValue: number) => {
     setActiveTab(newValue)

@@ -6,6 +6,7 @@ export const SET_PULL = 'SET_PULL'
 export const SET_DIFFS = 'SET_DIFFS'
 export const SET_COMPARES = 'SET_COMPARES'
 export const SET_CLONES = 'SET_CLONES'
+export const RESET_PULLS_INFO = 'RESET_PULLS_INFO'
 
 export type IPullDiffsState = Wrapper<IDiff[]> & IPullRef
 export type IPullComparesState = Wrapper<IDiff[]> & ICompareRef
@@ -44,9 +45,14 @@ export interface SetClones {
   payload: Wrapper<IClone[]> & IPullRef
 }
 
+export interface ResetPullsInfo {
+  type: typeof RESET_PULLS_INFO
+}
+
 export type PullsActionTypes =
   | SetPulls //
   | SetPull
   | SetDiffs
   | SetCompares
   | SetClones
+  | ResetPullsInfo

@@ -7,9 +7,10 @@ import {
   getProjectAction,
   getProjectConfAction,
   getRepoAdminsAction,
+  resetProjectInfo,
   updateProjectConfAction
 } from 'store/projects/actions'
-import { getPullsAction } from 'store/pulls/actions'
+import { getPullsAction, resetPullsInfo } from 'store/pulls/actions'
 import { historyPush, isProjectAdmin } from 'utils'
 import { PageTitle } from 'components/PageTitle'
 import BreadCrumbs from 'components/BreadCrumbs'
@@ -29,7 +30,9 @@ const Project = ({
   pulls,
   getProject,
   getProjectConf,
-  getPulls
+  getPulls,
+  resetPulls,
+  resetProject
 }: ProjectProps) => {
   const history = useHistory()
   const { enqueueSnackbar, closeSnackbar } = useSnackbar()
@@ -50,6 +53,11 @@ const Project = ({
     getProject(projectId, showErrorNotification)
     getProjectConf(projectId, showErrorNotification)
     getPulls(projectId, showErrorNotification)
+
+    return () => {
+      resetProject()
+      resetPulls()
+    }
     // eslint-disable-next-line
   }, [projectId])
 
@@ -110,6 +118,8 @@ const mapDispatchToProps = (dispatch: AppDispatch) => ({
   getProject: bindActionCreators(getProjectAction, dispatch),
   getProjectConf: bindActionCreators(getProjectConfAction, dispatch),
   getRepoAdmins: bindActionCreators(getRepoAdminsAction, dispatch),
+  resetPulls: bindActionCreators(resetPullsInfo, dispatch),
+  resetProject: bindActionCreators(resetProjectInfo, dispatch),
   getPulls: bindActionCreators(getPullsAction, dispatch),
   updateProjectConf: bindActionCreators(updateProjectConfAction, dispatch)
 })

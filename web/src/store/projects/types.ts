@@ -6,6 +6,7 @@ export const SET_PROJECT = 'SET_PROJECT'
 export const SET_PROJECT_CONF = 'SET_PROJECT_CONF'
 export const UPDATE_PROJECT_CONF = 'UPDATE_PROJECT_CONF'
 export const SET_REPO_ADMINS = 'SET_REPO_ADMINS'
+export const RESET_PROJECT_INFO = 'RESET_PROJECT_INFO'
 
 export interface ProjectsState {
   projects: Wrapper<IProject[]>
@@ -39,6 +40,9 @@ export interface SetRepoAdmins {
   type: typeof SET_REPO_ADMINS
   payload: Wrapper<IUser[]> & IProjectRef
 }
+export interface ResetProjectInfo {
+  type: typeof RESET_PROJECT_INFO
+}
 
 export type ProjectsActionTypes =
   | SetProjects //
@@ -46,3 +50,4 @@ export type ProjectsActionTypes =
   | SetProjectConf
   | UpdateProjectConf
   | SetRepoAdmins
+  | ResetProjectInfo

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import IconButton from '@material-ui/core/IconButton'
 import { connect, ConnectedProps } from 'react-redux'
 import { AppState } from 'store'
@@ -13,7 +13,7 @@ interface MenuBarProps extends PropsFromRedux {}
 const MenuBar: React.FC<MenuBarProps> = ({ user }: MenuBarProps) => {
   const history = useHistory()
   const classes = useStyles()
-  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null)
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const isMenuOpen = Boolean(anchorEl)
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {

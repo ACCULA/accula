@@ -11,11 +11,13 @@ import {
   SET_DIFFS,
   SET_PULL,
   SET_PULLS,
+  RESET_PULLS_INFO,
   SetClones,
   SetCompares,
   SetDiffs,
   SetPull,
-  SetPulls
+  SetPulls,
+  ResetPullsInfo
 } from './types'
 import { getClones, getCompares, getDiffs, getPull, getPulls, refreshClones } from './services'
 
@@ -42,6 +44,10 @@ const setDiffs = (payload: IPullDiffsState): SetDiffs => ({
 const setClones = (payload: IPullClonesState): SetClones => ({
   type: SET_CLONES,
   payload
+})
+
+export const resetPullsInfo = (): ResetPullsInfo => ({
+  type: RESET_PULLS_INFO
 })
 
 export const getPullsAction = (projectId: number, handleError?: (msg: string) => void) => async (
