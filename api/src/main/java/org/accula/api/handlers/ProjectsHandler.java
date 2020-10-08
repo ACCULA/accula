@@ -24,12 +24,11 @@ import org.accula.api.handlers.dto.UserDto;
 import org.accula.api.handlers.request.CreateProjectRequestBody;
 import org.accula.api.handlers.response.ErrorBody;
 import org.accula.api.handlers.util.ProjectUpdater;
-import org.accula.api.util.ReactorSchedulers;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Scheduler;
+import reactor.core.scheduler.Schedulers;
 import reactor.function.TupleUtils;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuple4;
@@ -53,7 +52,6 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 public final class ProjectsHandler {
     private static final Exception PROJECT_NOT_FOUND_EXCEPTION = new Exception();
 
-    private final Scheduler remoteCallsScheduler = ReactorSchedulers.boundedElastic(this);
     private final WebhookProperties webhookProperties;
     private final CurrentUserRepo currentUser;
     private final GithubClient githubClient;
@@ -172,12 +170,11 @@ public final class ProjectsHandler {
 
     private Mono<Tuple4<Boolean, GithubApiRepo, List<GithubApiPull>, User>> retrieveGithubInfoForProjectCreation(final String owner,
                                                                                                                  final String repo) {
-        //@formatter:off
-        return Mono.zip(githubClient.hasAdminPermission(owner, repo).subscribeOn(remoteCallsScheduler),
-                        githubClient.getRepo(owner, repo).subscribeOn(remoteCallsScheduler),
-                        githubClient.getRepositoryPulls(owner, repo, State.ALL, 100).collectList().subscribeOn(remoteCallsScheduler),
-                        currentUser.get());
-        //@formatter:on
+        return Mono.zip(
+                githubClient.hasAdminPermission(owner, repo).subscribeOn(Schedulers.boundedElastic()),
+                githubClient.getRepo(owner, repo).subscribeOn(Schedulers.boundedElastic()),
+                githubClient.getRepositoryPulls(owner, repo, State.ALL, 100).collectList().subscribeOn(Schedulers.boundedElastic()),
+                currentUser.get());
     }
 
     private Mono<ProjectDto> saveProjectData(final boolean isAdmin,
