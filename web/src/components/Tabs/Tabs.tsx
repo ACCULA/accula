@@ -1,10 +1,13 @@
 import React from 'react'
-import { Tabs as MuiTabs, Tab } from '@material-ui/core'
+import { Tabs as MuiTabs, Tab, Badge } from '@material-ui/core'
 import { useStyles } from './styles'
 
 export interface Tab {
   id: string
   text: string
+  Icon?: React.FunctionComponent<React.SVGProps<SVGSVGElement>>
+  badgeValue?: React.ReactNode
+  badgeTip?: string
 }
 
 interface TabsProps {
@@ -31,7 +34,21 @@ const Tabs = ({ tabs, onChange }: TabsProps) => {
   }
 
   const tabItems = tabs ? (
-    tabs.map(({ text }, index) => <Tab key={text} label={`${text}`} {...a11yProps(index)} />)
+    tabs.map(({ text, Icon, badgeValue }, index) => {
+      const label = (
+        <div>
+          {Icon && <Icon className={classes.tabImg} />}
+          {badgeValue ? (
+            <Badge className={classes.badge} badgeContent={badgeValue} max={99} color="secondary">
+              <span>{text}</span>
+            </Badge>
+          ) : (
+            <span>{text}</span>
+          )}
+        </div>
+      )
+      return <Tab className={classes.tab} key={text} label={label} {...a11yProps(index)} />
+    })
   ) : (
     <Tab className={classes.dummyTab} />
   )
@@ -41,6 +58,7 @@ const Tabs = ({ tabs, onChange }: TabsProps) => {
       className={classes.tabs}
       value={tabs ? activeTab : false}
       onChange={handleChange}
+      variant="scrollable"
       aria-label="tabs"
     >
       {tabItems}

@@ -1,8 +1,9 @@
-import { makeStyles } from '@material-ui/core'
+import { makeStyles, Theme } from '@material-ui/core'
+import { colors } from 'theme'
 
-export const useStyles = makeStyles(() => ({
+export const useStyles = makeStyles((theme: Theme) => ({
   tabs: {
-    marginBottom: '53px',
+    marginBottom: '64px',
     position: 'relative',
     '&::after': {
       content: '""',
@@ -13,6 +14,19 @@ export const useStyles = makeStyles(() => ({
       top: '95%',
       zIndex: '-1'
     }
+  },
+  tab: {
+    textTransform: 'none',
+    fontSize: '1rem'
+  },
+  tabImg: {
+    width: '16px',
+    height: '16px',
+    marginRight: '6px',
+    fill: theme.palette.type === 'light' ? colors.primaryLight : '#fff'
+  },
+  badge: {
+    paddingRight: `${theme.spacing(1)}px`
   },
   dummyTab: {
     display: 'none'
