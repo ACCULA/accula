@@ -15,13 +15,22 @@ import { PageTitle } from 'components/PageTitle'
 import BreadCrumbs from 'components/BreadCrumbs'
 import Tabs, { Tab } from 'components/Tabs/Tabs'
 import { useSnackbar } from 'notistack'
-import { IconButton } from '@material-ui/core'
+import { CircularProgress, IconButton } from '@material-ui/core'
 import { CloseRounded } from '@material-ui/icons'
+import { ReactComponent as PrLogo } from 'images/pull_request.svg'
 import ProjectPullsTab from './ProjectPullsTab/ProjectPullsTab'
 
 interface ProjectProps extends PropsFromRedux {}
 
-const Project = ({ project, projectConf, user, getProject, getProjectConf }: ProjectProps) => {
+const Project = ({
+  project,
+  projectConf,
+  user,
+  pulls,
+  getProject,
+  getProjectConf,
+  getPulls
+}: ProjectProps) => {
   const history = useHistory()
   const { enqueueSnackbar, closeSnackbar } = useSnackbar()
   const { prId, tab }: any = useParams()
@@ -40,6 +49,7 @@ const Project = ({ project, projectConf, user, getProject, getProjectConf }: Pro
   useEffect(() => {
     getProject(projectId, showErrorNotification)
     getProjectConf(projectId, showErrorNotification)
+    getPulls(projectId, showErrorNotification)
     // eslint-disable-next-line
   }, [projectId])
 
@@ -52,7 +62,19 @@ const Project = ({ project, projectConf, user, getProject, getProjectConf }: Pro
   }
 
   const isAdmin = isProjectAdmin(user, project, projectConf)
-  const tabs = [{ id: 'pulls', text: 'Pull requests' }] as Tab[]
+  const tabs = [
+    {
+      id: 'pulls',
+      text: 'Pull requests',
+      Icon: PrLogo,
+      badgeValue: pulls ? (
+        pulls.filter(pull => pull.open).length
+      ) : (
+        <CircularProgress size={12} color="inherit" />
+      )
+    }
+  ] as Tab[]
+
   if (isAdmin) {
     tabs.push({ id: 'configuration', text: 'Configuration' })
   }
@@ -64,7 +86,7 @@ const Project = ({ project, projectConf, user, getProject, getProjectConf }: Pro
       />
       <PageTitle title={project && project.repoName} />
       <Tabs tabs={tabs} onChange={handleChangeTab} />
-      {tab === 'pulls' && <ProjectPullsTab project={project} />}
+      {tab === 'pulls' && <ProjectPullsTab project={project} pulls={pulls} />}
       {isAdmin && tab === 'configuration' && (
         <></>
         // <ProjectConfigurationTab
@@ -80,7 +102,7 @@ const mapStateToProps = (state: AppState) => ({
   projectConf: state.projects.projectConf.value,
   updateProjectConfState: state.projects.updateProjectConf,
   repoAdmins: state.projects.repoAdmins,
-  pulls: state.pulls.pulls,
+  pulls: state.pulls.pulls.value,
   user: state.users.user.value
 })
 

@@ -14,7 +14,7 @@ import Tabs from 'components/Tabs'
 import Table from 'components/Table'
 import { IProject } from 'types'
 import { HeadCell } from 'components/Table/TableHeader/TableHeader'
-import layersImg from 'images/layers.svg'
+import { ReactComponent as LayersImg } from 'images/layers.svg'
 import GitHubIcon from '@material-ui/icons/GitHub'
 import { Avatar, IconButton, TableCell } from '@material-ui/core'
 import { StyledTableRow } from 'components/Table/styles'
@@ -63,7 +63,7 @@ const Projects = ({ user, projects, getProjects }: ProjectsProps) => {
   if (projects.length === 0) {
     return (
       <div className={classes.emptyContent}>
-        <img className={classes.layersImg} src={layersImg} alt="Projects" />
+        <LayersImg className={classes.layersImg} />
         <span className={classes.projectsText}>Projects</span>
         {user && (
           <>
@@ -91,6 +91,7 @@ const Projects = ({ user, projects, getProjects }: ProjectsProps) => {
       <Tabs />
       <Table<IProject>
         headCells={headCells}
+        count={projects.length}
         toolBarTitle=""
         toolBarButtons={[
           {
@@ -100,47 +101,51 @@ const Projects = ({ user, projects, getProjects }: ProjectsProps) => {
           }
         ]}
       >
-        {projects.map(project => (
-          <StyledTableRow
-            hover
-            onClick={() => historyPush(history, `projects/${project.id}/pulls`)}
-            tabIndex={-1}
-            key={project.id}
-          >
-            <TableCell align="left">
-              <div className={classes.repoInfo}>
-                <Avatar
-                  className={classes.repoAvatarImg}
-                  src={project.repoOwnerAvatar}
-                  alt={project.repoOwner}
-                />
-                <div className={classes.repoFullName}>
-                  <span
-                    className={classes.cellText}
-                  >{`${project.repoOwner}/${project.repoName}`}</span>
-                  {project.repoDescription !== '' && (
-                    <span className={classes.repoDescription}>{project.repoDescription}</span>
-                  )}
-                </div>
-              </div>
-            </TableCell>
-            <TableCell align="right">
-              <span className={classes.cellText}>{project.repoOpenPullCount}</span>
-            </TableCell>
-            <TableCell align="right">
-              <a
-                href={project.repoUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={classes.repoUrlImg}
+        {() => (
+          <>
+            {projects.map(project => (
+              <StyledTableRow
+                hover
+                onClick={() => historyPush(history, `projects/${project.id}/pulls`)}
+                tabIndex={-1}
+                key={project.id}
               >
-                <IconButton color="default" aria-label="Project Url">
-                  <GitHubIcon />
-                </IconButton>
-              </a>
-            </TableCell>
-          </StyledTableRow>
-        ))}
+                <TableCell align="left">
+                  <div className={classes.repoInfo}>
+                    <Avatar
+                      className={classes.repoAvatarImg}
+                      src={project.repoOwnerAvatar}
+                      alt={project.repoOwner}
+                    />
+                    <div className={classes.repoFullName}>
+                      <span
+                        className={classes.cellText}
+                      >{`${project.repoOwner}/${project.repoName}`}</span>
+                      {project.repoDescription !== '' && (
+                        <span className={classes.repoDescription}>{project.repoDescription}</span>
+                      )}
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell align="right">
+                  <span className={classes.cellText}>{project.repoOpenPullCount}</span>
+                </TableCell>
+                <TableCell align="right">
+                  <a
+                    href={project.repoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={classes.repoUrlImg}
+                  >
+                    <IconButton color="default" aria-label="Project Url">
+                      <GitHubIcon />
+                    </IconButton>
+                  </a>
+                </TableCell>
+              </StyledTableRow>
+            ))}
+          </>
+        )}
       </Table>
       {addProjectDialog}
     </div>

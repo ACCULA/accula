@@ -1,19 +1,14 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import { format, formatDistanceToNow } from 'date-fns'
 import { useHistory } from 'react-router'
-import { AppDispatch, AppState } from 'store'
-import { bindActionCreators } from 'redux'
-import { connect, ConnectedProps } from 'react-redux'
-import { getPullsAction } from 'store/pulls/actions'
+
 import { IProject, IShortPull } from 'types'
-import { useSnackbar } from 'notistack'
-import { Avatar, IconButton, TableCell, Tooltip } from '@material-ui/core'
-import { CloseRounded } from '@material-ui/icons'
+import { Avatar, TableCell, Tooltip } from '@material-ui/core'
 import { HeadCell } from 'components/Table/TableHeader/TableHeader'
 import Table from 'components/Table/Table'
 import { StyledTableRow } from 'components/Table/styles'
 import { historyPush } from 'utils'
-import prImage from 'images/pull_request.svg'
+import { ReactComponent as PrLogo } from 'images/pull_request.svg'
 import { useStyles } from './styles'
 
 const DATE_TITLE_FORMAT = "d MMMM yyyy 'at' HH:mm"
@@ -26,28 +21,14 @@ const headCells: HeadCell<IShortPull>[] = [
   { id: 'updatedAt', numeric: false, disablePadding: false, label: 'Last Updated' },
   { id: 'author', numeric: false, disablePadding: false, label: 'Author' }
 ]
-interface ProjectPullsTabProps extends PropsFromRedux {
+interface ProjectPullsTabProps {
   project: IProject
   pulls: IShortPull[]
 }
 
-const ProjectPullsTab = ({ project, pulls, getPulls }: ProjectPullsTabProps) => {
+const ProjectPullsTab = ({ project, pulls }: ProjectPullsTabProps) => {
   const history = useHistory()
   const classes = useStyles()
-  const { enqueueSnackbar, closeSnackbar } = useSnackbar()
-  useEffect(() => {
-    getPulls(project.id, msg =>
-      enqueueSnackbar(msg, {
-        variant: 'error',
-        action: key => (
-          <IconButton onClick={() => closeSnackbar(key)} aria-label="Close notification">
-            <CloseRounded />
-          </IconButton>
-        )
-      })
-    )
-    // eslint-disable-next-line
-  }, [])
 
   if (!pulls) {
     return <></>
@@ -56,77 +37,70 @@ const ProjectPullsTab = ({ project, pulls, getPulls }: ProjectPullsTabProps) => 
   if (pulls.length === 0) {
     return (
       <div className={classes.emptyContent}>
-        <img className={classes.prImage} src={prImage} alt="Pull request" />
+        <PrLogo className={classes.prImage} />
         <span className={classes.prText}>No pull requests</span>
       </div>
     )
   }
 
   return (
-    <Table<IShortPull> headCells={headCells} toolBarTitle="">
-      {pulls.map(pull => (
-        <StyledTableRow
-          hover
-          onClick={() => historyPush(history, `/projects/${project.id}/pulls/${pull.number}`)}
-          tabIndex={-1}
-          key={pull.number}
-        >
-          <TableCell align="right">
-            <span className={classes.dataText}>{pull.number}</span>
-          </TableCell>
-          <TableCell align="left">
-            <span className={classes.dataText}>{pull.title}</span>
-          </TableCell>
-          <TableCell align="left">
-            {pull.open ? (
-              <Tooltip title="Open">
-                <div className={`${classes.blob} ${classes.blobGreen}`}></div>
-              </Tooltip>
-            ) : (
-              <Tooltip title="Close">
-                <div className={`${classes.blob} ${classes.blobRed}`}></div>
-              </Tooltip>
-            )}
-          </TableCell>
-          <TableCell align="left">
-            <Tooltip title={`${format(new Date(pull.createdAt), DATE_TITLE_FORMAT)}`}>
-              <span className={classes.dataText}>
-                {formatDistanceToNow(new Date(pull.createdAt), { addSuffix: true })}
-              </span>
-            </Tooltip>
-          </TableCell>
-          <TableCell align="left">
-            <Tooltip title={`${format(new Date(pull.updatedAt), DATE_TITLE_FORMAT)}`}>
-              <span className={classes.dataText}>
-                {formatDistanceToNow(new Date(pull.updatedAt), { addSuffix: true })}
-              </span>
-            </Tooltip>
-          </TableCell>
-          <TableCell align="left">
-            <div className={classes.authorInfo}>
-              <Avatar
-                className={classes.authorAvatar}
-                src={pull.author.avatar}
-                alt={project.repoOwner}
-              />
-              <span className={classes.dataText}>{pull.author.login}</span>
-            </div>
-          </TableCell>
-        </StyledTableRow>
-      ))}
+    <Table<IShortPull> count={pulls.length} headCells={headCells} toolBarTitle="" withPagination>
+      {({ page, rowsPerPage }) => (
+        <>
+          {pulls.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map(pull => (
+            <StyledTableRow
+              hover
+              onClick={() => historyPush(history, `/projects/${project.id}/pulls/${pull.number}`)}
+              tabIndex={-1}
+              key={pull.number}
+            >
+              <TableCell align="right">
+                <span className={classes.dataText}>{pull.number}</span>
+              </TableCell>
+              <TableCell align="left">
+                <span className={classes.dataText}>{pull.title}</span>
+              </TableCell>
+              <TableCell align="left">
+                {pull.open ? (
+                  <Tooltip title="Open">
+                    <div className={`${classes.blob} ${classes.blobGreen}`}></div>
+                  </Tooltip>
+                ) : (
+                  <Tooltip title="Close">
+                    <div className={`${classes.blob} ${classes.blobRed}`}></div>
+                  </Tooltip>
+                )}
+              </TableCell>
+              <TableCell align="left">
+                <Tooltip title={`${format(new Date(pull.createdAt), DATE_TITLE_FORMAT)}`}>
+                  <span className={classes.dataText}>
+                    {formatDistanceToNow(new Date(pull.createdAt), { addSuffix: true })}
+                  </span>
+                </Tooltip>
+              </TableCell>
+              <TableCell align="left">
+                <Tooltip title={`${format(new Date(pull.updatedAt), DATE_TITLE_FORMAT)}`}>
+                  <span className={classes.dataText}>
+                    {formatDistanceToNow(new Date(pull.updatedAt), { addSuffix: true })}
+                  </span>
+                </Tooltip>
+              </TableCell>
+              <TableCell align="left">
+                <div className={classes.authorInfo}>
+                  <Avatar
+                    className={classes.authorAvatar}
+                    src={pull.author.avatar}
+                    alt={project.repoOwner}
+                  />
+                  <span className={classes.dataText}>{pull.author.login}</span>
+                </div>
+              </TableCell>
+            </StyledTableRow>
+          ))}
+        </>
+      )}
     </Table>
   )
 }
 
-const mapStateToProps = (state: AppState) => ({
-  pulls: state.pulls.pulls.value
-})
-
-const mapDispatchToProps = (dispatch: AppDispatch) => ({
-  getPulls: bindActionCreators(getPullsAction, dispatch)
-})
-
-const connector = connect(mapStateToProps, mapDispatchToProps)
-type PropsFromRedux = ConnectedProps<typeof connector>
-
-export default connector(ProjectPullsTab)
+export default ProjectPullsTab

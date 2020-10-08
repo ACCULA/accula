@@ -1,4 +1,5 @@
 import { makeStyles, Theme } from '@material-ui/core'
+import { colors } from 'theme'
 
 export const useStyles = makeStyles((theme: Theme) => ({
   emptyContent: {
@@ -15,7 +16,8 @@ export const useStyles = makeStyles((theme: Theme) => ({
   },
   layersImg: {
     width: '152px',
-    height: '152px'
+    height: '152px',
+    fill: colors.secondaryLight
   },
   projectsText: {
     fontSize: '38px',

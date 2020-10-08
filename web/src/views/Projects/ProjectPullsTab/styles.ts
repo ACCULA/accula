@@ -1,4 +1,5 @@
 import { makeStyles } from '@material-ui/core'
+import { colors } from 'theme'
 
 export const useStyles = makeStyles(() => ({
   emptyContent: {
@@ -10,10 +11,11 @@ export const useStyles = makeStyles(() => ({
   },
   prImage: {
     width: '172px',
-    height: '236px'
+    height: '236px',
+    fill: colors.secondaryLight
   },
   prText: {
-    fontSize: '34px',
+    fontSize: '30px',
     fontWeight: 500,
     marginBottom: '28px'
   },
