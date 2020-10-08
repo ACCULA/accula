@@ -10,6 +10,9 @@ export const useStyles = makeStyles((theme: Theme) => ({
   },
   table: {
     minWidth: 750
+  },
+  pagination: {
+    backgroundColor: theme.palette.type === 'light' ? 'rgba(211, 211, 211, 0.1)' : '#4D535C'
   }
 }))
 
