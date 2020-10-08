@@ -13,6 +13,7 @@ import { HeadCell } from 'components/Table/TableHeader/TableHeader'
 import Table from 'components/Table/Table'
 import { StyledTableRow } from 'components/Table/styles'
 import { historyPush } from 'utils'
+import prImage from 'images/pull_request.svg'
 import { useStyles } from './styles'
 
 const DATE_TITLE_FORMAT = "d MMMM yyyy 'at' HH:mm"
@@ -50,6 +51,15 @@ const ProjectPullsTab = ({ project, pulls, getPulls }: ProjectPullsTabProps) => 
 
   if (!pulls) {
     return <></>
+  }
+
+  if (pulls.length === 0) {
+    return (
+      <div className={classes.emptyContent}>
+        <img className={classes.prImage} src={prImage} alt="Pull request" />
+        <span className={classes.prText}>No pull requests</span>
+      </div>
+    )
   }
 
   return (

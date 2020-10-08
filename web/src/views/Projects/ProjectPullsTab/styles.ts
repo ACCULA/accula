@@ -1,6 +1,22 @@
 import { makeStyles } from '@material-ui/core'
 
 export const useStyles = makeStyles(() => ({
+  emptyContent: {
+    marginTop: '110px',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  prImage: {
+    width: '172px',
+    height: '236px'
+  },
+  prText: {
+    fontSize: '34px',
+    fontWeight: 500,
+    marginBottom: '28px'
+  },
   dataText: {
     fontSize: '14px',
     fontWeight: 500
