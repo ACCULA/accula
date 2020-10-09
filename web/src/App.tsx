@@ -22,6 +22,7 @@ import { AppDispatch, AppState } from 'store'
 import SideBar from 'components/SideBar'
 import { DRAWER_WIDTH } from 'utils'
 import { PageTitle } from 'components/PageTitle'
+import { NotFound } from 'views/NotFound'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -119,9 +120,7 @@ const App = ({ auth, token, getCurrentUser, settings, changeSettings }: AppProps
                 )
               )}
               <Redirect to="/projects" path="/" exact />
-              <Route>
-                <h1 className="text-center">404</h1>
-              </Route>
+              <Route component={NotFound} />
             </Switch>
           </main>
         </SnackbarProvider>
