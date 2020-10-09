@@ -88,7 +88,7 @@ export const useStyles = makeStyles((theme: Theme) => ({
     padding: '1px 2px'
   },
   pullRequestsBlock: {
-    marginTop: 40
+    marginTop: 64
   },
   titleOfBlock: {
     fontSize: 24,
