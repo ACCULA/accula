@@ -1,8 +1,7 @@
 import React, { useEffect } from 'react'
 import clsx from 'clsx'
 import { connect, ConnectedProps } from 'react-redux'
-import { Redirect, Route, Switch, useHistory } from 'react-router-dom'
-import { useLocation } from 'react-use'
+import { Redirect, Route, Switch } from 'react-router-dom'
 import { Helmet } from 'react-helmet'
 import { bindActionCreators } from 'redux'
 
@@ -61,22 +60,14 @@ const useStyles = makeStyles((theme: Theme) =>
 type AppProps = PropsFromRedux
 
 const App = ({ auth, getCurrentUser, settings, changeSettings }: AppProps) => {
-  const location = useLocation()
-  const history = useHistory()
   const [theme, toggleTheme] = useTheme(settings.themeMode)
   const customTheme = createMuiTheme(theme)
   const classes = useStyles()
 
   useEffect(() => {
-    if (history.action === 'PUSH') {
-      document.documentElement.scrollTop = 0
-      document.scrollingElement.scrollTop = 0
-    }
-  }, [history, location])
-
-  useEffect(() => {
     getCurrentUser()
-  }, [getCurrentUser])
+    // eslint-disable-next-line
+  }, [])
 
   const changeTheme = () => {
     changeSettings({ ...settings, themeMode: theme.palette!.type! === 'dark' ? 'light' : 'dark' })
