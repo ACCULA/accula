@@ -34,6 +34,7 @@ const mapStateToProps = (state: AppState) => ({
   isFetching:
     state.projects.projects.isFetching ||
     state.projects.project.isFetching ||
+    state.projects.projectConf.isFetching ||
     state.pulls.pulls.isFetching
 })
 

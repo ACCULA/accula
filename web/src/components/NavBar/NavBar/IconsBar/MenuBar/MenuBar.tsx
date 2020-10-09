@@ -31,6 +31,10 @@ const MenuBar: React.FC<MenuBarProps> = ({ user }: MenuBarProps) => {
     handleMenuClose()
   }
 
+  if (!user) {
+    return <></>
+  }
+
   const menuId = 'more-actions-menu'
   const renderMenu = (
     <Menu

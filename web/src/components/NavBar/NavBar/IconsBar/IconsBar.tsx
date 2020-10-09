@@ -21,7 +21,7 @@ interface IconsBarProps extends PropsFromRedux {
 }
 
 const IconsBar: React.FC<IconsBarProps> = ({
-  user,
+  token,
   settings,
   setTheme,
   changeSettings
@@ -60,17 +60,19 @@ const IconsBar: React.FC<IconsBarProps> = ({
           {theme.direction === 'ltr' ? <ChevronLeftRounded /> : <ChevronRightRounded />}
         </IconButton>
       )}
-      <div className={classes.mainTools}>
-        {!user.value ? (
-          <Tooltip title="Log in with GitHub">
-            <a href={`${API_URL}/api/login/github`} className={classes.login}>
-              <IconButton color="default" aria-label="Log in with GitHub">
-                <GitHubIcon />
-              </IconButton>
-            </a>
-          </Tooltip>
-        ) : (
-          !(user.isFetching == null || user.isFetching) && (
+      {token === null ? (
+        <></>
+      ) : (
+        <div className={classes.mainTools}>
+          {token === '' ? (
+            <Tooltip title="Log in with GitHub">
+              <a href={`${API_URL}/api/login/github`} className={classes.login}>
+                <IconButton color="default" aria-label="Log in with GitHub">
+                  <GitHubIcon />
+                </IconButton>
+              </a>
+            </Tooltip>
+          ) : (
             <>
               <Tooltip title="Toggle light/dark theme">
                 <IconButton
@@ -83,15 +85,15 @@ const IconsBar: React.FC<IconsBarProps> = ({
               </Tooltip>
               <MenuBar />
             </>
-          )
-        )}
-      </div>
+          )}
+        </div>
+      )}
     </>
   )
 }
 
 const mapStateToProps = (state: AppState) => ({
-  user: state.users.user,
+  token: state.users.token.accessToken,
   settings: state.settings.settings
 })
 
