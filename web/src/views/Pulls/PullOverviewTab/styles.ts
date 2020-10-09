@@ -30,9 +30,9 @@ export const useStyles = makeStyles((theme: Theme) => ({
   authorLoginField: {
     display: 'flex',
     alignItems: 'center',
-    color: 'inherit',
+    color: theme.palette.type === 'light' ? 'rgba(0, 0, 0, 0.54);' : '#fff',
     textDecoration: 'none',
-    marginTop: 10
+    marginTop: 20
   },
   authorLogin: {
     fontWeight: 700,
@@ -51,7 +51,7 @@ export const useStyles = makeStyles((theme: Theme) => ({
     marginBottom: 8,
     marginTop: 0,
     fontSize: 48,
-    [theme.breakpoints.down('md')]: {
+    [theme.breakpoints.down('xs')]: {
       fontSize: 38
     },
     [theme.breakpoints.down('xs')]: {
