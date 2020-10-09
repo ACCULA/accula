@@ -21,6 +21,8 @@ final class BatchStatement {
     private static final char RIGHT_PARENTHESIS = ')';
     private static final char COMMA = ',';
     private static final char SINGLE_QUOTATION_MARK = '\'';
+    private static final String SINGLE_QUOTATION_MARK_STRING = "'";
+    private static final String ESCAPED_SINGLE_QUOTATION_MARK_STRING = "''";
     private static final Object NULL = null;
     private final Connection connection;
     private final String sql;
@@ -82,7 +84,11 @@ final class BatchStatement {
     private static void addBinding(final StringBuilder sb, @Nullable final Object binding) {
         if (binding == null) {
             sb.append(NULL);
-        } else if (binding instanceof String || binding instanceof Instant) {
+        } else if (binding instanceof String s) {
+            sb.append(SINGLE_QUOTATION_MARK);
+            sb.append(s.replace(SINGLE_QUOTATION_MARK_STRING, ESCAPED_SINGLE_QUOTATION_MARK_STRING));
+            sb.append(SINGLE_QUOTATION_MARK);
+        } else if (binding instanceof Instant) {
             sb.append(SINGLE_QUOTATION_MARK);
             sb.append(binding);
             sb.append(SINGLE_QUOTATION_MARK);

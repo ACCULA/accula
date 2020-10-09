@@ -74,6 +74,7 @@ public final class GitCodeLoader implements CodeLoader {
     @Override
     public Flux<DiffEntry<Snapshot>> loadDiff(final Snapshot base, final Snapshot head, final FileFilter filter) {
         return withCommonGitRepo(head)
+                .flatMap(repo -> addOrUpdateRemote(repo, base))
                 .flatMapMany(repo -> loadDiff(repo, base, head, filter, 0));
     }
 
@@ -121,6 +122,14 @@ public final class GitCodeLoader implements CodeLoader {
                                 addOrUpdateRemote(repo, headUrl, headRemote, remotesPresent),
                                 Lambda.firstArg()
                         ));
+    }
+
+    private Mono<Repo> addOrUpdateRemote(final Repo repo, final Snapshot remote) {
+        final var url = repoGitUrl(remote.getRepo());
+        final var name = remote.getRepo().getOwner().getLogin();
+        return Mono
+                .fromFuture(repo.remote())
+                .flatMap(remotesPresent -> addOrUpdateRemote(repo, url, name, remotesPresent));
     }
 
     private static Mono<Repo> addOrUpdateRemote(final Repo repo,

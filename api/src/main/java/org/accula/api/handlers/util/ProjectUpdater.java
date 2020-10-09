@@ -17,8 +17,8 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 
-import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -35,8 +35,8 @@ public final class ProjectUpdater {
     private final SnapshotRepo snapshotRepo;
     private final PullRepo pullRepo;
 
-    public Mono<Integer> update(final Long projectId, final GithubApiPull[] githubApiPulls) { // NOPMD
-        if (githubApiPulls.length == 0) {
+    public Mono<Integer> update(final Long projectId, final List<GithubApiPull> githubApiPulls) {
+        if (githubApiPulls.isEmpty()) {
             return Mono.just(0);
         }
 
@@ -71,8 +71,8 @@ public final class ProjectUpdater {
                             .thenMany(snapshotRepo.mapToPulls(heads))
                             .then(Mono.just(openPullCount));
                 })
-                .doOnSuccess(success -> log.info("Project has been updated successfully with {} pulls", githubApiPulls.length))
-                .doOnError(e -> log.error("Failed to update project with pulls={}", Arrays.toString(githubApiPulls), e))
+                .doOnSuccess(success -> log.info("Project has been updated successfully with {} pulls", githubApiPulls.size()))
+                .doOnError(e -> log.error("Failed to update project with pulls={}", githubApiPulls, e))
                 .subscribeOn(processingScheduler);
     }
 

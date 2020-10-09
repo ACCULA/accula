@@ -130,7 +130,7 @@ class ProjectsRouterTest {
         Mockito.when(pullRepo.upsert(Mockito.anyCollection()))
                 .thenReturn(Flux.fromIterable(PULLS));
 
-        Mockito.when(projectUpdater.update(Mockito.anyLong(), Mockito.any(GithubApiPull[].class)))
+        Mockito.when(projectUpdater.update(Mockito.anyLong(), Mockito.anyList()))
                 .thenReturn(Mono.just(OPEN_PULLS.length));
 
         Mockito.when(githubClient.hasAdminPermission(Mockito.anyString(), Mockito.anyString()))
@@ -139,8 +139,8 @@ class ProjectsRouterTest {
         Mockito.when(githubClient.getRepo(GH_REPO.getOwner().getLogin(), GH_REPO.getName()))
                 .thenReturn(Mono.just(GH_REPO));
 
-        Mockito.when(githubClient.getRepositoryPulls(GH_REPO.getOwner().getLogin(), GH_REPO.getName(), State.ALL))
-                .thenReturn(Mono.just(OPEN_PULLS));
+        Mockito.when(githubClient.getRepositoryPulls(GH_REPO.getOwner().getLogin(), GH_REPO.getName(), State.ALL, 100))
+                .thenReturn(Flux.fromArray(OPEN_PULLS));
 
         Mockito.when(githubClient.createHook(Mockito.any(), Mockito.any(), Mockito.any()))
                 .thenReturn(Mono.empty());
@@ -178,8 +178,8 @@ class ProjectsRouterTest {
         Mockito.when(githubClient.getRepo(GH_REPO.getOwner().getLogin(), GH_REPO.getName()))
                 .thenReturn(Mono.error(GH_EXCEPTION));
 
-        Mockito.when(githubClient.getRepositoryPulls(GH_REPO.getOwner().getLogin(), GH_REPO.getName(), State.ALL))
-                .thenReturn(Mono.error(GH_EXCEPTION));
+        Mockito.when(githubClient.getRepositoryPulls(GH_REPO.getOwner().getLogin(), GH_REPO.getName(), State.ALL, 100))
+                .thenReturn(Flux.error(GH_EXCEPTION));
 
         client.post().uri("/api/projects")
                 .contentType(APPLICATION_JSON)
@@ -204,8 +204,8 @@ class ProjectsRouterTest {
         Mockito.when(githubClient.getRepo(GH_REPO.getOwner().getLogin(), GH_REPO.getName()))
                 .thenReturn(Mono.just(GH_REPO));
 
-        Mockito.when(githubClient.getRepositoryPulls(GH_REPO.getOwner().getLogin(), GH_REPO.getName(), State.ALL))
-                .thenReturn(Mono.just(OPEN_PULLS));
+        Mockito.when(githubClient.getRepositoryPulls(GH_REPO.getOwner().getLogin(), GH_REPO.getName(), State.ALL, 100))
+                .thenReturn(Flux.fromArray(OPEN_PULLS));
 
         client.post().uri("/api/projects")
                 .contentType(APPLICATION_JSON)
@@ -228,8 +228,8 @@ class ProjectsRouterTest {
         Mockito.when(githubClient.getRepo(GH_REPO.getOwner().getLogin(), GH_REPO.getName()))
                 .thenReturn(Mono.just(GH_REPO));
 
-        Mockito.when(githubClient.getRepositoryPulls(GH_REPO.getOwner().getLogin(), GH_REPO.getName(), State.ALL))
-                .thenReturn(Mono.just(OPEN_PULLS));
+        Mockito.when(githubClient.getRepositoryPulls(GH_REPO.getOwner().getLogin(), GH_REPO.getName(), State.ALL, 100))
+                .thenReturn(Flux.fromArray(OPEN_PULLS));
 
         client.post().uri("/api/projects")
                 .contentType(APPLICATION_JSON)
