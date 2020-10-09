@@ -5,7 +5,7 @@ export const useStyles = makeStyles((theme: Theme) => ({
     display: 'flex',
     alignItems: 'center',
     margin: '20px 0',
-    [theme.breakpoints.down('sm')]: {
+    [theme.breakpoints.down('xs')]: {
       flexDirection: 'column'
     }
   },
@@ -19,7 +19,7 @@ export const useStyles = makeStyles((theme: Theme) => ({
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    [theme.breakpoints.down('sm')]: {
+    [theme.breakpoints.down('xs')]: {
       margin: 0
     }
   },
@@ -43,7 +43,7 @@ export const useStyles = makeStyles((theme: Theme) => ({
     flexDirection: 'column',
     justifyContent: 'flex-end',
     marginLeft: 20,
-    [theme.breakpoints.down('sm')]: {
+    [theme.breakpoints.down('xs')]: {
       margin: 0
     }
   },
@@ -54,7 +54,7 @@ export const useStyles = makeStyles((theme: Theme) => ({
     [theme.breakpoints.down('md')]: {
       fontSize: 38
     },
-    [theme.breakpoints.down('sm')]: {
+    [theme.breakpoints.down('xs')]: {
       textAlign: 'center',
       marginTop: 10
     }
@@ -83,8 +83,9 @@ export const useStyles = makeStyles((theme: Theme) => ({
     marginLeft: 4
   },
   githubLink: {
-    color: '#2178a3',
-    background: '#e3f2f9'
+    color: theme.palette.type === 'light' ? '#2178a3' : '#e3f2f9',
+    background: theme.palette.type === 'light' ? '#e3f2f9' : '#2178a3',
+    padding: '1px 2px'
   },
   pullRequestsBlock: {
     marginTop: 40
