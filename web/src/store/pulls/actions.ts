@@ -54,8 +54,7 @@ export const getPullsAction = (projectId: number, handleError?: (msg: string) =>
   dispatch: AppDispatch, //
   getState: AppStateSupplier
 ) => {
-  await requireToken(dispatch, getState)
-  const { pulls, users } = getState()
+  const { pulls } = getState()
   if (
     pulls.pulls.isFetching ||
     (pulls.pulls.value &&
@@ -66,7 +65,7 @@ export const getPullsAction = (projectId: number, handleError?: (msg: string) =>
   }
   try {
     dispatch(setPulls(fetching))
-    const result = await getPulls(users.token, projectId)
+    const result = await getPulls(projectId)
     dispatch(setPulls(fetched(result)))
   } catch (e) {
     dispatch(setPulls(failed(e)))
@@ -80,8 +79,7 @@ export const getPullAction = (projectId: number, pullNumber: number) => async (
   dispatch: AppDispatch, //
   getState: AppStateSupplier
 ) => {
-  await requireToken(dispatch, getState)
-  const { pulls, users } = getState()
+  const { pulls } = getState()
   if (
     pulls.pull.isFetching ||
     (pulls.pull.value &&
@@ -92,7 +90,7 @@ export const getPullAction = (projectId: number, pullNumber: number) => async (
   }
   try {
     dispatch(setPull(fetching))
-    const pull = await getPull(users.token, projectId, pullNumber)
+    const pull = await getPull(projectId, pullNumber)
     dispatch(setPull(fetched(pull)))
   } catch (e) {
     dispatch(setPull(failed(e)))
@@ -103,8 +101,7 @@ export const getDiffsAction = (projectId: number, pullNumber: number) => async (
   dispatch: AppDispatch, //
   getState: AppStateSupplier
 ) => {
-  await requireToken(dispatch, getState)
-  const { users, pulls } = getState()
+  const { pulls } = getState()
   if (
     pulls.diffs.isFetching ||
     (pulls.diffs.value &&
@@ -115,7 +112,7 @@ export const getDiffsAction = (projectId: number, pullNumber: number) => async (
   }
   try {
     dispatch(setDiffs(fetching))
-    const result = await getDiffs(users.token, projectId, pullNumber)
+    const result = await getDiffs(projectId, pullNumber)
     dispatch(setDiffs(fetched(result, { projectId, pullNumber })))
   } catch (e) {
     dispatch(setDiffs(failed(e)))
@@ -130,8 +127,7 @@ export const getComparesAction = (projectId: number, target: number, source: num
     dispatch(setCompares(notFetching))
     return
   }
-  await requireToken(dispatch, getState)
-  const { users, pulls } = getState()
+  const { pulls } = getState()
   if (
     pulls.compares.isFetching ||
     (pulls.compares.value &&
@@ -143,7 +139,7 @@ export const getComparesAction = (projectId: number, target: number, source: num
   }
   try {
     dispatch(setCompares(fetching))
-    const result = await getCompares(users.token, projectId, target, source)
+    const result = await getCompares(projectId, target, source)
     dispatch(setCompares(fetched(result, { projectId, target, source })))
   } catch (e) {
     dispatch(setCompares(failed(e)))
@@ -154,7 +150,6 @@ export const getClonesAction = (projectId: number, pullNumber: number) => async 
   dispatch: AppDispatch, //
   getState: AppStateSupplier
 ) => {
-  await requireToken(dispatch, getState)
   const { users, pulls } = getState()
   if (
     pulls.clones.isFetching ||

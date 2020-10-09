@@ -60,34 +60,30 @@ const IconsBar: React.FC<IconsBarProps> = ({
           {theme.direction === 'ltr' ? <ChevronLeftRounded /> : <ChevronRightRounded />}
         </IconButton>
       )}
-      {token === null ? (
-        <></>
-      ) : (
-        <div className={classes.mainTools}>
-          {token === '' ? (
-            <Tooltip title="Log in with GitHub">
-              <a href={`${API_URL}/api/login/github`} className={classes.login}>
-                <IconButton color="default" aria-label="Log in with GitHub">
-                  <GitHubIcon />
-                </IconButton>
-              </a>
+      <div className={classes.mainTools}>
+        {token === '' ? (
+          <Tooltip title="Log in with GitHub">
+            <a href={`${API_URL}/api/login/github`} className={classes.login}>
+              <IconButton color="default" aria-label="Log in with GitHub">
+                <GitHubIcon />
+              </IconButton>
+            </a>
+          </Tooltip>
+        ) : (
+          <>
+            <Tooltip title="Toggle light/dark theme">
+              <IconButton
+                color="default"
+                aria-label="Toggle light/dark theme"
+                onClick={toggleTheme}
+              >
+                {(lightTheme && <Brightness4Rounded />) || <Brightness7Rounded />}
+              </IconButton>
             </Tooltip>
-          ) : (
-            <>
-              <Tooltip title="Toggle light/dark theme">
-                <IconButton
-                  color="default"
-                  aria-label="Toggle light/dark theme"
-                  onClick={toggleTheme}
-                >
-                  {(lightTheme && <Brightness4Rounded />) || <Brightness7Rounded />}
-                </IconButton>
-              </Tooltip>
-              <MenuBar />
-            </>
-          )}
-        </div>
-      )}
+            <MenuBar />
+          </>
+        )}
+      </div>
     </>
   )
 }

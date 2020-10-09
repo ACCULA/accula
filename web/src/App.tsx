@@ -58,7 +58,7 @@ const useStyles = makeStyles((theme: Theme) =>
 
 type AppProps = PropsFromRedux
 
-const App = ({ auth, getCurrentUser, settings, changeSettings }: AppProps) => {
+const App = ({ auth, token, getCurrentUser, settings, changeSettings }: AppProps) => {
   const [theme, toggleTheme] = useTheme(settings.themeMode)
   const customTheme = createMuiTheme(theme)
   const classes = useStyles()
@@ -67,6 +67,10 @@ const App = ({ auth, getCurrentUser, settings, changeSettings }: AppProps) => {
     getCurrentUser()
     // eslint-disable-next-line
   }, [])
+
+  if (token === null) {
+    return <></>
+  }
 
   const changeTheme = () => {
     changeSettings({ ...settings, themeMode: theme.palette!.type! === 'dark' ? 'light' : 'dark' })
@@ -128,6 +132,7 @@ const App = ({ auth, getCurrentUser, settings, changeSettings }: AppProps) => {
 
 const mapStateToProps = (state: AppState) => ({
   auth: state.users.user.value !== null,
+  token: state.users.token.accessToken,
   settings: state.settings.settings
 })
 

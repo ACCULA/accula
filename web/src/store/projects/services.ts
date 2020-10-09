@@ -18,15 +18,14 @@ export const getProjects = async (): Promise<IProject[]> => {
     .then(resp => resp.data as IProject[])
 }
 
-export const getProject = async (id: number, token: IToken): Promise<IProject> => {
+export const getProject = async (id: number): Promise<IProject> => {
   if (DEBUG) {
     return Promise.resolve(projects.find(p => p.id === id))
   }
   return axios
     .get(`${API_URL}/api/projects/${id}`, {
       headers: {
-        Accept: 'application/json',
-        Authorization: `Bearer ${token.accessToken}`
+        Accept: 'application/json'
       },
       withCredentials: true
     })

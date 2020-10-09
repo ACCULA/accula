@@ -4,56 +4,42 @@ import { API_URL, DEBUG } from 'utils'
 import { IClone, IDiff, IPull, IShortPull, IToken } from 'types'
 import { pulls, clones } from 'stubs'
 
-export const getPulls = async (
-  token: IToken, //
-  projectId: number
-): Promise<IShortPull[]> => {
+export const getPulls = async (projectId: number): Promise<IShortPull[]> => {
   if (DEBUG) {
     return Promise.resolve(pulls)
   }
   return axios
     .get(`${API_URL}/api/projects/${projectId}/pulls`, {
       headers: {
-        Accept: 'application/json',
-        Authorization: `Bearer ${token.accessToken}`
+        Accept: 'application/json'
       },
       withCredentials: true
     })
     .then(resp => resp.data as IShortPull[])
 }
 
-export const getPull = async (
-  token: IToken, //
-  projectId: number,
-  pullId: number
-): Promise<IPull> => {
+export const getPull = async (projectId: number, pullId: number): Promise<IPull> => {
   if (DEBUG) {
     return Promise.resolve(pulls.find(p => p.number === pullId))
   }
   return axios
     .get(`${API_URL}/api/projects/${projectId}/pulls/${pullId}`, {
       headers: {
-        Accept: 'application/json',
-        Authorization: `Bearer ${token.accessToken}`
+        Accept: 'application/json'
       },
       withCredentials: true
     })
     .then(resp => resp.data as IPull)
 }
 
-export const getDiffs = async (
-  token: IToken,
-  projectId: number,
-  pullId: number
-): Promise<IDiff[]> => {
+export const getDiffs = async (projectId: number, pullId: number): Promise<IDiff[]> => {
   if (DEBUG) {
     return Promise.resolve([])
   }
   return axios
     .get(`${API_URL}/api/projects/${projectId}/pulls/${pullId}/diff`, {
       headers: {
-        Accept: 'application/json',
-        Authorization: `Bearer ${token.accessToken}`
+        Accept: 'application/json'
       },
       withCredentials: true
     })
@@ -61,7 +47,6 @@ export const getDiffs = async (
 }
 
 export const getCompares = async (
-  token: IToken,
   projectId: number,
   target: number,
   source: number
@@ -72,8 +57,7 @@ export const getCompares = async (
   return axios
     .get(`${API_URL}/api/projects/${projectId}/pulls/${source}/compare?with=${target}`, {
       headers: {
-        Accept: 'application/json',
-        Authorization: `Bearer ${token.accessToken}`
+        Accept: 'application/json'
       },
       withCredentials: true
     })
@@ -91,8 +75,7 @@ export const getClones = async (
   return axios
     .get(`${API_URL}/api/projects/${projectId}/pulls/${pullId}/clones`, {
       headers: {
-        Accept: 'application/json',
-        Authorization: `Bearer ${token.accessToken}`
+        Accept: 'application/json'
       },
       withCredentials: true
     })

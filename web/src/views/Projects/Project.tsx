@@ -52,9 +52,9 @@ const Project = ({
       resetPulls()
     }
     // eslint-disable-next-line
-  }, [projectId])
+  }, [])
 
-  if (!user || !project) {
+  if (!project) {
     return <></>
   }
 
