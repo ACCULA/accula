@@ -1,13 +1,7 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { IconButton, Tooltip, useTheme } from '@material-ui/core'
 import GitHubIcon from '@material-ui/icons/GitHub'
-import {
-  Brightness4Rounded,
-  Brightness7Rounded,
-  MenuRounded,
-  ChevronLeftRounded,
-  ChevronRightRounded
-} from '@material-ui/icons'
+import { MenuRounded, ChevronLeftRounded, ChevronRightRounded } from '@material-ui/icons'
 import { connect, ConnectedProps } from 'react-redux'
 import { AppDispatch, AppState } from 'store'
 import { bindActionCreators } from 'redux'
@@ -28,12 +22,6 @@ const IconsBar: React.FC<IconsBarProps> = ({
 }: IconsBarProps) => {
   const classes = useStyles()
   const theme = useTheme()
-  const [lightTheme, setLightTheme] = useState(theme.palette.type === 'light')
-
-  const toggleTheme = () => {
-    setLightTheme(!lightTheme)
-    setTheme()
-  }
 
   const handleDrawerOpen = () => {
     changeSettings({ ...settings, isDrawerOpen: true })
@@ -70,18 +58,7 @@ const IconsBar: React.FC<IconsBarProps> = ({
             </a>
           </Tooltip>
         ) : (
-          <>
-            <Tooltip title="Toggle light/dark theme">
-              <IconButton
-                color="default"
-                aria-label="Toggle light/dark theme"
-                onClick={toggleTheme}
-              >
-                {(lightTheme && <Brightness4Rounded />) || <Brightness7Rounded />}
-              </IconButton>
-            </Tooltip>
-            <MenuBar />
-          </>
+          <MenuBar setTheme={setTheme} />
         )}
       </div>
     </>

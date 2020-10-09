@@ -3,16 +3,26 @@ import IconButton from '@material-ui/core/IconButton'
 import { connect, ConnectedProps } from 'react-redux'
 import { AppState } from 'store'
 import { useHistory } from 'react-router-dom'
-import { Menu, MenuItem, ListItemIcon, Avatar } from '@material-ui/core'
-import { AccountCircle, ArrowDropDownRounded, ArrowDropUpRounded } from '@material-ui/icons'
+import { Menu, MenuItem, ListItemIcon, Avatar, useTheme } from '@material-ui/core'
+import {
+  AccountCircle,
+  ArrowDropDownRounded,
+  ArrowDropUpRounded,
+  Brightness4Rounded,
+  Brightness7Rounded
+} from '@material-ui/icons'
 import { historyPush } from 'utils'
 import { useStyles } from './styles'
 
-interface MenuBarProps extends PropsFromRedux {}
+interface MenuBarProps extends PropsFromRedux {
+  setTheme: () => void
+}
 
-const MenuBar: React.FC<MenuBarProps> = ({ user }: MenuBarProps) => {
+const MenuBar: React.FC<MenuBarProps> = ({ user, setTheme }: MenuBarProps) => {
   const history = useHistory()
   const classes = useStyles()
+  const theme = useTheme()
+  const [lightTheme, setLightTheme] = useState(theme.palette.type === 'light')
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const isMenuOpen = Boolean(anchorEl)
 
@@ -29,6 +39,11 @@ const MenuBar: React.FC<MenuBarProps> = ({ user }: MenuBarProps) => {
       onClick()
     }
     handleMenuClose()
+  }
+
+  const toggleTheme = () => {
+    setLightTheme(!lightTheme)
+    setTheme()
   }
 
   if (!user) {
@@ -53,6 +68,12 @@ const MenuBar: React.FC<MenuBarProps> = ({ user }: MenuBarProps) => {
           <AccountCircle />
         </ListItemIcon>
         <p className={classes.menuItemTitle}>Profile</p>
+      </MenuItem>
+      <MenuItem onClick={toggleTheme}>
+        <ListItemIcon aria-label="Toggle light/dark theme" color="inherit">
+          {(lightTheme && <Brightness4Rounded />) || <Brightness7Rounded />}
+        </ListItemIcon>
+        <p className={classes.menuItemTitle}>{`${lightTheme ? 'Dark' : 'Light'} mode`}</p>
       </MenuItem>
     </Menu>
   )
