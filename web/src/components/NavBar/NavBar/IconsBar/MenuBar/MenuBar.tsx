@@ -4,7 +4,7 @@ import { connect, ConnectedProps } from 'react-redux'
 import { AppState } from 'store'
 import { useHistory } from 'react-router-dom'
 import { Menu, MenuItem, ListItemIcon, Avatar } from '@material-ui/core'
-import { AccountCircle, ArrowDropDownRounded } from '@material-ui/icons'
+import { AccountCircle, ArrowDropDownRounded, ArrowDropUpRounded } from '@material-ui/icons'
 import { historyPush } from 'utils'
 import { useStyles } from './styles'
 
@@ -38,6 +38,7 @@ const MenuBar: React.FC<MenuBarProps> = ({ user }: MenuBarProps) => {
   const menuId = 'more-actions-menu'
   const renderMenu = (
     <Menu
+      className={classes.menu}
       anchorEl={anchorEl}
       getContentAnchorEl={null}
       anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
@@ -67,7 +68,8 @@ const MenuBar: React.FC<MenuBarProps> = ({ user }: MenuBarProps) => {
         className={classes.avatarBtn}
       >
         <Avatar alt={user.name} src={user.avatar} className={classes.avatar} />
-        <ArrowDropDownRounded />
+        <span className={classes.avatarBtnText}>{user.login}</span>
+        {isMenuOpen ? <ArrowDropUpRounded /> : <ArrowDropDownRounded />}
       </IconButton>
       {renderMenu}
     </>
