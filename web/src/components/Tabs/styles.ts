@@ -19,6 +19,10 @@ export const useStyles = makeStyles((theme: Theme) => ({
     textTransform: 'none',
     fontSize: '1rem'
   },
+  tabContent: {
+    display: 'flex',
+    alignItems: 'center'
+  },
   tabImg: {
     width: '16px',
     height: '16px',

@@ -12,12 +12,14 @@ export interface Tab {
 
 interface TabsProps {
   tabs?: Tab[]
+  activeId?: string
   onChange?: (tab: Tab) => void
 }
 
-const Tabs = ({ tabs, onChange }: TabsProps) => {
+const Tabs = ({ tabs, activeId, onChange }: TabsProps) => {
   const classes = useStyles()
-  const [activeTab, setActiveTab] = useState(0)
+  const tab = tabs && activeId ? tabs.findIndex(t => t.id === activeId) : 0
+  const [activeTab, setActiveTab] = useState(tab === -1 ? 0 : tab)
 
   const handleChange = (event: React.ChangeEvent<{}>, newValue: number) => {
     setActiveTab(newValue)
@@ -36,7 +38,7 @@ const Tabs = ({ tabs, onChange }: TabsProps) => {
   const tabItems = tabs ? (
     tabs.map(({ text, Icon, badgeValue }, index) => {
       const label = (
-        <div>
+        <div className={classes.tabContent}>
           {Icon && <Icon className={classes.tabImg} />}
           {badgeValue ? (
             <Badge className={classes.badge} badgeContent={badgeValue} max={99} color="secondary">
