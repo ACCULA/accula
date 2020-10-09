@@ -53,7 +53,6 @@ export const putProjectConf = async (
   token: IToken,
   conf: IProjectConf
 ): Promise<void> => {
-  console.log(conf)
   if (DEBUG) {
     return Promise.resolve()
   }

@@ -7,14 +7,12 @@ import {
   SET_PROJECT_CONF,
   SET_PROJECTS,
   SET_REPO_ADMINS,
-  UPDATE_PROJECT_CONF,
   RESET_PROJECT_INFO,
   RESET_PROJECTS,
   SetProject,
   SetProjectConf,
   SetProjects,
   SetRepoAdmins,
-  UpdateProjectConf,
   ResetProjectInfo,
   ResetProjects
 } from './types'
@@ -42,11 +40,6 @@ const setProjectConf = (payload): SetProjectConf => ({
   payload
 })
 
-const updateProjectConf = (isCreating: boolean, error: string): UpdateProjectConf => ({
-  type: UPDATE_PROJECT_CONF,
-  payload: [isCreating, error]
-})
-
 export const resetProjectInfo = (): ResetProjectInfo => ({
   type: RESET_PROJECT_INFO
 })
@@ -54,8 +47,6 @@ export const resetProjectInfo = (): ResetProjectInfo => ({
 export const resetProjects = (): ResetProjects => ({
   type: RESET_PROJECTS
 })
-
-export const resetUpdateProjectConf = (): UpdateProjectConf => updateProjectConf(false, '')
 
 const setRepoAdmins = (payload): SetRepoAdmins => ({
   type: SET_REPO_ADMINS,
@@ -136,7 +127,12 @@ export const getProjectConfAction = (id: number, handleError?: (msg: string) => 
   }
 }
 
-export const updateProjectConfAction = (id: number, conf: IProjectConf) => async (
+export const updateProjectConfAction = (
+  id: number,
+  conf: IProjectConf,
+  handleSuccess?: () => void,
+  handleError?: (msg: string) => void
+) => async (
   dispatch: AppDispatch, //
   getState: AppStateSupplier
 ) => {
@@ -147,15 +143,18 @@ export const updateProjectConfAction = (id: number, conf: IProjectConf) => async
   await requireToken(dispatch, getState)
   const { users } = getState()
   try {
-    dispatch(updateProjectConf(true, null))
     await putProjectConf(id, users.token, conf)
-    dispatch(updateProjectConf(false, null))
+    if (handleSuccess) {
+      handleSuccess()
+    }
   } catch (e) {
-    dispatch(updateProjectConf(false, e.message))
+    if (handleError) {
+      handleError(e.message)
+    }
   }
 }
 
-export const getRepoAdminsAction = (id: number) => async (
+export const getRepoAdminsAction = (id: number, handleError?: (msg: string) => void) => async (
   dispatch: AppDispatch, //
   getState: AppStateSupplier
 ) => {
@@ -171,6 +170,9 @@ export const getRepoAdminsAction = (id: number) => async (
     dispatch(setRepoAdmins(fetched(admins)))
   } catch (e) {
     dispatch(setRepoAdmins(failed(e)))
+    if (handleError) {
+      handleError(e.message)
+    }
   }
 }
 

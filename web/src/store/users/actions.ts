@@ -61,6 +61,7 @@ export const getCurrentUserAction = () => async (
     if (users.user.value && users.user.value.id === id) {
       return
     }
+
     dispatch(setUser(fetching))
     const user = await getUserById(id)
     dispatch(setUser(fetched(user)))

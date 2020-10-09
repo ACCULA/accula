@@ -6,7 +6,6 @@ import {
   SET_PROJECT_CONF,
   SET_PROJECTS,
   SET_REPO_ADMINS,
-  UPDATE_PROJECT_CONF,
   RESET_PROJECT_INFO,
   RESET_PROJECTS
 } from './types'
@@ -15,7 +14,6 @@ const initialState: ProjectsState = {
   projects: notFetching,
   project: notFetching,
   projectConf: notFetching,
-  updateProjectConf: [false, null],
   repoAdmins: notFetching
 }
 
@@ -40,12 +38,6 @@ export function projectsReducer(
       return {
         ...state,
         projectConf: action.payload
-      }
-    }
-    case UPDATE_PROJECT_CONF: {
-      return {
-        ...state,
-        updateProjectConf: action.payload
       }
     }
     case SET_REPO_ADMINS: {

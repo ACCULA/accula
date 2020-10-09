@@ -5,7 +5,7 @@ import logger from 'redux-logger'
 import { rootReducer } from './reducers'
 import { saveState, loadState } from './saveState'
 
-const createStoreWithMiddleware = composeWithDevTools(applyMiddleware(saveState(), thunk, logger))(
+const createStoreWithMiddleware = composeWithDevTools(applyMiddleware(saveState(), thunk))(
   createStore
 )
 
