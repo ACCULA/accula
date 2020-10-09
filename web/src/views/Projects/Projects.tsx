@@ -17,6 +17,7 @@ import { ReactComponent as LayersImg } from 'images/layers.svg'
 import { PageTitle } from 'components/PageTitle'
 import GitHubIcon from '@material-ui/icons/GitHub'
 import { Avatar, IconButton, TableCell } from '@material-ui/core'
+import Link from 'components/Link'
 import { StyledTableRow } from 'components/Table/styles'
 import AddProjectDialog from './AddProjectDialog'
 import { useStyles } from './styles'
@@ -30,9 +31,10 @@ const headCells: HeadCell<IProject>[] = [
 ]
 
 const Projects = ({ user, projects, getProjects, resetProjects }: ProjectsProps) => {
+  const classes = useStyles()
   const history = useHistory()
   const { enqueueSnackbar, closeSnackbar } = useSnackbar()
-  const classes = useStyles()
+  const [isGithubButtonHovered, setGithubButtonHovered] = useState(false)
   const [isCreateProjectDialogOpen, setCreateProjectDialogOpen] = useState(false)
 
   useEffect(() => {
@@ -107,7 +109,11 @@ const Projects = ({ user, projects, getProjects, resetProjects }: ProjectsProps)
             {projects.map(project => (
               <StyledTableRow
                 hover
-                onClick={() => historyPush(history, `projects/${project.id}/pulls`)}
+                onClick={() => {
+                  if (!isGithubButtonHovered) {
+                    historyPush(history, `projects/${project.id}/pulls`)
+                  }
+                }}
                 tabIndex={-1}
                 key={project.id}
               >
@@ -132,16 +138,18 @@ const Projects = ({ user, projects, getProjects, resetProjects }: ProjectsProps)
                   <span className={classes.cellText}>{project.repoOpenPullCount}</span>
                 </TableCell>
                 <TableCell align="right">
-                  <a
-                    href={project.repoUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={classes.repoUrlImg}
-                  >
-                    <IconButton color="default" aria-label="Project Url">
+                  <Link to={project.repoUrl} className={classes.repoUrlImg}>
+                    <IconButton
+                      color="default"
+                      aria-label="Project Url"
+                      onFocus={() => setGithubButtonHovered(true)}
+                      onMouseOver={() => setGithubButtonHovered(true)}
+                      onMouseOut={() => setGithubButtonHovered(false)}
+                      onBlur={() => setGithubButtonHovered(false)}
+                    >
                       <GitHubIcon />
                     </IconButton>
-                  </a>
+                  </Link>
                 </TableCell>
               </StyledTableRow>
             ))}
