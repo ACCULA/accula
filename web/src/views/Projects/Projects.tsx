@@ -7,7 +7,7 @@ import { bindActionCreators } from 'redux'
 import { connect, ConnectedProps } from 'react-redux'
 import { Helmet } from 'react-helmet'
 import { AddBoxOutlined, CloseRounded } from '@material-ui/icons'
-import { getProjectsAction, resetProjects } from 'store/projects/actions'
+import { getProjectsAction, resetProjectsAction } from 'store/projects/actions'
 import Button from '@material-ui/core/Button'
 import BreadCrumbs from 'components/BreadCrumbs'
 import Tabs from 'components/Tabs'
@@ -162,7 +162,7 @@ const mapStateToProps = (state: AppState) => ({
 
 const mapDispatchToProps = (dispatch: AppDispatch) => ({
   getProjects: bindActionCreators(getProjectsAction, dispatch),
-  resetProjects: bindActionCreators(resetProjects, dispatch)
+  resetProjects: bindActionCreators(resetProjectsAction, dispatch)
 })
 
 const connector = connect(mapStateToProps, mapDispatchToProps)

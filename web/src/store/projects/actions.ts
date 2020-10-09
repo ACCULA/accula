@@ -44,7 +44,7 @@ export const resetProjectInfo = (): ResetProjectInfo => ({
   type: RESET_PROJECT_INFO
 })
 
-export const resetProjects = (): ResetProjects => ({
+export const resetProjectsAction = (): ResetProjects => ({
   type: RESET_PROJECTS
 })
 
