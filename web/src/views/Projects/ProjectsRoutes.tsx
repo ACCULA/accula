@@ -4,14 +4,6 @@ import { Route, Switch } from 'react-router-dom'
 import Pull from 'views/Pulls/Pull'
 import Project from 'views/Projects/Project'
 import Projects from 'views/Projects/Projects'
-import { AppState } from 'store'
-import { connect } from 'react-redux'
-
-const mapStateToProps = (state: AppState) => ({
-  auth: state.users.user.value !== undefined
-})
-
-const connector = connect(mapStateToProps, null)
 
 const ProjectsRoutes = () => {
   return (
@@ -34,4 +26,4 @@ const ProjectsRoutes = () => {
   )
 }
 
-export default connector(ProjectsRoutes)
+export default ProjectsRoutes
