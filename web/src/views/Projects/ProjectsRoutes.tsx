@@ -18,7 +18,18 @@ const ProjectsRoutes = () => {
     <Switch>
       <Route path="/projects" exact component={Projects} />
       <Route path="/projects/:prId/:tab?" exact component={Project} />
-      <Route path="/projects/:prId/pulls/:plId/:tab?" exact component={Pull} />
+      <Route
+        path="/projects/:prId/pulls/:plId/:tab?"
+        exact
+        render={(props: any) => {
+          const {
+            match: {
+              params: { prId, plId, tab }
+            }
+          } = props
+          return <Pull key={`prId=${prId}&plId=${plId}&tab=${tab}`} {...props} />
+        }}
+      />
     </Switch>
   )
 }

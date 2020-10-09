@@ -16,6 +16,7 @@ interface PullOverviewTabProps {
 
 const PullOverviewTab = ({ pull, project }: PullOverviewTabProps) => {
   const classes = useStyles()
+
   return (
     <div>
       <div className={classes.pullOverview}>
