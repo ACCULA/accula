@@ -15,9 +15,9 @@ import * as Yup from 'yup'
 import LoadingButton from 'components/LoadingButton'
 import { connect, ConnectedProps } from 'react-redux'
 import { bindActionCreators } from 'redux'
-import { AppDispatch } from 'store'
-import { updateProjectConfAction } from 'store/projects/actions'
-import { useSnackbar } from 'notistack'
+import { AppDispatch, AppState } from 'store'
+import { getRepoAdminsAction, updateProjectConfAction } from 'store/projects/actions'
+import { useSnackbar, VariantType } from 'notistack'
 import { CloseRounded } from '@material-ui/icons'
 import { useStyles } from './styles'
 
@@ -30,19 +30,36 @@ const validationSchema = Yup.object().shape({
 interface ProjectConfigurationTabProps extends PropsFromRedux {
   project: IProject
   projectConf: IProjectConf
-  repoAdmins: IUser[]
 }
 
 const ProjectConfigurationTab = ({
   project,
-  projectConf,
   repoAdmins,
-  updateProjectConf
+  projectConf,
+  updateProjectConf,
+  getRepoAdmins
 }: ProjectConfigurationTabProps) => {
   const classes = useStyles()
   const { enqueueSnackbar, closeSnackbar } = useSnackbar()
   const [adminOptions, setAdminOptions] = useState<IUser[]>([])
   const [fetching, setFetching] = useState(false)
+
+  const showNotification = (variant: VariantType) => {
+    return (msg: string) =>
+      enqueueSnackbar(msg, {
+        variant,
+        action: key => (
+          <IconButton onClick={() => closeSnackbar(key)} aria-label="Close notification">
+            <CloseRounded />
+          </IconButton>
+        )
+      })
+  }
+
+  useEffect(() => {
+    getRepoAdmins(project.id, showNotification('error'))
+    // eslint-disable-next-line
+  }, [])
 
   useEffect(() => {
     if (repoAdmins && projectConf) {
@@ -66,25 +83,11 @@ const ProjectConfigurationTab = ({
           cloneMinLineCount: cloneMinLineCount === '' ? 5 : cloneMinLineCount
         },
         () => {
-          enqueueSnackbar('Configuration has been successfully updated', {
-            variant: 'success',
-            action: key => (
-              <IconButton onClick={() => closeSnackbar(key)} aria-label="Close notification">
-                <CloseRounded />
-              </IconButton>
-            )
-          })
+          showNotification('success')('Configuration has been successfully updated')
           setFetching(false)
         },
         msg => {
-          enqueueSnackbar(msg, {
-            variant: 'error',
-            action: key => (
-              <IconButton onClick={() => closeSnackbar(key)} aria-label="Close notification">
-                <CloseRounded />
-              </IconButton>
-            )
-          })
+          showNotification('error')(msg)
           setFetching(false)
         }
       )
@@ -185,9 +188,12 @@ const ProjectConfigurationTab = ({
     </>
   )
 }
-const mapStateToProps = () => ({})
+const mapStateToProps = (state: AppState) => ({
+  repoAdmins: state.projects.repoAdmins.value
+})
 
 const mapDispatchToProps = (dispatch: AppDispatch) => ({
+  getRepoAdmins: bindActionCreators(getRepoAdminsAction, dispatch),
   updateProjectConf: bindActionCreators(updateProjectConfAction, dispatch)
 })
 

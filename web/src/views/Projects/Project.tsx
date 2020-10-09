@@ -7,8 +7,7 @@ import {
   getProjectAction,
   getProjectConfAction,
   getRepoAdminsAction,
-  resetProjectInfo,
-  updateProjectConfAction
+  resetProjectInfo
 } from 'store/projects/actions'
 import { getPullsAction, resetPullsInfo } from 'store/pulls/actions'
 import { historyPush, isProjectAdmin } from 'utils'
@@ -30,10 +29,8 @@ const Project = ({
   projectConf,
   user,
   pulls,
-  repoAdmins,
   getProject,
   getProjectConf,
-  getRepoAdmins,
   getPulls,
   resetPulls,
   resetProject
@@ -57,7 +54,6 @@ const Project = ({
     getProject(projectId, showErrorNotification)
     getProjectConf(projectId)
     getPulls(projectId, showErrorNotification)
-    getRepoAdmins(projectId)
 
     return () => {
       resetProject()
@@ -100,11 +96,7 @@ const Project = ({
       <Tabs tabs={tabs} onChange={handleChangeTab} activeId={tab} />
       {tab === 'pulls' && <ProjectPullsTab project={project} pulls={pulls} />}
       {isAdmin && tab === 'configuration' && (
-        <ProjectConfigurationTab
-          project={project}
-          projectConf={projectConf}
-          repoAdmins={repoAdmins}
-        />
+        <ProjectConfigurationTab project={project} projectConf={projectConf} />
       )}
     </div>
   )
@@ -124,8 +116,7 @@ const mapDispatchToProps = (dispatch: AppDispatch) => ({
   getRepoAdmins: bindActionCreators(getRepoAdminsAction, dispatch),
   resetPulls: bindActionCreators(resetPullsInfo, dispatch),
   resetProject: bindActionCreators(resetProjectInfo, dispatch),
-  getPulls: bindActionCreators(getPullsAction, dispatch),
-  updateProjectConf: bindActionCreators(updateProjectConfAction, dispatch)
+  getPulls: bindActionCreators(getPullsAction, dispatch)
 })
 
 const connector = connect(mapStateToProps, mapDispatchToProps)
