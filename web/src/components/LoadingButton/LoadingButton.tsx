@@ -6,10 +6,11 @@ import { useStyles } from './styles'
 interface LoadingButtonProps {
   text: string
   submitting: boolean
+  disabled?: boolean
   onClick?: () => void
 }
 
-const LoadingButton = ({ text, submitting, onClick }: LoadingButtonProps) => {
+const LoadingButton = ({ text, disabled, submitting, onClick }: LoadingButtonProps) => {
   const classes = useStyles()
 
   return (
@@ -18,7 +19,7 @@ const LoadingButton = ({ text, submitting, onClick }: LoadingButtonProps) => {
         type="submit"
         variant="contained"
         color="secondary"
-        disabled={submitting}
+        disabled={disabled || submitting}
         onClick={onClick}
       >
         {text}
