@@ -41,10 +41,11 @@ export const useStyles = makeStyles((theme: Theme) => ({
   pullInfo: {
     display: 'flex',
     flexDirection: 'column',
-    justifyContent: 'flex-end',
+    alignSelf: 'flex-end',
     marginLeft: 20,
     [theme.breakpoints.down('xs')]: {
-      margin: 0
+      margin: 0,
+      alignSelf: 'center'
     }
   },
   pullTitle: {
