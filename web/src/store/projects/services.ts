@@ -101,3 +101,17 @@ export const postProject = async (url: string, token: IToken): Promise<IProject 
     .then(resp => resp.data as IProject)
     .catch(rej => rej.response.data?.error || 'UNKNOWN_ERROR')
 }
+
+export const deleteProject = async (id: number, token: IToken): Promise<void> => {
+  if (DEBUG) {
+    return Promise.resolve()
+  }
+  return axios //
+    .delete(`${API_URL}/api/projects/${id}`, {
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token.accessToken}`
+      },
+      withCredentials: true
+    })
+}

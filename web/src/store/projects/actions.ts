@@ -22,7 +22,8 @@ import {
   getProjectConf,
   getProjects,
   getRepoAdmins,
-  putProjectConf
+  putProjectConf,
+  deleteProject
 } from './services'
 
 const setProjects = (payload): SetProjects => ({
@@ -210,6 +211,28 @@ export const createProjectAction = (
       if (handleSuccess) {
         handleSuccess()
       }
+    }
+  }
+}
+
+export const deleteProjectAction = (
+  id: number,
+  handleSuccess?: () => void,
+  handleError?: (msg: string) => void
+) => async (
+  dispatch: AppDispatch, //
+  getState: AppStateSupplier
+) => {
+  await requireToken(dispatch, getState)
+  const { users } = getState()
+  try {
+    await deleteProject(id, users.token)
+    if (handleSuccess) {
+      handleSuccess()
+    }
+  } catch (e) {
+    if (handleError) {
+      handleError(e.message)
     }
   }
 }

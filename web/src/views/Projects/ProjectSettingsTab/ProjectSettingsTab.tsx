@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import clsx from 'clsx'
 import {
   Chip,
   Avatar,
@@ -8,6 +9,7 @@ import {
   Typography,
   IconButton
 } from '@material-ui/core'
+import DeleteRoundedIcon from '@material-ui/icons/DeleteRounded'
 import { IProject, IUser } from 'types'
 import Autocomplete from '@material-ui/lab/Autocomplete'
 import { Field, Form, Formik } from 'formik'
@@ -17,12 +19,15 @@ import { connect, ConnectedProps } from 'react-redux'
 import { bindActionCreators } from 'redux'
 import { AppDispatch, AppState } from 'store'
 import {
+  deleteProjectAction,
   getProjectConfAction,
   getRepoAdminsAction,
   updateProjectConfAction
 } from 'store/projects/actions'
 import { useSnackbar, VariantType } from 'notistack'
 import { CloseRounded } from '@material-ui/icons'
+import { historyPush } from 'utils'
+import { useHistory } from 'react-router'
 import { useStyles } from './styles'
 
 const validationSchema = Yup.object().shape({
@@ -31,19 +36,23 @@ const validationSchema = Yup.object().shape({
     .max(10000, 'Value should be less than 10000')
 })
 
-interface ProjectConfigurationTabProps extends PropsFromRedux {
+interface ProjectSettingsTabProps extends PropsFromRedux {
   project: IProject
+  user: IUser
 }
 
-const ProjectConfigurationTab = ({
+const ProjectSettingsTab = ({
+  user,
   project,
   repoAdmins,
   projectConf,
   updateProjectConf,
   getRepoAdmins,
-  getProjectConf
-}: ProjectConfigurationTabProps) => {
+  getProjectConf,
+  deleteProject
+}: ProjectSettingsTabProps) => {
   const classes = useStyles()
+  const history = useHistory()
   const { enqueueSnackbar, closeSnackbar } = useSnackbar()
   const [adminOptions, setAdminOptions] = useState<IUser[]>([])
   const [fetching, setFetching] = useState(false)
@@ -99,6 +108,21 @@ const ProjectConfigurationTab = ({
     }
   }
 
+  const handleDeleteProject = () => {
+    deleteProject(
+      project.id,
+      () => {
+        showNotification('success')('Project has been successfully deleted')
+        setFetching(false)
+        historyPush(history, '/projects')
+      },
+      msg => {
+        showNotification('error')(msg)
+        setFetching(false)
+      }
+    )
+  }
+
   return (
     <>
       <Typography className={classes.title} gutterBottom>
@@ -114,7 +138,7 @@ const ProjectConfigurationTab = ({
       >
         {({ values, setFieldValue, errors }) => (
           <Form>
-            <Card className={classes.root}>
+            <Card className={classes.card}>
               <CardContent>
                 <Field
                   name="admins"
@@ -190,6 +214,23 @@ const ProjectConfigurationTab = ({
           </Form>
         )}
       </Formik>
+      {user && user.id === project.creatorId && (
+        <>
+          <Typography className={classes.title} gutterBottom>
+            Danger Zone
+          </Typography>
+          <Card className={clsx(classes.card, classes.dangerCard)}>
+            <CardContent className={classes.cardBox}>
+              <div className={classes.dangerBoxTextField}>
+                <span className={classes.titleBox}>Delete this project</span>
+              </div>
+              <IconButton className={classes.dangerButton} onClick={() => handleDeleteProject()}>
+                <DeleteRoundedIcon />
+              </IconButton>
+            </CardContent>
+          </Card>
+        </>
+      )}
     </>
   )
 }
@@ -201,11 +242,12 @@ const mapStateToProps = (state: AppState) => ({
 const mapDispatchToProps = (dispatch: AppDispatch) => ({
   getRepoAdmins: bindActionCreators(getRepoAdminsAction, dispatch),
   updateProjectConf: bindActionCreators(updateProjectConfAction, dispatch),
-  getProjectConf: bindActionCreators(getProjectConfAction, dispatch)
+  getProjectConf: bindActionCreators(getProjectConfAction, dispatch),
+  deleteProject: bindActionCreators(deleteProjectAction, dispatch)
 })
 
 const connector = connect(mapStateToProps, mapDispatchToProps)
 
 type PropsFromRedux = ConnectedProps<typeof connector>
 
-export default connector(ProjectConfigurationTab)
+export default connector(ProjectSettingsTab)

@@ -15,7 +15,7 @@ import { CloseRounded } from '@material-ui/icons'
 import { ReactComponent as PrLogo } from 'images/pull_request.svg'
 import SettingsIcon from '@material-ui/icons/Settings'
 import ProjectPullsTab from './ProjectPullsTab/ProjectPullsTab'
-import ProjectConfigurationTab from './ProjectConfigurationTab'
+import ProjectSettingsTab from './ProjectSettingsTab'
 
 interface ProjectProps extends PropsFromRedux {}
 
@@ -54,7 +54,7 @@ const Project = ({
     // eslint-disable-next-line
   }, [])
 
-  if (!project) {
+  if (user.isFetching || !project) {
     return <></>
   }
 
@@ -75,9 +75,9 @@ const Project = ({
     }
   ] as Tab[]
 
-  const isAdmin = isProjectAdmin(user, project)
+  const isAdmin = isProjectAdmin(user.value, project)
   if (isAdmin) {
-    tabs.push({ id: 'configuration', text: 'Configuration', Icon: SettingsIcon })
+    tabs.push({ id: 'settings', text: 'Settings', Icon: SettingsIcon })
   }
 
   return (
@@ -88,7 +88,7 @@ const Project = ({
       />
       <Tabs tabs={tabs} onChange={handleChangeTab} activeId={tab} />
       {tab === 'pulls' && <ProjectPullsTab project={project} pulls={pulls} />}
-      {isAdmin && tab === 'configuration' && <ProjectConfigurationTab project={project} />}
+      {isAdmin && tab === 'settings' && <ProjectSettingsTab user={user.value} project={project} />}
     </>
   )
 }
@@ -96,7 +96,7 @@ const Project = ({
 const mapStateToProps = (state: AppState) => ({
   project: state.projects.project.value,
   pulls: state.pulls.pulls.value,
-  user: state.users.user.value
+  user: state.users.user
 })
 
 const mapDispatchToProps = (dispatch: AppDispatch) => ({
