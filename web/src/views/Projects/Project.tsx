@@ -19,7 +19,9 @@ import { useSnackbar } from 'notistack'
 import { CircularProgress, IconButton } from '@material-ui/core'
 import { CloseRounded } from '@material-ui/icons'
 import { ReactComponent as PrLogo } from 'images/pull_request.svg'
+import SettingsIcon from '@material-ui/icons/Settings'
 import ProjectPullsTab from './ProjectPullsTab/ProjectPullsTab'
+import ProjectConfigurationTab from './ProjectConfigurationTab'
 
 interface ProjectProps extends PropsFromRedux {}
 
@@ -28,8 +30,10 @@ const Project = ({
   projectConf,
   user,
   pulls,
+  repoAdmins,
   getProject,
   getProjectConf,
+  getRepoAdmins,
   getPulls,
   resetPulls,
   resetProject
@@ -51,8 +55,9 @@ const Project = ({
 
   useEffect(() => {
     getProject(projectId, showErrorNotification)
-    getProjectConf(projectId, showErrorNotification)
+    getProjectConf(projectId)
     getPulls(projectId, showErrorNotification)
+    getRepoAdmins(projectId)
 
     return () => {
       resetProject()
@@ -68,7 +73,6 @@ const Project = ({
   const handleChangeTab = (t: Tab) => {
     historyPush(history, `/projects/${projectId}/${t.id}`)
   }
-
   const isAdmin = isProjectAdmin(user, project, projectConf)
   const tabs = [
     {
@@ -84,7 +88,7 @@ const Project = ({
   ] as Tab[]
 
   if (isAdmin) {
-    tabs.push({ id: 'configuration', text: 'Configuration' })
+    tabs.push({ id: 'configuration', text: 'Configuration', Icon: SettingsIcon })
   }
 
   return (
@@ -93,13 +97,14 @@ const Project = ({
         breadcrumbs={[{ text: 'Projects', to: '/projects' }, { text: project.repoName }]}
       />
       <PageTitle title={project && project.repoName} />
-      <Tabs tabs={tabs} onChange={handleChangeTab} />
+      <Tabs tabs={tabs} onChange={handleChangeTab} activeId={tab} />
       {tab === 'pulls' && <ProjectPullsTab project={project} pulls={pulls} />}
       {isAdmin && tab === 'configuration' && (
-        <></>
-        // <ProjectConfigurationTab
-        //   project={project} //
-        // />
+        <ProjectConfigurationTab
+          project={project}
+          projectConf={projectConf}
+          repoAdmins={repoAdmins}
+        />
       )}
     </div>
   )
@@ -108,8 +113,7 @@ const Project = ({
 const mapStateToProps = (state: AppState) => ({
   project: state.projects.project.value,
   projectConf: state.projects.projectConf.value,
-  updateProjectConfState: state.projects.updateProjectConf,
-  repoAdmins: state.projects.repoAdmins,
+  repoAdmins: state.projects.repoAdmins.value,
   pulls: state.pulls.pulls.value,
   user: state.users.user.value
 })
@@ -125,6 +129,7 @@ const mapDispatchToProps = (dispatch: AppDispatch) => ({
 })
 
 const connector = connect(mapStateToProps, mapDispatchToProps)
+
 type PropsFromRedux = ConnectedProps<typeof connector>
 
 export default connector(Project)
