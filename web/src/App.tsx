@@ -2,9 +2,7 @@ import React, { useEffect } from 'react'
 import clsx from 'clsx'
 import { connect, ConnectedProps } from 'react-redux'
 import { Redirect, Route, Switch } from 'react-router-dom'
-import { Helmet } from 'react-helmet'
 import { bindActionCreators } from 'redux'
-
 import { routes } from 'routes'
 import { getCurrentUserAction } from 'store/users/actions'
 import { changeSettingsAction } from 'store/settings/actions'
@@ -23,6 +21,7 @@ import { SnackbarProvider } from 'notistack'
 import { AppDispatch, AppState } from 'store'
 import SideBar from 'components/SideBar'
 import { drawerWidth } from 'utils'
+import { PageTitle } from 'components/PageTitle'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -87,9 +86,7 @@ const App = ({ auth, getCurrentUser, settings, changeSettings }: AppProps) => {
           }}
         >
           <CssBaseline />
-          <Helmet>
-            <title>ACCULA</title>
-          </Helmet>
+          <PageTitle />
           <NavBar setTheme={changeTheme} />
           <SideBar routes={sideBarRoutes} />
           <main

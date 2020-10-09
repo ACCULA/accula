@@ -8,7 +8,7 @@ import {
   Typography,
   IconButton
 } from '@material-ui/core'
-import { IProject, IProjectConf, IUser } from 'types'
+import { IProject, IUser } from 'types'
 import Autocomplete from '@material-ui/lab/Autocomplete'
 import { Field, Form, Formik } from 'formik'
 import * as Yup from 'yup'
@@ -16,7 +16,11 @@ import LoadingButton from 'components/LoadingButton'
 import { connect, ConnectedProps } from 'react-redux'
 import { bindActionCreators } from 'redux'
 import { AppDispatch, AppState } from 'store'
-import { getRepoAdminsAction, updateProjectConfAction } from 'store/projects/actions'
+import {
+  getProjectConfAction,
+  getRepoAdminsAction,
+  updateProjectConfAction
+} from 'store/projects/actions'
 import { useSnackbar, VariantType } from 'notistack'
 import { CloseRounded } from '@material-ui/icons'
 import { useStyles } from './styles'
@@ -29,7 +33,6 @@ const validationSchema = Yup.object().shape({
 
 interface ProjectConfigurationTabProps extends PropsFromRedux {
   project: IProject
-  projectConf: IProjectConf
 }
 
 const ProjectConfigurationTab = ({
@@ -37,7 +40,8 @@ const ProjectConfigurationTab = ({
   repoAdmins,
   projectConf,
   updateProjectConf,
-  getRepoAdmins
+  getRepoAdmins,
+  getProjectConf
 }: ProjectConfigurationTabProps) => {
   const classes = useStyles()
   const { enqueueSnackbar, closeSnackbar } = useSnackbar()
@@ -57,6 +61,7 @@ const ProjectConfigurationTab = ({
   }
 
   useEffect(() => {
+    getProjectConf(project.id, showNotification('error'))
     getRepoAdmins(project.id, showNotification('error'))
     // eslint-disable-next-line
   }, [])
@@ -189,12 +194,14 @@ const ProjectConfigurationTab = ({
   )
 }
 const mapStateToProps = (state: AppState) => ({
-  repoAdmins: state.projects.repoAdmins.value
+  repoAdmins: state.projects.repoAdmins.value,
+  projectConf: state.projects.projectConf.value
 })
 
 const mapDispatchToProps = (dispatch: AppDispatch) => ({
   getRepoAdmins: bindActionCreators(getRepoAdminsAction, dispatch),
-  updateProjectConf: bindActionCreators(updateProjectConfAction, dispatch)
+  updateProjectConf: bindActionCreators(updateProjectConfAction, dispatch),
+  getProjectConf: bindActionCreators(getProjectConfAction, dispatch)
 })
 
 const connector = connect(mapStateToProps, mapDispatchToProps)

@@ -5,7 +5,6 @@ import { useHistory } from 'react-router'
 import { AppDispatch, AppState } from 'store'
 import { bindActionCreators } from 'redux'
 import { connect, ConnectedProps } from 'react-redux'
-import { Helmet } from 'react-helmet'
 import { AddBoxOutlined, CloseRounded } from '@material-ui/icons'
 import { getProjectsAction, resetProjectsAction } from 'store/projects/actions'
 import Button from '@material-ui/core/Button'
@@ -15,6 +14,7 @@ import Table from 'components/Table'
 import { IProject } from 'types'
 import { HeadCell } from 'components/Table/TableHeader/TableHeader'
 import { ReactComponent as LayersImg } from 'images/layers.svg'
+import { PageTitle } from 'components/PageTitle'
 import GitHubIcon from '@material-ui/icons/GitHub'
 import { Avatar, IconButton, TableCell } from '@material-ui/core'
 import { StyledTableRow } from 'components/Table/styles'
@@ -87,9 +87,7 @@ const Projects = ({ user, projects, getProjects, resetProjects }: ProjectsProps)
 
   return (
     <div>
-      <Helmet>
-        <title>Projects - ACCULA</title>
-      </Helmet>
+      <PageTitle title="Projects" />
       <BreadCrumbs breadcrumbs={[{ text: 'Projects' }]} />
       <Tabs />
       <Table<IProject>

@@ -9,7 +9,8 @@ export const projects: IProject[] = [
     repoName: '2019-highload-dht',
     repoDescription: 'Курсовой проект 2019 года курса "Highload системы"',
     repoOwnerAvatar: 'https://avatars2.githubusercontent.com/u/31819365?s=200&v=4',
-    repoOpenPullCount: 10
+    repoOpenPullCount: 10,
+    adminIds: [1]
   },
   {
     id: 2,
@@ -19,7 +20,8 @@ export const projects: IProject[] = [
     repoName: 'accula',
     repoDescription: 'Advanced Code Clones UniversaL Analyzer',
     repoOwnerAvatar: 'https://avatars0.githubusercontent.com/u/61988411?s=200&v=4',
-    repoOpenPullCount: 0
+    repoOpenPullCount: 0,
+    adminIds: [1]
   },
   {
     id: 3,
@@ -29,7 +31,8 @@ export const projects: IProject[] = [
     repoName: '2020-db-lsm',
     repoDescription: 'NoSQL course project',
     repoOwnerAvatar: 'https://avatars2.githubusercontent.com/u/31819365?s=200&v=4',
-    repoOpenPullCount: 19
+    repoOpenPullCount: 19,
+    adminIds: [1]
   }
 ]
 

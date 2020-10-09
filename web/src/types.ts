@@ -47,6 +47,7 @@ export interface IProject {
   repoDescription?: string
   repoOwnerAvatar: string
   repoOpenPullCount: number
+  adminIds: number[]
 }
 
 export interface IProjectConf {

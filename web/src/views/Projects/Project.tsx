@@ -3,12 +3,7 @@ import { connect, ConnectedProps } from 'react-redux'
 import { useHistory, useParams } from 'react-router-dom'
 import { bindActionCreators } from 'redux'
 import { AppDispatch, AppState } from 'store'
-import {
-  getProjectAction,
-  getProjectConfAction,
-  getRepoAdminsAction,
-  resetProjectInfo
-} from 'store/projects/actions'
+import { getProjectAction, resetProjectInfo } from 'store/projects/actions'
 import { getPullsAction, resetPullsInfo } from 'store/pulls/actions'
 import { historyPush, isProjectAdmin } from 'utils'
 import { PageTitle } from 'components/PageTitle'
@@ -26,11 +21,9 @@ interface ProjectProps extends PropsFromRedux {}
 
 const Project = ({
   project,
-  projectConf,
   user,
   pulls,
   getProject,
-  getProjectConf,
   getPulls,
   resetPulls,
   resetProject
@@ -52,7 +45,6 @@ const Project = ({
 
   useEffect(() => {
     getProject(projectId, showErrorNotification)
-    getProjectConf(projectId)
     getPulls(projectId, showErrorNotification)
 
     return () => {
@@ -62,14 +54,14 @@ const Project = ({
     // eslint-disable-next-line
   }, [projectId])
 
-  if (!user || !project || !projectConf) {
+  if (!user || !project) {
     return <></>
   }
 
   const handleChangeTab = (t: Tab) => {
     historyPush(history, `/projects/${projectId}/${t.id}`)
   }
-  const isAdmin = isProjectAdmin(user, project, projectConf)
+
   const tabs = [
     {
       id: 'pulls',
@@ -83,37 +75,32 @@ const Project = ({
     }
   ] as Tab[]
 
+  const isAdmin = isProjectAdmin(user, project)
   if (isAdmin) {
     tabs.push({ id: 'configuration', text: 'Configuration', Icon: SettingsIcon })
   }
 
   return (
-    <div>
+    <>
+      <PageTitle title={project && project.repoName} />
       <BreadCrumbs
         breadcrumbs={[{ text: 'Projects', to: '/projects' }, { text: project.repoName }]}
       />
-      <PageTitle title={project && project.repoName} />
       <Tabs tabs={tabs} onChange={handleChangeTab} activeId={tab} />
       {tab === 'pulls' && <ProjectPullsTab project={project} pulls={pulls} />}
-      {isAdmin && tab === 'configuration' && (
-        <ProjectConfigurationTab project={project} projectConf={projectConf} />
-      )}
-    </div>
+      {isAdmin && tab === 'configuration' && <ProjectConfigurationTab project={project} />}
+    </>
   )
 }
 
 const mapStateToProps = (state: AppState) => ({
   project: state.projects.project.value,
-  projectConf: state.projects.projectConf.value,
-  repoAdmins: state.projects.repoAdmins.value,
   pulls: state.pulls.pulls.value,
   user: state.users.user.value
 })
 
 const mapDispatchToProps = (dispatch: AppDispatch) => ({
   getProject: bindActionCreators(getProjectAction, dispatch),
-  getProjectConf: bindActionCreators(getProjectConfAction, dispatch),
-  getRepoAdmins: bindActionCreators(getRepoAdminsAction, dispatch),
   resetPulls: bindActionCreators(resetPullsInfo, dispatch),
   resetProject: bindActionCreators(resetProjectInfo, dispatch),
   getPulls: bindActionCreators(getPullsAction, dispatch)
