@@ -46,7 +46,7 @@ const Table = <DataItem extends object>({
 
   return (
     <div className={classes.root}>
-      {toolBarTitle && toolBarButtons && (
+      {toolBarTitle !== undefined && toolBarButtons && (
         <TableToolbar title={toolBarTitle} toolBarButtons={toolBarButtons} />
       )}
       <Paper className={classes.paper}>
