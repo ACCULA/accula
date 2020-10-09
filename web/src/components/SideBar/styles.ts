@@ -1,14 +1,14 @@
 import { makeStyles, Theme } from '@material-ui/core'
 import { colors } from 'theme'
-import { drawerWidth } from 'utils'
+import { DRAWER_WIDTH } from 'utils'
 
 export const useStyles = makeStyles((theme: Theme) => ({
   drawer: {
-    width: drawerWidth,
+    width: DRAWER_WIDTH,
     flexShrink: 0
   },
   drawerPaper: {
-    width: drawerWidth,
+    width: DRAWER_WIDTH,
     background: theme.palette.type === 'light' ? colors.primaryLight : colors.primaryDark,
     color: '#fff'
   },

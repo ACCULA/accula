@@ -3,8 +3,8 @@ import { IProject, IUser } from 'types'
 
 export const API_URL = process.env.REACT_APP_API_URL
 export const DEBUG = false
-
-export const drawerWidth = 260
+export const DRAWER_WIDTH = 260
+export const DATE_TITLE_FORMAT = "d MMMM yyyy 'at' HH:mm"
 
 export const isProjectAdmin = (
   user: IUser, //

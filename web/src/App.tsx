@@ -20,7 +20,7 @@ import { NavBar } from 'components/NavBar/NavBar'
 import { SnackbarProvider } from 'notistack'
 import { AppDispatch, AppState } from 'store'
 import SideBar from 'components/SideBar'
-import { drawerWidth } from 'utils'
+import { DRAWER_WIDTH } from 'utils'
 import { PageTitle } from 'components/PageTitle'
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -44,7 +44,7 @@ const useStyles = makeStyles((theme: Theme) =>
         easing: theme.transitions.easing.easeOut,
         duration: theme.transitions.duration.enteringScreen
       }),
-      marginLeft: drawerWidth
+      marginLeft: DRAWER_WIDTH
     },
     drawerHeader: {
       display: 'flex',
