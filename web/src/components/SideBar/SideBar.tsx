@@ -25,7 +25,7 @@ interface SideBarProps extends PropsFromRedux {
   routes: IRouteInfo[]
 }
 
-const SideBar = ({ routes, settings, changeSettings }: SideBarProps) => {
+const SideBar = ({ routes, settings, changeSettings, token }: SideBarProps) => {
   const theme = useTheme()
   const history = useHistory()
   const classes = useStyles()
@@ -75,7 +75,8 @@ const SideBar = ({ routes, settings, changeSettings }: SideBarProps) => {
       <List className={classes.itemList}>
         {routes.map(
           route =>
-            route.path !== '/settings' && (
+            route.path !== '/settings' &&
+            (!route.authRequired || token) && (
               <ListItem
                 classes={{ selected: classes.activeItem, disabled: classes.activeItem }}
                 button
@@ -94,17 +95,19 @@ const SideBar = ({ routes, settings, changeSettings }: SideBarProps) => {
             )
         )}
       </List>
-      <div className={classes.drawerBottom}>
-        <Tooltip title="Settings">
-          <IconButton
-            color="inherit"
-            aria-label="Settings"
-            onClick={() => historyPush(history, settingsRoute.path)}
-          >
-            <SettingsRounded />
-          </IconButton>
-        </Tooltip>
-      </div>
+      {token && (
+        <div className={classes.drawerBottom}>
+          <Tooltip title="Settings">
+            <IconButton
+              color="inherit"
+              aria-label="Settings"
+              onClick={() => historyPush(history, settingsRoute.path)}
+            >
+              <SettingsRounded />
+            </IconButton>
+          </Tooltip>
+        </div>
+      )}
     </>
   )
 
@@ -128,6 +131,7 @@ const SideBar = ({ routes, settings, changeSettings }: SideBarProps) => {
 }
 
 const mapStateToProps = (state: AppState) => ({
+  token: state.users.token.accessToken,
   settings: state.settings.settings
 })
 
