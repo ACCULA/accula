@@ -66,8 +66,8 @@ const ProjectSettingsTab = ({
   const classes = useStyles()
   const history = useHistory()
   const { enqueueSnackbar, closeSnackbar } = useSnackbar()
-  const [adminOptions, setAdminOptions] = useState<IUser[]>([])
-  const [excludedFilesOptions, setExcludedFilesOptions] = useState([])
+  const [adminOptions, setAdminOptions] = useState<IUser[]>(null)
+  const [excludedFilesOptions, setExcludedFilesOptions] = useState(null)
   const [fetching, setFetching] = useState(false)
 
   const showNotification = (variant: VariantType) => {
@@ -94,13 +94,24 @@ const ProjectSettingsTab = ({
       const options = repoAdmins.filter(u => u.id !== project.creatorId)
       setAdminOptions(options)
     }
+    // eslint-disable-next-line
+  }, [repoAdmins, projectConf])
+
+  useEffect(() => {
     if (baseFiles) {
       setExcludedFilesOptions(baseFiles)
     }
     // eslint-disable-next-line
-  }, [])
+  }, [baseFiles])
 
-  if (!project || !projectConf || !repoAdmins || !baseFiles) {
+  if (
+    !project ||
+    !projectConf ||
+    !repoAdmins ||
+    !baseFiles ||
+    !excludedFilesOptions ||
+    !adminOptions
+  ) {
     return <></>
   }
 
@@ -157,8 +168,8 @@ const ProjectSettingsTab = ({
         validationSchema={validationSchema}
         initialValues={{
           admins: adminOptions.filter(u => projectConf.admins.includes(u.id)),
-          excludedFiles: excludedFilesOptions.filter(f =>
-            projectConf.excludedFiles.includes(f.value)
+          excludedFiles: excludedFilesOptions.filter((f: string) =>
+            projectConf.excludedFiles.includes(f)
           ),
           fileMinSimilarityIndex: projectConf ? projectConf.fileMinSimilarityIndex : '',
           cloneMinTokenCount: projectConf ? projectConf.cloneMinTokenCount : ''
@@ -180,7 +191,7 @@ const ProjectSettingsTab = ({
                   filterSelectedOptions
                   defaultValue={adminOptions.filter(u => projectConf.admins.includes(u.id))}
                   onChange={(_, value: IUser[]) => setFieldValue('admins', value)}
-                  renderTags={(value: IUser[], getTagProps) =>
+                  renderTags={(value: IUser[], getTagProps: any) =>
                     value.map((option, index) => (
                       <Chip
                         className={classes.chip}
@@ -220,14 +231,14 @@ const ProjectSettingsTab = ({
                   multiple
                   limitTags={5}
                   id="excluded-files-select"
-                  options={adminOptions}
+                  options={excludedFilesOptions}
                   getOptionLabel={(option: string) => option}
                   filterSelectedOptions
-                  defaultValue={excludedFilesOptions.filter(f =>
-                    projectConf.excludedFiles.includes(f.value)
+                  defaultValue={excludedFilesOptions.filter((f: string) =>
+                    projectConf.excludedFiles.includes(f)
                   )}
                   onChange={(_, value: string[]) => setFieldValue('excludedFiles', value)}
-                  renderTags={(value: string[], getTagProps) =>
+                  renderTags={(value: string[], getTagProps: any) =>
                     value.map((option, index) => (
                       <Chip
                         className={classes.chip}

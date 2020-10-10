@@ -36,7 +36,8 @@ const mapStateToProps = (state: AppState) => ({
     state.projects.project.isFetching ||
     state.projects.projectConf.isFetching ||
     state.pulls.pulls.isFetching ||
-    state.pulls.pull.isFetching
+    state.pulls.pull.isFetching ||
+    state.projects.baseFiles.isFetching
 })
 
 const mapDispatchToProps = (dispatch: AppDispatch) => ({
