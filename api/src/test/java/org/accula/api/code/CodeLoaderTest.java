@@ -200,4 +200,13 @@ class CodeLoaderTest {
                 .count();
         assertEquals(5, possibleRenameCount);
     }
+
+    @Test
+    void test() {
+        final var projectRepo = new GithubRepo(1L, "2017-highload-kv", "descr", USER);
+        final var filenames = codeLoader.loadFilenames(projectRepo).collectList().block();
+        assertNotNull(filenames);
+        assertEquals(21, filenames.size());
+        assertTrue(filenames.contains(README));
+    }
 }
