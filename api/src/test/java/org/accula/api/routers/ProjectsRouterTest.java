@@ -430,7 +430,7 @@ class ProjectsRouterTest {
     }
 
     @Test
-    void testHeadForbidden() {
+    void testHeadFilesForbidden() {
         mockForbidden();
 
         client.get().uri("/api/projects/{id}/headFiles", PROJECT.getId())
@@ -439,7 +439,7 @@ class ProjectsRouterTest {
     }
 
     @Test
-    void testHeadNotFound() {
+    void testHeadFilesNotFound() {
         mockNotFound();
 
         client.get().uri("/api/projects/{id}/headFiles", PROJECT.getId())
