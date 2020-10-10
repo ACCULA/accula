@@ -67,49 +67,49 @@ CREATE TABLE IF NOT EXISTS project_conf
     FOREIGN KEY (project_id) REFERENCES project (id)
 );
 
-CREATE TABLE IF NOT EXISTS commit_snapshot
+CREATE TABLE IF NOT EXISTS snapshot
 (
     sha     CHAR(40)     NOT NULL,
     repo_id BIGINT       NOT NULL,
     branch  VARCHAR(256) NOT NULL,
 
     FOREIGN KEY (repo_id) REFERENCES repo_github (id),
-    CONSTRAINT commit_snapshot_pk PRIMARY KEY (sha, repo_id)
+    CONSTRAINT snapshot_pk PRIMARY KEY (sha, repo_id)
 );
 
 CREATE TABLE IF NOT EXISTS pull
 (
-    id                           BIGINT PRIMARY KEY,
-    number                       INT                      NOT NULL,
-    title                        VARCHAR(128)             NOT NULL,
-    open                         BOOLEAN                  NOT NULL,
-    created_at                   TIMESTAMP WITH TIME ZONE NOT NULL,
-    updated_at                   TIMESTAMP WITH TIME ZONE NOT NULL,
+    id                    BIGINT PRIMARY KEY,
+    number                INT                      NOT NULL,
+    title                 VARCHAR(128)             NOT NULL,
+    open                  BOOLEAN                  NOT NULL,
+    created_at            TIMESTAMP WITH TIME ZONE NOT NULL,
+    updated_at            TIMESTAMP WITH TIME ZONE NOT NULL,
 
-    head_commit_snapshot_sha     CHAR(40)                 NOT NULL,
-    head_commit_snapshot_repo_id BIGINT                   NOT NULL,
+    head_snapshot_sha     CHAR(40)                 NOT NULL,
+    head_snapshot_repo_id BIGINT                   NOT NULL,
 
-    base_commit_snapshot_sha     CHAR(40)                 NOT NULL,
-    base_commit_snapshot_repo_id BIGINT                   NOT NULL,
+    base_snapshot_sha     CHAR(40)                 NOT NULL,
+    base_snapshot_repo_id BIGINT                   NOT NULL,
 
-    project_id                   BIGINT                   NOT NULL,
-    author_github_id             BIGINT                   NOT NULL,
+    project_id            BIGINT                   NOT NULL,
+    author_github_id      BIGINT                   NOT NULL,
 
-    FOREIGN KEY (head_commit_snapshot_sha, head_commit_snapshot_repo_id) REFERENCES commit_snapshot (sha, repo_id),
-    FOREIGN KEY (base_commit_snapshot_sha, base_commit_snapshot_repo_id) REFERENCES commit_snapshot (sha, repo_id),
+    FOREIGN KEY (head_snapshot_sha, head_snapshot_repo_id) REFERENCES snapshot (sha, repo_id),
+    FOREIGN KEY (base_snapshot_sha, base_snapshot_repo_id) REFERENCES snapshot (sha, repo_id),
     FOREIGN KEY (project_id) REFERENCES project (id),
     FOREIGN KEY (author_github_id) REFERENCES user_github (id)
 );
 
-CREATE TABLE IF NOT EXISTS commit_snapshot_pull
+CREATE TABLE IF NOT EXISTS snapshot_pull
 (
-    commit_snapshot_sha     CHAR(40) NOT NULL,
-    commit_snapshot_repo_id BIGINT   NOT NULL,
-    pull_id                 BIGINT   NOT NULL,
+    snapshot_sha     CHAR(40) NOT NULL,
+    snapshot_repo_id BIGINT   NOT NULL,
+    pull_id          BIGINT   NOT NULL,
 
-    FOREIGN KEY (commit_snapshot_sha, commit_snapshot_repo_id) REFERENCES commit_snapshot (sha, repo_id),
+    FOREIGN KEY (snapshot_sha, snapshot_repo_id) REFERENCES snapshot (sha, repo_id),
     FOREIGN KEY (pull_id) REFERENCES pull (id),
-    CONSTRAINT commit_snapshot_pull_pk PRIMARY KEY (commit_snapshot_sha, commit_snapshot_repo_id, pull_id)
+    CONSTRAINT snapshot_pull_pk PRIMARY KEY (snapshot_sha, snapshot_repo_id, pull_id)
 );
 
 --  TODO: extract (target | source)_ ... into separate table
@@ -128,6 +128,6 @@ CREATE TABLE IF NOT EXISTS clone
     source_to_line    INT          NOT NULL,
     suppressed        BOOLEAN      NOT NULL DEFAULT FALSE,
 
-    FOREIGN KEY (target_commit_sha, target_repo_id) REFERENCES commit_snapshot (sha, repo_id),
-    FOREIGN KEY (source_commit_sha, source_repo_id) REFERENCES commit_snapshot (sha, repo_id)
+    FOREIGN KEY (target_commit_sha, target_repo_id) REFERENCES snapshot (sha, repo_id),
+    FOREIGN KEY (source_commit_sha, source_repo_id) REFERENCES snapshot (sha, repo_id)
 );

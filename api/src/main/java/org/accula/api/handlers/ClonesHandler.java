@@ -5,8 +5,8 @@ import org.accula.api.code.CodeLoader;
 import org.accula.api.code.FileEntity;
 import org.accula.api.code.SnippetMarker;
 import org.accula.api.db.model.Clone;
-import org.accula.api.db.model.CommitSnapshot;
 import org.accula.api.db.model.Pull;
+import org.accula.api.db.model.Snapshot;
 import org.accula.api.db.model.User;
 import org.accula.api.db.repo.CloneRepo;
 import org.accula.api.db.repo.CurrentUserRepo;
@@ -102,7 +102,7 @@ public final class ClonesHandler {
 
     private Mono<ServerResponse> toResponse(final Flux<Clone> clones, final long projectId, final int pullNumber) {
         class SnippetContainer {
-            CommitSnapshot snapshot;
+            Snapshot snapshot;
             final List<SnippetMarker> markers = new ArrayList<>();
         }
 
@@ -139,8 +139,8 @@ public final class ClonesHandler {
     }
 
     private static CloneDto toCloneDto(final Clone clone,
-                                       final FileEntity<CommitSnapshot> targetFile,
-                                       final FileEntity<CommitSnapshot> sourceFile,
+                                       final FileEntity<Snapshot> targetFile,
+                                       final FileEntity<Snapshot> sourceFile,
                                        final Integer sourcePullNumber,
                                        final long projectId,
                                        final int targetPullNumber) {
@@ -163,11 +163,11 @@ public final class ClonesHandler {
         return new CloneDto(clone.getId(), target, source);
     }
 
-    private static FlatCodeSnippetBuilder codeSnippetWith(final CommitSnapshot commitSnapshot, final String content) {
+    private static FlatCodeSnippetBuilder codeSnippetWith(final Snapshot snapshot, final String content) {
         return CloneDto.FlatCodeSnippet.builder()
-                .owner(commitSnapshot.getRepo().getOwner().getLogin())
-                .repo(commitSnapshot.getRepo().getName())
-                .sha(commitSnapshot.getSha())
+                .owner(snapshot.getRepo().getOwner().getLogin())
+                .repo(snapshot.getRepo().getName())
+                .sha(snapshot.getSha())
                 .content(base64.encodeToString(content.getBytes(UTF_8)));
     }
 

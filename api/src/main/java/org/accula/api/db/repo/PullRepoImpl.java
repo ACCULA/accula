@@ -38,10 +38,10 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
                                       open,
                                       created_at,
                                       updated_at,
-                                      head_commit_snapshot_sha,
-                                      head_commit_snapshot_repo_id,
-                                      base_commit_snapshot_sha,
-                                      base_commit_snapshot_repo_id,
+                                      head_snapshot_sha,
+                                      head_snapshot_repo_id,
+                                      base_snapshot_sha,
+                                      base_snapshot_repo_id,
                                       project_id,
                                       author_github_id)
                     VALUES ($collection)
@@ -49,8 +49,8 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
                        SET title = excluded.title,
                            open = excluded.open,
                            updated_at = excluded.updated_at,
-                           head_commit_snapshot_sha = excluded.head_commit_snapshot_sha,
-                           base_commit_snapshot_sha = excluded.base_commit_snapshot_sha
+                           head_snapshot_sha = excluded.head_snapshot_sha,
+                           base_snapshot_sha = excluded.base_snapshot_sha
                     """);
             statement.bind(pulls, pull -> new Object[]{
                     pull.getId(),
@@ -229,16 +229,16 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
                        author.avatar          AS author_avatar,
                        author.is_org          AS author_is_org
                 FROM pull
-                   JOIN commit_snapshot head_snap
-                       ON pull.head_commit_snapshot_sha = head_snap.sha
+                   JOIN snapshot head_snap
+                       ON pull.head_snapshot_sha = head_snap.sha
                    JOIN repo_github base_repo
-                       ON pull.base_commit_snapshot_repo_id = base_repo.id
+                       ON pull.base_snapshot_repo_id = base_repo.id
                    JOIN user_github base_repo_owner
                        ON base_repo.owner_id = base_repo_owner.id
-                   JOIN commit_snapshot base_snap
-                       ON pull.base_commit_snapshot_sha = base_snap.sha
+                   JOIN snapshot base_snap
+                       ON pull.base_snapshot_sha = base_snap.sha
                    JOIN repo_github head_repo
-                       ON pull.head_commit_snapshot_repo_id = head_repo.id
+                       ON pull.head_snapshot_repo_id = head_repo.id
                    JOIN user_github head_repo_owner
                        ON head_repo.owner_id = head_repo_owner.id
                    JOIN user_github author

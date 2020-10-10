@@ -11,7 +11,7 @@ import java.util.List;
  * @author Anton Lamtev
  */
 public interface GithubUserRepo {
-    default Mono<GithubUser> upsert(GithubUser user) {
+    default Mono<GithubUser> upsert(final GithubUser user) {
         return upsert(List.of(user)).next();
     }
 

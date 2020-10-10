@@ -13,7 +13,7 @@ import static lombok.AccessLevel.PRIVATE;
 @Value
 @NoArgsConstructor(force = true, access = PRIVATE)
 @AllArgsConstructor
-public class GithubApiCommitSnapshot {
+public class GithubApiSnapshot {
     @Nullable
     String label;
     String ref;

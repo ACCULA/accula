@@ -11,8 +11,8 @@ import org.accula.api.code.git.GitDiffEntry.Renaming;
 import org.accula.api.code.git.GitFile;
 import org.accula.api.code.git.Identifiable;
 import org.accula.api.code.git.Snippet;
-import org.accula.api.db.model.CommitSnapshot;
 import org.accula.api.db.model.GithubRepo;
+import org.accula.api.db.model.Snapshot;
 import org.accula.api.util.Lambda;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -40,7 +40,7 @@ public final class GitCodeLoader implements CodeLoader {
     private final Git git;
 
     @Override
-    public Flux<FileEntity<CommitSnapshot>> loadFiles(final CommitSnapshot snapshot, final FileFilter filter) {
+    public Flux<FileEntity<Snapshot>> loadFiles(final Snapshot snapshot, final FileFilter filter) {
         return withCommonGitRepo(snapshot)
                 .flatMap(repo -> Mono
                         .fromFuture(repo.lsTree(snapshot.getSha()))
@@ -57,7 +57,7 @@ public final class GitCodeLoader implements CodeLoader {
     }
 
     @Override
-    public Flux<FileEntity<CommitSnapshot>> loadSnippets(final CommitSnapshot snapshot, final List<SnippetMarker> markers) {
+    public Flux<FileEntity<Snapshot>> loadSnippets(final Snapshot snapshot, final List<SnippetMarker> markers) {
         return withCommonGitRepo(snapshot)
                 .flatMap(repo -> Mono
                         .fromFuture(repo.lsTree(snapshot.getSha()))
@@ -73,16 +73,17 @@ public final class GitCodeLoader implements CodeLoader {
     }
 
     @Override
-    public Flux<DiffEntry<CommitSnapshot>> loadDiff(final CommitSnapshot base, final CommitSnapshot head, final FileFilter filter) {
+    public Flux<DiffEntry<Snapshot>> loadDiff(final Snapshot base, final Snapshot head, final FileFilter filter) {
         return withCommonGitRepo(head)
+                .flatMap(repo -> addOrUpdateRemote(repo, base))
                 .flatMapMany(repo -> loadDiff(repo, base, head, filter, 0));
     }
 
     @Override
-    public Flux<DiffEntry<CommitSnapshot>> loadRemoteDiff(final GithubRepo projectRepo,
-                                                          final CommitSnapshot base,
-                                                          final CommitSnapshot head,
-                                                          final FileFilter filter) {
+    public Flux<DiffEntry<Snapshot>> loadRemoteDiff(final GithubRepo projectRepo,
+                                                    final Snapshot base,
+                                                    final Snapshot head,
+                                                    final FileFilter filter) {
         return withProjectGitRepo(projectRepo)
                 .flatMap(repo -> addOrUpdateRemotes(repo, base, head))
                 .flatMapMany(repo -> loadDiff(repo, base, head, filter, 1));
@@ -97,7 +98,7 @@ public final class GitCodeLoader implements CodeLoader {
     }
 
     /// We name each common repo git folder like that: <owner-login>_<repo-name>
-    private Mono<Repo> withCommonGitRepo(final CommitSnapshot snapshot) {
+    private Mono<Repo> withCommonGitRepo(final Snapshot snapshot) {
         final var snapshotRepo = snapshot.getRepo();
         final var repoGitDirectory = Path.of(snapshotRepo.getOwner().getLogin() + "_" + snapshotRepo.getName());
         final var repoUrl = repoGitUrl(snapshotRepo);
@@ -117,7 +118,7 @@ public final class GitCodeLoader implements CodeLoader {
                 .flatMap(repo -> Mono.fromFuture(repo.fetch()));
     }
 
-    private Mono<Repo> addOrUpdateRemotes(final Repo repo, final CommitSnapshot base, final CommitSnapshot head) {
+    private Mono<Repo> addOrUpdateRemotes(final Repo repo, final Snapshot base, final Snapshot head) {
         final var baseRemote = base.getRepo().getOwner().getLogin();
         final var headRemote = head.getRepo().getOwner().getLogin();
         final var baseUrl = repoGitUrl(base.getRepo());
@@ -132,6 +133,14 @@ public final class GitCodeLoader implements CodeLoader {
                         ));
     }
 
+    private Mono<Repo> addOrUpdateRemote(final Repo repo, final Snapshot remote) {
+        final var url = repoGitUrl(remote.getRepo());
+        final var name = remote.getRepo().getOwner().getLogin();
+        return Mono
+                .fromFuture(repo.remote())
+                .flatMap(remotesPresent -> addOrUpdateRemote(repo, url, name, remotesPresent));
+    }
+
     private static Mono<Repo> addOrUpdateRemote(final Repo repo,
                                                 final String remoteUrl,
                                                 final String remote,
@@ -139,11 +148,11 @@ public final class GitCodeLoader implements CodeLoader {
         return Mono.fromFuture(remotesPresent.contains(remote) ? repo.remoteUpdate(remote) : repo.remoteAdd(remoteUrl, remote));
     }
 
-    private static Flux<DiffEntry<CommitSnapshot>> loadDiff(final Repo repo,
-                                                            final CommitSnapshot base,
-                                                            final CommitSnapshot head,
-                                                            final FileFilter filter,
-                                                            final int findRenamesMinSimilarityIndex) {
+    private static Flux<DiffEntry<Snapshot>> loadDiff(final Repo repo,
+                                                      final Snapshot base,
+                                                      final Snapshot head,
+                                                      final FileFilter filter,
+                                                      final int findRenamesMinSimilarityIndex) {
         return Mono
                 .fromFuture(repo.diff(base.getSha(), head.getSha(), findRenamesMinSimilarityIndex))
                 .map(diffEntries -> diffEntries
@@ -160,8 +169,8 @@ public final class GitCodeLoader implements CodeLoader {
                         .flatMapMany(Flux::fromStream));
     }
 
-    private static Function<Mono<Map<Identifiable, String>>, Mono<Stream<DiffEntry<CommitSnapshot>>>>
-    convertDiffEntries(final List<GitDiffEntry> diffEntries, final CommitSnapshot base, final CommitSnapshot head) {
+    private static Function<Mono<Map<Identifiable, String>>, Mono<Stream<DiffEntry<Snapshot>>>>
+    convertDiffEntries(final List<GitDiffEntry> diffEntries, final Snapshot base, final Snapshot head) {
         return filesMono -> filesMono
                 .map(files -> diffEntries
                         .stream()

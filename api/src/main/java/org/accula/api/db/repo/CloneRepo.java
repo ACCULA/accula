@@ -11,7 +11,7 @@ import java.util.List;
  * @author Anton Lamtev
  */
 public interface CloneRepo {
-    default Mono<Clone> insert(Clone clone) {
+    default Mono<Clone> insert(final Clone clone) {
         return insert(List.of(clone)).next();
     }
 

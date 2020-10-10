@@ -1,9 +1,9 @@
 package org.accula.api.converter;
 
-import org.accula.api.db.model.CommitSnapshot;
 import org.accula.api.db.model.GithubUser;
 import org.accula.api.db.model.Project;
 import org.accula.api.db.model.Pull;
+import org.accula.api.db.model.Snapshot;
 import org.accula.api.db.model.User;
 import org.accula.api.handlers.dto.GithubUserDto;
 import org.accula.api.handlers.dto.ProjectConfDto;
@@ -82,7 +82,7 @@ public final class ModelToDtoConverter {
                 .build();
     }
 
-    public static PullDto.Marker convert(final CommitSnapshot snapshot) {
+    public static PullDto.Marker convert(final Snapshot snapshot) {
         return new PullDto.Marker(
                 String.format(
                         GITHUB_REPO_URL_FORMAT + "/tree/%s",

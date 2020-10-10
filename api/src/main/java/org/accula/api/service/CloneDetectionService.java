@@ -71,11 +71,11 @@ public final class CloneDetectionService {
 
     private Clone convert(final CodeSnippet target, final CodeSnippet source) {
         return Clone.builder()
-                .targetSnapshot(target.getCommitSnapshot())
+                .targetSnapshot(target.getSnapshot())
                 .targetFile(target.getFile())
                 .targetFromLine(target.getFromLine())
                 .targetToLine(target.getToLine())
-                .sourceSnapshot(source.getCommitSnapshot())
+                .sourceSnapshot(source.getSnapshot())
                 .sourceFile(source.getFile())
                 .sourceFromLine(source.getFromLine())
                 .sourceToLine(source.getToLine())

@@ -6,14 +6,17 @@ import org.accula.api.github.model.GithubApiHook;
 import org.accula.api.github.model.GithubApiPull;
 import org.accula.api.github.model.GithubApiRepo;
 import org.accula.api.github.model.GithubApiUserPermission;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.function.TupleUtils;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -28,16 +31,22 @@ import static org.springframework.http.HttpStatus.OK;
 @Slf4j
 @Component
 public final class GithubClientImpl implements GithubClient {
+    private static final MediaType APPLICATION_VND_GITHUB_V3_JSON = new MediaType("application", "vnd.github.v3+json");
     private final AccessTokenProvider accessTokenProvider;
     private final LoginProvider loginProvider;
     private final WebClient githubApiWebClient;
 
     public GithubClientImpl(final AccessTokenProvider accessTokenProvider, final LoginProvider loginProvider, final WebClient webClient) {
-        this.accessTokenProvider = accessTokenProvider;
-        this.loginProvider = loginProvider;
+        this.accessTokenProvider = () -> accessTokenProvider
+                .accessToken()
+                .switchIfEmpty(Mono.error(new IllegalStateException("Access token MUST be present")));
+        this.loginProvider = () -> loginProvider
+                .login()
+                .switchIfEmpty(Mono.error(new IllegalStateException("Login MUST be present")));
         this.githubApiWebClient = webClient
                 .mutate()
                 .baseUrl("https://api.github.com")
+                .defaultHeaders(h -> h.setAccept(List.of(APPLICATION_VND_GITHUB_V3_JSON)))
                 .exchangeStrategies(ExchangeStrategies
                         .builder()
                         .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(10_000_000))
@@ -64,7 +73,7 @@ public final class GithubClientImpl implements GithubClient {
                             .bodyToMono(GithubApiUserPermission.class)
                             .map(permission -> permission.getPermission() == ADMIN);
                 })
-                .onErrorResume(GithubClientException::wrap);
+                .onErrorMap(GithubClientException::new);
     }
 
     @Override
@@ -75,7 +84,7 @@ public final class GithubClientImpl implements GithubClient {
                 .headers(h -> h.setBearerAuth(accessToken))
                 .retrieve()
                 .bodyToMono(GithubApiRepo.class)
-                .onErrorResume(GithubClientException::wrap));
+                .onErrorMap(GithubClientException::new));
     }
 
     @Override
@@ -89,18 +98,38 @@ public final class GithubClientImpl implements GithubClient {
                 .filter(GithubApiCollaborator::hasAdminPermissions)
                 .map(GithubApiCollaborator::getId)
                 .collectList()
-                .onErrorResume(GithubClientException::wrap));
+                .onErrorMap(GithubClientException::new));
     }
 
     @Override
-    public Mono<GithubApiPull[]> getRepositoryPulls(final String owner, final String repo, final GithubApiPull.State state) {
+    public Flux<GithubApiPull> getRepositoryPulls(final String owner,
+                                                  final String repo,
+                                                  final GithubApiPull.State state,
+                                                  final int perPage) {
+        final var page = new AtomicInteger(1);
+        return getRepositoryPulls(owner, repo, state, perPage, page.getAndIncrement())
+                .expand(pulls -> {
+                    if (pulls.length < perPage) {
+                        return Mono.empty();
+                    }
+                    return getRepositoryPulls(owner, repo, state, perPage, page.getAndIncrement());
+                })
+                .flatMap(Flux::fromArray);
+    }
+
+    @Override
+    public Mono<GithubApiPull[]> getRepositoryPulls(final String owner,
+                                                    final String repo,
+                                                    final GithubApiPull.State state,
+                                                    final int perPage,
+                                                    final int page) {
         return withAccessToken(accessToken -> githubApiWebClient
                 .get()
-                .uri("/repos/{owner}/{repo}/pulls?&page=1&per_page=100&state=" + state.value(), owner, repo)
+                .uri("/repos/{owner}/{repo}/pulls?state={state}&per_page={perPage}&page={page}", owner, repo, state.value(), perPage, page)
                 .headers(h -> h.setBearerAuth(accessToken))
                 .retrieve()
                 .bodyToMono(GithubApiPull[].class)
-                .onErrorResume(GithubClientException::wrap));
+                .onErrorMap(GithubClientException::new));
     }
 
     @Override
@@ -111,7 +140,7 @@ public final class GithubClientImpl implements GithubClient {
                 .headers(h -> h.setBearerAuth(accessToken))
                 .retrieve()
                 .bodyToMono(GithubApiPull.class)
-                .onErrorResume(GithubClientException::wrap));
+                .onErrorMap(GithubClientException::new));
     }
 
     @Override
@@ -124,7 +153,8 @@ public final class GithubClientImpl implements GithubClient {
                 .exchange()
                 .doOnSuccess(p -> log.info("Created GitHub webhook for {}/{}", owner, repo))
                 .doOnError(e -> log.error("Cannot create hook for {}/{}", owner, repo, e))
-                .then());
+                .then())
+                .onErrorMap(GithubClientException::new);
     }
 
     private <T> Mono<T> withAccessToken(final Function<String, Mono<T>> transform) {

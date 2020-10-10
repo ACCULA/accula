@@ -106,26 +106,26 @@ public final class CloneRepoImpl implements CloneRepo, ConnectionProvidedRepo {
                                        clone.source_from_line      AS source_from_line,
                                        clone.source_to_line        AS source_to_line
                                 FROM clone
-                                  JOIN commit_snapshot target
+                                  JOIN snapshot target
                                       ON clone.target_commit_sha = target.sha
                                           AND clone.target_repo_id = target.repo_id
                                   JOIN repo_github target_repo
                                       ON target.repo_id = target_repo.id
                                   JOIN user_github target_repo_owner
                                       ON target_repo.owner_id = target_repo_owner.id
-                                  JOIN commit_snapshot_pull target_snap_to_pull
-                                      ON target.sha = target_snap_to_pull.commit_snapshot_sha
-                                          AND target.repo_id = target_snap_to_pull.commit_snapshot_repo_id
-                                  JOIN commit_snapshot source
+                                  JOIN snapshot_pull target_snap_to_pull
+                                      ON target.sha = target_snap_to_pull.snapshot_sha
+                                          AND target.repo_id = target_snap_to_pull.snapshot_repo_id
+                                  JOIN snapshot source
                                       ON clone.source_commit_sha = source.sha
                                           AND clone.source_repo_id = source.repo_id
                                   JOIN repo_github source_repo
                                       ON source.repo_id = source_repo.id
                                   JOIN user_github source_repo_owner
                                       ON source_repo.owner_id = source_repo_owner.id
-                                  JOIN commit_snapshot_pull source_snap_to_pull
-                                      ON source.sha = source_snap_to_pull.commit_snapshot_sha
-                                          AND source.repo_id = source_snap_to_pull.commit_snapshot_repo_id
+                                  JOIN snapshot_pull source_snap_to_pull
+                                      ON source.sha = source_snap_to_pull.snapshot_sha
+                                          AND source.repo_id = source_snap_to_pull.snapshot_repo_id
                                 WHERE clone.target_commit_sha = $1
                                 """)
                         .bind("$1", sha)
@@ -141,8 +141,8 @@ public final class CloneRepoImpl implements CloneRepo, ConnectionProvidedRepo {
                         WHERE id IN (SELECT clone.id
                                      FROM pull
                                         JOIN clone
-                                            ON pull.head_commit_snapshot_sha = clone.target_commit_sha 
-                                                AND pull.head_commit_snapshot_repo_id = clone.target_repo_id
+                                            ON pull.head_snapshot_sha = clone.target_commit_sha 
+                                                AND pull.head_snapshot_repo_id = clone.target_repo_id
                                      WHERE pull.project_id = $1 AND pull.number = $2)
                         """))
                 .bind("$1", projectId)
