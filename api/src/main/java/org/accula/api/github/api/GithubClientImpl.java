@@ -37,8 +37,12 @@ public final class GithubClientImpl implements GithubClient {
     private final WebClient githubApiWebClient;
 
     public GithubClientImpl(final AccessTokenProvider accessTokenProvider, final LoginProvider loginProvider, final WebClient webClient) {
-        this.accessTokenProvider = accessTokenProvider;
-        this.loginProvider = loginProvider;
+        this.accessTokenProvider = () -> accessTokenProvider
+                .accessToken()
+                .switchIfEmpty(Mono.error(new IllegalStateException("Access token MUST be present")));
+        this.loginProvider = () -> loginProvider
+                .login()
+                .switchIfEmpty(Mono.error(new IllegalStateException("Login MUST be present")));
         this.githubApiWebClient = webClient
                 .mutate()
                 .baseUrl("https://api.github.com")
@@ -69,7 +73,7 @@ public final class GithubClientImpl implements GithubClient {
                             .bodyToMono(GithubApiUserPermission.class)
                             .map(permission -> permission.getPermission() == ADMIN);
                 })
-                .onErrorResume(GithubClientException::wrap);
+                .onErrorMap(GithubClientException::new);
     }
 
     @Override
@@ -80,7 +84,7 @@ public final class GithubClientImpl implements GithubClient {
                 .headers(h -> h.setBearerAuth(accessToken))
                 .retrieve()
                 .bodyToMono(GithubApiRepo.class)
-                .onErrorResume(GithubClientException::wrap));
+                .onErrorMap(GithubClientException::new));
     }
 
     @Override
@@ -94,7 +98,7 @@ public final class GithubClientImpl implements GithubClient {
                 .filter(GithubApiCollaborator::hasAdminPermissions)
                 .map(GithubApiCollaborator::getId)
                 .collectList()
-                .onErrorResume(GithubClientException::wrap));
+                .onErrorMap(GithubClientException::new));
     }
 
     @Override
@@ -125,7 +129,7 @@ public final class GithubClientImpl implements GithubClient {
                 .headers(h -> h.setBearerAuth(accessToken))
                 .retrieve()
                 .bodyToMono(GithubApiPull[].class)
-                .onErrorResume(GithubClientException::wrap));
+                .onErrorMap(GithubClientException::new));
     }
 
     @Override
@@ -136,7 +140,7 @@ public final class GithubClientImpl implements GithubClient {
                 .headers(h -> h.setBearerAuth(accessToken))
                 .retrieve()
                 .bodyToMono(GithubApiPull.class)
-                .onErrorResume(GithubClientException::wrap));
+                .onErrorMap(GithubClientException::new));
     }
 
     @Override
@@ -149,12 +153,14 @@ public final class GithubClientImpl implements GithubClient {
                 .exchange()
                 .doOnSuccess(p -> log.info("Created GitHub webhook for {}/{}", owner, repo))
                 .doOnError(e -> log.error("Cannot create hook for {}/{}", owner, repo, e))
-                .then());
+                .then())
+                .onErrorMap(GithubClientException::new);
     }
 
     private <T> Mono<T> withAccessToken(final Function<String, Mono<T>> transform) {
         return accessTokenProvider
                 .accessToken()
-                .flatMap(transform);
+                .flatMap(transform)
+                .onErrorMap(GithubClientException::new);
     }
 }

@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class BatchStatementTest {
     @SuppressWarnings("ConstantConditions")
@@ -23,7 +24,6 @@ class BatchStatementTest {
             new GithubUser(2L, "login2", "Firstname D' Lastnamiano", "avatar", false),
             new GithubUser(3L, "login3", "Just many ' ' ' ' ' ' single quotes", "avatar", false)
     );
-
 
     @Test
     void testBind() {
@@ -46,6 +46,16 @@ class BatchStatementTest {
                 """;
 
         assertEquals(expectedSql, sql(statement));
+    }
+
+    @Test
+    @SuppressWarnings("ConstantConditions")
+    void testCreationFail() {
+        assertThrows(IllegalArgumentException.class, () ->
+                BatchStatement.of(null, """
+                        INSERT INTO user_ (id, github_id, github_access_token)
+                        VALUES (1, 1, 'token')
+                        """));
     }
 
     @SneakyThrows
