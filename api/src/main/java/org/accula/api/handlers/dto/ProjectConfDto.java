@@ -18,5 +18,7 @@ import static lombok.AccessLevel.PRIVATE;
 @NoArgsConstructor(force = true, access = PRIVATE)
 public class ProjectConfDto implements InputDto {
     List<Long> admins;
-    Integer cloneMinLineCount;
+    Integer cloneMinTokenCount;
+    Integer fileMinSimilarityIndex;
+    List<String> excludedFiles;
 }

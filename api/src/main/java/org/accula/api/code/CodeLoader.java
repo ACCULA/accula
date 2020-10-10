@@ -37,7 +37,7 @@ public interface CodeLoader {
      * If file was removed in {@code head}, then second tuple element values are equal to {@code null}.
      */
     default Flux<DiffEntry<Snapshot>> loadDiff(Snapshot base, Snapshot head) {
-        return loadDiff(base, head, FileFilter.ALL);
+        return loadDiff(base, head, 0, FileFilter.ALL);
     }
 
     /**
@@ -47,12 +47,17 @@ public interface CodeLoader {
      * of the first element of the tuple return {@code null}.
      * If file was removed in {@code head}, then second tuple element values are equal to {@code null}.
      */
-    Flux<DiffEntry<Snapshot>> loadDiff(Snapshot base, Snapshot head, FileFilter filter);
+    Flux<DiffEntry<Snapshot>> loadDiff(Snapshot base, Snapshot head, int minSimilarityIndex, FileFilter filter);
 
     /**
      * Loads diff between two commits of remote repositories.
      *
-     * @see #loadDiff(Snapshot, Snapshot, FileFilter)
+     * @see #loadDiff(Snapshot, Snapshot, int, FileFilter)
      */
-    Flux<DiffEntry<Snapshot>> loadRemoteDiff(GithubRepo projectRepo, Snapshot base, Snapshot head, FileFilter filter);
+    Flux<DiffEntry<Snapshot>> loadRemoteDiff(GithubRepo repo, Snapshot base, Snapshot head, int minSimilarityIndex, FileFilter filter);
+
+    /**
+     * Loads filenames by the project repo.
+     */
+    Flux<String> loadFilenames(GithubRepo projectRepo);
 }

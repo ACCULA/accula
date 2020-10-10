@@ -31,6 +31,7 @@ public final class ProjectsRouter {
                                 .GET("", projectsHandler::get)
                                 .DELETE("", projectsHandler::delete)
                                 .GET("/githubAdmins", projectsHandler::githubAdmins)
+                                .GET("/headFiles", projectsHandler::headFiles)
                                 .nest(path("/conf"), b3 -> b3
                                         .GET("", projectsHandler::getConf)
                                         .PUT("", accept(APPLICATION_JSON), projectsHandler::updateConf))))

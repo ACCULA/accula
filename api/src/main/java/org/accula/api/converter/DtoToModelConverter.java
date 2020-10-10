@@ -15,7 +15,9 @@ public final class DtoToModelConverter {
         validate(conf);
         return Project.Conf.builder()
                 .adminIds(conf.getAdmins())
-                .cloneMinLineCount(conf.getCloneMinLineCount())
+                .cloneMinTokenCount(conf.getCloneMinTokenCount())
+                .fileMinSimilarityIndex(conf.getFileMinSimilarityIndex())
+                .excludedFiles(conf.getExcludedFiles())
                 .build();
     }
 

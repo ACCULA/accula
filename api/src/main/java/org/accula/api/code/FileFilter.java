@@ -1,5 +1,7 @@
 package org.accula.api.code;
 
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.function.Predicate;
 
 /**
@@ -17,8 +19,13 @@ public interface FileFilter extends Predicate<String> {
     FileFilter INFO = file -> file.endsWith("package-info.java") || file.endsWith("module-info.java");
     FileFilter SRC_JAVA = JAVA.and(SRC).and(INFO.negate());
 
+    static FileFilter exclude(final Collection<String> excludedFiles) {
+        final var set = new HashSet<>(excludedFiles);
+        return f -> !set.contains(f);
+    }
+
     @Override
-    default FileFilter and(Predicate<? super String> other) {
+    default FileFilter and(final Predicate<? super String> other) {
         return f -> test(f) && other.test(f);
     }
 

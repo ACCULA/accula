@@ -20,6 +20,7 @@ import { bindActionCreators } from 'redux'
 import { AppDispatch, AppState } from 'store'
 import {
   deleteProjectAction,
+  getBaseFilesAction,
   getProjectConfAction,
   getRepoAdminsAction,
   updateProjectConfAction
@@ -30,10 +31,19 @@ import { historyPush } from 'utils'
 import { useHistory } from 'react-router'
 import { useStyles } from './styles'
 
+const minFileMinSimilarityIndex = 5
+const minCloneTokenCount = 15
+
+// Todo: add a limit on the maximum value of numeric variables
 const validationSchema = Yup.object().shape({
-  cloneMinLineCount: Yup.number()
-    .min(5, 'Value should be more than 5')
-    .max(10000, 'Value should be less than 10000')
+  fileMinSimilarityIndex: Yup.number().min(
+    minFileMinSimilarityIndex,
+    `Value should be more than ${minFileMinSimilarityIndex}`
+  ),
+  cloneMinTokenCount: Yup.number().min(
+    minCloneTokenCount,
+    `Value should be more than ${minCloneTokenCount}`
+  )
 })
 
 interface ProjectSettingsTabProps extends PropsFromRedux {
@@ -46,15 +56,18 @@ const ProjectSettingsTab = ({
   project,
   repoAdmins,
   projectConf,
+  baseFiles,
   updateProjectConf,
   getRepoAdmins,
   getProjectConf,
+  getBaseFiles,
   deleteProject
 }: ProjectSettingsTabProps) => {
   const classes = useStyles()
   const history = useHistory()
   const { enqueueSnackbar, closeSnackbar } = useSnackbar()
   const [adminOptions, setAdminOptions] = useState<IUser[]>([])
+  const [excludedFilesOptions, setExcludedFilesOptions] = useState([])
   const [fetching, setFetching] = useState(false)
 
   const showNotification = (variant: VariantType) => {
@@ -72,6 +85,7 @@ const ProjectSettingsTab = ({
   useEffect(() => {
     getProjectConf(project.id, showNotification('error'))
     getRepoAdmins(project.id, showNotification('error'))
+    getBaseFiles(project.id, showNotification('error'))
     // eslint-disable-next-line
   }, [])
 
@@ -80,21 +94,32 @@ const ProjectSettingsTab = ({
       const options = repoAdmins.filter(u => u.id !== project.creatorId)
       setAdminOptions(options)
     }
+    if (baseFiles) {
+      setExcludedFilesOptions(baseFiles)
+    }
     // eslint-disable-next-line
   }, [])
 
-  if (!project || !projectConf || !repoAdmins) {
+  if (!project || !projectConf || !repoAdmins || !baseFiles) {
     return <></>
   }
 
-  const handleSubmit = ({ admins, cloneMinLineCount }: any) => {
+  const handleSubmit = ({
+    admins,
+    excludedFiles,
+    fileMinSimilarityIndex,
+    cloneMinTokenCount
+  }: any) => {
     if (!fetching) {
       setFetching(true)
       updateProjectConf(
         project.id,
         {
           admins,
-          cloneMinLineCount: cloneMinLineCount === '' ? 5 : cloneMinLineCount
+          excludedFiles,
+          fileMinSimilarityIndex:
+            fileMinSimilarityIndex === '' ? minFileMinSimilarityIndex : fileMinSimilarityIndex,
+          cloneMinTokenCount: cloneMinTokenCount === '' ? minCloneTokenCount : cloneMinTokenCount
         },
         () => {
           showNotification('success')('Configuration has been successfully updated')
@@ -131,8 +156,12 @@ const ProjectSettingsTab = ({
       <Formik
         validationSchema={validationSchema}
         initialValues={{
-          admins: adminOptions.filter(u => projectConf.admins.indexOf(u.id) !== -1),
-          cloneMinLineCount: projectConf ? projectConf.cloneMinLineCount : ''
+          admins: adminOptions.filter(u => projectConf.admins.includes(u.id)),
+          excludedFiles: excludedFilesOptions.filter(f =>
+            projectConf.excludedFiles.includes(f.value)
+          ),
+          fileMinSimilarityIndex: projectConf ? projectConf.fileMinSimilarityIndex : '',
+          cloneMinTokenCount: projectConf ? projectConf.cloneMinTokenCount : ''
         }}
         onSubmit={handleSubmit}
       >
@@ -149,7 +178,7 @@ const ProjectSettingsTab = ({
                   options={adminOptions}
                   getOptionLabel={(option: IUser) => option.login}
                   filterSelectedOptions
-                  defaultValue={adminOptions.filter(u => projectConf.admins.indexOf(u.id) !== -1)}
+                  defaultValue={adminOptions.filter(u => projectConf.admins.includes(u.id))}
                   onChange={(_, value: IUser[]) => setFieldValue('admins', value)}
                   renderTags={(value: IUser[], getTagProps) =>
                     value.map((option, index) => (
@@ -183,29 +212,82 @@ const ProjectSettingsTab = ({
                 />
                 <Typography className={classes.description} variant="body2" component="p">
                   Admin can resolve clones and update project settings. Only a repository admin can
-                  become a project admin.
+                  become a project admin
                 </Typography>
                 <Field
-                  error={errors.cloneMinLineCount !== undefined}
-                  helperText={errors.cloneMinLineCount || ''}
-                  name="cloneMinLineCount"
-                  id="clone-min-line-count"
-                  label="Clone minimum line count"
+                  name="excludedFiles"
+                  component={Autocomplete}
+                  multiple
+                  limitTags={5}
+                  id="excluded-files-select"
+                  options={adminOptions}
+                  getOptionLabel={(option: string) => option}
+                  filterSelectedOptions
+                  defaultValue={excludedFilesOptions.filter(f =>
+                    projectConf.excludedFiles.includes(f.value)
+                  )}
+                  onChange={(_, value: string[]) => setFieldValue('excludedFiles', value)}
+                  renderTags={(value: string[], getTagProps) =>
+                    value.map((option, index) => (
+                      <Chip
+                        className={classes.chip}
+                        key={option}
+                        label={option}
+                        color="secondary"
+                        {...getTagProps({ index })}
+                      />
+                    ))
+                  }
+                  renderInput={params => (
+                    <TextField
+                      {...params}
+                      variant="outlined"
+                      label="Excluded files"
+                      color="secondary"
+                      placeholder="Files"
+                    />
+                  )}
+                />
+                <Typography className={classes.description} variant="body2" component="p">
+                  Files that will be excluded during code clone analysis
+                </Typography>
+                <Field
+                  error={errors.cloneMinTokenCount !== undefined}
+                  helperText={errors.cloneMinTokenCount}
+                  name="cloneMinTokenCount"
+                  id="clone-min-token-count"
+                  label="Clone minimum token count"
+                  placeholder={`Default value is ${minCloneTokenCount}`}
                   type="number"
                   fullWidth
                   variant="outlined"
                   color="secondary"
-                  placeholder="Default value is 5"
                   as={TextField}
                 />
                 <Typography className={classes.description} variant="body2" component="p">
-                  Minimum source code line count to be considered as a clone.
+                  Minimum source code token count to be considered as a clone
+                </Typography>
+                <Field
+                  error={errors.fileMinSimilarityIndex !== undefined}
+                  helperText={errors.fileMinSimilarityIndex}
+                  name="fileMinSimilarityIndex"
+                  id="file-min-sim-index"
+                  label="File minimum similarity index"
+                  placeholder={`Default value is ${minFileMinSimilarityIndex}`}
+                  type="number"
+                  fullWidth
+                  variant="outlined"
+                  color="secondary"
+                  as={TextField}
+                />
+                <Typography className={classes.description} variant="body2" component="p">
+                  Minimum similarity percent to consider file as renamed
                 </Typography>
                 <div className={classes.saveButtonContainer}>
                   <LoadingButton
                     text="Save"
                     submitting={fetching}
-                    disabled={errors.cloneMinLineCount !== undefined}
+                    disabled={errors.fileMinSimilarityIndex !== undefined}
                     onClick={() => handleSubmit(values)}
                   />
                 </div>
@@ -234,15 +316,18 @@ const ProjectSettingsTab = ({
     </>
   )
 }
+
 const mapStateToProps = (state: AppState) => ({
   repoAdmins: state.projects.repoAdmins.value,
-  projectConf: state.projects.projectConf.value
+  projectConf: state.projects.projectConf.value,
+  baseFiles: state.projects.baseFiles.value
 })
 
 const mapDispatchToProps = (dispatch: AppDispatch) => ({
   getRepoAdmins: bindActionCreators(getRepoAdminsAction, dispatch),
   updateProjectConf: bindActionCreators(updateProjectConfAction, dispatch),
   getProjectConf: bindActionCreators(getProjectConfAction, dispatch),
+  getBaseFiles: bindActionCreators(getBaseFilesAction, dispatch),
   deleteProject: bindActionCreators(deleteProjectAction, dispatch)
 })
 

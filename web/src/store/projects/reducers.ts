@@ -2,6 +2,7 @@ import { notFetching } from 'store/wrapper'
 import {
   ProjectsActionTypes,
   ProjectsState,
+  SET_BASE_FILES,
   SET_PROJECT,
   SET_PROJECT_CONF,
   SET_PROJECTS,
@@ -14,7 +15,8 @@ const initialState: ProjectsState = {
   projects: notFetching,
   project: notFetching,
   projectConf: notFetching,
-  repoAdmins: notFetching
+  repoAdmins: notFetching,
+  baseFiles: notFetching
 }
 
 export function projectsReducer(
@@ -44,6 +46,12 @@ export function projectsReducer(
       return {
         ...state,
         repoAdmins: action.payload
+      }
+    }
+    case SET_BASE_FILES: {
+      return {
+        ...state,
+        baseFiles: action.payload
       }
     }
     case RESET_PROJECT_INFO: {

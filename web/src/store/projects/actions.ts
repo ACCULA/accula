@@ -3,12 +3,14 @@ import { requireToken } from 'store/users/actions'
 import { failed, fetched, fetching } from 'store/wrapper'
 import { IProjectConf } from 'types'
 import {
+  SET_BASE_FILES,
   SET_PROJECT,
   SET_PROJECT_CONF,
   SET_PROJECTS,
   SET_REPO_ADMINS,
   RESET_PROJECT_INFO,
   RESET_PROJECTS,
+  SetBaseFiles,
   SetProject,
   SetProjectConf,
   SetProjects,
@@ -17,13 +19,14 @@ import {
   ResetProjects
 } from './types'
 import {
-  postProject,
+  getBaseFiles,
   getProject,
   getProjectConf,
   getProjects,
   getRepoAdmins,
   putProjectConf,
-  deleteProject
+  deleteProject,
+  postProject
 } from './services'
 
 const setProjects = (payload): SetProjects => ({
@@ -51,6 +54,11 @@ export const resetProjectsAction = (): ResetProjects => ({
 
 const setRepoAdmins = (payload): SetRepoAdmins => ({
   type: SET_REPO_ADMINS,
+  payload
+})
+
+const setBaseFiles = (payload): SetBaseFiles => ({
+  type: SET_BASE_FILES,
   payload
 })
 
@@ -114,6 +122,9 @@ export const getProjectConfAction = (id: number, handleError?: (msg: string) => 
   }
   await requireToken(dispatch, getState)
   const { users } = getState()
+  if (!users.token) {
+    return
+  }
   try {
     dispatch(setProjectConf(fetching))
     const conf = await getProjectConf(id, users.token)
@@ -153,20 +164,26 @@ export const updateProjectConfAction = (
   }
 }
 
-export const getRepoAdminsAction = (id: number, handleError?: (msg: string) => void) => async (
+export const getRepoAdminsAction = (
+  projectId: number,
+  handleError?: (msg: string) => void
+) => async (
   dispatch: AppDispatch, //
   getState: AppStateSupplier
 ) => {
   const { projects } = getState()
-  if (projects.repoAdmins.value && projects.repoAdmins.projectId === id) {
+  if (projects.repoAdmins.value && projects.repoAdmins.projectId === projectId) {
     return
   }
   await requireToken(dispatch, getState)
   const { users } = getState()
+  if (!users.token) {
+    return
+  }
   try {
     dispatch(setRepoAdmins(fetching))
-    const admins = await getRepoAdmins(id, users.token)
-    dispatch(setRepoAdmins(fetched(admins)))
+    const admins = await getRepoAdmins(projectId, users.token)
+    dispatch(setRepoAdmins(fetched(admins, projectId)))
   } catch (e) {
     dispatch(setRepoAdmins(failed(e)))
     if (handleError) {
@@ -211,6 +228,31 @@ export const createProjectAction = (
       if (handleSuccess) {
         handleSuccess()
       }
+    }
+  }
+}
+
+export const getBaseFilesAction = (
+  projectId: number,
+  handleError?: (msg: string) => void
+) => async (
+  dispatch: AppDispatch, //
+  getState: AppStateSupplier
+) => {
+  const { projects } = getState()
+  if (projects.baseFiles.value && projects.baseFiles.projectId === projectId) {
+    return
+  }
+  await requireToken(dispatch, getState)
+  const { users } = getState()
+  try {
+    dispatch(setBaseFiles(fetching))
+    const files = await getBaseFiles(projectId, users.token)
+    dispatch(setBaseFiles(fetched(files, projectId)))
+  } catch (e) {
+    dispatch(setBaseFiles(failed(e)))
+    if (handleError) {
+      handleError(e.message)
     }
   }
 }
