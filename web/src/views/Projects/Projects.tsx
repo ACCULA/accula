@@ -19,6 +19,7 @@ import GitHubIcon from '@material-ui/icons/GitHub'
 import { Avatar, IconButton, TableCell } from '@material-ui/core'
 import Link from 'components/Link'
 import { StyledTableRow } from 'components/Table/styles'
+import EmptyContent from 'components/EmptyContent'
 import AddProjectDialog from './AddProjectDialog'
 import { useStyles } from './styles'
 
@@ -61,22 +62,22 @@ const Projects = ({ user, projects, getProjects, resetProjects }: ProjectsProps)
   return (
     <>
       {projects.length === 0 ? (
-        <div className={classes.emptyContent}>
-          <LayersImg className={classes.layersImg} />
-          <span className={classes.projectsText}>Projects</span>
-          {user && (
-            <>
-              <Button
-                className={classes.addProjectBtn}
-                variant="contained"
-                color="secondary"
-                onClick={() => setCreateProjectDialogOpen(true)}
-              >
-                Add project
-              </Button>
-            </>
-          )}
-        </div>
+        <EmptyContent className={classes.emptyContent} Icon={LayersImg} info="Projects">
+          <>
+            {user && (
+              <>
+                <Button
+                  className={classes.addProjectBtn}
+                  variant="contained"
+                  color="secondary"
+                  onClick={() => setCreateProjectDialogOpen(true)}
+                >
+                  Add project
+                </Button>
+              </>
+            )}
+          </>
+        </EmptyContent>
       ) : (
         <div>
           <PageTitle title="Projects" />
