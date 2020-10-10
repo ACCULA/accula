@@ -1,28 +1,13 @@
 import { makeStyles, Theme } from '@material-ui/core'
-import { colors } from 'theme'
 
 export const useStyles = makeStyles((theme: Theme) => ({
   emptyContent: {
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
     position: 'absolute',
     top: 0,
     bottom: 0,
     left: 0,
     right: 0,
     margin: 'auto'
-  },
-  layersImg: {
-    width: '152px',
-    height: '152px',
-    fill: colors.secondaryLight
-  },
-  projectsText: {
-    fontSize: '38px',
-    fontWeight: 500,
-    marginBottom: '28px'
   },
   addProjectBtn: {
     boxShadow: 'none',

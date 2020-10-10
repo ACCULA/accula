@@ -30,10 +30,9 @@ const useStyles = makeStyles((theme: Theme) =>
       flexGrow: 1,
       height: '100vh',
       position: 'relative',
-      padding: '63px 147px',
+      padding: '64px 64px',
       [theme.breakpoints.down('sm')]: {
-        marginLeft: 0,
-        padding: '63px 73px'
+        marginLeft: 0
       },
       transition: theme.transitions.create('margin', {
         easing: theme.transitions.easing.sharp,

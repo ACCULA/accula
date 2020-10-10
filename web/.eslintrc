@@ -1,9 +1,7 @@
 {
   "root": true,
   "parser": "@typescript-eslint/parser",
-  "plugins": [
-    "@typescript-eslint"
-  ],
+  "plugins": ["@typescript-eslint"],
   "parserOptions": {
     "project": "./tsconfig.json"
   },
@@ -16,9 +14,7 @@
   ],
   "rules": {
     // Make prettier code formatting suggestions more verbose.
-    "prettier/prettier": [
-      "warn"
-    ],
+    "prettier/prettier": ["warn"],
     // Disable <Fragment> => <> replacement. Feel free to change
     "react/jsx-fragments": "off",
     "react/no-array-index-key": "off",
@@ -37,9 +33,7 @@
   "settings": {
     "import/resolver": {
       "node": {
-        "paths": [
-          "./src"
-        ]
+        "paths": ["./src"]
       }
     }
   }

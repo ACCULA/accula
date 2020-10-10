@@ -3,7 +3,8 @@ import { CHANGE_SETTINGS, SettingsState, SettingsActionTypes } from './types'
 const initialState: SettingsState = {
   settings: {
     themeMode: 'light',
-    isDrawerOpen: true
+    isDrawerOpen: true,
+    splitCodeView: 'unified'
   }
 }
 

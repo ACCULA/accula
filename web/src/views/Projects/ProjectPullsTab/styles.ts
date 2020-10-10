@@ -1,23 +1,8 @@
 import { makeStyles } from '@material-ui/core'
-import { colors } from 'theme'
 
 export const useStyles = makeStyles(() => ({
   emptyContent: {
-    marginTop: '110px',
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  prImage: {
-    width: '172px',
-    height: '236px',
-    fill: colors.secondaryLight
-  },
-  prText: {
-    fontSize: '30px',
-    fontWeight: 500,
-    marginBottom: '28px'
+    marginTop: '110px'
   },
   dataText: {
     fontSize: '14px',
