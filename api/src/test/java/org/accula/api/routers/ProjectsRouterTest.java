@@ -1,6 +1,7 @@
 package org.accula.api.routers;
 
 import lombok.SneakyThrows;
+import org.accula.api.config.WebConfig;
 import org.accula.api.config.WebhookProperties;
 import org.accula.api.converter.GithubApiToModelConverter;
 import org.accula.api.converter.ModelToDtoConverter;
@@ -51,7 +52,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 @WebFluxTest
-@ContextConfiguration(classes = {ProjectsHandler.class, ProjectsRouter.class, GithubApiToModelConverter.class, WebhookProperties.class})
+@ContextConfiguration(classes = {ProjectsHandler.class, ProjectsRouter.class, GithubApiToModelConverter.class, WebhookProperties.class, WebConfig.class})
 class ProjectsRouterTest {
     static final String REPO_URL = "https://github.com/accula/accula";
     static final String REPO_NAME = "accula";
@@ -327,7 +328,9 @@ class ProjectsRouterTest {
                 .expectBody(ProjectConfDto.class)
                 .isEqualTo(ProjectConfDto.builder()
                         .admins(adminIds)
-                        .cloneMinLineCount(Project.Conf.DEFAULT.getCloneMinLineCount())
+                        .cloneMinTokenCount(Project.Conf.DEFAULT.getCloneMinTokenCount())
+                        .fileMinSimilarityIndex(Project.Conf.DEFAULT.getFileMinSimilarityIndex())
+                        .excludedFiles(Project.Conf.DEFAULT.getExcludedFiles())
                         .build());
     }
 
@@ -345,7 +348,9 @@ class ProjectsRouterTest {
                 .contentType(APPLICATION_JSON)
                 .bodyValue(ProjectConfDto.builder()
                         .admins(adminIds)
-                        .cloneMinLineCount(Project.Conf.DEFAULT.getCloneMinLineCount())
+                        .cloneMinTokenCount(Project.Conf.DEFAULT.getCloneMinTokenCount())
+                        .fileMinSimilarityIndex(Project.Conf.DEFAULT.getFileMinSimilarityIndex())
+                        .excludedFiles(Project.Conf.DEFAULT.getExcludedFiles())
                         .build())
                 .exchange()
                 .expectStatus().isOk();

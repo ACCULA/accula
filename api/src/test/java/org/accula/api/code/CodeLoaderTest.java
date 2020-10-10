@@ -70,7 +70,7 @@ class CodeLoaderTest {
     @Test
     void testGetMultipleFilteredFiles() {
         Pattern excludeRegex = Pattern.compile(".*Test.*");
-        FileFilter filter = fileName -> fileName.endsWith(".java") && !excludeRegex.matcher(fileName).matches();
+        FileFilter filter = filename -> filename.endsWith(".java") && !excludeRegex.matcher(filename).matches();
         Map<String, String> files = codeLoader.loadFiles(COMMIT, filter)
                 .collectMap(FileEntity::getName, FileEntity::getContent).block();
         assertNotNull(files);
@@ -172,7 +172,7 @@ class CodeLoaderTest {
         var headRepo = new GithubRepo(1L, "2019-highload-dht", "descr", headOwner);
         var head = Snapshot.builder().sha("a1c28a1b500701819cf9919246f15f3f900bb609").branch("branch").repo(headRepo).build();
         var base = Snapshot.builder().sha("d6357dccc16c7d5c001fd2a2203298c36fe96b63").branch("branch").repo(REPO).build();
-        StepVerifier.create(codeLoader.loadDiff(base, head, FileFilter.SRC_JAVA))
+        StepVerifier.create(codeLoader.loadDiff(base, head, 0, FileFilter.SRC_JAVA))
                 .expectNextCount(11)
                 .expectComplete()
                 .verify();
@@ -192,12 +192,21 @@ class CodeLoaderTest {
                 .repo(new GithubRepo(0L, "2017-highload-kv", "", new GithubUser(0L, "vaddya", null, "", false)))
                 .build();
 
-        final var diffEntries = codeLoader.loadRemoteDiff(projectRepo, base, head, FileFilter.SRC_JAVA).collectList().block();
+        final var diffEntries = codeLoader.loadRemoteDiff(projectRepo, base, head, 1, FileFilter.SRC_JAVA).collectList().block();
         assertEquals(9, diffEntries.size());
         final var possibleRenameCount = diffEntries
                 .stream()
                 .filter(diffEntry -> diffEntry.getSimilarityIndex() > 0)
                 .count();
         assertEquals(5, possibleRenameCount);
+    }
+
+    @Test
+    void testLoadFilenames() {
+        final var projectRepo = new GithubRepo(1L, "2017-highload-kv", "descr", USER);
+        final var filenames = codeLoader.loadFilenames(projectRepo).collectList().block();
+        assertNotNull(filenames);
+        assertEquals(21, filenames.size());
+        assertTrue(filenames.contains(README));
     }
 }

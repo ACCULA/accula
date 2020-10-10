@@ -4,11 +4,12 @@ import lombok.RequiredArgsConstructor;
 import org.accula.api.code.CodeLoader;
 import org.accula.api.code.DiffEntry;
 import org.accula.api.code.FileFilter;
+import org.accula.api.db.model.Project;
 import org.accula.api.db.model.Pull;
 import org.accula.api.db.model.Snapshot;
+import org.accula.api.db.repo.ProjectRepo;
 import org.accula.api.db.repo.PullRepo;
 import org.accula.api.handlers.dto.DiffDto;
-import org.accula.api.util.Lambda;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
@@ -35,6 +36,7 @@ public final class DiffHandler {
     private static final Base64.Encoder base64 = Base64.getEncoder(); // NOPMD
 
     private final PullRepo pullRepo;
+    private final ProjectRepo projectRepo;
     private final CodeLoader codeLoader;
 
     public Mono<ServerResponse> diff(final ServerRequest request) {
@@ -70,10 +72,11 @@ public final class DiffHandler {
                 .cache();
         final var base = pullMono.map(Pull::getBase);
         final var head = pullMono.map(Pull::getHead);
+        final var minSimilarityIndex = projectRepo.confById(projectId).map(Project.Conf::getFileMinSimilarityIndex);
 
         final var diff = Mono
-                .zip(base, head)
-                .flatMapMany(baseHead -> codeLoader.loadDiff(baseHead.getT1(), baseHead.getT2(), FileFilter.SRC_JAVA));
+                .zip(base, head, minSimilarityIndex)
+                .flatMapMany(t -> codeLoader.loadDiff(t.getT1(), t.getT2(), t.getT3(), FileFilter.SRC_JAVA));
 
         return toResponse(diff);
     }
@@ -87,12 +90,14 @@ public final class DiffHandler {
                 .cache();
         final var headPullSnapshot = headPull
                 .map(Pull::getHead);
-        final var projectRepo = headPull
+        final var projectGithubRepo = headPull
                 .map(pull -> pull.getBase().getRepo());
+        final var minSimilarityIndex = projectRepo
+                .confById(projectId).map(Project.Conf::getFileMinSimilarityIndex);
 
         final var diff = Mono
-                .zip(projectRepo, basePullSnapshot, headPullSnapshot)
-                .flatMapMany(Lambda.passingTailArg(codeLoader::loadRemoteDiff, FileFilter.SRC_JAVA));
+                .zip(projectGithubRepo, basePullSnapshot, headPullSnapshot, minSimilarityIndex)
+                .flatMapMany(t -> codeLoader.loadRemoteDiff(t.getT1(), t.getT2(), t.getT3(), t.getT4(), FileFilter.SRC_JAVA));
 
         return toResponse(diff);
     }

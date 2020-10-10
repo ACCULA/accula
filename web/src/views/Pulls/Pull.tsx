@@ -97,7 +97,7 @@ const Pull = ({
     getUser()
     getProject(projectId)
     getProjectConf(projectId)
-  }, [getUser, getProject, getProjectConf])
+  }, [getUser, getProject, getProjectConf, projectId])
 
   if (pull.value && pull.value.number !== pullId) {
     return <Loader />

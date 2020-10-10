@@ -33,7 +33,9 @@ export interface IProject {
 
 export interface IProjectConf {
   admins: number[]
-  cloneMinLineCount: number
+  cloneMinTokenCount: number
+  fileMinSimilarityIndex: number
+  excludedFiles: string[]
 }
 
 export interface IShortPull {

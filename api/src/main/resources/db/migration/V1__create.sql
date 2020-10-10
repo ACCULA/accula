@@ -60,8 +60,10 @@ CREATE TABLE IF NOT EXISTS project_admin
 
 CREATE TABLE IF NOT EXISTS project_conf
 (
-    project_id           BIGINT PRIMARY KEY,
-    clone_min_line_count INT NOT NULL,
+    project_id                BIGINT PRIMARY KEY,
+    clone_min_token_count     INT NOT NULL,
+    file_min_similarity_index INT NOT NULL,
+    excluded_files            TEXT[] NOT NULL,
 
     FOREIGN KEY (project_id) REFERENCES project (id)
 );

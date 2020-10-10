@@ -2,6 +2,7 @@ package org.accula.api.handlers;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.accula.api.code.CodeLoader;
 import org.accula.api.config.WebhookProperties;
 import org.accula.api.converter.DtoToModelConverter;
 import org.accula.api.converter.GithubApiToModelConverter;
@@ -60,6 +61,7 @@ public final class ProjectsHandler {
     private final UserRepo userRepo;
     private final ProjectUpdater projectUpdater;
     private final GithubApiToModelConverter githubToModelConverter;
+    private final CodeLoader codeLoader;
 
     public Mono<ServerResponse> getTop(final ServerRequest request) {
         return Mono
@@ -140,6 +142,18 @@ public final class ProjectsHandler {
                     log.warn("Cannot fetch repository admins", e);
                     return ServerResponse.badRequest().build();
                 });
+    }
+
+    public Mono<ServerResponse> headFiles(ServerRequest request) {
+        final var files = withProjectId(request)
+                .flatMap(projectRepo::findById)
+                .map(Project::getGithubRepo)
+                .flatMapMany(codeLoader::loadFilenames)
+                .collectList();
+        return ServerResponse
+                .ok()
+                .contentType(APPLICATION_JSON)
+                .body(files, List.class);
     }
 
     public Mono<ServerResponse> getConf(final ServerRequest request) {
