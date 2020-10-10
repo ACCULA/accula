@@ -101,7 +101,8 @@ public final class ProjectsHandler {
                 .doOnError(e -> log.error("{}: ", request, e))
                 .onErrorResume(CreateProjectException.class, e ->
                         switch (CreateProjectException.error(e)) {
-                            case BAD_FORMAT, INVALID_URL, WRONG_URL, ALREADY_EXISTS -> Responses.badRequest(CreateProjectException.errorBody(e));
+                            case BAD_FORMAT, INVALID_URL, WRONG_URL, ALREADY_EXISTS -> Responses
+                                    .badRequest(CreateProjectException.errorBody(e));
                             case NO_PERMISSION -> Responses.forbidden(CreateProjectException.errorBody(e));
                         });
     }
