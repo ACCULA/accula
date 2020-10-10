@@ -41,7 +41,7 @@ public interface CodeLoader {
     }
 
     /**
-     * Loads diff between two commits as {@link DiffEntry} of file entities that satisfy the filter from the conf,
+     * Loads diff between two commits as {@link DiffEntry} of file entities that satisfy the filter,
      * each representing two corresponding files in {@code base} and {@code head} commit snapshots.
      * If a file was added in {@code head}, then {@link FileEntity#getName} and {@link FileEntity#getContent}
      * of the first element of the tuple return {@code null}.
