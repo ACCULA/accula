@@ -58,106 +58,103 @@ const Projects = ({ user, projects, getProjects, resetProjects }: ProjectsProps)
     return <></>
   }
 
-  const addProjectDialog = (
-    <AddProjectDialog
-      open={isCreateProjectDialogOpen}
-      onClose={() => setCreateProjectDialogOpen(false)}
-    />
-  )
-
-  if (projects.length === 0) {
-    return (
-      <div className={classes.emptyContent}>
-        <LayersImg className={classes.layersImg} />
-        <span className={classes.projectsText}>Projects</span>
-        {user && (
-          <>
-            <Button
-              className={classes.addProjectBtn}
-              variant="contained"
-              color="secondary"
-              onClick={() => setCreateProjectDialogOpen(true)}
-            >
-              Add project
-            </Button>
-            {addProjectDialog}
-          </>
-        )}
-      </div>
-    )
-  }
-
   return (
-    <div>
-      <PageTitle title="Projects" />
-      <BreadCrumbs breadcrumbs={[{ text: 'Projects' }]} />
-      <Tabs />
-      <Table<IProject>
-        headCells={headCells}
-        count={projects.length}
-        toolBarTitle=""
-        toolBarButtons={[
-          {
-            toolTip: 'Add project',
-            iconButton: <AddBoxOutlined />,
-            onClick: () => setCreateProjectDialogOpen(true)
-          }
-        ]}
-      >
-        {() => (
-          <>
-            {projects.map(project => (
-              <StyledTableRow
-                hover
-                onClick={() => {
-                  if (!isGithubButtonHovered) {
-                    historyPush(history, `projects/${project.id}/pulls`)
-                  }
-                }}
-                tabIndex={-1}
-                key={project.id}
+    <>
+      {projects.length === 0 ? (
+        <div className={classes.emptyContent}>
+          <LayersImg className={classes.layersImg} />
+          <span className={classes.projectsText}>Projects</span>
+          {user && (
+            <>
+              <Button
+                className={classes.addProjectBtn}
+                variant="contained"
+                color="secondary"
+                onClick={() => setCreateProjectDialogOpen(true)}
               >
-                <TableCell align="left">
-                  <div className={classes.repoInfo}>
-                    <Avatar
-                      className={classes.repoAvatarImg}
-                      src={project.repoOwnerAvatar}
-                      alt={project.repoOwner}
-                    />
-                    <div className={classes.repoFullName}>
-                      <span
-                        className={classes.cellText}
-                      >{`${project.repoOwner}/${project.repoName}`}</span>
-                      {project.repoDescription !== '' && (
-                        <span className={classes.repoDescription}>{project.repoDescription}</span>
-                      )}
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell align="right">
-                  <span className={classes.cellText}>{project.repoOpenPullCount}</span>
-                </TableCell>
-                <TableCell align="right">
-                  <Link to={project.repoUrl} className={classes.repoUrlImg}>
-                    <IconButton
-                      color="default"
-                      aria-label="Project Url"
-                      onFocus={() => setGithubButtonHovered(true)}
-                      onMouseOver={() => setGithubButtonHovered(true)}
-                      onMouseOut={() => setGithubButtonHovered(false)}
-                      onBlur={() => setGithubButtonHovered(false)}
-                    >
-                      <GitHubIcon />
-                    </IconButton>
-                  </Link>
-                </TableCell>
-              </StyledTableRow>
-            ))}
-          </>
-        )}
-      </Table>
-      {addProjectDialog}
-    </div>
+                Add project
+              </Button>
+            </>
+          )}
+        </div>
+      ) : (
+        <div>
+          <PageTitle title="Projects" />
+          <BreadCrumbs breadcrumbs={[{ text: 'Projects' }]} />
+          <Tabs />
+          <Table<IProject>
+            headCells={headCells}
+            count={projects.length}
+            toolBarTitle=""
+            toolBarButtons={[
+              {
+                toolTip: 'Add project',
+                iconButton: <AddBoxOutlined />,
+                onClick: () => setCreateProjectDialogOpen(true)
+              }
+            ]}
+          >
+            {() => (
+              <>
+                {projects.map(project => (
+                  <StyledTableRow
+                    hover
+                    onClick={() => {
+                      if (!isGithubButtonHovered) {
+                        historyPush(history, `projects/${project.id}/pulls`)
+                      }
+                    }}
+                    tabIndex={-1}
+                    key={project.id}
+                  >
+                    <TableCell align="left">
+                      <div className={classes.repoInfo}>
+                        <Avatar
+                          className={classes.repoAvatarImg}
+                          src={project.repoOwnerAvatar}
+                          alt={project.repoOwner}
+                        />
+                        <div className={classes.repoFullName}>
+                          <span
+                            className={classes.cellText}
+                          >{`${project.repoOwner}/${project.repoName}`}</span>
+                          {project.repoDescription !== '' && (
+                            <span className={classes.repoDescription}>
+                              {project.repoDescription}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell align="right">
+                      <span className={classes.cellText}>{project.repoOpenPullCount}</span>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Link to={project.repoUrl} className={classes.repoUrlImg}>
+                        <IconButton
+                          color="default"
+                          aria-label="Project Url"
+                          onFocus={() => setGithubButtonHovered(true)}
+                          onMouseOver={() => setGithubButtonHovered(true)}
+                          onMouseOut={() => setGithubButtonHovered(false)}
+                          onBlur={() => setGithubButtonHovered(false)}
+                        >
+                          <GitHubIcon />
+                        </IconButton>
+                      </Link>
+                    </TableCell>
+                  </StyledTableRow>
+                ))}
+              </>
+            )}
+          </Table>
+        </div>
+      )}
+      <AddProjectDialog
+        open={isCreateProjectDialogOpen}
+        onClose={() => setCreateProjectDialogOpen(false)}
+      />
+    </>
   )
 }
 
