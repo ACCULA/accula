@@ -6,6 +6,7 @@ import PullDate from 'components/PullDate'
 import PullTable from 'components/PullTable'
 import { GitHub, CheckCircleOutlineRounded, ScheduleRounded } from '@material-ui/icons'
 import PullStatus from 'components/PullStatus/PullStatus'
+import PullLabel from 'components/PullLabel'
 import { ReactComponent as PrLogo } from 'images/pull_request.svg'
 import { useStyles } from './styles'
 
@@ -40,11 +41,11 @@ const PullOverviewTab = ({ pull, project }: PullOverviewTabProps) => {
             <span>
               Pull request into{' '}
               <Link to={pull.base.url}>
-                <code className={classes.githubLink}>{pull.base.label}</code>
+                <PullLabel text={pull.base.label} />
               </Link>{' '}
               from{' '}
               <Link to={pull.head.url}>
-                <code className={classes.githubLink}>{pull.head.label}</code>
+                <PullLabel text={pull.head.label} />
               </Link>
             </span>
           </div>
