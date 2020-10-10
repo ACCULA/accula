@@ -69,7 +69,7 @@ const MenuBar: React.FC<MenuBarProps> = ({ user, setTheme }: MenuBarProps) => {
         </ListItemIcon>
         <p className={classes.menuItemTitle}>Profile</p>
       </MenuItem>
-      <MenuItem onClick={toggleTheme}>
+      <MenuItem onClick={() => handleClickListItem(toggleTheme)}>
         <ListItemIcon aria-label="Toggle light/dark theme" color="inherit">
           {(lightTheme && <Brightness4Rounded />) || <Brightness7Rounded />}
         </ListItemIcon>
