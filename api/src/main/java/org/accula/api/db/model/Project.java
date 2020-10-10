@@ -29,11 +29,13 @@ public class Project {
         public static final Conf DEFAULT = builder()
                 .adminIds(Collections.emptyList())
                 .cloneMinTokenCount(15)
+                .fileMinSimilarityIndex(0)
                 .excludedFiles(Collections.emptyList())
                 .build();
 
         List<Long> adminIds;
         Integer cloneMinTokenCount;
+        Integer fileMinSimilarityIndex;
         List<String> excludedFiles;
     }
 }

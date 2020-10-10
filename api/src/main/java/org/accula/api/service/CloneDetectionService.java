@@ -92,7 +92,8 @@ public final class CloneDetectionService {
                 .switchIfEmpty(projectRepo
                         .confById(projectId)
                         .map(conf -> CloneDetector.Config.builder()
-                                .minCloneLength(conf.getCloneMinTokenCount())
+                                .cloneMinTokenCount(conf.getCloneMinTokenCount())
+                                .filter(FileFilter.SRC_JAVA.and(FileFilter.from(conf.getExcludedFiles())))
                                 .build()))
                 .doOnNext(conf -> cloneDetectorConfigs.put(projectId, conf));
     }

@@ -23,7 +23,7 @@ class CloneDetectorTest {
 
     @BeforeEach
     void setUp() {
-        cloneDetector = new CloneDetectorImpl(() -> Mono.just(CloneDetector.Config.builder().minCloneLength(1).build()));
+        cloneDetector = new CloneDetectorImpl(() -> Mono.just(CloneDetector.Config.builder().cloneMinTokenCount(1).build()));
     }
 
     @Test

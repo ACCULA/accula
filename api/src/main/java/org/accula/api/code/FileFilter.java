@@ -1,5 +1,6 @@
 package org.accula.api.code;
 
+import java.util.List;
 import java.util.function.Predicate;
 
 /**
@@ -17,8 +18,12 @@ public interface FileFilter extends Predicate<String> {
     FileFilter INFO = file -> file.endsWith("package-info.java") || file.endsWith("module-info.java");
     FileFilter SRC_JAVA = JAVA.and(SRC).and(INFO.negate());
 
+    static FileFilter from(final List<String> excludedFiles) {
+        return f -> !excludedFiles.contains(f);
+    }
+
     @Override
-    default FileFilter and(Predicate<? super String> other) {
+    default FileFilter and(final Predicate<? super String> other) {
         return f -> test(f) && other.test(f);
     }
 

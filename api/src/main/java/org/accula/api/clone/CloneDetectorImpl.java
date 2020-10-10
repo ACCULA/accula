@@ -80,7 +80,7 @@ public final class CloneDetectorImpl implements CloneDetector {
     }
 
     private static boolean cloneClassMatchesRules(final CloneClass<Snapshot> cloneClass, final Config rules) {
-        return cloneClass.getLength() >= rules.getMinCloneLength()
+        return cloneClass.getLength() >= rules.getCloneMinTokenCount()
                && cloneClass
                        .getClones()
                        .stream()

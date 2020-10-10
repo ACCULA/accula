@@ -6,12 +6,17 @@ export const Select = (props: any) => {
     label: 'Select all',
     value: '*'
   }
+  const options = props.options && props.options.length > 0 ? [allOption, ...props.options] : []
   return (
     <ReactSelect
       {...props}
-      options={[allOption, ...props.options]}
+      options={options}
       onChange={(selected: any) => {
-        if (selected.length > 0 && selected[selected.length - 1].value === allOption.value) {
+        if (
+          selected &&
+          selected.length > 0 &&
+          selected[selected.length - 1].value === allOption.value
+        ) {
           return props.onChange(props.options)
         }
         return props.onChange(selected)

@@ -38,6 +38,7 @@ export const ProjectConfigurationTab = ({
   const [excludedFilesOptions, setExcludedFilesOptions] = useState(null)
   const [excludedFiles, setExcludedFiles] = useState(null)
   const [cloneMinTokenCount, setCloneMinTokenCount] = useState(0)
+  const [fileMinSimilarityIndex, setFileMinSimilarityIndex] = useState(0)
 
   useEffect(() => {
     if (repoAdmins.value && project.value) {
@@ -74,6 +75,12 @@ export const ProjectConfigurationTab = ({
   useEffect(() => {
     if (projectConf.value) {
       setCloneMinTokenCount(projectConf.value.cloneMinTokenCount)
+    }
+  }, [projectConf.value])
+
+  useEffect(() => {
+    if (projectConf.value) {
+      setFileMinSimilarityIndex(projectConf.value.fileMinSimilarityIndex)
     }
   }, [projectConf.value])
 
@@ -116,6 +123,16 @@ export const ProjectConfigurationTab = ({
           <HelpBlock>Minimum source code token count to be considered as a clone</HelpBlock>
         </FormGroup>
         <FormGroup>
+          <ControlLabel>File minimum similarity index</ControlLabel>
+          <FormControl
+            type="number" //
+            placeholder="..."
+            value={fileMinSimilarityIndex}
+            onChange={e => setFileMinSimilarityIndex((e.target as any).value)}
+          />
+          <HelpBlock>Minimum similarity percent to consider file as renamed</HelpBlock>
+        </FormGroup>
+        <FormGroup>
           <ControlLabel>Excluded files</ControlLabel>
           <Select
             isMulti //
@@ -133,6 +150,7 @@ export const ProjectConfigurationTab = ({
             updateConf({
               admins: admins.map(u => u.value),
               cloneMinTokenCount,
+              fileMinSimilarityIndex,
               excludedFiles: excludedFiles.map(s => s.value)
             })
           }

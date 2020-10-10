@@ -38,6 +38,7 @@ export const getProjectConf = async (id: number, token: IToken): Promise<IProjec
     return Promise.resolve({
       admins: [],
       cloneMinTokenCount: 0,
+      fileMinSimilarityIndex: 0,
       excludedFiles: []
     })
   }
@@ -49,6 +50,7 @@ export const getProjectConf = async (id: number, token: IToken): Promise<IProjec
       },
       withCredentials: true
     })
+    .then(resp => { console.log(resp); return resp; })
     .then(resp => resp.data as IProjectConf)
 }
 

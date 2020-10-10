@@ -73,20 +73,24 @@ public final class GitCodeLoader implements CodeLoader {
     }
 
     @Override
-    public Flux<DiffEntry<Snapshot>> loadDiff(final Snapshot base, final Snapshot head, final FileFilter filter) {
+    public Flux<DiffEntry<Snapshot>> loadDiff(final Snapshot base,
+                                              final Snapshot head,
+                                              final int minSimilarityIndex,
+                                              final FileFilter filter) {
         return withCommonGitRepo(head)
                 .flatMap(repo -> addOrUpdateRemote(repo, base))
-                .flatMapMany(repo -> loadDiff(repo, base, head, filter, 0));
+                .flatMapMany(repo -> loadDiff(repo, base, head, minSimilarityIndex, filter));
     }
 
     @Override
     public Flux<DiffEntry<Snapshot>> loadRemoteDiff(final GithubRepo projectRepo,
                                                     final Snapshot base,
                                                     final Snapshot head,
+                                                    final int minSimilarityIndex,
                                                     final FileFilter filter) {
         return withProjectGitRepo(projectRepo)
                 .flatMap(repo -> addOrUpdateRemotes(repo, base, head))
-                .flatMapMany(repo -> loadDiff(repo, base, head, filter, 1));
+                .flatMapMany(repo -> loadDiff(repo, base, head, minSimilarityIndex, filter));
     }
 
     @Override
@@ -151,8 +155,8 @@ public final class GitCodeLoader implements CodeLoader {
     private static Flux<DiffEntry<Snapshot>> loadDiff(final Repo repo,
                                                       final Snapshot base,
                                                       final Snapshot head,
-                                                      final FileFilter filter,
-                                                      final int findRenamesMinSimilarityIndex) {
+                                                      final int findRenamesMinSimilarityIndex,
+                                                      final FileFilter filter) {
         return Mono
                 .fromFuture(repo.diff(base.getSha(), head.getSha(), findRenamesMinSimilarityIndex))
                 .map(diffEntries -> diffEntries

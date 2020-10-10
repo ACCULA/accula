@@ -28,7 +28,7 @@ public interface CloneDetector {
     @Builder
     @Value
     class Config {
-        int minCloneLength;
+        int cloneMinTokenCount;
         @Builder.Default
         FileFilter filter = FileFilter.SRC_JAVA;
     }

@@ -157,6 +157,7 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
     public Mono<Project.Conf> confById(final Long id) {
         return withConnection(connection -> Mono.from(((PostgresqlStatement) connection.createStatement("""
                 SELECT conf.clone_min_token_count               AS clone_min_token_count,
+                       conf.file_min_similarity_index           AS file_min_similarity_index,
                        COALESCE(admins.ids, Array[]::BIGINT[])  AS admin_ids,
                        conf.excluded_files                      AS excluded_files
                 FROM project_conf conf
@@ -270,15 +271,17 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
 
     private Mono<Void> upsertConf(final Connection connection, final Long projectId, final Project.Conf conf) {
         return ((PostgresqlStatement) connection.createStatement("""
-                INSERT INTO project_conf (project_id, clone_min_token_count, excluded_files)             
-                VALUES ($1, $2, $3)
+                INSERT INTO project_conf (project_id, clone_min_token_count, file_min_similarity_index, excluded_files)             
+                VALUES ($1, $2, $3, $4)
                 ON CONFLICT (project_id) DO UPDATE
                       SET clone_min_token_count = $2,
-                          excluded_files = $3
+                          file_min_similarity_index = $3,
+                          excluded_files = $4
                 """))
                 .bind("$1", projectId)
                 .bind("$2", conf.getCloneMinTokenCount())
-                .bind("$3", conf.getExcludedFiles().toArray(new String[0]))
+                .bind("$3", conf.getFileMinSimilarityIndex())
+                .bind("$4", conf.getExcludedFiles().toArray(new String[0]))
                 .execute()
                 .flatMap(PostgresqlResult::getRowsUpdated)
                 .then();
@@ -313,6 +316,7 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
         return Project.Conf.builder()
                 .adminIds(Converters.ids(row, "admin_ids"))
                 .cloneMinTokenCount(Converters.integer(row, "clone_min_token_count"))
+                .fileMinSimilarityIndex(Converters.integer(row, "file_min_similarity_index"))
                 .excludedFiles(Converters.strings(row, "excluded_files"))
                 .build();
     }

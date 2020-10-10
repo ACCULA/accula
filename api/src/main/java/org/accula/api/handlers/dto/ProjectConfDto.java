@@ -19,5 +19,6 @@ import static lombok.AccessLevel.PRIVATE;
 public class ProjectConfDto implements InputDto {
     List<Long> admins;
     Integer cloneMinTokenCount;
+    Integer fileMinSimilarityIndex;
     List<String> excludedFiles;
 }

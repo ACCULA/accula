@@ -34,6 +34,7 @@ export interface IProject {
 export interface IProjectConf {
   admins: number[]
   cloneMinTokenCount: number
+  fileMinSimilarityIndex: number
   excludedFiles: string[]
 }
 

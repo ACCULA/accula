@@ -329,6 +329,7 @@ class ProjectsRouterTest {
                 .isEqualTo(ProjectConfDto.builder()
                         .admins(adminIds)
                         .cloneMinTokenCount(Project.Conf.DEFAULT.getCloneMinTokenCount())
+                        .fileMinSimilarityIndex(Project.Conf.DEFAULT.getFileMinSimilarityIndex())
                         .excludedFiles(Project.Conf.DEFAULT.getExcludedFiles())
                         .build());
     }
@@ -348,6 +349,7 @@ class ProjectsRouterTest {
                 .bodyValue(ProjectConfDto.builder()
                         .admins(adminIds)
                         .cloneMinTokenCount(Project.Conf.DEFAULT.getCloneMinTokenCount())
+                        .fileMinSimilarityIndex(Project.Conf.DEFAULT.getFileMinSimilarityIndex())
                         .excludedFiles(Project.Conf.DEFAULT.getExcludedFiles())
                         .build())
                 .exchange()
