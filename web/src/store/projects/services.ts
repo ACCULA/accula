@@ -90,7 +90,7 @@ export const getBaseFiles = async (id: number, token: IToken): Promise<string[]>
     return Promise.resolve([])
   }
   return axios
-    .get(`${API_URL}/api/projects/${id}/baseFiles`, {
+    .get(`${API_URL}/api/projects/${id}/headFiles`, {
       headers: {
         Accept: 'application/json',
         Authorization: `Bearer ${token.accessToken}`

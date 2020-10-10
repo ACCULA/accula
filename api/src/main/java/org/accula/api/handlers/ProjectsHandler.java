@@ -146,7 +146,7 @@ public final class ProjectsHandler {
                 });
     }
 
-    public Mono<ServerResponse> baseFiles(ServerRequest request) {
+    public Mono<ServerResponse> headFiles(ServerRequest request) {
         final var files = withProjectId(request)
                 .flatMap(projectRepo::findById)
                 .map(Project::getGithubRepo)

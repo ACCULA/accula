@@ -123,6 +123,9 @@ export const getProjectConfAction = (id: number) => async (
   }
   await requireToken(dispatch, getState)
   const { users } = getState()
+  if (!users.token) {
+    return
+  }
   try {
     dispatch(setProjectConf(fetching))
     const conf = await getProjectConf(id, users.token)
@@ -161,6 +164,9 @@ export const getRepoAdminsAction = (projectId: number) => async (
   }
   await requireToken(dispatch, getState)
   const { users } = getState()
+  if (!users.token) {
+    return
+  }
   try {
     dispatch(setRepoAdmins(fetching))
     const admins = await getRepoAdmins(projectId, users.token)
