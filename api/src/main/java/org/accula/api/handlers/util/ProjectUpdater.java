@@ -29,7 +29,6 @@ import java.util.Set;
 @RequiredArgsConstructor
 public final class ProjectUpdater {
     private final Scheduler processingScheduler = ReactorSchedulers.boundedElastic(this);
-    private final GithubApiToModelConverter converter;
     private final GithubUserRepo githubUserRepo;
     private final GithubRepoRepo githubRepoRepo;
     private final SnapshotRepo snapshotRepo;
@@ -109,7 +108,7 @@ public final class ProjectUpdater {
                                       final Set<GithubRepo> repos,
                                       final Set<Snapshot> heads,
                                       final Set<Snapshot> bases) {
-        final var pull = converter.convert(githubApiPull, projectId);
+        final var pull = GithubApiToModelConverter.convert(githubApiPull, projectId);
 
         final var head = pull.getHead();
         users.add(head.getRepo().getOwner());

@@ -21,10 +21,11 @@ import org.accula.api.github.model.GithubApiPull.State;
 import org.accula.api.github.model.GithubApiRepo;
 import org.accula.api.handlers.dto.ProjectConfDto;
 import org.accula.api.handlers.dto.ProjectDto;
-import org.accula.api.handlers.dto.UserDto;
 import org.accula.api.handlers.request.CreateProjectRequestBody;
 import org.accula.api.handlers.response.ErrorBody;
 import org.accula.api.handlers.util.ProjectUpdater;
+import org.accula.api.handlers.util.Responses;
+import org.accula.api.util.Lambda;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
@@ -38,11 +39,10 @@ import reactor.util.function.Tuples;
 import java.util.Arrays;
 import java.util.List;
 
+import static java.lang.Boolean.TRUE;
 import static java.util.function.Predicate.isEqual;
 import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.toList;
-import static org.springframework.http.HttpStatus.FORBIDDEN;
-import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 /**
  * @author Anton Lamtev
@@ -51,7 +51,9 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 @Slf4j
 @RequiredArgsConstructor
 public final class ProjectsHandler {
-    private static final Exception PROJECT_NOT_FOUND_EXCEPTION = new Exception();
+    //TODO: common handler for all NOT FOUND cases
+    private static final Exception PROJECT_NOT_FOUND_EXCEPTION = new Exception("PROJECT_NOT_FOUND_EXCEPTION");
+    private static final Exception NOT_ENOUGH_PERMISSIONS_EXCEPTION = new Exception("NOT_ENOUGH_PERMISSIONS_EXCEPTION");
 
     private final WebhookProperties webhookProperties;
     private final CurrentUserRepo currentUser;
@@ -60,18 +62,17 @@ public final class ProjectsHandler {
     private final GithubUserRepo githubUserRepo;
     private final UserRepo userRepo;
     private final ProjectUpdater projectUpdater;
-    private final GithubApiToModelConverter githubToModelConverter;
     private final CodeLoader codeLoader;
 
     public Mono<ServerResponse> getTop(final ServerRequest request) {
         return Mono
                 .just(request.queryParam("count").orElse("5"))
                 .map(Integer::parseInt)
-                .flatMap(count -> ServerResponse
-                        .ok()
-                        .contentType(APPLICATION_JSON)
-                        .body(projectRepo.getTop(count).map(ModelToDtoConverter::convert), ProjectDto.class))
-                .doOnSuccess(response -> log.debug("{}: {}", request, response.statusCode()));
+                .flatMap(count -> projectRepo
+                        .getTop(count)
+                        .map(ModelToDtoConverter::convert)
+                        .collectList())
+                .flatMap(Responses::ok);
     }
 
     public Mono<ServerResponse> get(final ServerRequest request) {
@@ -79,12 +80,8 @@ public final class ProjectsHandler {
                 .flatMap(projectRepo::findById)
                 .map(ModelToDtoConverter::convert)
                 .switchIfEmpty(Mono.error(PROJECT_NOT_FOUND_EXCEPTION))
-                .flatMap(project -> ServerResponse
-                        .ok()
-                        .contentType(APPLICATION_JSON)
-                        .bodyValue(project))
-                .onErrorResume(PROJECT_NOT_FOUND_EXCEPTION::equals, ProjectsHandler::notFound)
-                .doOnSuccess(response -> log.debug("{}: {}", request, response.statusCode()));
+                .flatMap(Responses::ok)
+                .onErrorResume(PROJECT_NOT_FOUND_EXCEPTION::equals, Lambda.expandingWithArg(Responses::notFound));
     }
 
     public Mono<ServerResponse> create(final ServerRequest request) {
@@ -99,20 +96,13 @@ public final class ProjectsHandler {
                 })
                 .flatMap(TupleUtils.function(this::saveProjectData))
                 .flatMap(this::createWebhook)
-                .flatMap(project -> ServerResponse
-                        .ok()
-                        .contentType(APPLICATION_JSON)
-                        .bodyValue(project))
-                .doOnNext(response -> log.debug("{}: {}", request, response.statusCode()))
+                .flatMap(Responses::created)
                 .doOnError(e -> log.error("{}: ", request, e))
-                .onErrorResume(CreateProjectException.class,
-                        e -> switch (CreateProjectException.error(e)) {
-                            case BAD_FORMAT, INVALID_URL, WRONG_URL, ALREADY_EXISTS -> ServerResponse
-                                    .badRequest()
-                                    .bodyValue(CreateProjectException.errorBody(e));
-                            case NO_PERMISSION -> ServerResponse
-                                    .status(FORBIDDEN)
-                                    .bodyValue(CreateProjectException.errorBody(e));
+                .onErrorResume(CreateProjectException.class, e ->
+                        switch (CreateProjectException.error(e)) {
+                            case BAD_FORMAT, INVALID_URL, WRONG_URL, ALREADY_EXISTS -> Responses
+                                    .badRequest(CreateProjectException.errorBody(e));
+                            case NO_PERMISSION -> Responses.forbidden(CreateProjectException.errorBody(e));
                         });
     }
 
@@ -120,66 +110,68 @@ public final class ProjectsHandler {
         return withProjectId(request)
                 .zipWith(currentUser.get(User::getId))
                 .flatMap(TupleUtils.function(projectRepo::delete))
-                .flatMap(success -> ServerResponse.ok().build())
-                .onErrorResume(PROJECT_NOT_FOUND_EXCEPTION::equals, ProjectsHandler::notFound);
+                .flatMap(Lambda.expandingWithArg(Responses::accepted))
+                .onErrorResume(PROJECT_NOT_FOUND_EXCEPTION::equals, Lambda.expandingWithArg(Responses::notFound));
     }
 
     public Mono<ServerResponse> githubAdmins(final ServerRequest request) {
-        final var admins = withProjectId(request)
+        final var adminsMono = withProjectId(request)
                 .filterWhen(this::isCurrentUserAdmin)
-                //TODO: not enough rights
+                .switchIfEmpty(Mono.error(NOT_ENOUGH_PERMISSIONS_EXCEPTION))
                 .flatMap(projectRepo::findById)
                 .switchIfEmpty(Mono.error(PROJECT_NOT_FOUND_EXCEPTION))
                 .flatMap(this::githubRepoAdmins)
                 .flatMapMany(userRepo::findByGithubIds)
-                .map(ModelToDtoConverter::convert);
-        return ServerResponse
-                .ok()
-                .contentType(APPLICATION_JSON)
-                .body(admins, UserDto.class)
-                .onErrorResume(PROJECT_NOT_FOUND_EXCEPTION::equals, ProjectsHandler::notFound)
+                .map(ModelToDtoConverter::convert)
+                .collectList();
+        return adminsMono
+                .flatMap(Responses::ok)
+                .onErrorResume(PROJECT_NOT_FOUND_EXCEPTION::equals, Lambda.expandingWithArg(Responses::notFound))
+                .onErrorResume(NOT_ENOUGH_PERMISSIONS_EXCEPTION::equals, Lambda.expandingWithArg(Responses::forbidden))
                 .onErrorResume(GithubClientException.class, e -> {
                     log.warn("Cannot fetch repository admins", e);
-                    return ServerResponse.badRequest().build();
+                    return Responses.badRequest();
                 });
     }
 
     public Mono<ServerResponse> headFiles(ServerRequest request) {
-        final var files = withProjectId(request)
+        return withProjectId(request)
+                .filterWhen(this::isCurrentUserAdmin)
+                .switchIfEmpty(Mono.error(NOT_ENOUGH_PERMISSIONS_EXCEPTION))
                 .flatMap(projectRepo::findById)
+                .switchIfEmpty(Mono.error(PROJECT_NOT_FOUND_EXCEPTION))
                 .map(Project::getGithubRepo)
                 .flatMapMany(codeLoader::loadFilenames)
-                .collectList();
-        return ServerResponse
-                .ok()
-                .contentType(APPLICATION_JSON)
-                .body(files, List.class);
+                .collectList()
+                .flatMap(Responses::ok)
+                .onErrorResume(PROJECT_NOT_FOUND_EXCEPTION::equals, Lambda.expandingWithArg(Responses::notFound))
+                .onErrorResume(NOT_ENOUGH_PERMISSIONS_EXCEPTION::equals, Lambda.expandingWithArg(Responses::forbidden));
     }
 
     public Mono<ServerResponse> getConf(final ServerRequest request) {
-        final var conf = withProjectId(request)
+        final var confMono = withProjectId(request)
                 .filterWhen(this::isCurrentUserAdmin)
-                //TODO: not enough rights
+                .switchIfEmpty(Mono.error(NOT_ENOUGH_PERMISSIONS_EXCEPTION))
                 .flatMap(projectRepo::confById)
                 .switchIfEmpty(Mono.error(PROJECT_NOT_FOUND_EXCEPTION))
                 .map(ModelToDtoConverter::convert);
-        return ServerResponse
-                .ok()
-                .contentType(APPLICATION_JSON)
-                .body(conf, ProjectConfDto.class)
-                .onErrorResume(PROJECT_NOT_FOUND_EXCEPTION::equals, ProjectsHandler::notFound);
+        return confMono
+                .flatMap(Responses::ok)
+                .onErrorResume(PROJECT_NOT_FOUND_EXCEPTION::equals, Lambda.expandingWithArg(Responses::notFound))
+                .onErrorResume(NOT_ENOUGH_PERMISSIONS_EXCEPTION::equals, Lambda.expandingWithArg(Responses::forbidden));
     }
 
     public Mono<ServerResponse> updateConf(final ServerRequest request) {
         return withProjectId(request)
                 .filterWhen(this::isCurrentUserAdmin)
-                //TODO: not enough rights
+                .switchIfEmpty(Mono.error(NOT_ENOUGH_PERMISSIONS_EXCEPTION))
                 .zipWith(request.bodyToMono(ProjectConfDto.class)
                         .map(DtoToModelConverter::convert))
                 .flatMap(TupleUtils.function(projectRepo::upsertConf))
-                .flatMap(conf -> ServerResponse.ok().build())
-                .onErrorResume(PROJECT_NOT_FOUND_EXCEPTION::equals, ProjectsHandler::notFound)
-                .onErrorResume(DtoToModelConverter.ValidationException.class, ProjectsHandler::badRequest);
+                .flatMap(Lambda.expandingWithArg(Responses::created))
+                .onErrorResume(PROJECT_NOT_FOUND_EXCEPTION::equals, Lambda.expandingWithArg(Responses::notFound))
+                .onErrorResume(NOT_ENOUGH_PERMISSIONS_EXCEPTION::equals, Lambda.expandingWithArg(Responses::forbidden))
+                .onErrorResume(DtoToModelConverter.ValidationException.class, Lambda.expandingWithArg(Responses::badRequest));
     }
 
     private Mono<Tuple4<Boolean, GithubApiRepo, List<GithubApiPull>, User>> retrieveGithubInfoForProjectCreation(final String owner,
@@ -200,11 +192,11 @@ public final class ProjectsHandler {
                 return Mono.error(CreateProjectException.NO_PERMISSION);
             }
 
-            final var projectGithubRepo = githubToModelConverter.convert(githubApiRepo);
+            final var projectGithubRepo = GithubApiToModelConverter.convert(githubApiRepo);
 
             return projectRepo
                     .notExists(projectGithubRepo.getId())
-                    .filter(isEqual(true))
+                    .filter(isEqual(TRUE))
                     .switchIfEmpty(Mono.error(CreateProjectException.ALREADY_EXISTS))
                     .flatMap(ok -> githubUserRepo.upsert(projectGithubRepo.getOwner())
                             .doOnError(e -> log.error("Error saving github user: {}", projectGithubRepo.getOwner(), e)))
@@ -274,14 +266,6 @@ public final class ProjectsHandler {
                 Mono::just,
                 project -> projectRepo.upsertConf(project.getId(), Project.Conf.DEFAULT)
         );
-    }
-
-    private static Mono<ServerResponse> notFound(final Throwable error) {
-        return ServerResponse.notFound().build();
-    }
-
-    private static Mono<ServerResponse> badRequest(final Throwable error) {
-        return ServerResponse.badRequest().build();
     }
 
     @RequiredArgsConstructor

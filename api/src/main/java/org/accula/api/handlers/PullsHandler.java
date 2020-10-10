@@ -3,13 +3,13 @@ package org.accula.api.handlers;
 import lombok.RequiredArgsConstructor;
 import org.accula.api.converter.ModelToDtoConverter;
 import org.accula.api.db.repo.PullRepo;
-import org.accula.api.handlers.dto.ShortPullDto;
+import org.accula.api.handlers.util.Responses;
+import org.accula.api.util.Lambda;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
-
-import static org.springframework.http.MediaType.APPLICATION_JSON;
+import reactor.function.TupleUtils;
 
 /**
  * @author Anton Lamtev
@@ -18,7 +18,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 @RequiredArgsConstructor
 public final class PullsHandler {
     //TODO: common handler for all NOT FOUND cases
-    private static final Exception PULL_NOT_FOUND_EXCEPTION = new Exception();
+    private static final Exception PULL_NOT_FOUND_EXCEPTION = new Exception("PULL_NOT_FOUND_EXCEPTION");
     private static final String PROJECT_ID = "projectId";
     private static final String PULL_NUMBER = "pullNumber";
 
@@ -29,11 +29,11 @@ public final class PullsHandler {
         return Mono
                 .fromSupplier(() -> Long.parseLong(request.pathVariable(PROJECT_ID)))
                 .onErrorMap(NumberFormatException.class, e -> PULL_NOT_FOUND_EXCEPTION)
-                .flatMap(projectId -> ServerResponse
-                        .ok()
-                        .contentType(APPLICATION_JSON)
-                        .body(pullRepo.findByProjectId(projectId).map(ModelToDtoConverter::convertShort), ShortPullDto.class))
-                .onErrorResume(PULL_NOT_FOUND_EXCEPTION::equals, e -> ServerResponse.notFound().build());
+                .flatMapMany(pullRepo::findByProjectId)
+                .map(ModelToDtoConverter::convertShort)
+                .collectList()
+                .flatMap(Responses::ok)
+                .onErrorResume(PULL_NOT_FOUND_EXCEPTION::equals, Lambda.expandingWithArg(Responses::notFound));
     }
 
     public Mono<ServerResponse> get(final ServerRequest request) {
@@ -47,12 +47,10 @@ public final class PullsHandler {
                             .switchIfEmpty(Mono.error(PULL_NOT_FOUND_EXCEPTION))
                             .flatMap(pull -> Mono.just(pull)
                                     .zipWith(pullRepo.findPrevious(projectId, pullNumber, pull.getAuthor().getId()).collectList())
-                                    .flatMap(pullWithPrev -> ServerResponse
-                                            .ok()
-                                            .contentType(APPLICATION_JSON)
-                                            .bodyValue(ModelToDtoConverter.convert(pullWithPrev.getT1(), pullWithPrev.getT2()))));
+                                    .map(TupleUtils.function(ModelToDtoConverter::convert))
+                                    .flatMap(Responses::ok));
                 })
                 .onErrorMap(NumberFormatException.class, e -> PULL_NOT_FOUND_EXCEPTION)
-                .onErrorResume(PULL_NOT_FOUND_EXCEPTION::equals, e -> ServerResponse.notFound().build());
+                .onErrorResume(PULL_NOT_FOUND_EXCEPTION::equals, Lambda.expandingWithArg(Responses::notFound));
     }
 }

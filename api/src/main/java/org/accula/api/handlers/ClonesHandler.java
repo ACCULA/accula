@@ -14,6 +14,7 @@ import org.accula.api.db.repo.ProjectRepo;
 import org.accula.api.db.repo.PullRepo;
 import org.accula.api.handlers.dto.CloneDto;
 import org.accula.api.handlers.dto.CloneDto.FlatCodeSnippet.FlatCodeSnippetBuilder;
+import org.accula.api.handlers.util.Responses;
 import org.accula.api.service.CloneDetectionService;
 import org.accula.api.util.Lambda;
 import org.springframework.http.HttpStatus;
@@ -31,7 +32,6 @@ import java.util.List;
 import java.util.Objects;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 /**
  * @author Anton Lamtev
@@ -59,7 +59,7 @@ public final class ClonesHandler {
                     final var pullNumber = Integer.parseInt(request.pathVariable(PULL_NUMBER));
                     return getLastCommitClones(projectId, pullNumber);
                 })
-                .onErrorResume(NumberFormatException.class, ClonesHandler::notFound);
+                .onErrorResume(NumberFormatException.class, Lambda.expandingWithArg(Responses::notFound));
     }
 
     public Mono<ServerResponse> refreshClones(final ServerRequest request) {
@@ -77,7 +77,7 @@ public final class ClonesHandler {
                     return toResponse(clones, projectId, pullNumber)
                             .switchIfEmpty(ServerResponse.status(HttpStatus.FORBIDDEN).build());
                 })
-                .onErrorResume(NumberFormatException.class, ClonesHandler::notFound);
+                .onErrorResume(NumberFormatException.class, Lambda.expandingWithArg(Responses::notFound));
     }
 
     private <T> Flux<T> doIfCurrentUserHasAdminPermissionInProject(final long projectId, final Flux<T> action) {
@@ -132,10 +132,7 @@ public final class ClonesHandler {
                         sourcePullNumbers)
                 .map(Lambda.passingTailArgs(ClonesHandler::toCloneDto, projectId, pullNumber));
 
-        return ServerResponse
-                .ok()
-                .contentType(APPLICATION_JSON)
-                .body(responseClones, CloneDto.class);
+        return Responses.ok(responseClones, CloneDto.class);
     }
 
     private static CloneDto toCloneDto(final Clone clone,
@@ -169,9 +166,5 @@ public final class ClonesHandler {
                 .repo(snapshot.getRepo().getName())
                 .sha(snapshot.getSha())
                 .content(base64.encodeToString(content.getBytes(UTF_8)));
-    }
-
-    private static <E extends Throwable> Mono<ServerResponse> notFound(final E error) {
-        return ServerResponse.notFound().build();
     }
 }
