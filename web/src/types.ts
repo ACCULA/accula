@@ -11,6 +11,33 @@ export interface IUser {
   avatar: string
 }
 
+export interface IDiffColors {
+  diffViewerBackground: string
+  diffViewerColor: string
+  addedBackground: string
+  addedColor: string
+  removedBackground: string
+  removedColor: string
+  wordAddedBackground: string
+  wordRemovedBackground: string
+  addedGutterBackground: string
+  removedGutterBackground: string
+  gutterBackground: string
+  gutterBackgroundDark: string
+  highlightBackground: string
+  highlightGutterBackground: string
+  codeFoldGutterBackground: string
+  codeFoldBackground: string
+  emptyLineBackground: string
+  gutterColor: string
+  addedGutterColor: string
+  removedGutterColor: string
+  codeFoldContentColor: string
+  diffViewerTitleBackground: string
+  diffViewerTitleColor: string
+  diffViewerTitleBorderColor: string
+}
+
 export interface IColors {
   bgLight: string
   bgDark: string
@@ -18,13 +45,19 @@ export interface IColors {
   primaryDark: string
   secondaryLight: string
   secondaryDark: string
+  codeDiff: {
+    light: IDiffColors
+    dark: IDiffColors
+  }
 }
 
 export type ThemeMode = 'dark' | 'light'
+export type SplitCodeView = 'unified' | 'split'
 
 export interface ISettings {
   themeMode: ThemeMode
   isDrawerOpen: boolean
+  splitCodeView: SplitCodeView
 }
 
 export interface IRouteInfo {
