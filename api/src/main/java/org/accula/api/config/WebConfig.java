@@ -1,7 +1,6 @@
 package org.accula.api.config;
 
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import org.accula.api.code.CodeLoader;
 import org.accula.api.code.GitCodeLoader;
 import org.accula.api.code.git.Git;
@@ -15,6 +14,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.web.reactive.config.WebFluxConfigurer;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -46,12 +46,10 @@ public class WebConfig implements WebFluxConfigurer {
         return () -> currentUserRepo.get(user -> user.getGithubUser().getLogin());
     }
 
-    @SneakyThrows
     @Bean
-    public Git git(@Value("${accula.reposPath}") final String reposPath) {
-        final var reposDirectory = Path.of(reposPath);
-        if (!Files.exists(reposDirectory)) {
-            Files.createDirectory(reposDirectory);
+    public Git git(@Value("${accula.reposPath}") final Path reposPath) throws IOException {
+        if (!Files.exists(reposPath)) {
+            Files.createDirectory(reposPath);
         }
         final var availableProcessors = Runtime.getRuntime().availableProcessors();
         final var executor = new ThreadPoolExecutor(
@@ -60,7 +58,7 @@ public class WebConfig implements WebFluxConfigurer {
                 60L, TimeUnit.SECONDS,
                 new LinkedBlockingQueue<>(availableProcessors * 50)
         );
-        return new Git(reposDirectory, executor);
+        return new Git(reposPath, executor);
     }
 
     @Bean
