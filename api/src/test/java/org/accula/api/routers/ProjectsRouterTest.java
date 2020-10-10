@@ -394,7 +394,7 @@ class ProjectsRouterTest {
                         .excludedFiles(Project.Conf.DEFAULT.getExcludedFiles())
                         .build())
                 .exchange()
-                .expectStatus().isOk();
+                .expectStatus().isCreated();
     }
 
     @Test

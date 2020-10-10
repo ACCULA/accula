@@ -97,7 +97,6 @@ public final class ProjectsHandler {
                 .flatMap(TupleUtils.function(this::saveProjectData))
                 .flatMap(this::createWebhook)
                 .flatMap(Responses::created)
-                .doOnNext(response -> log.debug("{}: {}", request, response.statusCode()))
                 .doOnError(e -> log.error("{}: ", request, e))
                 .onErrorResume(CreateProjectException.class, e ->
                         switch (CreateProjectException.error(e)) {
@@ -169,7 +168,7 @@ public final class ProjectsHandler {
                 .zipWith(request.bodyToMono(ProjectConfDto.class)
                         .map(DtoToModelConverter::convert))
                 .flatMap(TupleUtils.function(projectRepo::upsertConf))
-                .flatMap(conf -> Responses.ok())
+                .flatMap(Lambda.expandingWithArg(Responses::created))
                 .onErrorResume(PROJECT_NOT_FOUND_EXCEPTION::equals, Lambda.expandingWithArg(Responses::notFound))
                 .onErrorResume(NOT_ENOUGH_PERMISSIONS_EXCEPTION::equals, Lambda.expandingWithArg(Responses::forbidden))
                 .onErrorResume(DtoToModelConverter.ValidationException.class, Lambda.expandingWithArg(Responses::badRequest));

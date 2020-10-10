@@ -33,6 +33,12 @@ public final class Responses {
                 .body(publisher, clazz);
     }
 
+    public static Mono<ServerResponse> created() {
+        return ServerResponse
+                .status(HttpStatus.CREATED)
+                .build();
+    }
+
     public static Mono<ServerResponse> created(final Object body) {
         return ServerResponse
                 .status(HttpStatus.CREATED)
