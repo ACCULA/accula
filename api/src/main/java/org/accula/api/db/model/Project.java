@@ -29,7 +29,7 @@ public class Project {
         public static final Conf DEFAULT = builder()
                 .adminIds(Collections.emptyList())
                 .cloneMinTokenCount(15)
-                .fileMinSimilarityIndex(0)
+                .fileMinSimilarityIndex(5)
                 .excludedFiles(Collections.emptyList())
                 .build();
 
