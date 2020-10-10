@@ -54,7 +54,7 @@ public interface CodeLoader {
      *
      * @see #loadDiff(Snapshot, Snapshot, int, FileFilter)
      */
-    Flux<DiffEntry<Snapshot>> loadRemoteDiff(GithubRepo projectRepo, Snapshot base, Snapshot head, int minSimilarityIndex, FileFilter filter);
+    Flux<DiffEntry<Snapshot>> loadRemoteDiff(GithubRepo repo, Snapshot base, Snapshot head, int minSimilarityIndex, FileFilter filter);
 
     /**
      * Loads filenames by the project repo.
