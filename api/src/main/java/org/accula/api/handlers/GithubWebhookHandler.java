@@ -6,7 +6,9 @@ import org.accula.api.db.model.Pull;
 import org.accula.api.db.repo.ProjectRepo;
 import org.accula.api.github.model.GithubApiHookPayload;
 import org.accula.api.handlers.util.ProjectUpdater;
+import org.accula.api.handlers.util.Responses;
 import org.accula.api.service.CloneDetectionService;
+import org.accula.api.util.Lambda;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
@@ -29,7 +31,7 @@ public final class GithubWebhookHandler {
 
     public Mono<ServerResponse> webhook(final ServerRequest request) {
         if (GITHUB_EVENT_PING.equals(request.headers().firstHeader(GITHUB_EVENT))) {
-            return ServerResponse.ok().build();
+            return Responses.ok();
         }
         // TODO: validate signature in X-Hub-Signature 
         return request
@@ -40,7 +42,7 @@ public final class GithubWebhookHandler {
                     log.error("Error during payload processing: ", e);
                     return Mono.empty();
                 })
-                .flatMap(p -> ServerResponse.ok().build());
+                .flatMap(Lambda.expandingWithArg(Responses::ok));
     }
 
     public Mono<Void> processPayload(final GithubApiHookPayload payload) {

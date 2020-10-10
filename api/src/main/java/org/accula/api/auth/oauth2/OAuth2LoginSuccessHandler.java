@@ -40,7 +40,6 @@ public final class OAuth2LoginSuccessHandler implements ServerAuthenticationSucc
     private final ReactiveOAuth2AuthorizedClientService authorizedClientService;
     private final UserRepo userRepo;
     private final RefreshTokenRepo refreshTokenRepo;
-    private final GithubApiToModelConverter converter;
 
     @Override
     public Mono<Void> onAuthenticationSuccess(final WebFilterExchange exchange, final Authentication authentication) {
@@ -50,7 +49,7 @@ public final class OAuth2LoginSuccessHandler implements ServerAuthenticationSucc
             }
 
             final var authenticationToken = (OAuth2AuthenticationToken) authentication;
-            final var githubUser = converter.convert(authenticationToken.getPrincipal().getAttributes());
+            final var githubUser = GithubApiToModelConverter.convert(authenticationToken.getPrincipal().getAttributes());
 
             return authorizedClientService
                     .loadAuthorizedClient(authenticationToken.getAuthorizedClientRegistrationId(), authenticationToken.getName())

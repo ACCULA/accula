@@ -1,9 +1,9 @@
 package org.accula.api.routers;
 
 import lombok.SneakyThrows;
+import org.accula.api.code.CodeLoader;
 import org.accula.api.config.WebConfig;
 import org.accula.api.config.WebhookProperties;
-import org.accula.api.converter.GithubApiToModelConverter;
 import org.accula.api.converter.ModelToDtoConverter;
 import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.GithubUser;
@@ -48,11 +48,12 @@ import java.util.List;
 
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 @WebFluxTest
-@ContextConfiguration(classes = {ProjectsHandler.class, ProjectsRouter.class, GithubApiToModelConverter.class, WebhookProperties.class, WebConfig.class})
+@ContextConfiguration(classes = {ProjectsHandler.class, ProjectsRouter.class, WebhookProperties.class, WebConfig.class})
 class ProjectsRouterTest {
     static final String REPO_URL = "https://github.com/accula/accula";
     static final String REPO_NAME = "accula";
@@ -103,6 +104,8 @@ class ProjectsRouterTest {
     @Autowired
     RouterFunction<ServerResponse> projectsRoute;
     WebTestClient client;
+    @MockBean
+    CodeLoader codeLoader;
 
     @BeforeEach
     void setUp() {
@@ -152,7 +155,7 @@ class ProjectsRouterTest {
                 .contentType(APPLICATION_JSON)
                 .bodyValue(REQUEST_BODY)
                 .exchange()
-                .expectStatus().isOk()
+                .expectStatus().isCreated()
                 .expectBody(ProjectDto.class).isEqualTo(expectedBody);
 
     }
@@ -290,7 +293,7 @@ class ProjectsRouterTest {
 
         client.delete().uri("/api/projects/{id}", PROJECT.getId())
                 .exchange()
-                .expectStatus().isOk();
+                .expectStatus().isAccepted();
     }
 
     @Test
@@ -313,6 +316,24 @@ class ProjectsRouterTest {
     }
 
     @Test
+    void testGetGithubAdminsForbidden() {
+        mockForbidden();
+
+        client.get().uri("/api/projects/{id}/githubAdmins", PROJECT.getId())
+                .exchange()
+                .expectStatus().isForbidden();
+    }
+
+    @Test
+    void testGetGithubAdminsNotFound() {
+        mockNotFound();
+
+        client.get().uri("/api/projects/{id}/githubAdmins", PROJECT.getId())
+                .exchange()
+                .expectStatus().isNotFound();
+    }
+
+    @Test
     void testGetConf() {
         Mockito.when(currentUser.get(Mockito.any()))
                 .thenReturn(Mono.just(0L));
@@ -332,6 +353,26 @@ class ProjectsRouterTest {
                         .fileMinSimilarityIndex(Project.Conf.DEFAULT.getFileMinSimilarityIndex())
                         .excludedFiles(Project.Conf.DEFAULT.getExcludedFiles())
                         .build());
+    }
+
+    @Test
+    void testGetConfForbidden() {
+        mockForbidden();
+
+        client.get().uri("/api/projects/{id}/conf", PROJECT.getId())
+                .exchange()
+                .expectStatus().isForbidden();
+    }
+
+    @Test
+    void testGetConfNotFound() {
+        mockNotFound();
+        Mockito.when(projectRepo.confById(Mockito.anyLong()))
+                .thenReturn(Mono.empty());
+
+        client.get().uri("/api/projects/{id}/conf", PROJECT.getId())
+                .exchange()
+                .expectStatus().isNotFound();
     }
 
     @Test
@@ -370,10 +411,62 @@ class ProjectsRouterTest {
                 .expectStatus().isBadRequest();
     }
 
+    @Test
+    void testHeadFiles() {
+        final var expectedFiles = new String[]{"file1", "file2", "file3"};
+        Mockito.when(currentUser.get(Mockito.any()))
+                .thenReturn(Mono.just(0L));
+        Mockito.when(projectRepo.hasAdmin(Mockito.anyLong(), Mockito.anyLong()))
+                .thenReturn(Mono.just(TRUE));
+        Mockito.when(projectRepo.findById(Mockito.anyLong()))
+                .thenReturn(Mono.just(PROJECT));
+        Mockito.when(codeLoader.loadFilenames(Mockito.any()))
+                .thenReturn(Flux.fromArray(expectedFiles));
+
+        client.get().uri("/api/projects/{id}/headFiles", PROJECT.getId())
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(String[].class).value(actualFiles -> assertArrayEquals(expectedFiles, actualFiles));
+    }
+
+    @Test
+    void testHeadForbidden() {
+        mockForbidden();
+
+        client.get().uri("/api/projects/{id}/headFiles", PROJECT.getId())
+                .exchange()
+                .expectStatus().isForbidden();
+    }
+
+    @Test
+    void testHeadNotFound() {
+        mockNotFound();
+
+        client.get().uri("/api/projects/{id}/headFiles", PROJECT.getId())
+                .exchange()
+                .expectStatus().isNotFound();
+    }
+
     @SneakyThrows
     private static GithubClientException newGithubException() {
         final var ctor = GithubClientException.class.getDeclaredConstructor(Throwable.class);
         ctor.setAccessible(true);
         return ctor.newInstance(new RuntimeException());
+    }
+
+    private void mockNotFound() {
+        Mockito.when(currentUser.get(Mockito.any()))
+                .thenReturn(Mono.just(0L));
+        Mockito.when(projectRepo.hasAdmin(Mockito.anyLong(), Mockito.anyLong()))
+                .thenReturn(Mono.just(TRUE));
+        Mockito.when(projectRepo.findById(Mockito.anyLong()))
+                .thenReturn(Mono.empty());
+    }
+
+    private void mockForbidden() {
+        Mockito.when(currentUser.get(Mockito.any()))
+                .thenReturn(Mono.just(0L));
+        Mockito.when(projectRepo.hasAdmin(Mockito.anyLong(), Mockito.anyLong()))
+                .thenReturn(Mono.just(FALSE));
     }
 }
