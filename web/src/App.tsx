@@ -145,7 +145,7 @@ const App = ({ auth, token, getCurrentUser, settings, changeSettings }: AppProps
 }
 
 const mapStateToProps = (state: AppState) => ({
-  auth: state.users.user.value !== null,
+  auth: state.users.token.accessToken !== undefined && state.users.token.accessToken !== '',
   token: state.users.token.accessToken,
   settings: state.settings.settings
 })
