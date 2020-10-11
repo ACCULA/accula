@@ -20,3 +20,13 @@ export const historyPush = (history: History, pathname: string) => {
     from: history.location.pathname
   })
 }
+
+export const openLink = (
+  e: React.MouseEvent<HTMLTableRowElement, MouseEvent>,
+  url: string,
+  blank: boolean = true
+) => {
+  if ((e.ctrlKey && e.buttons === 1) || e.button === 1) {
+    window.open(url, blank ? '_blank' : '')
+  }
+}

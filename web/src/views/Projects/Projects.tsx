@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useSnackbar } from 'notistack'
-import { historyPush } from 'utils'
+import { historyPush, openLink } from 'utils'
 import { useHistory } from 'react-router'
 import { AppDispatch, AppState } from 'store'
 import { bindActionCreators } from 'redux'
@@ -92,11 +92,12 @@ const Projects = ({ user, projects, getProjects, resetProjects }: ProjectsProps)
                 {projects.map(project => (
                   <StyledTableRow
                     hover
-                    onClick={() => {
-                      if (!isGithubButtonHovered) {
-                        historyPush(history, `projects/${project.id}/pulls`)
-                      }
-                    }}
+                    onClick={() =>
+                      !isGithubButtonHovered && historyPush(history, `projects/${project.id}/pulls`)
+                    }
+                    onMouseDown={e =>
+                      !isGithubButtonHovered && openLink(e, `projects/${project.id}/pulls`)
+                    }
                     tabIndex={-1}
                     key={project.id}
                   >

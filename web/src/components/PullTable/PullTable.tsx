@@ -7,7 +7,7 @@ import Table from 'components/Table/Table'
 import PullStatus from 'components/PullStatus/PullStatus'
 import PullDate from 'components/PullDate/PullDate'
 import { StyledTableRow } from 'components/Table/styles'
-import { historyPush } from 'utils'
+import { historyPush, openLink } from 'utils'
 import { useStyles } from './styles'
 
 type ExcludeType = ('number' | 'title' | 'open' | 'createdAt' | 'updatedAt' | 'author')[]
@@ -38,15 +38,6 @@ const PullTable = ({ project, pulls, exclude }: PullTableProps) => {
     }
   }, [exclude])
 
-  const handleRowClick = (
-    e: React.MouseEvent<HTMLTableRowElement, MouseEvent>,
-    pull: IShortPull
-  ) => {
-    if ((e.ctrlKey && e.buttons === 1) || e.button === 1) {
-      window.open(`/projects/${project.id}/pulls/${pull.number}`, '_blank')
-    }
-  }
-
   return (
     <Table<IShortPull> count={pulls.length} headCells={headers} toolBarTitle="" withPagination>
       {({ page, rowsPerPage }) => (
@@ -55,7 +46,7 @@ const PullTable = ({ project, pulls, exclude }: PullTableProps) => {
             <StyledTableRow
               hover
               onClick={() => historyPush(history, `/projects/${project.id}/pulls/${pull.number}`)}
-              onMouseDown={e => handleRowClick(e, pull)}
+              onMouseDown={e => openLink(e, `/projects/${project.id}/pulls/${pull.number}`)}
               tabIndex={-1}
               key={pull.number}
             >
