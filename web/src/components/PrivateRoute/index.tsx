@@ -9,7 +9,7 @@ interface PrivateRouteProps extends RouteProps {
 
 export const PrivateRoute = ({ component: Component, auth, ...rest }: PrivateRouteProps) => {
   const snackbarContext = useSnackbar()
-  console.log(auth)
+
   if (!auth) {
     getNotifier('error', snackbarContext)('Authentication required')
     return (
