@@ -102,7 +102,7 @@ export const getProjectAction = (id: number, handleError?: (msg: string) => void
     const project = await getProject(id)
     dispatch(setProject(fetched(project)))
   } catch (e) {
-    dispatch(setProjects(failed(e)))
+    dispatch(setProject(failed(e)))
     if (handleError) {
       handleError(e.message)
     }

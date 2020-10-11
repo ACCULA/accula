@@ -21,6 +21,10 @@ import { CircularProgress } from '@material-ui/core'
 import PullOverviewTab from './PullOverviewTab'
 import PullChangesTab from './PullChangesTab'
 
+const tabValues = ['changes', 'compare', 'clones'] as string[]
+
+const validateTab = (tab: string) => tabValues.includes(tab) || tab === undefined
+
 interface PullsProps extends PropsFromRedux {}
 
 const Pull = ({
@@ -48,14 +52,16 @@ const Pull = ({
   //   }, [compareWith, location, getCompares, projectId, pullId])
 
   useEffect(() => {
-    getProject(projectId)
-    getPull(projectId, pullId)
-    getDiffs(projectId, pullId)
-    getClones(projectId, pullId)
+    if (!Number.isNaN(projectId) && !Number.isNaN(pullId) && validateTab(tab)) {
+      getProject(projectId)
+      getPull(projectId, pullId)
+      getDiffs(projectId, pullId)
+      getClones(projectId, pullId)
+    }
     // eslint-disable-next-line
   }, [])
 
-  if (!project || !pull) {
+  if (Number.isNaN(projectId) || Number.isNaN(pullId) || !validateTab(tab) || !project || !pull) {
     return <></>
   }
 

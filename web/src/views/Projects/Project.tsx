@@ -19,6 +19,10 @@ import ProjectSettingsTab from './ProjectSettingsTab'
 
 interface ProjectProps extends PropsFromRedux {}
 
+const tabValues = ['pulls', 'settings'] as string[]
+
+const validateTab = (tab: string) => tabValues.includes(tab) || tab === undefined
+
 const Project = ({
   project,
   user,
@@ -34,9 +38,10 @@ const Project = ({
   const projectId = parseInt(prId, 10)
 
   useEffect(() => {
-    getProject(projectId, getNotifier('error', snackbarContext))
-    getPulls(projectId, getNotifier('error', snackbarContext))
-
+    if (!Number.isNaN(projectId) && validateTab(tab)) {
+      getProject(projectId, getNotifier('error', snackbarContext))
+      getPulls(projectId, getNotifier('error', snackbarContext))
+    }
     return () => {
       resetProject()
       resetPulls()
@@ -44,7 +49,7 @@ const Project = ({
     // eslint-disable-next-line
   }, [])
 
-  if (user.isFetching || !project) {
+  if (Number.isNaN(projectId) || !validateTab(tab) || user.isFetching || !project) {
     return <></>
   }
 
@@ -77,7 +82,9 @@ const Project = ({
         breadcrumbs={[{ text: 'Projects', to: '/projects' }, { text: project.repoName }]}
       />
       <Tabs tabs={tabs} onChange={handleChangeTab} activeId={tab} />
-      {tab === 'pulls' && <ProjectPullsTab project={project} pulls={pulls} />}
+      {(tab === 'pulls' || tab === undefined) && (
+        <ProjectPullsTab project={project} pulls={pulls} />
+      )}
       {isAdmin && tab === 'settings' && <ProjectSettingsTab user={user.value} project={project} />}
     </>
   )
