@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS project_admin
     project_id BIGSERIAL NOT NULL,
     admin_id   BIGSERIAL NOT NULL,
 
-    FOREIGN KEY (project_id) REFERENCES project (id),
+    FOREIGN KEY (project_id) REFERENCES project (id) ON DELETE CASCADE,
     FOREIGN KEY (admin_id) REFERENCES user_ (id),
     CONSTRAINT project_admin_pk PRIMARY KEY (project_id, admin_id)
 );
@@ -61,11 +61,11 @@ CREATE TABLE IF NOT EXISTS project_admin
 CREATE TABLE IF NOT EXISTS project_conf
 (
     project_id                BIGINT PRIMARY KEY,
-    clone_min_token_count     INT NOT NULL,
-    file_min_similarity_index INT NOT NULL,
+    clone_min_token_count     INT    NOT NULL,
+    file_min_similarity_index INT    NOT NULL,
     excluded_files            TEXT[] NOT NULL,
 
-    FOREIGN KEY (project_id) REFERENCES project (id)
+    FOREIGN KEY (project_id) REFERENCES project (id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS snapshot
@@ -98,7 +98,7 @@ CREATE TABLE IF NOT EXISTS pull
 
     FOREIGN KEY (head_snapshot_sha, head_snapshot_repo_id) REFERENCES snapshot (sha, repo_id),
     FOREIGN KEY (base_snapshot_sha, base_snapshot_repo_id) REFERENCES snapshot (sha, repo_id),
-    FOREIGN KEY (project_id) REFERENCES project (id),
+    FOREIGN KEY (project_id) REFERENCES project (id) ON DELETE CASCADE,
     FOREIGN KEY (author_github_id) REFERENCES user_github (id)
 );
 
@@ -109,7 +109,7 @@ CREATE TABLE IF NOT EXISTS snapshot_pull
     pull_id          BIGINT   NOT NULL,
 
     FOREIGN KEY (snapshot_sha, snapshot_repo_id) REFERENCES snapshot (sha, repo_id),
-    FOREIGN KEY (pull_id) REFERENCES pull (id),
+    FOREIGN KEY (pull_id) REFERENCES pull (id) ON DELETE CASCADE,
     CONSTRAINT snapshot_pull_pk PRIMARY KEY (snapshot_sha, snapshot_repo_id, pull_id)
 );
 
