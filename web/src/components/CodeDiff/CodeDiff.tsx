@@ -25,6 +25,7 @@ const CodeDiff = ({ title, language, defaultExpanded, ...props }: CodeDiffProps)
     return (
       <pre
         style={{ display: 'inline' }}
+        /* eslint-disable-next-line react/no-danger */
         dangerouslySetInnerHTML={{
           __html: Prism.highlight(code, Prism.languages[language], language)
         }}
