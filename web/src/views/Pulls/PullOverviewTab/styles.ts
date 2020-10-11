@@ -12,7 +12,7 @@ export const useStyles = makeStyles((theme: Theme) => ({
   authorAvatar: {
     width: 192,
     height: 192,
-    boxShadow: '0 4px 60px rgba(0,0,0,.3)'
+    boxShadow: theme.palette.type === 'light' ? '0 4px 60px rgba(0,0,0,.3)' : 'none'
   },
   authorView: {
     marginRight: 24,
