@@ -10,8 +10,8 @@ import { PageTitle } from 'components/PageTitle'
 import BreadCrumbs from 'components/BreadCrumbs'
 import Tabs, { Tab } from 'components/Tabs/Tabs'
 import { useSnackbar } from 'notistack'
-import { CircularProgress, IconButton } from '@material-ui/core'
-import { CloseRounded } from '@material-ui/icons'
+import { getNotifier } from 'App'
+import { CircularProgress } from '@material-ui/core'
 import { ReactComponent as PrLogo } from 'images/pull_request.svg'
 import SettingsIcon from '@material-ui/icons/Settings'
 import ProjectPullsTab from './ProjectPullsTab/ProjectPullsTab'
@@ -29,23 +29,13 @@ const Project = ({
   resetProject
 }: ProjectProps) => {
   const history = useHistory()
-  const { enqueueSnackbar, closeSnackbar } = useSnackbar()
+  const snackbarContext = useSnackbar()
   const { prId, tab }: any = useParams()
   const projectId = parseInt(prId, 10)
 
-  const showErrorNotification = (msg: string) =>
-    enqueueSnackbar(msg, {
-      variant: 'error',
-      action: key => (
-        <IconButton onClick={() => closeSnackbar(key)} aria-label="Close notification">
-          <CloseRounded />
-        </IconButton>
-      )
-    })
-
   useEffect(() => {
-    getProject(projectId, showErrorNotification)
-    getPulls(projectId, showErrorNotification)
+    getProject(projectId, getNotifier('error', snackbarContext))
+    getPulls(projectId, getNotifier('error', snackbarContext))
 
     return () => {
       resetProject()

@@ -5,7 +5,7 @@ import { useHistory } from 'react-router'
 import { AppDispatch, AppState } from 'store'
 import { bindActionCreators } from 'redux'
 import { connect, ConnectedProps } from 'react-redux'
-import { AddBoxOutlined, CloseRounded } from '@material-ui/icons'
+import { AddBoxOutlined } from '@material-ui/icons'
 import { getProjectsAction, resetProjectsAction } from 'store/projects/actions'
 import Button from '@material-ui/core/Button'
 import BreadCrumbs from 'components/BreadCrumbs'
@@ -19,6 +19,7 @@ import GitHubIcon from '@material-ui/icons/GitHub'
 import { Avatar, IconButton, TableCell } from '@material-ui/core'
 import Link from 'components/Link'
 import { StyledTableRow } from 'components/Table/styles'
+import { getNotifier } from 'App'
 import EmptyContent from 'components/EmptyContent'
 import AddProjectDialog from './AddProjectDialog'
 import { useStyles } from './styles'
@@ -34,21 +35,12 @@ const headCells: HeadCell<IProject>[] = [
 const Projects = ({ user, projects, getProjects, resetProjects }: ProjectsProps) => {
   const classes = useStyles()
   const history = useHistory()
-  const { enqueueSnackbar, closeSnackbar } = useSnackbar()
+  const snackbarContext = useSnackbar()
   const [isGithubButtonHovered, setGithubButtonHovered] = useState(false)
   const [isCreateProjectDialogOpen, setCreateProjectDialogOpen] = useState(false)
 
   useEffect(() => {
-    getProjects(msg =>
-      enqueueSnackbar(msg, {
-        variant: 'error',
-        action: key => (
-          <IconButton onClick={() => closeSnackbar(key)} aria-label="Close notification">
-            <CloseRounded />
-          </IconButton>
-        )
-      })
-    )
+    getProjects(getNotifier('error', snackbarContext))
     return () => {
       resetProjects()
     }

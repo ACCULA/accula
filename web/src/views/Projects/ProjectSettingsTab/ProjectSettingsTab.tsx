@@ -25,9 +25,9 @@ import {
   getRepoAdminsAction,
   updateProjectConfAction
 } from 'store/projects/actions'
-import { useSnackbar, VariantType } from 'notistack'
-import { CloseRounded } from '@material-ui/icons'
+import { useSnackbar } from 'notistack'
 import { historyPush } from 'utils'
+import { getNotifier } from 'App'
 import { useHistory } from 'react-router'
 import { useStyles } from './styles'
 
@@ -65,27 +65,15 @@ const ProjectSettingsTab = ({
 }: ProjectSettingsTabProps) => {
   const classes = useStyles()
   const history = useHistory()
-  const { enqueueSnackbar, closeSnackbar } = useSnackbar()
+  const snackbarContext = useSnackbar()
   const [adminOptions, setAdminOptions] = useState<IUser[]>(null)
   const [excludedFilesOptions, setExcludedFilesOptions] = useState(null)
   const [fetching, setFetching] = useState(false)
 
-  const showNotification = (variant: VariantType) => {
-    return (msg: string) =>
-      enqueueSnackbar(msg, {
-        variant,
-        action: key => (
-          <IconButton onClick={() => closeSnackbar(key)} aria-label="Close notification">
-            <CloseRounded />
-          </IconButton>
-        )
-      })
-  }
-
   useEffect(() => {
-    getProjectConf(project.id, showNotification('error'))
-    getRepoAdmins(project.id, showNotification('error'))
-    getBaseFiles(project.id, showNotification('error'))
+    getProjectConf(project.id, getNotifier('error', snackbarContext))
+    getRepoAdmins(project.id, getNotifier('error', snackbarContext))
+    getBaseFiles(project.id, getNotifier('error', snackbarContext))
     // eslint-disable-next-line
   }, [])
 
@@ -133,11 +121,11 @@ const ProjectSettingsTab = ({
           cloneMinTokenCount: cloneMinTokenCount === '' ? minCloneTokenCount : cloneMinTokenCount
         },
         () => {
-          showNotification('success')('Configuration has been successfully updated')
+          getNotifier('success', snackbarContext)('Configuration has been successfully updated')
           setFetching(false)
         },
         msg => {
-          showNotification('error')(msg)
+          getNotifier('error', snackbarContext)(msg)
           setFetching(false)
         }
       )
@@ -148,12 +136,12 @@ const ProjectSettingsTab = ({
     deleteProject(
       project.id,
       () => {
-        showNotification('success')('Project has been successfully deleted')
+        getNotifier('success', snackbarContext)('Project has been successfully deleted')
         setFetching(false)
         historyPush(history, '/projects')
       },
       msg => {
-        showNotification('error')(msg)
+        getNotifier('error', snackbarContext)(msg)
         setFetching(false)
       }
     )

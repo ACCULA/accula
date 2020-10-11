@@ -7,8 +7,7 @@ import {
   DialogContentText,
   DialogActions,
   Button,
-  TextField,
-  IconButton
+  TextField
 } from '@material-ui/core'
 import { Formik, Field, Form } from 'formik'
 import LoadingButton from 'components/LoadingButton'
@@ -16,8 +15,8 @@ import { AppDispatch } from 'store'
 import { bindActionCreators } from 'redux'
 import { createProjectAction } from 'store/projects/actions'
 import { connect, ConnectedProps } from 'react-redux'
+import { getNotifier } from 'App'
 import { useSnackbar } from 'notistack'
-import { CloseRounded } from '@material-ui/icons'
 import { useStyles } from './styles'
 
 const githubRepoUrlRegex = /https:\/\/github.com\/[\w\d_-]+\/[\w\d_-]+\/?$/
@@ -29,7 +28,7 @@ interface CreateProjectDialogProps extends PropsFromRedux {
 
 const AddProjectDialog = ({ open, onClose, addProject }: CreateProjectDialogProps) => {
   const classes = useStyles()
-  const { enqueueSnackbar, closeSnackbar } = useSnackbar()
+  const snackbarContext = useSnackbar()
   const [isDialogOpen, openDialog] = useState(false)
   const [fetching, setFetching] = useState(false)
 
@@ -56,14 +55,7 @@ const AddProjectDialog = ({ open, onClose, addProject }: CreateProjectDialogProp
           handleClose()
         },
         msg => {
-          enqueueSnackbar(msg, {
-            variant: 'error',
-            action: key => (
-              <IconButton onClick={() => closeSnackbar(key)} aria-label="Close notification">
-                <CloseRounded />
-              </IconButton>
-            )
-          })
+          getNotifier('error', snackbarContext)(msg)
           setFetching(false)
         }
       )

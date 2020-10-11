@@ -15,14 +15,15 @@ import {
   Theme,
   ThemeProvider
 } from '@material-ui/core/styles'
-import { CssBaseline } from '@material-ui/core'
+import { CssBaseline, IconButton } from '@material-ui/core'
 import { NavBar } from 'components/NavBar/NavBar'
-import { SnackbarProvider } from 'notistack'
+import { ProviderContext, SnackbarProvider, VariantType } from 'notistack'
 import { AppDispatch, AppState } from 'store'
 import SideBar from 'components/SideBar'
 import { DRAWER_WIDTH } from 'utils'
 import { PageTitle } from 'components/PageTitle'
 import { NotFound } from 'views/NotFound'
+import { CloseRounded } from '@material-ui/icons'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -55,6 +56,21 @@ const useStyles = makeStyles((theme: Theme) =>
     }
   })
 )
+
+export const getNotifier = (
+  variant: VariantType,
+  { enqueueSnackbar, closeSnackbar }: ProviderContext
+) => {
+  return (msg: string) =>
+    enqueueSnackbar(msg, {
+      variant,
+      action: key => (
+        <IconButton onClick={() => closeSnackbar(key)} aria-label="Close notification">
+          <CloseRounded />
+        </IconButton>
+      )
+    })
+}
 
 type AppProps = PropsFromRedux
 
