@@ -38,6 +38,15 @@ const PullTable = ({ project, pulls, exclude }: PullTableProps) => {
     }
   }, [exclude])
 
+  const handleRowClick = (
+    e: React.MouseEvent<HTMLTableRowElement, MouseEvent>,
+    pull: IShortPull
+  ) => {
+    if ((e.ctrlKey && e.buttons === 1) || e.button === 1) {
+      window.open(`/projects/${project.id}/pulls/${pull.number}`, '_blank')
+    }
+  }
+
   return (
     <Table<IShortPull> count={pulls.length} headCells={headers} toolBarTitle="" withPagination>
       {({ page, rowsPerPage }) => (
@@ -46,6 +55,7 @@ const PullTable = ({ project, pulls, exclude }: PullTableProps) => {
             <StyledTableRow
               hover
               onClick={() => historyPush(history, `/projects/${project.id}/pulls/${pull.number}`)}
+              onMouseDown={e => handleRowClick(e, pull)}
               tabIndex={-1}
               key={pull.number}
             >
