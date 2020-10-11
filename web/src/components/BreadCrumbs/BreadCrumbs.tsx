@@ -1,4 +1,5 @@
 import React from 'react'
+import clsx from 'clsx'
 import { Breadcrumbs, Typography } from '@material-ui/core'
 import { Link } from 'react-router-dom'
 import { useStyles } from './styles'
@@ -15,7 +16,7 @@ interface BreadCrumbsProps {
 const BreadCrumbs = ({ breadcrumbs }: BreadCrumbsProps) => {
   const classes = useStyles()
   return (
-    <Breadcrumbs className={classes.root} aria-label="breadcrumb">
+    <Breadcrumbs className={classes.crumb} aria-label="breadcrumb">
       {breadcrumbs &&
         breadcrumbs.map(({ text, to }) =>
           to ? (
@@ -23,7 +24,11 @@ const BreadCrumbs = ({ breadcrumbs }: BreadCrumbsProps) => {
               {text}
             </Link>
           ) : (
-            <Typography key={text} className={classes.activeCrumb} color="textPrimary">
+            <Typography
+              key={text}
+              className={clsx(classes.crumb, classes.activeCrumb)}
+              color="textPrimary"
+            >
               {text}
             </Typography>
           )

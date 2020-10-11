@@ -160,7 +160,7 @@ const ProjectSettingsTab = ({
   }
 
   return (
-    <>
+    <div className={classes.root}>
       <Typography className={classes.title} gutterBottom>
         Project configuration
       </Typography>
@@ -324,7 +324,7 @@ const ProjectSettingsTab = ({
           </Card>
         </>
       )}
-    </>
+    </div>
   )
 }
 

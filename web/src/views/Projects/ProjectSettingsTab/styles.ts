@@ -1,6 +1,10 @@
 import { makeStyles, Theme } from '@material-ui/core'
 
 export const useStyles = makeStyles((theme: Theme) => ({
+  root: {
+    maxWidth: 1000,
+    margin: '0 auto'
+  },
   card: {
     marginBottom: 40
   },

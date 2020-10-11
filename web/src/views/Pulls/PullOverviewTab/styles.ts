@@ -53,9 +53,7 @@ export const useStyles = makeStyles((theme: Theme) => ({
     marginTop: 0,
     fontSize: 48,
     [theme.breakpoints.down('xs')]: {
-      fontSize: 38
-    },
-    [theme.breakpoints.down('xs')]: {
+      fontSize: '2em',
       textAlign: 'center',
       marginTop: 10
     }
