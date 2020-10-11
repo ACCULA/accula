@@ -10,6 +10,8 @@ import org.accula.api.db.model.Snapshot;
 import org.accula.api.db.repo.ProjectRepo;
 import org.accula.api.db.repo.PullRepo;
 import org.accula.api.handlers.dto.DiffDto;
+import org.accula.api.handlers.util.Responses;
+import org.accula.api.util.Lambda;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
@@ -19,8 +21,6 @@ import reactor.core.publisher.Mono;
 
 import java.util.Base64;
 
-import static org.springframework.http.MediaType.APPLICATION_JSON;
-
 /**
  * @author Vadim Dyachkov
  * @author Anton Lamtev
@@ -28,7 +28,8 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 @Component
 @RequiredArgsConstructor
 public final class DiffHandler {
-    private static final Exception PULL_NOT_FOUND_EXCEPTION = new Exception();
+    //TODO: common handler for all NOT FOUND cases
+    private static final Exception PULL_NOT_FOUND_EXCEPTION = new Exception("PULL_NOT_FOUND_EXCEPTION");
     private static final String PROJECT_ID = "projectId";
     private static final String PULL_NUMBER = "pullNumber";
     private static final String PULL_TO_COMPARE_WITH = "with";
@@ -47,13 +48,13 @@ public final class DiffHandler {
                     return diff(projectId, pullNumber);
                 })
                 .onErrorMap(NumberFormatException.class, e -> PULL_NOT_FOUND_EXCEPTION)
-                .onErrorResume(PULL_NOT_FOUND_EXCEPTION::equals, e -> ServerResponse.notFound().build());
+                .onErrorResume(PULL_NOT_FOUND_EXCEPTION::equals, Lambda.expandingWithArg(Responses::notFound));
     }
 
     public Mono<ServerResponse> diffBetweenPulls(final ServerRequest request) {
         final var queryParams = request.queryParams();
         if (!queryParams.containsKey(PULL_TO_COMPARE_WITH)) {
-            return ServerResponse.badRequest().build();
+            return Responses.badRequest();
         }
 
         return Mono
@@ -103,10 +104,7 @@ public final class DiffHandler {
     }
 
     private static Mono<ServerResponse> toResponse(final Flux<DiffEntry<Snapshot>> diff) {
-        return ServerResponse
-                .ok()
-                .contentType(APPLICATION_JSON)
-                .body(diff.map(DiffHandler::toDto), DiffDto.class);
+        return Responses.ok(diff.map(DiffHandler::toDto), DiffDto.class);
     }
 
     private static DiffDto toDto(final DiffEntry<Snapshot> diff) {

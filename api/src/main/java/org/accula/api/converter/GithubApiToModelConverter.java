@@ -22,7 +22,10 @@ import java.util.Objects;
 public final class GithubApiToModelConverter {
     private static final String EMPTY = "";
 
-    public GithubRepo convert(final GithubApiRepo apiRepo) {
+    private GithubApiToModelConverter() {
+    }
+
+    public static GithubRepo convert(final GithubApiRepo apiRepo) {
         return new GithubRepo(
                 apiRepo.getId(),
                 apiRepo.getName(),
@@ -31,7 +34,7 @@ public final class GithubApiToModelConverter {
         );
     }
 
-    public GithubUser convert(final GithubApiUser apiUser) {
+    public static GithubUser convert(final GithubApiUser apiUser) {
         return new GithubUser(
                 apiUser.getId(),
                 apiUser.getLogin(),
@@ -41,7 +44,7 @@ public final class GithubApiToModelConverter {
         );
     }
 
-    public GithubUser convert(final Map<String, Object> attributes) {
+    public static GithubUser convert(final Map<String, Object> attributes) {
         final var id = ((Number) attributes.get("id")).longValue();
         final var login = (String) attributes.get("login");
         final var name = (String) attributes.get("name");
@@ -49,7 +52,7 @@ public final class GithubApiToModelConverter {
         return new GithubUser(id, login, name, avatar, false);
     }
 
-    public Snapshot convert(final GithubApiSnapshot snapshot, final Long pullId) {
+    public static Snapshot convert(final GithubApiSnapshot snapshot, final Long pullId) {
         return Snapshot.builder()
                 .sha(snapshot.getSha())
                 .branch(snapshot.getRef())
@@ -58,7 +61,7 @@ public final class GithubApiToModelConverter {
                 .build();
     }
 
-    public Pull convert(final GithubApiPull pull, final Long projectId) {
+    public static Pull convert(final GithubApiPull pull, final Long projectId) {
         return Pull.builder()
                 .id(pull.getId())
                 .number(pull.getNumber())
