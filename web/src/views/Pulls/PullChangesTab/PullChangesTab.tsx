@@ -1,17 +1,12 @@
 import React from 'react'
 import { IDiff } from 'types'
-import { IconButton, Tooltip, Typography, useTheme } from '@material-ui/core'
-import {
-  VerticalSplitRounded,
-  HorizontalSplitRounded,
-  LayersClearRounded
-} from '@material-ui/icons'
+import { Typography, useTheme } from '@material-ui/core'
+import { LayersClearRounded } from '@material-ui/icons'
 import EmptyContent from 'components/EmptyContent'
 import CodeDiff from 'components/CodeDiff/CodeDiff'
 import PullLabel from 'components/PullLabel'
-import { AppDispatch, AppState } from 'store'
-import { bindActionCreators } from 'redux'
-import { changeSettingsAction } from 'store/settings/actions'
+import { AppState } from 'store'
+import SplitUnifiedViewButton from 'components/CodeDiff/SplitUnifiedViewButton'
 import { connect, ConnectedProps } from 'react-redux'
 import { useStyles } from './styles'
 
@@ -19,19 +14,12 @@ interface PullChangesTabProps extends PropsFromRedux {
   diffs: IDiff[]
 }
 
-const PullChangesTab = ({ diffs, settings, changeSettings }: PullChangesTabProps) => {
+const PullChangesTab = ({ diffs, settings }: PullChangesTabProps) => {
   const theme = useTheme()
   const classes = useStyles()
 
   if (!diffs) {
     return <></>
-  }
-
-  const handleSplitView = () => {
-    changeSettings({
-      ...settings,
-      splitCodeView: settings.splitCodeView === 'unified' ? 'split' : 'unified'
-    })
   }
 
   const getTitle = (base?: string, head?: string): JSX.Element => {
@@ -58,16 +46,7 @@ const PullChangesTab = ({ diffs, settings, changeSettings }: PullChangesTabProps
             <Typography className={classes.title} gutterBottom>
               {diffs.length} files changed
             </Typography>
-            <Tooltip
-              title={`${settings.splitCodeView === 'unified' ? 'Unified' : 'Split'}`}
-              placement="top"
-            >
-              <IconButton onClick={() => handleSplitView()}>
-                {(settings.splitCodeView === 'split' && <HorizontalSplitRounded />) || (
-                  <VerticalSplitRounded />
-                )}
-              </IconButton>
-            </Tooltip>
+            <SplitUnifiedViewButton />
           </div>
           {diffs.map(({ baseContent, baseFilename, headFilename, headContent }, i) => (
             <CodeDiff
@@ -94,9 +73,7 @@ const mapStateToProps = (state: AppState) => ({
   settings: state.settings.settings
 })
 
-const mapDispatchToProps = (dispatch: AppDispatch) => ({
-  changeSettings: bindActionCreators(changeSettingsAction, dispatch)
-})
+const mapDispatchToProps = () => ({})
 
 const connector = connect(mapStateToProps, mapDispatchToProps)
 
