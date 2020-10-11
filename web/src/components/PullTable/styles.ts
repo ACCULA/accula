@@ -1,7 +1,7 @@
-import { makeStyles } from '@material-ui/core'
+import { makeStyles, Theme } from '@material-ui/core'
 import { colors } from 'theme'
 
-export const useStyles = makeStyles(() => ({
+export const useStyles = makeStyles((theme: Theme) => ({
   emptyContent: {
     marginTop: '110px',
     display: 'flex',

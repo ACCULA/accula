@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from 'react'
 import { useSnackbar } from 'notistack'
-import { historyPush, openLink } from 'utils'
-import { useHistory } from 'react-router'
 import { AppDispatch, AppState } from 'store'
 import { bindActionCreators } from 'redux'
 import { connect, ConnectedProps } from 'react-redux'
@@ -16,13 +14,13 @@ import { HeadCell } from 'components/Table/TableHeader/TableHeader'
 import { ReactComponent as LayersImg } from 'images/layers.svg'
 import { PageTitle } from 'components/PageTitle'
 import GitHubIcon from '@material-ui/icons/GitHub'
-import { Avatar, IconButton, TableCell } from '@material-ui/core'
-import Link from 'components/Link'
-import { StyledTableRow } from 'components/Table/styles'
+import { Avatar, IconButton } from '@material-ui/core'
 import { getNotifier } from 'App'
 import EmptyContent from 'components/EmptyContent'
 import AddProjectDialog from './AddProjectDialog'
 import { useStyles } from './styles'
+import TableRow from 'components/Table/TableRow'
+import TableCell from 'components/Table/TableCell'
 
 type ProjectsProps = PropsFromRedux
 
@@ -34,7 +32,6 @@ const headCells: HeadCell<IProject>[] = [
 
 const Projects = ({ user, projects, getProjects, resetProjects }: ProjectsProps) => {
   const classes = useStyles()
-  const history = useHistory()
   const snackbarContext = useSnackbar()
   const [isGithubButtonHovered, setGithubButtonHovered] = useState(false)
   const [isCreateProjectDialogOpen, setCreateProjectDialogOpen] = useState(false)
@@ -90,15 +87,8 @@ const Projects = ({ user, projects, getProjects, resetProjects }: ProjectsProps)
             {() => (
               <>
                 {projects.map(project => (
-                  <StyledTableRow
-                    hover
-                    onClick={() =>
-                      !isGithubButtonHovered && historyPush(history, `projects/${project.id}/pulls`)
-                    }
-                    onMouseDown={e =>
-                      !isGithubButtonHovered && openLink(e, `projects/${project.id}/pulls`)
-                    }
-                    tabIndex={-1}
+                  <TableRow
+                    to={!isGithubButtonHovered ? `projects/${project.id}/pulls` : undefined}
                     key={project.id}
                   >
                     <TableCell align="left">
@@ -124,20 +114,20 @@ const Projects = ({ user, projects, getProjects, resetProjects }: ProjectsProps)
                       <span className={classes.cellText}>{project.repoOpenPullCount}</span>
                     </TableCell>
                     <TableCell align="right">
-                      <Link to={project.repoUrl} className={classes.repoUrlImg}>
-                        <IconButton
-                          color="default"
-                          aria-label="Project Url"
-                          onFocus={() => setGithubButtonHovered(true)}
-                          onMouseOver={() => setGithubButtonHovered(true)}
-                          onMouseOut={() => setGithubButtonHovered(false)}
-                          onBlur={() => setGithubButtonHovered(false)}
-                        >
-                          <GitHubIcon />
-                        </IconButton>
-                      </Link>
+                      <IconButton
+                        className={classes.repoUrlImg}
+                        color="default"
+                        aria-label="Project Url"
+                        onFocus={() => setGithubButtonHovered(true)}
+                        onMouseOver={() => setGithubButtonHovered(true)}
+                        onMouseOut={() => setGithubButtonHovered(false)}
+                        onBlur={() => setGithubButtonHovered(false)}
+                        onClick={() => window.open(project.repoUrl, '_blank')}
+                      >
+                        <GitHubIcon />
+                      </IconButton>
                     </TableCell>
-                  </StyledTableRow>
+                  </TableRow>
                 ))}
               </>
             )}

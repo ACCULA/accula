@@ -4,7 +4,8 @@ import {
   TableContainer,
   Table as MuiTable,
   TableBody,
-  TablePagination
+  TablePagination,
+  Box
 } from '@material-ui/core'
 import { useStyles } from './styles'
 import TableToolbar, { ToolBarButton } from './TableToolbar/TableToolbar'
@@ -51,9 +52,9 @@ const Table = <DataItem extends object>({
       )}
       <Paper className={classes.paper}>
         <TableContainer>
-          <MuiTable className={classes.table} aria-label={toolBarTitle}>
+          <MuiTable component={Box} className={classes.table} aria-label={toolBarTitle}>
             <TableHeader headCells={headCells} />
-            {children && <TableBody>{children(childrenData)}</TableBody>}
+            {children && <TableBody component={Box}>{children(childrenData)}</TableBody>}
           </MuiTable>
         </TableContainer>
         {withPagination && (

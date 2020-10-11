@@ -1,6 +1,8 @@
 import React from 'react'
-import { TableHead, TableRow } from '@material-ui/core'
-import { StyledTableCell } from './styles'
+import { Box, TableHead } from '@material-ui/core'
+import TableRow from '../TableRow'
+import TableCell from '../TableCell'
+import { useStyles } from './styles'
 
 export interface HeadCell<DataItem> {
   disablePadding: boolean
@@ -14,17 +16,19 @@ interface TableHeaderProps<DataItem> {
 }
 
 const TableHeader = <DataItem extends object>({ headCells }: TableHeaderProps<DataItem>) => {
+  const classes = useStyles()
   return (
-    <TableHead>
+    <TableHead component={Box}>
       <TableRow>
         {headCells.map(headCell => (
-          <StyledTableCell
+          <TableCell
             key={headCell.label}
             align={headCell.numeric ? 'right' : 'left'}
             padding={headCell.disablePadding ? 'none' : 'default'}
+            classes={{ head: classes.tableHeadCell }}
           >
             {headCell.label}
-          </StyledTableCell>
+          </TableCell>
         ))}
       </TableRow>
     </TableHead>

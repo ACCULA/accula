@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react'
-import { useHistory } from 'react-router'
 import { IProject, IShortPull } from 'types'
-import { Avatar, TableCell } from '@material-ui/core'
+import { Avatar } from '@material-ui/core'
 import { HeadCell } from 'components/Table/TableHeader/TableHeader'
 import Table from 'components/Table/Table'
 import PullStatus from 'components/PullStatus/PullStatus'
 import PullDate from 'components/PullDate/PullDate'
-import { StyledTableRow } from 'components/Table/styles'
-import { historyPush, openLink } from 'utils'
+import TableRow from 'components/Table/TableRow'
+import TableCell from 'components/Table/TableCell'
 import { useStyles } from './styles'
 
 type ExcludeType = ('number' | 'title' | 'open' | 'createdAt' | 'updatedAt' | 'author')[]
@@ -28,7 +27,6 @@ interface PullTableProps {
 }
 
 const PullTable = ({ project, pulls, exclude }: PullTableProps) => {
-  const history = useHistory()
   const classes = useStyles()
   const [headers, setHeaders] = useState<HeadCell<IShortPull>[]>(headCells)
 
@@ -43,13 +41,7 @@ const PullTable = ({ project, pulls, exclude }: PullTableProps) => {
       {({ page, rowsPerPage }) => (
         <>
           {pulls.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map(pull => (
-            <StyledTableRow
-              hover
-              onClick={() => historyPush(history, `/projects/${project.id}/pulls/${pull.number}`)}
-              onMouseDown={e => openLink(e, `/projects/${project.id}/pulls/${pull.number}`)}
-              tabIndex={-1}
-              key={pull.number}
-            >
+            <TableRow key={pull.number} to={`/projects/${project.id}/pulls/${pull.number}`}>
               {(exclude === undefined || !exclude.includes('number')) && (
                 <TableCell align="right">
                   <span className={classes.dataText}>{pull.number}</span>
@@ -87,7 +79,7 @@ const PullTable = ({ project, pulls, exclude }: PullTableProps) => {
                   </div>
                 </TableCell>
               )}
-            </StyledTableRow>
+            </TableRow>
           ))}
         </>
       )}

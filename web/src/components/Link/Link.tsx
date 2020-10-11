@@ -8,9 +8,10 @@ export interface LinkProps {
   to: string
   className?: string
   children: React.ReactNode
+  [x: string]: any
 }
 
-const Link = ({ to, children, className }: LinkProps) => {
+const Link = ({ to, children, className, props }: LinkProps) => {
   const classes = useStyles()
   return isExternal(to) ? (
     <a
@@ -22,7 +23,9 @@ const Link = ({ to, children, className }: LinkProps) => {
       {children}
     </a>
   ) : (
-    <RelativeLink to={to}>{children}</RelativeLink>
+    <RelativeLink to={to} {...props}>
+      {children}
+    </RelativeLink>
   )
 }
 
