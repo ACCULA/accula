@@ -22,6 +22,10 @@ export const useStyles = makeStyles((theme: Theme) => ({
     marginLeft: 8,
     fontSize: 14,
     fontWeight: 700,
+    overflow: 'hidden',
+    whiteSpace: 'nowrap',
+    textOverflow: 'ellipsis',
+    maxWidth: 110,
     [theme.breakpoints.down('sm')]: {
       display: 'none'
     }
