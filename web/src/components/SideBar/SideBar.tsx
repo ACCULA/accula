@@ -30,6 +30,7 @@ const SideBar = ({ routes, settings, changeSettings, token }: SideBarProps) => {
   const history = useHistory()
   const classes = useStyles()
   const settingsRoute = routes[routes.findIndex(r => r.path === '/settings')]
+  const [previousDrawerState, setPreviousDrawerState] = useState(null)
   const [currentRoute, setRoute] = useState<IRouteInfo>(
     routes.find(route => route.path === history.location.pathname)
   )
@@ -55,10 +56,11 @@ const SideBar = ({ routes, settings, changeSettings, token }: SideBarProps) => {
   }, [history.location.pathname])
 
   useEffect(() => {
-    if (isMdDown) {
+    if (isMdDown && !isMdUp) {
+      setPreviousDrawerState(settings.isDrawerOpen)
       handleDrawerClose()
     }
-    if (isMdUp) {
+    if (isMdUp && !isMdDown && previousDrawerState) {
       handleDrawerOpen()
     }
     // eslint-disable-next-line
