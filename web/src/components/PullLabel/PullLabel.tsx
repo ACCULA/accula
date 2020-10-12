@@ -6,14 +6,20 @@ import { useStyles } from './styles'
 interface PullLabel {
   text: string
   className?: string
+  type?: 'added' | 'removed'
 }
 
-const PullLabel = ({ text, className }: PullLabel) => {
+const PullLabel = ({ text, className, type }: PullLabel) => {
   const classes = useStyles()
-
+  let labelClassName: string
+  if (!type && type === 'added') {
+    labelClassName = classes.addedLabel
+  } else if (!type && type === 'removed') {
+    labelClassName = classes.removedLabel
+  }
   return (
     <Tooltip placement="top" title={text}>
-      <code className={clsx(className, classes.label)}>{text}</code>
+      <code className={clsx(className, classes.label, labelClassName)}>{text}</code>
     </Tooltip>
   )
 }
