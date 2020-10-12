@@ -16,6 +16,10 @@ export const useStyles = makeStyles((theme: Theme) => ({
     display: 'flex',
     alignItems: 'center'
   },
+  avatarOption: {
+    width: 30,
+    height: 30
+  },
   optionText: {
     marginLeft: 10,
     fontSize: 16,

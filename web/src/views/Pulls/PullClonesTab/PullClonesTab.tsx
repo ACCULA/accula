@@ -7,6 +7,7 @@ import CodeDiff from 'components/CodeDiff/CodeDiff'
 import PullLabel from 'components/PullLabel'
 import { AppDispatch, AppState } from 'store'
 import SplitUnifiedViewButton from 'components/CodeDiff/SplitUnifiedViewButton'
+import LoadingWrapper from 'components/LoadingWrapper'
 import { connect, ConnectedProps } from 'react-redux'
 import { bindActionCreators } from 'redux'
 import { refreshClonesAction } from 'store/pulls/actions'
@@ -32,75 +33,74 @@ const PullClonesTab = ({
   const theme = useTheme()
   const classes = useStyles()
 
-  if (!clones.value) {
-    return <></>
-  }
-
   const getTitle = (clone: IClone): JSX.Element => {
     return (
       <>
         <span className={classes.cloneTitleText}> Code cloned from </span>
         <PullLabel
           className={classes.fromTitle}
+          type="removed"
           text={`#${clone.source.pullNumber}@${clone.source.repo}:${clone.source.file}`}
         />
         <span className={classes.cloneTitleText}>into</span>
-        <PullLabel className={classes.intoTitle} text={clone.target.file} />
+        <PullLabel type="added" className={classes.intoTitle} text={clone.target.file} />
       </>
     )
   }
 
   return (
     <div>
-      {clones.value.length > 0 ? (
-        <>
-          <div className={classes.titleField}>
-            <Typography className={classes.title} gutterBottom>
-              {clones.value.length} clones found
-            </Typography>
-            {isAdmin && (
-              <Tooltip title="Refresh clones" placement="top">
-                <IconButton onClick={() => refreshClones(project.id, pull.number)}>
-                  <RefreshRounded />
-                </IconButton>
-              </Tooltip>
-            )}
-            <SplitUnifiedViewButton />
-          </div>
-          {clones.value.map(clone => (
-            <CodeDiff
-              key={clone.id}
-              title={getTitle(clone)}
-              splitView={settings.splitCodeView === 'unified'}
-              oldValue={clone.source.content}
-              newValue={clone.target.content}
-              language="java"
-              showDiffOnly
-              useDarkTheme={theme.palette.type === 'dark'}
-              defaultExpanded
-              compareMethod={DiffMethod.WORDS_WITH_SPACE}
-              // disableWordDiff
-            />
-          ))}
-        </>
-      ) : (
-        <EmptyContent Icon={LibraryAddCheckRounded} info="No clones">
+      <LoadingWrapper deps={[clones]}>
+        {clones.value && clones.value.length > 0 ? (
           <>
-            {isAdmin && (
-              <>
-                <Button
-                  className={classes.refreshButton}
-                  variant="contained"
-                  color="secondary"
-                  onClick={() => refreshClones(project.id, pull.number)}
-                >
-                  Refresh clones
-                </Button>
-              </>
-            )}
+            <div className={classes.titleField}>
+              <Typography className={classes.title} gutterBottom>
+                {clones.value.length} clones found
+              </Typography>
+              {isAdmin && (
+                <Tooltip title="Refresh clones" placement="top">
+                  <IconButton onClick={() => refreshClones(project.id, pull.number)}>
+                    <RefreshRounded />
+                  </IconButton>
+                </Tooltip>
+              )}
+              <SplitUnifiedViewButton />
+            </div>
+            {clones.value.map(clone => (
+              <CodeDiff
+                key={clone.id}
+                title={getTitle(clone)}
+                splitView={settings.splitCodeView === 'unified'}
+                oldValue={clone.source.content}
+                newValue={clone.target.content}
+                language="java"
+                showDiffOnly
+                useDarkTheme={theme.palette.type === 'dark'}
+                defaultExpanded
+                compareMethod={DiffMethod.WORDS_WITH_SPACE}
+                // disableWordDiff
+              />
+            ))}
           </>
-        </EmptyContent>
-      )}
+        ) : (
+          <EmptyContent Icon={LibraryAddCheckRounded} info="No clones">
+            <>
+              {isAdmin && (
+                <>
+                  <Button
+                    className={classes.refreshButton}
+                    variant="contained"
+                    color="secondary"
+                    onClick={() => refreshClones(project.id, pull.number)}
+                  >
+                    Refresh clones
+                  </Button>
+                </>
+              )}
+            </>
+          </EmptyContent>
+        )}
+      </LoadingWrapper>
     </div>
   )
 }

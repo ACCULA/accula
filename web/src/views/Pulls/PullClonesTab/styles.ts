@@ -17,15 +17,7 @@ export const useStyles = makeStyles((theme: Theme) => ({
     whiteSpace: 'nowrap'
   },
   intoTitle: {
-    margin: '0 4px',
-    color:
-      theme.palette.type === 'light'
-        ? colors.codeDiff.light.addedColor
-        : colors.codeDiff.dark.addedColor,
-    backgroundColor:
-      theme.palette.type === 'light'
-        ? colors.codeDiff.light.addedGutterBackground
-        : colors.codeDiff.dark.addedGutterBackground
+    margin: '0 4px'
   },
   fromTitle: {
     margin: '0 4px',

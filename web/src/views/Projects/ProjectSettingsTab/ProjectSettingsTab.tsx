@@ -193,7 +193,11 @@ const ProjectSettingsTab = ({
                   }
                   renderOption={(option: IUser) => (
                     <div className={classes.option}>
-                      <Avatar alt={option.login} src={option.avatar} />
+                      <Avatar
+                        className={classes.avatarOption}
+                        alt={option.login}
+                        src={option.avatar}
+                      />
                       <span className={classes.optionText}>
                         {option.name ? `@${option.login} (${option.name})` : `@${option.login}`}
                       </span>

@@ -4,12 +4,14 @@ import { CompareRounded } from '@material-ui/icons'
 import { AppDispatch, AppState } from 'store'
 import { connect, ConnectedProps } from 'react-redux'
 import { bindActionCreators } from 'redux'
-import { getComparesAction, getPullsAction } from 'store/pulls/actions'
+import { getComparesAction, getPullsAction, setCompareWithAction } from 'store/pulls/actions'
 import { useLocation } from 'react-use'
 import { Avatar, TextField, Typography, useTheme } from '@material-ui/core'
 import SplitUnifiedViewButton from 'components/CodeDiff/SplitUnifiedViewButton'
 import CodeDiff from 'components/CodeDiff'
 import EmptyContent from 'components/EmptyContent'
+import LoadingWrapper from 'components/LoadingWrapper'
+import { DiffMethod } from 'react-diff-viewer'
 import { Autocomplete } from '@material-ui/lab'
 import { historyPush } from 'utils'
 import { useHistory } from 'react-router'
@@ -27,15 +29,17 @@ const PullCompareTab = ({
   project,
   pull,
   pulls,
+  compareWith,
   getCompares,
-  getPulls
+  getPulls,
+  setCompareWith
 }: PullCompareTabProps) => {
   const history = useHistory()
   const location = useLocation()
   const classes = useStyles()
   const theme = useTheme()
   const [pullOptions, setPullOptions] = useState<IShortPull[]>([])
-  const [compareWith, setCompareWith] = useState(null)
+  const [defaultOption, setDefaultOption] = useState<IShortPull>(null)
 
   useEffect(() => {
     getPulls(project.id)
@@ -48,6 +52,7 @@ const PullCompareTab = ({
         .filter(p => p.number !== pull.number)
         .sort((a, b) => (a.number > b.number ? -1 : a.number === b.number ? 0 : 1))
       setPullOptions(options)
+      setDefaultOption(options.find(p => p.number === compareWith))
     }
     // eslint-disable-next-line
   }, [pulls])
@@ -61,12 +66,40 @@ const PullCompareTab = ({
     // eslint-disable-next-line
   }, [location])
 
-  if (!pulls) {
+  if (!pulls || (compareWith && defaultOption === null)) {
     return <></>
   }
 
   const handleSelectPull = (pullNum: number) =>
     historyPush(history, `/projects/${project.id}/pulls/${pull.number}/compare?with=${pullNum}`)
+
+  const renderCodeDiff =
+    compares.value && compares.value.length > 0 ? (
+      <>
+        <div className={classes.titleField}>
+          <Typography className={classes.title} gutterBottom>
+            {compares.value.length} files changed
+          </Typography>
+          <SplitUnifiedViewButton />
+        </div>
+        {compares.value.map(({ baseContent, baseFilename, headFilename, headContent }, i) => (
+          <CodeDiff
+            key={i}
+            title={getPullTitle(baseFilename, headFilename)}
+            splitView={settings.splitCodeView === 'unified'}
+            oldValue={baseContent}
+            newValue={headContent}
+            disableWordDiff
+            language="java"
+            useDarkTheme={theme.palette.type === 'dark'}
+            defaultExpanded
+            compareMethod={DiffMethod.LINES}
+          />
+        ))}
+      </>
+    ) : (
+      <EmptyContent Icon={CompareRounded} info="No differences" />
+    )
 
   return (
     <div>
@@ -78,7 +111,7 @@ const PullCompareTab = ({
             `#${option.number} ${option.title} (@${option.author.login})`
           }
           filterSelectedOptions
-          defaultValue={pulls.find(p => p.number === compareWith)}
+          defaultValue={defaultOption}
           onChange={(_, value: IShortPull) => value && handleSelectPull(value.number)}
           renderOption={(option: IShortPull) => (
             <div className={classes.option}>
@@ -102,30 +135,8 @@ const PullCompareTab = ({
           )}
         />
       </div>
-      {compares.value && compares.value.length > 0 ? (
-        <>
-          <div className={classes.titleField}>
-            <Typography className={classes.title} gutterBottom>
-              {compares.value.length} files changed
-            </Typography>
-            <SplitUnifiedViewButton />
-          </div>
-          {compares.value.map(({ baseContent, baseFilename, headFilename, headContent }, i) => (
-            <CodeDiff
-              key={i}
-              title={getPullTitle(baseFilename, headFilename)}
-              splitView={settings.splitCodeView === 'unified'}
-              oldValue={baseContent}
-              newValue={headContent}
-              disableWordDiff
-              language="java"
-              useDarkTheme={theme.palette.type === 'dark'}
-              defaultExpanded
-            />
-          ))}
-        </>
-      ) : (
-        <EmptyContent Icon={CompareRounded} info="No differences" />
+      {(compareWith && <LoadingWrapper deps={[compares]}>{renderCodeDiff}</LoadingWrapper>) || (
+        <>{renderCodeDiff}</>
       )}
     </div>
   )
@@ -133,12 +144,14 @@ const PullCompareTab = ({
 const mapStateToProps = (state: AppState) => ({
   settings: state.settings.settings,
   compares: state.pulls.compares,
+  compareWith: state.pulls.compareWith,
   pulls: state.pulls.pulls.value
 })
 
 const mapDispatchToProps = (dispatch: AppDispatch) => ({
   getCompares: bindActionCreators(getComparesAction, dispatch),
-  getPulls: bindActionCreators(getPullsAction, dispatch)
+  getPulls: bindActionCreators(getPullsAction, dispatch),
+  setCompareWith: bindActionCreators(setCompareWithAction, dispatch)
 })
 const connector = connect(mapStateToProps, mapDispatchToProps)
 
