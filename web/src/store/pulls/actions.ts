@@ -12,6 +12,8 @@ import {
   SET_PULL,
   SET_PULLS,
   RESET_PULLS_INFO,
+  SET_COMPARE_WITH,
+  SetCompareWith,
   SetClones,
   SetCompares,
   SetDiffs,
@@ -48,6 +50,11 @@ const setClones = (payload: IPullClonesState): SetClones => ({
 
 export const resetPullsInfo = (): ResetPullsInfo => ({
   type: RESET_PULLS_INFO
+})
+
+export const setCompareWithAction = (pullNum: number): SetCompareWith => ({
+  type: SET_COMPARE_WITH,
+  payload: pullNum
 })
 
 export const getPullsAction = (projectId: number, handleError?: (msg: string) => void) => async (
