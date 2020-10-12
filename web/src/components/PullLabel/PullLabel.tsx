@@ -12,9 +12,9 @@ interface PullLabel {
 const PullLabel = ({ text, className, type }: PullLabel) => {
   const classes = useStyles()
   let labelClassName: string
-  if (!type && type === 'added') {
+  if (type === 'added') {
     labelClassName = classes.addedLabel
-  } else if (!type && type === 'removed') {
+  } else if (type === 'removed') {
     labelClassName = classes.removedLabel
   }
   return (
