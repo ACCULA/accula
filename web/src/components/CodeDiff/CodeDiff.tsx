@@ -39,6 +39,7 @@ const CodeDiff = ({ title, language, defaultExpanded, ...props }: CodeDiffProps)
         className={classes.panelHeader}
         expandIcon={<ExpandMoreRoundedIcon />}
         aria-controls="code-panel"
+        classes={{ content: classes.panelHeaderContent }}
       >
         {title}
       </AccordionSummary>
