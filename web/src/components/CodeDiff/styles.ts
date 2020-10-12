@@ -8,16 +8,17 @@ export const useStyles = makeStyles((theme: Theme) => ({
     borderRadius: 8
   },
   panelHeader: {
+    paddingLeft: 0,
     flexDirection: 'row-reverse',
     backgroundColor: theme.palette.type === 'light' ? 'rgba(211, 211, 211, 0.1)' : '#2c313a',
     color: theme.palette.type === 'light' ? 'rgba(0, 0, 0, 0.3)' : '#fff'
   },
   panelHeaderContent: {
-    marginLeft: '12px !important',
     overflow: 'hidden',
-    [theme.breakpoints.down('sm')]: {
-      flexDirection: 'column'
-    }
+    flexWrap: 'wrap'
+  },
+  expandIcon: {
+    marginRight: 0
   },
   panelData: {
     padding: 0,
