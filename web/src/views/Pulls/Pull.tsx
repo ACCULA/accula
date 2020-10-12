@@ -20,6 +20,7 @@ import Tabs, { Tab } from 'components/Tabs/Tabs'
 import { CircularProgress } from '@material-ui/core'
 import PullOverviewTab from './PullOverviewTab'
 import PullChangesTab from './PullChangesTab'
+import PullClonesTab from './PullClonesTab/PullClonesTab'
 
 const tabValues = ['changes', 'compare', 'clones'] as string[]
 
@@ -28,6 +29,7 @@ const validateTab = (tab: string) => tabValues.includes(tab) || tab === undefine
 interface PullsProps extends PropsFromRedux {}
 
 const Pull = ({
+  user,
   project,
   pull,
   diffs,
@@ -61,7 +63,14 @@ const Pull = ({
     // eslint-disable-next-line
   }, [])
 
-  if (Number.isNaN(projectId) || Number.isNaN(pullId) || !validateTab(tab) || !project || !pull) {
+  if (
+    Number.isNaN(projectId) ||
+    Number.isNaN(pullId) ||
+    !validateTab(tab) ||
+    user.isFetching ||
+    !project ||
+    !pull
+  ) {
     return <></>
   }
 
@@ -90,7 +99,11 @@ const Pull = ({
       id: 'clones',
       text: 'Clones',
       Icon: FileCopyRounded,
-      badgeValue: clones ? clones.length : <CircularProgress size={12} color="inherit" />
+      badgeValue: clones.value ? (
+        clones.value.length
+      ) : (
+        <CircularProgress size={12} color="inherit" />
+      )
     }
   ] as Tab[]
 
@@ -109,19 +122,27 @@ const Pull = ({
       <Tabs tabs={tabs} onChange={handleChangeTab} activeId={tab} />
       {tab === undefined && <PullOverviewTab project={project} pull={pull} />}
       {tab === 'changes' && <PullChangesTab diffs={diffs} />}
+      {tab === 'clones' && (
+        <PullClonesTab
+          project={project}
+          pull={pull}
+          clones={clones}
+          isAdmin={isProjectAdmin(user.value, project)}
+        />
+      )}
     </div>
   )
 }
 
 const mapStateToProps = (state: AppState) => ({
   project: state.projects.project.value,
+  user: state.users.user,
   pull: state.pulls.pull.value,
   diffs: state.pulls.diffs.value,
-  clones: state.pulls.clones.value
+  clones: state.pulls.clones
 })
 
 const mapDispatchToProps = (dispatch: AppDispatch) => ({
-  getUser: bindActionCreators(getCurrentUserAction, dispatch),
   getProject: bindActionCreators(getProjectAction, dispatch),
   getPull: bindActionCreators(getPullAction, dispatch),
   getDiffs: bindActionCreators(getDiffsAction, dispatch),

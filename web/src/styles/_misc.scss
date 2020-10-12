@@ -21,7 +21,8 @@ pre {
     display: inline;
     background-color: transparent;
     line-height: 25px;
-    font-family: 'JetBrains Mono'
+    font-family: 'JetBrains Mono';
+    white-space: pre !important;
 }
 
 code {
