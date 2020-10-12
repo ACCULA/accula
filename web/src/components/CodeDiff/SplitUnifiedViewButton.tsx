@@ -8,7 +8,7 @@ import { connect, ConnectedProps } from 'react-redux'
 
 interface SplitUnifiedViewButton extends PropsFromRedux {}
 
-const PullChangesTab = ({ settings, changeSettings }: SplitUnifiedViewButton) => {
+const SplitUnifiedViewButton = ({ settings, changeSettings }: SplitUnifiedViewButton) => {
   const handleSplitView = () => {
     changeSettings({
       ...settings,
@@ -42,4 +42,4 @@ const connector = connect(mapStateToProps, mapDispatchToProps)
 
 type PropsFromRedux = ConnectedProps<typeof connector>
 
-export default connector(PullChangesTab)
+export default connector(SplitUnifiedViewButton)
