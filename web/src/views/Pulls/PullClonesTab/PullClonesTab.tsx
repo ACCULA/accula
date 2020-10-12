@@ -38,7 +38,7 @@ const PullClonesTab = ({
 
   const getTitle = (clone: IClone): JSX.Element => {
     return (
-      <div>
+      <>
         <span className={classes.cloneTitleText}> Code cloned from </span>
         <PullLabel
           className={classes.fromTitle}
@@ -46,7 +46,7 @@ const PullClonesTab = ({
         />
         <span className={classes.cloneTitleText}>into</span>
         <PullLabel className={classes.intoTitle} text={clone.target.file} />
-      </div>
+      </>
     )
   }
 

@@ -13,7 +13,11 @@ export const useStyles = makeStyles((theme: Theme) => ({
     color: theme.palette.type === 'light' ? 'rgba(0, 0, 0, 0.3)' : '#fff'
   },
   panelHeaderContent: {
-    marginLeft: '12px !important'
+    marginLeft: '12px !important',
+    overflow: 'hidden',
+    [theme.breakpoints.down('sm')]: {
+      flexDirection: 'column'
+    }
   },
   panelData: {
     padding: 0,
