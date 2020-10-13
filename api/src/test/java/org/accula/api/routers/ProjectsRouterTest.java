@@ -152,9 +152,6 @@ class ProjectsRouterTest {
         Mockito.when(githubClient.createHook(Mockito.any(), Mockito.any(), Mockito.any()))
                 .thenReturn(Mono.empty());
 
-        Mockito.when(cloneDetectionService.detectClones(Mockito.anyLong()))
-                .thenReturn(Flux.empty());
-
         final var expectedBody = ModelToDtoConverter.convert(PROJECT);
 
         client.post().uri("/api/projects")
@@ -451,6 +448,33 @@ class ProjectsRouterTest {
         client.get().uri("/api/projects/{id}/headFiles", PROJECT.getId())
                 .exchange()
                 .expectStatus().isNotFound();
+    }
+
+    @Test
+    void testDetectClones() {
+        Mockito.when(currentUser.get(Mockito.any()))
+                .thenReturn(Mono.just(0L));
+        Mockito.when(projectRepo.hasAdmin(Mockito.anyLong(), Mockito.anyLong()))
+                .thenReturn(Mono.just(TRUE));
+        Mockito.when(projectRepo.findById(Mockito.anyLong()))
+                .thenReturn(Mono.just(PROJECT));
+        Mockito.when(cloneDetectionService.detectClones(Mockito.anyLong()))
+                .thenReturn(Flux.empty());
+
+        client.post().uri("/api/projects/{id}/detectClones", PROJECT.getId())
+                .exchange()
+                .expectStatus().isAccepted();
+    }
+
+    @Test
+    void testDetectClonesForbidden() {
+        mockForbidden();
+        Mockito.when(cloneDetectionService.detectClones(Mockito.anyLong()))
+                .thenReturn(Flux.empty());
+
+        client.post().uri("/api/projects/{id}/detectClones", PROJECT.getId())
+                .exchange()
+                .expectStatus().isForbidden();
     }
 
     @SneakyThrows

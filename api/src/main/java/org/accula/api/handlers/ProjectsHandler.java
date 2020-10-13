@@ -97,7 +97,6 @@ public final class ProjectsHandler {
                     return CreateProjectException.WRONG_URL;
                 })
                 .flatMap(TupleUtils.function(this::saveProjectData))
-                .flatMap(this::detectClones)
                 .flatMap(this::createWebhook)
                 .flatMap(Responses::created)
                 .doOnError(e -> log.error("{}: ", request, e))
@@ -177,6 +176,15 @@ public final class ProjectsHandler {
                 .onErrorResume(DtoToModelConverter.ValidationException.class, Lambda.expandingWithArg(Responses::badRequest));
     }
 
+    public Mono<ServerResponse> detectClones(final ServerRequest request) {
+        return withProjectId(request)
+                .filterWhen(this::isCurrentUserAdmin)
+                .switchIfEmpty(Mono.error(NOT_ENOUGH_PERMISSIONS_EXCEPTION))
+                .flatMap(projectId -> cloneDetectionService.detectClones(projectId).collectList())
+                .flatMap(Lambda.expandingWithArg(Responses::accepted))
+                .onErrorResume(NOT_ENOUGH_PERMISSIONS_EXCEPTION::equals, Lambda.expandingWithArg(Responses::forbidden));
+    }
+
     private Mono<Tuple4<Boolean, GithubApiRepo, List<GithubApiPull>, User>> retrieveGithubInfoForProjectCreation(final String owner,
                                                                                                                  final String repo) {
         return Mono.zip(
@@ -209,12 +217,6 @@ public final class ProjectsHandler {
                     .flatMap(project -> projectUpdater.update(project.getId(), githubApiPulls)
                             .map(openPullCount -> ModelToDtoConverter.convert(project, openPullCount)));
         });
-    }
-
-    private Mono<ProjectDto> detectClones(final ProjectDto project) {
-        return cloneDetectionService
-                .detectClones(project.getId())
-                .then(Mono.just(project));
     }
 
     private Mono<ProjectDto> createWebhook(final ProjectDto project) {
