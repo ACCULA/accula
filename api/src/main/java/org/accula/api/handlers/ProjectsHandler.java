@@ -25,6 +25,7 @@ import org.accula.api.handlers.request.CreateProjectRequestBody;
 import org.accula.api.handlers.response.ErrorBody;
 import org.accula.api.handlers.util.ProjectUpdater;
 import org.accula.api.handlers.util.Responses;
+import org.accula.api.service.CloneDetectionService;
 import org.accula.api.util.Lambda;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
@@ -63,6 +64,7 @@ public final class ProjectsHandler {
     private final UserRepo userRepo;
     private final ProjectUpdater projectUpdater;
     private final CodeLoader codeLoader;
+    private final CloneDetectionService cloneDetectionService;
 
     public Mono<ServerResponse> getTop(final ServerRequest request) {
         return Mono
@@ -95,6 +97,7 @@ public final class ProjectsHandler {
                     return CreateProjectException.WRONG_URL;
                 })
                 .flatMap(TupleUtils.function(this::saveProjectData))
+                .flatMap(this::detectClones)
                 .flatMap(this::createWebhook)
                 .flatMap(Responses::created)
                 .doOnError(e -> log.error("{}: ", request, e))
@@ -206,6 +209,12 @@ public final class ProjectsHandler {
                     .flatMap(project -> projectUpdater.update(project.getId(), githubApiPulls)
                             .map(openPullCount -> ModelToDtoConverter.convert(project, openPullCount)));
         });
+    }
+
+    private Mono<ProjectDto> detectClones(final ProjectDto project) {
+        return cloneDetectionService
+                .detectClones(project.getId())
+                .then(Mono.just(project));
     }
 
     private Mono<ProjectDto> createWebhook(final ProjectDto project) {
