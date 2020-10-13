@@ -49,7 +49,6 @@ export const getProjectConf = async (id: number, token: IToken): Promise<IProjec
       },
       withCredentials: true
     })
-    .then(resp => resp)
     .then(resp => resp.data as IProjectConf)
 }
 

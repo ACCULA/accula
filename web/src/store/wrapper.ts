@@ -1,5 +1,5 @@
 export interface Wrapper<T> {
-  isFetching: boolean | null
+  isFetching: boolean
   value?: T
   error?: string
 }
