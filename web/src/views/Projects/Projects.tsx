@@ -17,16 +17,16 @@ import GitHubIcon from '@material-ui/icons/GitHub'
 import { Avatar, IconButton } from '@material-ui/core'
 import { getNotifier } from 'App'
 import EmptyContent from 'components/EmptyContent'
-import AddProjectDialog from './AddProjectDialog'
-import { useStyles } from './styles'
 import TableRow from 'components/Table/TableRow'
 import TableCell from 'components/Table/TableCell'
+import AddProjectDialog from './AddProjectDialog'
+import { useStyles } from './styles'
 
 type ProjectsProps = PropsFromRedux
 
 const headCells: HeadCell<IProject>[] = [
   { id: 'repoName', numeric: false, disablePadding: false, label: 'Name' },
-  { id: 'repoOpenPullCount', numeric: true, disablePadding: false, label: 'Open pr' },
+  { id: 'repoOpenPullCount', numeric: true, disablePadding: false, label: 'Open PRs' },
   { id: 'repoUrl', numeric: true, disablePadding: false, label: '' }
 ]
 
