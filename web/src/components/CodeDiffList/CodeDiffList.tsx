@@ -15,7 +15,7 @@ export interface ToolBarButton {
 }
 
 interface CodeDiffListProps<ListItem>
-  extends Omit<ReactDiffViewerProps, 'splitView' | 'oldValue' | 'newValue'>,
+  extends Omit<ReactDiffViewerProps, 'splitView' | 'oldValue' | 'newValue' | 'showDiffOnly'>,
     PropsFromRedux {
   title: string
   toolbarButtons?: ToolBarButton[]
@@ -96,6 +96,7 @@ const CodeDiffList = <ListItem extends object>({
                         language="java"
                         useDarkTheme={theme.palette.type === 'dark'}
                         defaultExpanded
+                        showDiffOnly={false}
                         {...props}
                       />
                     </div>

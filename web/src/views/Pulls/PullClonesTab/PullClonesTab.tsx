@@ -52,7 +52,6 @@ const PullClonesTab = ({ project, pull, clones, refreshClones, isAdmin }: PullCl
             getNewValue={(clone: IClone) => clone.target.content}
             compareMethod={DiffMethod.WORDS_WITH_SPACE}
             disableWordDiff
-            showDiffOnly
             toolbarButtons={[
               {
                 tip: 'Refresh clones',
