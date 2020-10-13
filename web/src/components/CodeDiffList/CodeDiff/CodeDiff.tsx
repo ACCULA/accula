@@ -1,7 +1,7 @@
 import React from 'react'
 import ReactDiffViewer, { ReactDiffViewerProps } from 'react-diff-viewer'
 import { Accordion, AccordionDetails, AccordionSummary } from '@material-ui/core'
-import ExpandMoreRoundedIcon from '@material-ui/icons/ExpandMoreRounded'
+// import ExpandMoreRoundedIcon from '@material-ui/icons/ExpandMoreRounded'
 import Prism from 'prismjs'
 import 'prismjs/components/prism-java'
 import { codeDiffStyles, useStyles } from './styles'
@@ -34,12 +34,16 @@ const CodeDiff = ({ title, language, defaultExpanded, ...props }: CodeDiffProps)
   }
 
   return (
-    <Accordion className={classes.panel} defaultExpanded>
+    <Accordion classes={{ expanded: classes.panel }} disabled defaultExpanded>
       <AccordionSummary
         className={classes.panelHeader}
-        expandIcon={<ExpandMoreRoundedIcon />}
+        // expandIcon={<ExpandMoreRoundedIcon />}
         aria-controls="code-panel"
-        classes={{ content: classes.panelHeaderContent, expandIcon: classes.expandIcon }}
+        classes={{
+          content: classes.panelHeaderContent,
+          expandIcon: classes.expandIcon,
+          disabled: classes.disabledHeader
+        }}
       >
         {title}
       </AccordionSummary>

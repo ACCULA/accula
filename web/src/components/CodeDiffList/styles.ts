@@ -9,5 +9,8 @@ export const useStyles = makeStyles(() => ({
     flexGrow: 1,
     fontSize: 19,
     fontWeight: 500
+  },
+  codeList: {
+    outline: 'none'
   }
 }))

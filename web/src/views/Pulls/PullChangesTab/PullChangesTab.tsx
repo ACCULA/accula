@@ -1,51 +1,32 @@
 import React from 'react'
-import { Typography, useTheme } from '@material-ui/core'
 import { LayersClearRounded } from '@material-ui/icons'
 import EmptyContent from 'components/EmptyContent'
-import CodeDiff from 'components/CodeDiff/CodeDiff'
-import { AppState } from 'store'
-import SplitUnifiedViewButton from 'components/CodeDiff/SplitUnifiedViewButton'
-import { connect, ConnectedProps } from 'react-redux'
 import LoadingWrapper from 'components/LoadingWrapper/LoadingWrapper'
 import { IPullDiffsState } from 'store/pulls/types'
-import { useStyles } from './styles'
+import CodeDiffList from 'components/CodeDiffList/CodeDiffList'
+import { IDiff } from 'types'
 import { getPullTitle } from '../Pull'
 
-interface PullChangesTabProps extends PropsFromRedux {
+interface PullChangesTabProps {
   diffs: IPullDiffsState
 }
 
-const PullChangesTab = ({ diffs, settings }: PullChangesTabProps) => {
-  const theme = useTheme()
-  const classes = useStyles()
-
+const PullChangesTab = ({ diffs }: PullChangesTabProps) => {
   return (
     <div>
       <LoadingWrapper deps={[diffs]}>
         {diffs.value && (
           <>
             {diffs.value.length > 0 ? (
-              <>
-                <div className={classes.titleField}>
-                  <Typography className={classes.title} gutterBottom>
-                    {diffs.value.length} files changed
-                  </Typography>
-                  <SplitUnifiedViewButton />
-                </div>
-                {diffs.value.map(({ baseContent, baseFilename, headFilename, headContent }, i) => (
-                  <CodeDiff
-                    key={i}
-                    title={getPullTitle(baseFilename, headFilename)}
-                    splitView={settings.splitCodeView === 'unified'}
-                    oldValue={baseContent}
-                    newValue={headContent}
-                    disableWordDiff
-                    language="java"
-                    useDarkTheme={theme.palette.type === 'dark'}
-                    defaultExpanded
-                  />
-                ))}
-              </>
+              <CodeDiffList
+                title={`${diffs.value.length} files changed`}
+                list={diffs.value}
+                language="java"
+                getDiffTitle={(diff: IDiff) => getPullTitle(diff.baseFilename, diff.headFilename)}
+                getOldValue={(diff: IDiff) => diff.baseContent}
+                getNewValue={(diff: IDiff) => diff.headContent}
+                disableWordDiff
+              />
             ) : (
               <EmptyContent Icon={LayersClearRounded} info="No changes" />
             )}
@@ -56,14 +37,4 @@ const PullChangesTab = ({ diffs, settings }: PullChangesTabProps) => {
   )
 }
 
-const mapStateToProps = (state: AppState) => ({
-  settings: state.settings.settings
-})
-
-const mapDispatchToProps = () => ({})
-
-const connector = connect(mapStateToProps, mapDispatchToProps)
-
-type PropsFromRedux = ConnectedProps<typeof connector>
-
-export default connector(PullChangesTab)
+export default PullChangesTab

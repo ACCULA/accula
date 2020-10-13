@@ -18,7 +18,7 @@ const SplitUnifiedViewButton = ({ settings, changeSettings }: SplitUnifiedViewBu
 
   return (
     <Tooltip
-      title={`${settings.splitCodeView === 'unified' ? 'Unified' : 'Split'}`}
+      title={`${settings.splitCodeView === 'unified' ? 'Split' : 'Unified'}`}
       placement="top"
     >
       <IconButton onClick={() => handleSplitView()}>

@@ -3,19 +3,22 @@ import { colors } from 'theme'
 
 export const useStyles = makeStyles((theme: Theme) => ({
   panel: {
-    marginBottom: 16,
+    margin: 16,
     fontSize: 12,
     borderRadius: 8
   },
   panelHeader: {
-    paddingLeft: 0,
-    flexDirection: 'row-reverse',
+    // paddingLeft: 0,
+    // flexDirection: 'row-reverse',
     backgroundColor: theme.palette.type === 'light' ? 'rgba(211, 211, 211, 0.1)' : '#2c313a',
     color: theme.palette.type === 'light' ? 'rgba(0, 0, 0, 0.3)' : '#fff'
   },
   panelHeaderContent: {
     overflow: 'hidden',
     flexWrap: 'wrap'
+  },
+  disabledHeader: {
+    opacity: '1 !important'
   },
   expandIcon: {
     marginRight: 0

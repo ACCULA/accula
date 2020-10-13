@@ -30,5 +30,8 @@ export const useStyles = makeStyles(() => ({
     marginBottom: 64,
     margin: '0 auto',
     maxWidth: 1000
+  },
+  codeList: {
+    outline: 'none'
   }
 }))

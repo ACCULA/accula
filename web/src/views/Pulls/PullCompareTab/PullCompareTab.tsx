@@ -1,20 +1,24 @@
 import React, { useEffect, useState } from 'react'
-import { IProject, IShortPull } from 'types'
+import { IDiff, IProject, IShortPull } from 'types'
 import { CompareRounded } from '@material-ui/icons'
 import { AppDispatch, AppState } from 'store'
 import { connect, ConnectedProps } from 'react-redux'
 import { bindActionCreators } from 'redux'
-import { getComparesAction, getPullsAction, setCompareWithAction } from 'store/pulls/actions'
+import {
+  clearComparesAction,
+  getComparesAction,
+  getPullsAction,
+  setCompareWithAction
+} from 'store/pulls/actions'
 import { useLocation } from 'react-use'
-import { Avatar, TextField, Typography, useTheme } from '@material-ui/core'
-import SplitUnifiedViewButton from 'components/CodeDiff/SplitUnifiedViewButton'
-import CodeDiff from 'components/CodeDiff'
+import { Avatar, TextField } from '@material-ui/core'
 import EmptyContent from 'components/EmptyContent'
 import LoadingWrapper from 'components/LoadingWrapper'
 import { DiffMethod } from 'react-diff-viewer'
 import { Autocomplete } from '@material-ui/lab'
 import { historyPush } from 'utils'
 import { useHistory } from 'react-router'
+import CodeDiffList from 'components/CodeDiffList/CodeDiffList'
 import { getPullTitle } from '../Pull'
 import { useStyles } from './styles'
 
@@ -24,7 +28,6 @@ interface PullCompareTabProps extends PropsFromRedux {
 }
 
 const PullCompareTab = ({
-  settings,
   compares,
   project,
   pull,
@@ -37,7 +40,6 @@ const PullCompareTab = ({
   const history = useHistory()
   const location = useLocation()
   const classes = useStyles()
-  const theme = useTheme()
   const [pullOptions, setPullOptions] = useState<IShortPull[]>([])
   const [defaultOption, setDefaultOption] = useState<IShortPull>(null)
 
@@ -75,28 +77,16 @@ const PullCompareTab = ({
 
   const renderCodeDiff =
     compares.value && compares.value.length > 0 ? (
-      <>
-        <div className={classes.titleField}>
-          <Typography className={classes.title} gutterBottom>
-            {compares.value.length} files changed
-          </Typography>
-          <SplitUnifiedViewButton />
-        </div>
-        {compares.value.map(({ baseContent, baseFilename, headFilename, headContent }, i) => (
-          <CodeDiff
-            key={i}
-            title={getPullTitle(baseFilename, headFilename)}
-            splitView={settings.splitCodeView === 'unified'}
-            oldValue={baseContent}
-            newValue={headContent}
-            disableWordDiff
-            language="java"
-            useDarkTheme={theme.palette.type === 'dark'}
-            defaultExpanded
-            compareMethod={DiffMethod.LINES}
-          />
-        ))}
-      </>
+      <CodeDiffList
+        title={`${compares.value.length} files changed`}
+        list={compares.value}
+        language="java"
+        getDiffTitle={(diff: IDiff) => getPullTitle(diff.baseFilename, diff.headFilename)}
+        getOldValue={(diff: IDiff) => diff.baseContent}
+        getNewValue={(diff: IDiff) => diff.headContent}
+        compareMethod={DiffMethod.LINES}
+        disableWordDiff
+      />
     ) : (
       <EmptyContent Icon={CompareRounded} info="No differences" />
     )
@@ -141,8 +131,8 @@ const PullCompareTab = ({
     </div>
   )
 }
+
 const mapStateToProps = (state: AppState) => ({
-  settings: state.settings.settings,
   compares: state.pulls.compares,
   compareWith: state.pulls.compareWith,
   pulls: state.pulls.pulls.value
@@ -151,7 +141,8 @@ const mapStateToProps = (state: AppState) => ({
 const mapDispatchToProps = (dispatch: AppDispatch) => ({
   getCompares: bindActionCreators(getComparesAction, dispatch),
   getPulls: bindActionCreators(getPullsAction, dispatch),
-  setCompareWith: bindActionCreators(setCompareWithAction, dispatch)
+  setCompareWith: bindActionCreators(setCompareWithAction, dispatch),
+  clearCompares: bindActionCreators(clearComparesAction, dispatch)
 })
 const connector = connect(mapStateToProps, mapDispatchToProps)
 
