@@ -31,8 +31,8 @@ import { getNotifier } from 'App'
 import { useHistory } from 'react-router'
 import { useStyles } from './styles'
 
-const minFileMinSimilarityIndex = 5
-const minCloneTokenCount = 15
+const minFileMinSimilarityIndex = 0
+const minCloneTokenCount = 0
 
 // Todo: add a limit on the maximum value of numeric variables
 const validationSchema = Yup.object().shape({
@@ -115,7 +115,7 @@ const ProjectSettingsTab = ({
         project.id,
         {
           admins,
-          excludedFiles: excludedFiles.includes('All') ? excludedFilesOptions : excludedFiles,
+          excludedFiles,
           fileMinSimilarityIndex:
             fileMinSimilarityIndex === '' ? minFileMinSimilarityIndex : fileMinSimilarityIndex,
           cloneMinTokenCount: cloneMinTokenCount === '' ? minCloneTokenCount : cloneMinTokenCount
@@ -158,7 +158,7 @@ const ProjectSettingsTab = ({
           admins: adminOptions.filter(u => projectConf.admins.includes(u.id)),
           excludedFiles:
             excludedFilesOptions.length === projectConf.excludedFiles.length
-              ? ['All']
+              ? excludedFilesOptions.slice(1)
               : excludedFilesOptions.filter((f: string) => projectConf.excludedFiles.includes(f)),
           fileMinSimilarityIndex: projectConf ? projectConf.fileMinSimilarityIndex : '',
           cloneMinTokenCount: projectConf ? projectConf.cloneMinTokenCount : ''
@@ -234,7 +234,7 @@ const ProjectSettingsTab = ({
                   value={values.excludedFiles}
                   onChange={(_, value: string[]) => {
                     if (value.includes('All')) {
-                      setFieldValue('excludedFiles', ['All'])
+                      setFieldValue('excludedFiles', excludedFilesOptions.slice(1))
                     } else {
                       setFieldValue('excludedFiles', value)
                     }
@@ -250,8 +250,8 @@ const ProjectSettingsTab = ({
                       />
                     ))
                   }
-                  filterOptions={(options, state) => {
-                    if (values.excludedFiles.includes('All')) {
+                  filterOptions={options => {
+                    if (values.excludedFiles.length === excludedFilesOptions.length - 1) {
                       return []
                     }
                     return options
