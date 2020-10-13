@@ -114,7 +114,7 @@ const ProjectSettingsTab = ({
       updateProjectConf(
         project.id,
         {
-          admins,
+          admins: admins.map(a => a.id),
           excludedFiles,
           fileMinSimilarityIndex:
             fileMinSimilarityIndex === '' ? minFileMinSimilarityIndex : fileMinSimilarityIndex,
