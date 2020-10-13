@@ -87,7 +87,7 @@ const ProjectSettingsTab = ({
 
   useEffect(() => {
     if (baseFiles) {
-      setExcludedFilesOptions(baseFiles)
+      setExcludedFilesOptions(['All', ...baseFiles])
     }
     // eslint-disable-next-line
   }, [baseFiles])
@@ -115,7 +115,7 @@ const ProjectSettingsTab = ({
         project.id,
         {
           admins,
-          excludedFiles,
+          excludedFiles: excludedFiles.includes('All') ? excludedFilesOptions : excludedFiles,
           fileMinSimilarityIndex:
             fileMinSimilarityIndex === '' ? minFileMinSimilarityIndex : fileMinSimilarityIndex,
           cloneMinTokenCount: cloneMinTokenCount === '' ? minCloneTokenCount : cloneMinTokenCount
@@ -156,9 +156,10 @@ const ProjectSettingsTab = ({
         validationSchema={validationSchema}
         initialValues={{
           admins: adminOptions.filter(u => projectConf.admins.includes(u.id)),
-          excludedFiles: excludedFilesOptions.filter((f: string) =>
-            projectConf.excludedFiles.includes(f)
-          ),
+          excludedFiles:
+            excludedFilesOptions.length === projectConf.excludedFiles.length
+              ? ['All']
+              : excludedFilesOptions.filter((f: string) => projectConf.excludedFiles.includes(f)),
           fileMinSimilarityIndex: projectConf ? projectConf.fileMinSimilarityIndex : '',
           cloneMinTokenCount: projectConf ? projectConf.cloneMinTokenCount : ''
         }}
@@ -226,10 +227,18 @@ const ProjectSettingsTab = ({
                   options={excludedFilesOptions}
                   getOptionLabel={(option: string) => option}
                   filterSelectedOptions
+                  disableCloseOnSelect
                   defaultValue={excludedFilesOptions.filter((f: string) =>
                     projectConf.excludedFiles.includes(f)
                   )}
-                  onChange={(_, value: string[]) => setFieldValue('excludedFiles', value)}
+                  value={values.excludedFiles}
+                  onChange={(_, value: string[]) => {
+                    if (value.includes('All')) {
+                      setFieldValue('excludedFiles', ['All'])
+                    } else {
+                      setFieldValue('excludedFiles', value)
+                    }
+                  }}
                   renderTags={(value: string[], getTagProps: any) =>
                     value.map((option, index) => (
                       <Chip
@@ -241,6 +250,12 @@ const ProjectSettingsTab = ({
                       />
                     ))
                   }
+                  filterOptions={(options, state) => {
+                    if (values.excludedFiles.includes('All')) {
+                      return []
+                    }
+                    return options
+                  }}
                   renderInput={params => (
                     <TextField
                       {...params}
