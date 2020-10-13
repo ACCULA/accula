@@ -30,6 +30,7 @@ import org.accula.api.handlers.dto.UserDto;
 import org.accula.api.handlers.request.CreateProjectRequestBody;
 import org.accula.api.handlers.request.RequestBody;
 import org.accula.api.handlers.util.ProjectUpdater;
+import org.accula.api.service.CloneDetectionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -106,6 +107,8 @@ class ProjectsRouterTest {
     WebTestClient client;
     @MockBean
     CodeLoader codeLoader;
+    @MockBean
+    CloneDetectionService cloneDetectionService;
 
     @BeforeEach
     void setUp() {
@@ -148,6 +151,9 @@ class ProjectsRouterTest {
 
         Mockito.when(githubClient.createHook(Mockito.any(), Mockito.any(), Mockito.any()))
                 .thenReturn(Mono.empty());
+
+        Mockito.when(cloneDetectionService.detectClones(Mockito.anyLong()))
+                .thenReturn(Flux.empty());
 
         final var expectedBody = ModelToDtoConverter.convert(PROJECT);
 
