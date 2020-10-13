@@ -9,7 +9,8 @@ import {
   SET_PULL,
   SET_PULLS,
   RESET_PULLS_INFO,
-  SET_COMPARE_WITH
+  SET_COMPARE_WITH,
+  CLEAR_COMPARES
 } from './types'
 
 const decodeDiff = (wrapper: Wrapper<IDiff[]>): Wrapper<IDiff[]> => ({
@@ -89,6 +90,13 @@ export function pullsReducer(
       return {
         ...state,
         compareWith: action.payload
+      }
+    }
+    case CLEAR_COMPARES: {
+      return {
+        ...state,
+        compares: notFetching,
+        compareWith: undefined
       }
     }
     case RESET_PULLS_INFO: {

@@ -35,13 +35,22 @@ const PullCompareTab = ({
   compareWith,
   getCompares,
   getPulls,
-  setCompareWith
+  setCompareWith,
+  clearCompares
 }: PullCompareTabProps) => {
   const history = useHistory()
   const location = useLocation()
   const classes = useStyles()
   const [pullOptions, setPullOptions] = useState<IShortPull[]>([])
   const [defaultOption, setDefaultOption] = useState<IShortPull>(null)
+
+  useEffect(() => {
+    history.push(
+      `/projects/${project.id}/pulls/${pull.number}/compare${
+        compareWith ? `?with=${compareWith}` : ''
+      }`
+    )
+  }, [])
 
   useEffect(() => {
     getPulls(project.id)
@@ -75,6 +84,11 @@ const PullCompareTab = ({
   const handleSelectPull = (pullNum: number) =>
     historyPush(history, `/projects/${project.id}/pulls/${pull.number}/compare?with=${pullNum}`)
 
+  const handleDeleteOption = () => {
+    clearCompares()
+    historyPush(history, `/projects/${project.id}/pulls/${pull.number}/compare`)
+  }
+
   const renderCodeDiff =
     compares.value && compares.value.length > 0 ? (
       <CodeDiffList
@@ -102,7 +116,14 @@ const PullCompareTab = ({
           }
           filterSelectedOptions
           defaultValue={defaultOption}
-          onChange={(_, value: IShortPull) => value && handleSelectPull(value.number)}
+          disabled={compares.isFetching}
+          onChange={(_, value: IShortPull, reason) => {
+            if (reason === 'clear') {
+              handleDeleteOption()
+            } else if (reason === 'select-option' && value) {
+              handleSelectPull(value.number)
+            }
+          }}
           renderOption={(option: IShortPull) => (
             <div className={classes.option}>
               <span className={classes.optionText}>{`#${option.number} ${option.title}`}</span>

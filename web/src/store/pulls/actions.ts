@@ -13,13 +13,15 @@ import {
   SET_PULLS,
   RESET_PULLS_INFO,
   SET_COMPARE_WITH,
+  CLEAR_COMPARES,
   SetCompareWith,
   SetClones,
   SetCompares,
   SetDiffs,
   SetPull,
   SetPulls,
-  ResetPullsInfo
+  ResetPullsInfo,
+  ClearCompares
 } from './types'
 import { getClones, getCompares, getDiffs, getPull, getPulls, refreshClones } from './services'
 
@@ -50,6 +52,10 @@ const setClones = (payload: IPullClonesState): SetClones => ({
 
 export const resetPullsInfo = (): ResetPullsInfo => ({
   type: RESET_PULLS_INFO
+})
+
+export const clearComparesAction = (): ClearCompares => ({
+  type: CLEAR_COMPARES
 })
 
 export const setCompareWithAction = (pullNum: number): SetCompareWith => ({
