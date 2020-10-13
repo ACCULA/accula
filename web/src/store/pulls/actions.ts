@@ -11,11 +11,17 @@ import {
   SET_DIFFS,
   SET_PULL,
   SET_PULLS,
+  RESET_PULLS_INFO,
+  SET_COMPARE_WITH,
+  CLEAR_COMPARES,
+  SetCompareWith,
   SetClones,
   SetCompares,
   SetDiffs,
   SetPull,
-  SetPulls
+  SetPulls,
+  ResetPullsInfo,
+  ClearCompares
 } from './types'
 import { getClones, getCompares, getDiffs, getPull, getPulls, refreshClones } from './services'
 
@@ -44,12 +50,24 @@ const setClones = (payload: IPullClonesState): SetClones => ({
   payload
 })
 
-export const getPullsAction = (projectId: number) => async (
+export const resetPullsInfo = (): ResetPullsInfo => ({
+  type: RESET_PULLS_INFO
+})
+
+export const clearComparesAction = (): ClearCompares => ({
+  type: CLEAR_COMPARES
+})
+
+export const setCompareWithAction = (pullNum: number): SetCompareWith => ({
+  type: SET_COMPARE_WITH,
+  payload: pullNum
+})
+
+export const getPullsAction = (projectId: number, handleError?: (msg: string) => void) => async (
   dispatch: AppDispatch, //
   getState: AppStateSupplier
 ) => {
-  await requireToken(dispatch, getState)
-  const { pulls, users } = getState()
+  const { pulls } = getState()
   if (
     pulls.pulls.isFetching ||
     (pulls.pulls.value &&
@@ -60,10 +78,13 @@ export const getPullsAction = (projectId: number) => async (
   }
   try {
     dispatch(setPulls(fetching))
-    const result = await getPulls(users.token, projectId)
+    const result = await getPulls(projectId)
     dispatch(setPulls(fetched(result)))
   } catch (e) {
     dispatch(setPulls(failed(e)))
+    if (handleError) {
+      handleError(e.message)
+    }
   }
 }
 
@@ -71,8 +92,7 @@ export const getPullAction = (projectId: number, pullNumber: number) => async (
   dispatch: AppDispatch, //
   getState: AppStateSupplier
 ) => {
-  await requireToken(dispatch, getState)
-  const { pulls, users } = getState()
+  const { pulls } = getState()
   if (
     pulls.pull.isFetching ||
     (pulls.pull.value &&
@@ -83,7 +103,7 @@ export const getPullAction = (projectId: number, pullNumber: number) => async (
   }
   try {
     dispatch(setPull(fetching))
-    const pull = await getPull(users.token, projectId, pullNumber)
+    const pull = await getPull(projectId, pullNumber)
     dispatch(setPull(fetched(pull)))
   } catch (e) {
     dispatch(setPull(failed(e)))
@@ -94,8 +114,7 @@ export const getDiffsAction = (projectId: number, pullNumber: number) => async (
   dispatch: AppDispatch, //
   getState: AppStateSupplier
 ) => {
-  await requireToken(dispatch, getState)
-  const { users, pulls } = getState()
+  const { pulls } = getState()
   if (
     pulls.diffs.isFetching ||
     (pulls.diffs.value &&
@@ -106,7 +125,7 @@ export const getDiffsAction = (projectId: number, pullNumber: number) => async (
   }
   try {
     dispatch(setDiffs(fetching))
-    const result = await getDiffs(users.token, projectId, pullNumber)
+    const result = await getDiffs(projectId, pullNumber)
     dispatch(setDiffs(fetched(result, { projectId, pullNumber })))
   } catch (e) {
     dispatch(setDiffs(failed(e)))
@@ -121,8 +140,7 @@ export const getComparesAction = (projectId: number, target: number, source: num
     dispatch(setCompares(notFetching))
     return
   }
-  await requireToken(dispatch, getState)
-  const { users, pulls } = getState()
+  const { pulls } = getState()
   if (
     pulls.compares.isFetching ||
     (pulls.compares.value &&
@@ -134,7 +152,7 @@ export const getComparesAction = (projectId: number, target: number, source: num
   }
   try {
     dispatch(setCompares(fetching))
-    const result = await getCompares(users.token, projectId, target, source)
+    const result = await getCompares(projectId, target, source)
     dispatch(setCompares(fetched(result, { projectId, target, source })))
   } catch (e) {
     dispatch(setCompares(failed(e)))
@@ -145,7 +163,6 @@ export const getClonesAction = (projectId: number, pullNumber: number) => async 
   dispatch: AppDispatch, //
   getState: AppStateSupplier
 ) => {
-  await requireToken(dispatch, getState)
   const { users, pulls } = getState()
   if (
     pulls.clones.isFetching ||

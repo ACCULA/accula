@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Redirect, useLocation } from 'react-router-dom'
 import { connect, ConnectedProps } from 'react-redux'
 
@@ -17,10 +17,14 @@ const OAuth2RedirectHandler = ({ setAccessToken }: OAuth2RedirectHandlerProps) =
   const accessToken: string = new URLSearchParams(location.search).get('accessToken')
   const error = new URLSearchParams(location.search).get('error')
 
+  useEffect(() => {
+    if (accessToken) {
+      setAccessToken({ accessToken })
+    }
+    // eslint-disable-next-line
+  }, [])
+
   if (accessToken) {
-    setAccessToken({
-      accessToken
-    })
     return (
       <Redirect
         to={{

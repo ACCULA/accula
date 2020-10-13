@@ -3,20 +3,20 @@ import { requireToken } from 'store/users/actions'
 import { failed, fetched, fetching } from 'store/wrapper'
 import { IProjectConf } from 'types'
 import {
-  CREATE_PROJECT,
   SET_BASE_FILES,
   SET_PROJECT,
   SET_PROJECT_CONF,
   SET_PROJECTS,
   SET_REPO_ADMINS,
-  UPDATE_PROJECT_CONF,
-  CreateProject,
+  RESET_PROJECT_INFO,
+  RESET_PROJECTS,
   SetBaseFiles,
   SetProject,
   SetProjectConf,
   SetProjects,
   SetRepoAdmins,
-  UpdateProjectConf
+  ResetProjectInfo,
+  ResetProjects
 } from './types'
 import {
   getBaseFiles,
@@ -24,8 +24,9 @@ import {
   getProjectConf,
   getProjects,
   getRepoAdmins,
-  postProject,
-  putProjectConf
+  putProjectConf,
+  deleteProject,
+  postProject
 } from './services'
 
 const setProjects = (payload): SetProjects => ({
@@ -43,12 +44,13 @@ const setProjectConf = (payload): SetProjectConf => ({
   payload
 })
 
-const updateProjectConf = (isCreating: boolean, error: string): UpdateProjectConf => ({
-  type: UPDATE_PROJECT_CONF,
-  payload: [isCreating, error]
+export const resetProjectInfo = (): ResetProjectInfo => ({
+  type: RESET_PROJECT_INFO
 })
 
-export const resetUpdateProjectConf = (): UpdateProjectConf => updateProjectConf(false, '')
+export const resetProjectsAction = (): ResetProjects => ({
+  type: RESET_PROJECTS
+})
 
 const setRepoAdmins = (payload): SetRepoAdmins => ({
   type: SET_REPO_ADMINS,
@@ -60,14 +62,7 @@ const setBaseFiles = (payload): SetBaseFiles => ({
   payload
 })
 
-const createProject = (isCreating: boolean, error: string): CreateProject => ({
-  type: CREATE_PROJECT,
-  payload: [isCreating, error]
-})
-
-export const resetCreateProject = (): CreateProject => createProject(false, '')
-
-export const getProjectsAction = () => async (
+export const getProjectsAction = (handleError?: (message: string) => void) => async (
   dispatch: AppDispatch, //
   getState: AppStateSupplier
 ) => {
@@ -80,11 +75,14 @@ export const getProjectsAction = () => async (
     const result = await getProjects()
     dispatch(setProjects(fetched(result)))
   } catch (e) {
+    if (handleError) {
+      handleError(e.message)
+    }
     dispatch(setProjects(failed(e)))
   }
 }
 
-export const getProjectAction = (id: number) => async (
+export const getProjectAction = (id: number, handleError?: (msg: string) => void) => async (
   dispatch: AppDispatch, //
   getState: AppStateSupplier
 ) => {
@@ -99,18 +97,19 @@ export const getProjectAction = (id: number) => async (
       return
     }
   }
-  await requireToken(dispatch, getState)
-  const { users } = getState()
   try {
     dispatch(setProject(fetching))
-    const project = await getProject(id, users.token)
+    const project = await getProject(id)
     dispatch(setProject(fetched(project)))
   } catch (e) {
-    dispatch(setProjects(failed(e)))
+    dispatch(setProject(failed(e)))
+    if (handleError) {
+      handleError(e.message)
+    }
   }
 }
 
-export const getProjectConfAction = (id: number) => async (
+export const getProjectConfAction = (id: number, handleError?: (msg: string) => void) => async (
   dispatch: AppDispatch, //
   getState: AppStateSupplier
 ) => {
@@ -132,10 +131,18 @@ export const getProjectConfAction = (id: number) => async (
     dispatch(setProjectConf(fetched(conf)))
   } catch (e) {
     dispatch(setProjectConf(failed(e)))
+    if (handleError) {
+      handleError(e.message)
+    }
   }
 }
 
-export const updateProjectConfAction = (id: number, conf: IProjectConf) => async (
+export const updateProjectConfAction = (
+  id: number,
+  conf: IProjectConf,
+  handleSuccess?: () => void,
+  handleError?: (msg: string) => void
+) => async (
   dispatch: AppDispatch, //
   getState: AppStateSupplier
 ) => {
@@ -146,15 +153,21 @@ export const updateProjectConfAction = (id: number, conf: IProjectConf) => async
   await requireToken(dispatch, getState)
   const { users } = getState()
   try {
-    dispatch(updateProjectConf(true, null))
     await putProjectConf(id, users.token, conf)
-    dispatch(updateProjectConf(false, null))
+    if (handleSuccess) {
+      handleSuccess()
+    }
   } catch (e) {
-    dispatch(updateProjectConf(false, e.message))
+    if (handleError) {
+      handleError(e.message)
+    }
   }
 }
 
-export const getRepoAdminsAction = (projectId: number) => async (
+export const getRepoAdminsAction = (
+  projectId: number,
+  handleError?: (msg: string) => void
+) => async (
   dispatch: AppDispatch, //
   getState: AppStateSupplier
 ) => {
@@ -173,10 +186,56 @@ export const getRepoAdminsAction = (projectId: number) => async (
     dispatch(setRepoAdmins(fetched(admins, projectId)))
   } catch (e) {
     dispatch(setRepoAdmins(failed(e)))
+    if (handleError) {
+      handleError(e.message)
+    }
   }
 }
 
-export const getBaseFilesAction = (projectId: number) => async (
+const messageFromError = (error: string): string => {
+  switch (error) {
+    case 'NO_PERMISSION':
+      return 'Only the admin of the repository can create a project for it!'
+    case 'WRONG_URL':
+      return 'URL to the repository is wrong!'
+    case 'ALREADY_EXISTS':
+      return 'Project for this repository is already exists!'
+    case 'INVALID_URL':
+      return 'URL to the repository is invalid!'
+    default:
+      return 'Unknown error has occurred'
+  }
+}
+
+export const createProjectAction = (
+  url: string,
+  handleSuccess?: () => void,
+  handleError?: (msg: string) => void
+) => async (
+  dispatch: AppDispatch, //
+  getState: AppStateSupplier
+) => {
+  await requireToken(dispatch, getState)
+  const { users, projects } = getState()
+  if (users.token.accessToken) {
+    const result = await postProject(url, users.token)
+    if (typeof result === 'string') {
+      if (handleError) {
+        handleError(messageFromError(result))
+      }
+    } else {
+      dispatch(setProjects(fetched([...projects.projects.value, result])))
+      if (handleSuccess) {
+        handleSuccess()
+      }
+    }
+  }
+}
+
+export const getBaseFilesAction = (
+  projectId: number,
+  handleError?: (msg: string) => void
+) => async (
   dispatch: AppDispatch, //
   getState: AppStateSupplier
 ) => {
@@ -192,22 +251,30 @@ export const getBaseFilesAction = (projectId: number) => async (
     dispatch(setBaseFiles(fetched(files, projectId)))
   } catch (e) {
     dispatch(setBaseFiles(failed(e)))
+    if (handleError) {
+      handleError(e.message)
+    }
   }
 }
 
-export const createProjectAction = (url: string) => async (
+export const deleteProjectAction = (
+  id: number,
+  handleSuccess?: () => void,
+  handleError?: (msg: string) => void
+) => async (
   dispatch: AppDispatch, //
   getState: AppStateSupplier
 ) => {
   await requireToken(dispatch, getState)
-  const { users, projects } = getState()
-  if (users.token.accessToken) {
-    const result = await postProject(url, users.token)
-    if (typeof result === 'string') {
-      dispatch(createProject(false, result))
-    } else {
-      dispatch(setProjects(fetched([...projects.projects.value, result])))
-      dispatch(createProject(false, null))
+  const { users } = getState()
+  try {
+    await deleteProject(id, users.token)
+    if (handleSuccess) {
+      handleSuccess()
+    }
+  } catch (e) {
+    if (handleError) {
+      handleError(e.message)
     }
   }
 }

@@ -1,204 +1,165 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import { bindActionCreators } from 'redux'
 import { connect, ConnectedProps } from 'react-redux'
 import { useHistory, useParams } from 'react-router-dom'
-import { Badge, Tab, Tabs } from 'react-bootstrap'
-
-import { Breadcrumbs } from 'components/Breadcrumbs'
-import { Loader } from 'components/Loader'
 import { AppDispatch, AppState } from 'store'
-import {
-  getClonesAction,
-  getComparesAction,
-  getDiffsAction,
-  getPullAction,
-  getPullsAction,
-  refreshClonesAction
-} from 'store/pulls/actions'
-import { getProjectAction, getProjectConfAction } from 'store/projects/actions'
-import { PullCompareTab } from 'views/Pulls/PullCompareTab'
-import { useLocation } from 'react-use'
-import { isProjectAdmin } from 'utils'
-import { getCurrentUserAction } from 'store/users/actions'
+import { getClonesAction, getDiffsAction, getPullAction } from 'store/pulls/actions'
+import { getProjectAction } from 'store/projects/actions'
+import { historyPush, isProjectAdmin } from 'utils'
 import { PageTitle } from 'components/PageTitle'
-import { PullClonesTab } from './PullClonesTab'
-import { PullChangesTab } from './PullChangesTab'
-import { PullOverviewTab } from './PullOverviewTab'
+import {
+  VisibilityRounded,
+  CodeRounded,
+  CompareArrowsRounded,
+  FileCopyRounded
+} from '@material-ui/icons'
+import BreadCrumbs from 'components/BreadCrumbs'
+import Tabs, { Tab } from 'components/Tabs/Tabs'
+import { CircularProgress } from '@material-ui/core'
+import PullLabel from 'components/PullLabel'
+import PullOverviewTab from './PullOverviewTab'
+import PullChangesTab from './PullChangesTab'
+import PullCompareTab from './PullCompareTab'
+import PullClonesTab from './PullClonesTab/PullClonesTab'
 
-const mapStateToProps = (state: AppState) => ({
-  user: state.users.user,
-  project: state.projects.project,
-  projectConf: state.projects.projectConf,
-  pull: state.pulls.pull,
-  pulls: state.pulls.pulls,
-  diffs: state.pulls.diffs,
-  compares: state.pulls.compares,
-  clones: state.pulls.clones
-})
+const tabValues = ['changes', 'compare', 'clones'] as string[]
 
-const mapDispatchToProps = (dispatch: AppDispatch) => ({
-  getUser: bindActionCreators(getCurrentUserAction, dispatch),
-  getProject: bindActionCreators(getProjectAction, dispatch),
-  getProjectConf: bindActionCreators(getProjectConfAction, dispatch),
-  getPull: bindActionCreators(getPullAction, dispatch),
-  getPulls: bindActionCreators(getPullsAction, dispatch),
-  getDiffs: bindActionCreators(getDiffsAction, dispatch),
-  getCompares: bindActionCreators(getComparesAction, dispatch),
-  getClones: bindActionCreators(getClonesAction, dispatch),
-  refreshClones: bindActionCreators(refreshClonesAction, dispatch)
-})
+const validateTab = (tab: string) => tabValues.includes(tab) || tab === undefined
 
-const connector = connect(mapStateToProps, mapDispatchToProps)
-type PullsProps = ConnectedProps<typeof connector>
+interface PullsProps extends PropsFromRedux {}
 
 const Pull = ({
   user,
   project,
-  projectConf,
   pull,
-  pulls,
   diffs,
-  compares,
   clones,
-  getUser,
   getProject,
-  getProjectConf,
   getPull,
-  getPulls,
   getDiffs,
-  getCompares,
-  getClones,
-  refreshClones
+  getClones
 }: PullsProps) => {
   const history = useHistory()
-  const location = useLocation()
-
-  const { prId, plId, tab } = useParams()
+  const { prId, plId, tab }: any = useParams()
   const projectId = parseInt(prId, 10)
   const pullId = parseInt(plId, 10)
-  const [compareWith, setCompareWith] = useState(0)
 
   useEffect(() => {
-    const query = parseInt(new URLSearchParams(location.search).get('with') || '0', 10)
-    if (compareWith !== query) {
-      setCompareWith(query)
-      getCompares(projectId, pullId, query)
+    if (!Number.isNaN(projectId) && !Number.isNaN(pullId) && validateTab(tab)) {
+      getProject(projectId)
+      getPull(projectId, pullId)
+      getDiffs(projectId, pullId)
+      getClones(projectId, pullId)
     }
-  }, [compareWith, location, getCompares, projectId, pullId])
+    // eslint-disable-next-line
+  }, [])
 
-  useEffect(() => {
-    getPull(projectId, pullId)
-    getPulls(projectId)
-    getDiffs(projectId, pullId)
-    getClones(projectId, pullId)
-  }, [getPull, getPulls, getDiffs, getClones, projectId, pullId])
-
-  useEffect(() => {
-    getUser()
-    getProject(projectId)
-    getProjectConf(projectId)
-  }, [getUser, getProject, getProjectConf, projectId])
-
-  if (pull.value && pull.value.number !== pullId) {
-    return <Loader />
+  if (
+    Number.isNaN(projectId) ||
+    Number.isNaN(pullId) ||
+    !validateTab(tab) ||
+    user.isFetching ||
+    !project ||
+    !pull
+  ) {
+    return <></>
   }
+
+  const handleChangeTab = (t: Tab) => {
+    historyPush(history, `/projects/${projectId}/pulls/${pullId}${t.id ? `/${t.id}` : ''}`)
+  }
+
+  const tabs = [
+    {
+      id: '',
+      text: 'Overview',
+      Icon: VisibilityRounded
+    },
+    {
+      id: 'changes',
+      text: 'Changes',
+      Icon: CodeRounded,
+      badgeValue:
+        diffs && diffs.value ? diffs.value.length : <CircularProgress size={12} color="inherit" />
+    },
+    {
+      id: 'compare',
+      text: 'Compare',
+      Icon: CompareArrowsRounded
+    },
+    {
+      id: 'clones',
+      text: 'Clones',
+      Icon: FileCopyRounded,
+      badgeValue: clones.value ? (
+        clones.value.length
+      ) : (
+        <CircularProgress size={12} color="inherit" />
+      )
+    }
+  ] as Tab[]
+
   return (
-    <div className="content">
+    <div>
       <PageTitle
-        title={pull.value && project.value && `${pull.value.title} - ${project.value.repoName}`}
+        title={pull && project && `${pull.author.login} - ${pull.title} - ${project.repoName}`}
       />
-      <Breadcrumbs
-        breadcrumbs={
-          project.value && pull.value
-            ? [
-                { text: 'Projects', to: '/projects' },
-                { text: project.value.repoName, to: `/projects/${project.value.id}/pulls` },
-                { text: pull.value.title }
-              ]
-            : [{ text: '' }]
-        }
+      <BreadCrumbs
+        breadcrumbs={[
+          { text: 'Projects', to: '/projects' },
+          { text: project.repoName, to: `/projects/${project.id}/pulls` },
+          { text: pull.title }
+        ]}
       />
-      <Tabs
-        activeKey={tab || 'overview'} //
-        onSelect={key => {
-          const tabPath = key === 'overview' ? '' : `/${key}`
-          history.push(`/projects/${projectId}/pulls/${pullId}${tabPath}`)
-        }}
-        id="pull-tabs"
-      >
-        <Tab
-          eventKey="overview"
-          title={
-            <>
-              <i className="fas fa-fw fa-eye" /> Overview
-            </>
-          }
-        >
-          <PullOverviewTab pull={pull} />
-        </Tab>
-        <Tab
-          eventKey="changes"
-          title={
-            <>
-              <i className="fas fa-fw fa-code" /> Changes{' '}
-              <Badge>
-                {diffs.isFetching ? (
-                  <i className="fas fa-spinner fa-spin" />
-                ) : (
-                  diffs.value && diffs.value.length
-                )}
-              </Badge>
-            </>
-          }
-        >
-          <PullChangesTab diffs={diffs} />
-        </Tab>
-        <Tab
-          eventKey="compare"
-          title={
-            <>
-              <i className="fas fa-fw fa-exchange-alt" /> Compare
-            </>
-          }
-        >
-          <PullCompareTab
-            pullId={pullId}
-            pulls={pulls}
-            compares={compares}
-            compareWith={compareWith}
-            onSelect={num => {
-              if (num === 0) {
-                history.push(`/projects/${projectId}/pulls/${pullId}/compare`)
-              } else {
-                history.push(`/projects/${projectId}/pulls/${pullId}/compare?with=${num}`)
-              }
-            }}
-          />
-        </Tab>
-        <Tab
-          eventKey="clones"
-          title={
-            <>
-              <i className="far fa-fw fa-copy" /> Clones{' '}
-              <Badge>
-                {clones.isFetching ? (
-                  <i className="fas fa-spinner fa-spin" />
-                ) : (
-                  clones.value && clones.value.length
-                )}
-              </Badge>
-            </>
-          }
-        >
-          <PullClonesTab
-            clones={clones} //
-            refreshClones={() => refreshClones(projectId, pullId)}
-            isAdmin={isProjectAdmin(user.value, project.value, projectConf.value)}
-          />
-        </Tab>
-      </Tabs>
+      <Tabs tabs={tabs} onChange={handleChangeTab} activeId={tab} />
+      {tab === undefined && <PullOverviewTab project={project} pull={pull} />}
+      {tab === 'changes' && <PullChangesTab diffs={diffs} />}
+      {tab === 'compare' && <PullCompareTab project={project} pull={pull} />}
+      {tab === 'clones' && (
+        <PullClonesTab
+          project={project}
+          pull={pull}
+          clones={clones}
+          isAdmin={isProjectAdmin(user.value, project)}
+        />
+      )}
     </div>
   )
 }
+
+export const getPullTitle = (base?: string, head?: string): JSX.Element => {
+  if (base && head) {
+    if (base === head) {
+      return <PullLabel text={base} />
+    }
+    return <PullLabel type="added" text={`${base} -> ${head}`} />
+  }
+  if (base) {
+    return <PullLabel type="removed" text={base} />
+  }
+  if (head) {
+    return <PullLabel type="removed" text={head} />
+  }
+  return <code />
+}
+
+const mapStateToProps = (state: AppState) => ({
+  project: state.projects.project.value,
+  user: state.users.user,
+  pull: state.pulls.pull.value,
+  diffs: state.pulls.diffs,
+  clones: state.pulls.clones
+})
+
+const mapDispatchToProps = (dispatch: AppDispatch) => ({
+  getProject: bindActionCreators(getProjectAction, dispatch),
+  getPull: bindActionCreators(getPullAction, dispatch),
+  getDiffs: bindActionCreators(getDiffsAction, dispatch),
+  getClones: bindActionCreators(getClonesAction, dispatch)
+})
+
+const connector = connect(mapStateToProps, mapDispatchToProps)
+
+type PropsFromRedux = ConnectedProps<typeof connector>
 
 export default connector(Pull)

@@ -1,35 +1,48 @@
 import React from 'react'
-import { Grid, Panel, Row } from 'react-bootstrap'
-
-import { Loader } from 'components/Loader'
 import { AppState } from 'store'
 import { connect, ConnectedProps } from 'react-redux'
+import { Avatar, IconButton } from '@material-ui/core'
+import { GitHub } from '@material-ui/icons'
+import Link from 'components/Link'
+import { useStyles } from './styles'
+
+interface UserProfileProps extends PropsFromRedux {}
+
+const UserProfile = ({ user }: UserProfileProps) => {
+  const classes = useStyles()
+
+  if (!user) {
+    return <></>
+  }
+
+  return (
+    <div>
+      <div className={classes.userOverview}>
+        <Avatar className={classes.userAvatar} src={user.avatar} />
+        <div className={classes.userInfo}>
+          <h1 className={classes.userName}>{user.name}</h1>
+          <Link className={classes.userLoginField} to={`https://github.com/${user.login}`}>
+            <IconButton
+              className={classes.githubButton}
+              color="default"
+              aria-label="Log in with GitHub"
+            >
+              <GitHub />
+            </IconButton>
+            <span className={classes.userLogin}>{`@${user.login}`}</span>
+          </Link>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 const mapStateToProps = (state: AppState) => ({
-  isFetching: state.users.user.isFetching || !state.users.user.value,
   user: state.users.user.value
 })
 
 const connector = connect(mapStateToProps, null)
-type UserProfileProps = ConnectedProps<typeof connector>
 
-const UserProfile = ({ isFetching, user }: UserProfileProps) => {
-  return isFetching ? (
-    <Loader />
-  ) : (
-    <div className="content">
-      <Grid fluid>
-        <Row>
-          <Panel>
-            <Panel.Heading>Profile</Panel.Heading>
-            <Panel.Body>
-              @{user.login}: {user.name}
-            </Panel.Body>
-          </Panel>
-        </Row>
-      </Grid>
-    </div>
-  )
-}
+type PropsFromRedux = ConnectedProps<typeof connector>
 
 export default connector(UserProfile)

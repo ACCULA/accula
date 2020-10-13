@@ -8,6 +8,56 @@ export interface IUser {
   id: number
   login: string
   name: string
+  avatar: string
+}
+
+export interface IDiffColors {
+  diffViewerBackground: string
+  diffViewerColor: string
+  addedBackground: string
+  addedColor: string
+  removedBackground: string
+  removedColor: string
+  wordAddedBackground: string
+  wordRemovedBackground: string
+  addedGutterBackground: string
+  removedGutterBackground: string
+  gutterBackground: string
+  gutterBackgroundDark: string
+  highlightBackground: string
+  highlightGutterBackground: string
+  codeFoldGutterBackground: string
+  codeFoldBackground: string
+  emptyLineBackground: string
+  gutterColor: string
+  addedGutterColor: string
+  removedGutterColor: string
+  codeFoldContentColor: string
+  diffViewerTitleBackground: string
+  diffViewerTitleColor: string
+  diffViewerTitleBorderColor: string
+}
+
+export interface IColors {
+  bgLight: string
+  bgDark: string
+  primaryLight: string
+  primaryDark: string
+  secondaryLight: string
+  secondaryDark: string
+  codeDiff: {
+    light: IDiffColors
+    dark: IDiffColors
+  }
+}
+
+export type ThemeMode = 'dark' | 'light'
+export type SplitCodeView = 'unified' | 'split'
+
+export interface ISettings {
+  themeMode: ThemeMode
+  isDrawerOpen: boolean
+  splitCodeView: SplitCodeView
 }
 
 export interface IRouteInfo {
@@ -18,6 +68,7 @@ export interface IRouteInfo {
   icon?: string
   hidden?: boolean
   authRequired?: boolean
+  sidebar?: boolean
 }
 
 export interface IProject {
@@ -29,6 +80,7 @@ export interface IProject {
   repoDescription?: string
   repoOwnerAvatar: string
   repoOpenPullCount: number
+  adminIds: number[]
 }
 
 export interface IProjectConf {
@@ -44,6 +96,8 @@ export interface IShortPull {
   url: string
   title: string
   open: boolean
+  createdAt: string
+  updatedAt: string
   author: {
     url: string
     login: string

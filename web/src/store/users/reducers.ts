@@ -1,4 +1,3 @@
-import { notFetching } from 'store/wrapper'
 import {
   SET_ACCESS_TOKEN, //
   SET_USER,
@@ -7,7 +6,7 @@ import {
 } from './types'
 
 const initialState: UsersState = {
-  user: notFetching,
+  user: { isFetching: null },
   token: {
     accessToken: null
   }
@@ -29,6 +28,7 @@ export function usersReducer(
         token: action.token
       }
     }
+
     default:
       return state
   }

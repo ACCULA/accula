@@ -18,4 +18,5 @@ public class UserDto {
     String login;
     @Nullable
     String name;
+    String avatar;
 }

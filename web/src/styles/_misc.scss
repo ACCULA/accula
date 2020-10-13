@@ -1,117 +1,40 @@
+@font-face {
+    font-family: 'JetBrains Mono';
+    src: url('https://raw.githubusercontent.com/JetBrains/JetBrainsMono/master/fonts/web/JetBrainsMono-Regular.eot') format('embedded-opentype'),
+        url('https://raw.githubusercontent.com/JetBrains/JetBrainsMono/master/fonts/web/JetBrainsMono-Regular.woff2') format('woff2'),
+        url('https://raw.githubusercontent.com/JetBrains/JetBrainsMono/master/fonts/web/JetBrainsMono-Regular.woff') format('woff'),
+        url('https://raw.githubusercontent.com/JetBrains/JetBrainsMono/master/fonts/ttf/JetBrainsMono-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
 body,
-.wrapper {
-  min-height: 100vh;
-  position: relative;
-  background-color: white;
+html {
+    height: 100%;
 }
 
-a {
-  color: $info-color;
-
-  &:hover, &:focus {
-    color: $info-states-color;
-    text-decoration: none;
-  }
-  
-  &.black {
-    color: $black-color;
-
-    &:hover {
-      color: $black-bg;
-    }
-  }
-}
-
-a:focus, a:active,
-button::-moz-focus-inner,
-input::-moz-focus-inner,
-input[type="reset"]::-moz-focus-inner,
-input[type="button"]::-moz-focus-inner,
-input[type="submit"]::-moz-focus-inner,
-select::-moz-focus-inner,
-input[type="file"] > input[type="button"]::-moz-focus-inner {
-  outline: 0;
-}
-
-.ui-slider-handle:focus,
-.navbar-toggle,
-input:focus {
-  outline: 0 !important;
-}
-
-// Animations
-.form-control,
-.input-group-addon,
-.tagsinput,
-.navbar,
-.navbar .alert {
-  @include transition($general-transition-time, $transition-linear);
-}
-
-.sidebar .nav a,
-.table > tbody > tr .td-actions .btn {
-  @include transition($fast-transition-time, $transition-ease-in);
-}
-
-.btn {
-  @include transition($ultra-fast-transition-time, $transition-ease-in);
-}
-
-.fa {
-  width: 18px;
-  text-align: center;
-}
-
-.margin-top {
-  margin-top: 50px;
-}
-
-.wrapper {
-  position: relative;
-  top: 0;
-  height: 100vh;
-}
-
-.tight {
-  padding: 0;
-  margin: 0;
-}
-
-.pointer {
-  cursor: pointer;
+body {
+    margin: 0;
 }
 
 pre {
-  display: inline;
-  border: 0;
-  padding: 0;
-  margin: 0;
-  background-color: transparent;
-  line-height: 20px;
-  font-family: $font-family-mono;
-  font-size: $font-size-small;
+    display: inline;
+    background-color: transparent;
+    line-height: 25px;
+    font-family: 'JetBrains Mono';
+    white-space: pre !important;
 }
 
 code {
-  color: $info-color;
-  background: lighten($info-color, 55);
-  font-family: $font-family-mono;
-  
-  &.added {
-    color: $addedColor;
-    background: $addedGutterBackground;
-  }
-
-  &.removed {
-    color: $removedColor;
-    background: $removedGutterBackground;
-  }
+    font-family: 'JetBrains Mono'
 }
 
-.alert {
-  margin-bottom: 0;
+// override prism.js
+.token.operator {
+    color: #708090;
+    background: none !important;
 }
 
-.split-unified-view-button {
-  margin-top: -7px;
+.token.number {
+    color: #d19a66;
 }

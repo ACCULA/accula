@@ -1,35 +1,32 @@
 import React from 'react'
 import { Link as RelativeLink } from 'react-router-dom'
 import isExternal from 'is-url-external'
-import cx from 'classnames'
+import clsx from 'clsx'
+import { useStyles } from './styles'
 
 export interface LinkProps {
   to: string
-  black?: boolean
-
+  className?: string
+  children: React.ReactNode
   [x: string]: any
 }
 
-export const Link = ({ to, black, props, children }: LinkProps) => {
-  const cls = cx({
-    black
-  })
+const Link = ({ to, children, className, props }: LinkProps) => {
+  const classes = useStyles()
   return isExternal(to) ? (
     <a
       href={to} //
       target="_blank"
       rel="noopener noreferrer"
-      className={cls}
-      {...props}
+      className={clsx(classes.root, className)}
     >
       {children}
     </a>
   ) : (
-    <RelativeLink
-      to={to} //
-      {...props}
-    >
+    <RelativeLink to={to} {...props}>
       {children}
     </RelativeLink>
   )
 }
+
+export default Link

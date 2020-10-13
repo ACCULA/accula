@@ -60,7 +60,7 @@ public final class ModelToDtoConverter {
     }
 
     public static UserDto convert(final User user) {
-        return new UserDto(user.getId(), user.getGithubUser().getLogin(), user.getGithubUser().getName());
+        return new UserDto(user.getId(), user.getGithubUser().getLogin(), user.getGithubUser().getName(), user.getGithubUser().getAvatar());
     }
 
     public static GithubUserDto convert(final GithubUser user) {
@@ -111,6 +111,8 @@ public final class ModelToDtoConverter {
                 .number(pull.getNumber())
                 .url(pullUrl(pull))
                 .title(pull.getTitle())
+                .createdAt(pull.getCreatedAt())
+                .updatedAt(pull.getUpdatedAt())
                 .open(pull.isOpen())
                 .author(convert(pull.getAuthor()))
                 .build();
