@@ -6,5 +6,10 @@ export const useStyles = makeStyles((theme: Theme) => ({
     color: theme.palette.type === 'light' ? 'rgba(0, 0, 0, 0.3)' : '#fff',
     fontSize: '18px',
     fontWeight: 500
+  },
+  tableHeadRow: {
+    '&:hover': {
+      cursor: 'default'
+    }
   }
 }))
