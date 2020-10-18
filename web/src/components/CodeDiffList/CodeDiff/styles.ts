@@ -5,13 +5,17 @@ export const useStyles = makeStyles((theme: Theme) => ({
   panel: {
     margin: 16,
     fontSize: 12,
-    borderRadius: 8
+    borderRadius: 8,
+    border: theme.palette.type === 'light' ? '1px solid #e1e4e8' : 'none'
+  },
+  root: {
+    backgroundColor: theme.palette.type === 'light' ? '#fbfbfb !important' : '#2c313a !important',
+    color: theme.palette.type === 'light' ? 'rgba(0, 0, 0, 0.5)' : '#fff'
   },
   panelHeader: {
     // paddingLeft: 0,
     // flexDirection: 'row-reverse',
-    backgroundColor: theme.palette.type === 'light' ? 'rgba(211, 211, 211, 0.1)' : '#2c313a',
-    color: theme.palette.type === 'light' ? 'rgba(0, 0, 0, 0.3)' : '#fff'
+    borderBottom: theme.palette.type === 'light' ? '1px solid #e1e4e8' : 'none'
   },
   panelHeaderContent: {
     overflow: 'hidden',

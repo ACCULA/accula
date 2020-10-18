@@ -34,7 +34,7 @@ const CodeDiff = ({ title, language, defaultExpanded, ...props }: CodeDiffProps)
   }
 
   return (
-    <Accordion classes={{ expanded: classes.panel }} disabled defaultExpanded>
+    <Accordion classes={{ expanded: classes.panel, root: classes.root }} disabled defaultExpanded>
       <AccordionSummary
         className={classes.panelHeader}
         // expandIcon={<ExpandMoreRoundedIcon />}
