@@ -19,17 +19,15 @@ import { connect, ConnectedProps } from 'react-redux'
 import { bindActionCreators } from 'redux'
 import { AppDispatch, AppState } from 'store'
 import {
-  deleteProjectAction,
   getBaseFilesAction,
   getProjectConfAction,
   getRepoAdminsAction,
   updateProjectConfAction
 } from 'store/projects/actions'
 import { useSnackbar } from 'notistack'
-import { historyPush } from 'utils'
 import { getNotifier } from 'App'
-import { useHistory } from 'react-router'
 import { useStyles } from './styles'
+import DeleteProjectDialog from '../DeleteProjectDialog'
 
 const minFileMinSimilarityIndex = 0
 const minCloneTokenCount = 0
@@ -60,15 +58,14 @@ const ProjectSettingsTab = ({
   updateProjectConf,
   getRepoAdmins,
   getProjectConf,
-  getBaseFiles,
-  deleteProject
+  getBaseFiles
 }: ProjectSettingsTabProps) => {
   const classes = useStyles()
-  const history = useHistory()
   const snackbarContext = useSnackbar()
   const [adminOptions, setAdminOptions] = useState<IUser[]>(null)
   const [excludedFilesOptions, setExcludedFilesOptions] = useState(null)
   const [fetching, setFetching] = useState(false)
+  const [isDeleteProjectDialogOpen, setDeleteProjectDialogOpen] = useState(false)
 
   useEffect(() => {
     getProjectConf(project.id, getNotifier('error', snackbarContext))
@@ -130,21 +127,6 @@ const ProjectSettingsTab = ({
         }
       )
     }
-  }
-
-  const handleDeleteProject = () => {
-    deleteProject(
-      project.id,
-      () => {
-        getNotifier('success', snackbarContext)('Project has been successfully deleted')
-        setFetching(false)
-        historyPush(history, '/projects')
-      },
-      msg => {
-        getNotifier('error', snackbarContext)(msg)
-        setFetching(false)
-      }
-    )
   }
 
   return (
@@ -324,11 +306,19 @@ const ProjectSettingsTab = ({
               <div className={classes.dangerBoxTextField}>
                 <span className={classes.titleBox}>Delete this project</span>
               </div>
-              <IconButton className={classes.dangerButton} onClick={() => handleDeleteProject()}>
+              <IconButton
+                className={classes.dangerButton}
+                onClick={() => setDeleteProjectDialogOpen(true)}
+              >
                 <DeleteRoundedIcon />
               </IconButton>
             </CardContent>
           </Card>
+          <DeleteProjectDialog
+            project={project}
+            open={isDeleteProjectDialogOpen}
+            onClose={() => setDeleteProjectDialogOpen(false)}
+          />
         </>
       )}
     </div>
@@ -345,8 +335,7 @@ const mapDispatchToProps = (dispatch: AppDispatch) => ({
   getRepoAdmins: bindActionCreators(getRepoAdminsAction, dispatch),
   updateProjectConf: bindActionCreators(updateProjectConfAction, dispatch),
   getProjectConf: bindActionCreators(getProjectConfAction, dispatch),
-  getBaseFiles: bindActionCreators(getBaseFilesAction, dispatch),
-  deleteProject: bindActionCreators(deleteProjectAction, dispatch)
+  getBaseFiles: bindActionCreators(getBaseFilesAction, dispatch)
 })
 
 const connector = connect(mapStateToProps, mapDispatchToProps)
