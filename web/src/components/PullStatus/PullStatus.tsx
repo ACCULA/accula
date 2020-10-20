@@ -10,7 +10,7 @@ interface PullStatusProps {
 
 const PullStatus = ({ open, className }: PullStatusProps) => {
   const classes = useStyles()
-  const title = open ? 'Open' : 'Close'
+  const title = open ? 'Open' : 'Closed'
   const clsn = clsx(className, classes.blob, open ? classes.blobGreen : classes.blobRed)
 
   return (

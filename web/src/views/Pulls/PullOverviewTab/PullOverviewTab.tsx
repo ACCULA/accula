@@ -35,7 +35,9 @@ const PullOverviewTab = ({ pull, project }: PullOverviewTabProps) => {
           </Link>
         </div>
         <div className={classes.pullInfo}>
-          <h1 className={classes.pullTitle}>{pull.title}</h1>
+          <Link to={pull.url}>
+            <h1 className={classes.pullTitle}>{pull.title}</h1>
+          </Link>
           <div className={classes.pullInfoField}>
             <PrLogo className={classes.prImage} />
             <span>

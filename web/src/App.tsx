@@ -33,7 +33,8 @@ const useStyles = makeStyles((theme: Theme) =>
       position: 'relative',
       padding: '64px 64px',
       [theme.breakpoints.down('sm')]: {
-        marginLeft: 0
+        marginLeft: 0,
+        padding: '24px 24px'
       },
       transition: theme.transitions.create('margin', {
         easing: theme.transitions.easing.sharp,
