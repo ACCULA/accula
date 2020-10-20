@@ -19,7 +19,7 @@ const TableHeader = <DataItem extends object>({ headCells }: TableHeaderProps<Da
   const classes = useStyles()
   return (
     <TableHead component={Box}>
-      <TableRow>
+      <TableRow className={classes.tableHeadRow} hover={false}>
         {headCells.map(headCell => (
           <TableCell
             key={headCell.label}
