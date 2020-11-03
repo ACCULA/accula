@@ -16,6 +16,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.function.TupleUtils;
 
+import java.util.Comparator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -55,6 +56,21 @@ public final class CloneDetectionService {
         return clones
                 .collectList()
                 .doOnNext(cloneList -> log.info("{} clones have been detected", cloneList.size()))
+                .flatMapMany(cloneRepo::insert);
+    }
+
+    //FIXME: temporary synchronous solution
+    //TODO: make asynchronous by resolving https://github.com/ACCULA/accula/issues/123
+    public Flux<Clone> detectClones(final long projectId) {
+        final var detector = cloneDetector(projectId);
+        return pullRepo
+                .findByProjectId(projectId)
+                .sort(Comparator.comparing(Pull::getCreatedAt))
+                .flatMapSequential(pull -> detector.findClones(pull.getHead(), loader.loadFiles(pull.getHead(), FileFilter.SRC_JAVA)))
+                .distinct()
+                .map(TupleUtils.function(this::convert))
+                .collectList()
+                .doOnNext(clones -> log.info("{} clones have been detected", clones.size()))
                 .flatMapMany(cloneRepo::insert);
     }
 

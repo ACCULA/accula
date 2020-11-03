@@ -25,6 +25,7 @@ import org.accula.api.handlers.request.CreateProjectRequestBody;
 import org.accula.api.handlers.response.ErrorBody;
 import org.accula.api.handlers.util.ProjectUpdater;
 import org.accula.api.handlers.util.Responses;
+import org.accula.api.service.CloneDetectionService;
 import org.accula.api.util.Lambda;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
@@ -63,6 +64,7 @@ public final class ProjectsHandler {
     private final UserRepo userRepo;
     private final ProjectUpdater projectUpdater;
     private final CodeLoader codeLoader;
+    private final CloneDetectionService cloneDetectionService;
 
     public Mono<ServerResponse> getTop(final ServerRequest request) {
         return Mono
@@ -172,6 +174,15 @@ public final class ProjectsHandler {
                 .onErrorResume(PROJECT_NOT_FOUND_EXCEPTION::equals, Lambda.expandingWithArg(Responses::notFound))
                 .onErrorResume(NOT_ENOUGH_PERMISSIONS_EXCEPTION::equals, Lambda.expandingWithArg(Responses::forbidden))
                 .onErrorResume(DtoToModelConverter.ValidationException.class, Lambda.expandingWithArg(Responses::badRequest));
+    }
+
+    public Mono<ServerResponse> detectClones(final ServerRequest request) {
+        return withProjectId(request)
+                .filterWhen(this::isCurrentUserAdmin)
+                .switchIfEmpty(Mono.error(NOT_ENOUGH_PERMISSIONS_EXCEPTION))
+                .flatMap(projectId -> cloneDetectionService.detectClones(projectId).collectList())
+                .flatMap(Lambda.expandingWithArg(Responses::accepted))
+                .onErrorResume(NOT_ENOUGH_PERMISSIONS_EXCEPTION::equals, Lambda.expandingWithArg(Responses::forbidden));
     }
 
     private Mono<Tuple4<Boolean, GithubApiRepo, List<GithubApiPull>, User>> retrieveGithubInfoForProjectCreation(final String owner,
