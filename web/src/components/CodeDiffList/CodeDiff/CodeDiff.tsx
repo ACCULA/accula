@@ -10,6 +10,7 @@ interface CodeDiffProps extends ReactDiffViewerProps {
   language: string
   title: React.ReactNode
   defaultExpanded?: boolean
+  hideLineNumbers?: boolean
 }
 
 const CodeDiff = ({ title, language, defaultExpanded, ...props }: CodeDiffProps) => {

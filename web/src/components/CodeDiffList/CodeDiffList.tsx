@@ -97,6 +97,7 @@ const CodeDiffList = <ListItem extends object>({
                         useDarkTheme={theme.palette.type === 'dark'}
                         defaultExpanded
                         showDiffOnly={false}
+                        hideLineNumbers
                         {...props}
                       />
                     </div>
