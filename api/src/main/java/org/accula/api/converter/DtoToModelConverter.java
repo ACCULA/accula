@@ -7,7 +7,7 @@ import org.accula.api.handlers.dto.ProjectConfDto;
 /**
  * @author Anton Lamtev
  */
-public final class DtoToModelConverter {
+public class DtoToModelConverter {
     private DtoToModelConverter() {
     }
 
