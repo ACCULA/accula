@@ -27,7 +27,7 @@ public interface ConnectionProvidedRepo {
         );
     }
 
-    default <T> Flux<T> manyWithConnection(final Function<? super Connection, ? extends Flux<T>> connectionUse) {
+    default <T> Flux<T> manyWithConnection(Function<? super Connection, ? extends Flux<T>> connectionUse) {
         return Flux.usingWhen(
                 getConnectionProvider().get(),
                 connectionUse,
@@ -49,7 +49,7 @@ public interface ConnectionProvidedRepo {
                 ));
     }
 
-    static <T> Mono<T> column(final Result result, final String name, final Class<T> clazz) {
+    static <T> Mono<T> column(final Result result, final String name, Class<T> clazz) {
         return Mono.from(result
                 .map((row, metadata) -> Objects.requireNonNull(row.get(name, clazz))));
     }
