@@ -215,25 +215,6 @@ public final class ProjectsHandler {
                 .thenReturn(project);
     }
 
-    private Mono<Boolean> isCurrentUserAdmin(final Long projectId) {
-        return currentUser
-                .get(User::getId)
-                .flatMap(currentUserId -> projectRepo.hasAdmin(projectId, currentUserId));
-    }
-
-    private Mono<List<Long>> githubRepoAdmins(final Project project) {
-        final var repo = project.getGithubRepo();
-        return githubClient.getRepoAdmins(repo.getOwner().getLogin(), repo.getName());
-    }
-
-    private Mono<Project> saveDefaultConf(final Mono<Project> projectMono) {
-        return Mono.usingWhen(
-                projectMono,
-                Mono::just,
-                project -> projectRepo.upsertConf(project.getId(), Project.Conf.DEFAULT)
-        );
-    }
-
     private static Tuple2<String, String> extractOwnerAndRepo(final CreateProjectRequestBody requestBody) {
         var url = requestBody.getGithubRepoUrl();
 
@@ -266,6 +247,25 @@ public final class ProjectsHandler {
                 .justOrEmpty(request.pathVariable("id"))
                 .map(Long::parseLong)
                 .onErrorMap(NumberFormatException.class, e -> PROJECT_NOT_FOUND_EXCEPTION);
+    }
+
+    private Mono<Boolean> isCurrentUserAdmin(final Long projectId) {
+        return currentUser
+                .get(User::getId)
+                .flatMap(currentUserId -> projectRepo.hasAdmin(projectId, currentUserId));
+    }
+
+    private Mono<List<Long>> githubRepoAdmins(final Project project) {
+        final var repo = project.getGithubRepo();
+        return githubClient.getRepoAdmins(repo.getOwner().getLogin(), repo.getName());
+    }
+
+    private Mono<Project> saveDefaultConf(final Mono<Project> projectMono) {
+        return Mono.usingWhen(
+                projectMono,
+                Mono::just,
+                project -> projectRepo.upsertConf(project.getId(), Project.Conf.DEFAULT)
+        );
     }
 
     @RequiredArgsConstructor
