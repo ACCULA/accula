@@ -5,12 +5,12 @@ import org.accula.api.db.model.Project;
 import org.accula.api.db.model.Pull;
 import org.accula.api.db.model.Snapshot;
 import org.accula.api.db.model.User;
-import org.accula.api.handlers.dto.GithubUserDto;
-import org.accula.api.handlers.dto.ProjectConfDto;
-import org.accula.api.handlers.dto.ProjectDto;
-import org.accula.api.handlers.dto.PullDto;
-import org.accula.api.handlers.dto.ShortPullDto;
-import org.accula.api.handlers.dto.UserDto;
+import org.accula.api.handler.dto.GithubUserDto;
+import org.accula.api.handler.dto.ProjectConfDto;
+import org.accula.api.handler.dto.ProjectDto;
+import org.accula.api.handler.dto.PullDto;
+import org.accula.api.handler.dto.ShortPullDto;
+import org.accula.api.handler.dto.UserDto;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;

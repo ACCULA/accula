@@ -243,8 +243,7 @@ public final class Git {
             final Identifiable identifiable;
             if (fileToDiscoverIdx < objectIds.size() && line.startsWith((identifiable = objectIds.get(fileToDiscoverIdx)).getId())) {
                 currentFileLineCounter = 1;
-                if (identifiable instanceof Snippet) {
-                    final var snippet = (Snippet) identifiable;
+                if (identifiable instanceof Snippet snippet) {
                     fromLine = snippet.getFromLine();
                     toLine = snippet.getToLine();
                 } else {
