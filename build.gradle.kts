@@ -9,7 +9,7 @@ plugins {
 }
 
 jacoco {
-    toolVersion = "0.8.5"
+    toolVersion = "0.8.6"
 }
 
 allprojects {
@@ -25,9 +25,9 @@ configure(subprojects.filterNot(project(":web")::equals)) {
     }
 
     dependencies {
-        implementation("org.jetbrains:annotations:19.0.0")
+        implementation("org.jetbrains:annotations:20.1.0")
 
-        val lombok = "org.projectlombok:lombok:1.18.12"
+        val lombok = "org.projectlombok:lombok:1.18.16"
         compileOnly(lombok)
         annotationProcessor(lombok)
         testCompileOnly(lombok)

@@ -8,7 +8,6 @@ import org.accula.api.github.model.GithubApiRepo;
 import org.accula.api.github.model.GithubApiUserPermission;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
-import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
@@ -20,9 +19,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import static java.lang.Boolean.FALSE;
 import static org.accula.api.github.model.GithubApiUserPermission.Permission.ADMIN;
-import static org.springframework.http.HttpStatus.OK;
 
 /**
  * @author Anton Lamtev
@@ -56,23 +53,16 @@ public final class GithubClientImpl implements GithubClient {
 
     @Override
     public Mono<Boolean> hasAdminPermission(final String owner, final String repo) {
-        final BiFunction<String, String, Mono<ClientResponse>> requestUserPermissions = (accessToken, login) -> githubApiWebClient
+        final BiFunction<String, String, Mono<GithubApiUserPermission>> requestUserPermissions = (accessToken, login) -> githubApiWebClient
                 .get()
                 .uri("/repos/{owner}/{repo}/collaborators/{user}/permission", owner, repo, login)
                 .headers(h -> h.setBearerAuth(accessToken))
-                .exchange();
+                .exchangeToMono(response -> response.bodyToMono(GithubApiUserPermission.class));
         return accessTokenProvider.accessToken()
                 .zipWith(loginProvider.login())
                 .flatMap(TupleUtils.function(requestUserPermissions))
-                .flatMap(response -> {
-                    if (response.statusCode() != OK) {
-                        return Mono.just(FALSE);
-                    }
-
-                    return response
-                            .bodyToMono(GithubApiUserPermission.class)
-                            .map(permission -> permission.getPermission() == ADMIN);
-                })
+                .filter(permission -> permission.getPermission() == ADMIN)
+                .hasElement()
                 .onErrorMap(GithubClientException::new);
     }
 
@@ -150,10 +140,9 @@ public final class GithubClientImpl implements GithubClient {
                 .uri("/repos/{owner}/{repo}/hooks", owner, repo)
                 .headers(h -> h.setBearerAuth(accessToken))
                 .bodyValue(hook)
-                .exchange()
+                .exchangeToMono(r -> Mono.<Void>empty())
                 .doOnSuccess(p -> log.info("Created GitHub webhook for {}/{}", owner, repo))
-                .doOnError(e -> log.error("Cannot create hook for {}/{}", owner, repo, e))
-                .then())
+                .doOnError(e -> log.error("Cannot create hook for {}/{}", owner, repo, e)))
                 .onErrorMap(GithubClientException::new);
     }
 

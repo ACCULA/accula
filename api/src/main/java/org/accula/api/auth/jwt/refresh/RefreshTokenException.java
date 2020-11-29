@@ -2,11 +2,14 @@ package org.accula.api.auth.jwt.refresh;
 
 import lombok.Getter;
 
+import java.io.Serial;
+
 /**
  * @author Anton Lamtev
  */
 @Getter
 final class RefreshTokenException extends RuntimeException {
+    @Serial
     private static final long serialVersionUID = -1081904770207522419L;
     private final String reason;
 

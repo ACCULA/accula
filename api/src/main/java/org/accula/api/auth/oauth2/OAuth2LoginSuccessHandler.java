@@ -44,11 +44,10 @@ public final class OAuth2LoginSuccessHandler implements ServerAuthenticationSucc
     @Override
     public Mono<Void> onAuthenticationSuccess(final WebFilterExchange exchange, final Authentication authentication) {
         return Mono.defer(() -> {
-            if (!(authentication instanceof OAuth2AuthenticationToken)) {
+            if (!(authentication instanceof OAuth2AuthenticationToken authenticationToken)) {
                 return Mono.empty();
             }
 
-            final var authenticationToken = (OAuth2AuthenticationToken) authentication;
             final var githubUser = GithubApiToModelConverter.convert(authenticationToken.getPrincipal().getAttributes());
 
             return authorizedClientService
