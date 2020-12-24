@@ -1,7 +1,7 @@
 import { ThemeOptions } from '@material-ui/core/styles/createMuiTheme'
 import { IColors } from './types'
 
-export const colors = {
+export const colors: IColors = {
   bgLight: '#F2F2F2',
   bgDark: '#393E46',
   primaryLight: '#393E46',
@@ -53,7 +53,7 @@ export const colors = {
       codeFoldGutterBackground: '#1b1d23',
       codeFoldBackground: '#1b1d23',
       emptyLineBackground: '#363946',
-      gutterColor: '#464c67',
+      gutterColor: '#f0f6fc',
       addedGutterColor: '#8c8c8c',
       removedGutterColor: '#8c8c8c',
       codeFoldContentColor: '#abb2bf',
@@ -62,7 +62,7 @@ export const colors = {
       diffViewerTitleBorderColor: '#353846'
     }
   }
-} as IColors
+}
 
 const customTheme: ThemeOptions = {
   palette: {

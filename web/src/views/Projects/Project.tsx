@@ -19,7 +19,7 @@ import ProjectSettingsTab from './ProjectSettingsTab'
 
 interface ProjectProps extends PropsFromRedux {}
 
-const tabValues = ['pulls', 'settings'] as string[]
+const tabValues: string[] = ['pulls', 'settings']
 
 const validateTab = (tab: string) => tabValues.includes(tab) || tab === undefined
 
@@ -57,7 +57,7 @@ const Project = ({
     historyPush(history, `/projects/${projectId}/${t.id}`)
   }
 
-  const tabs = [
+  const tabs: Tab[] = [
     {
       id: 'pulls',
       text: 'Pull requests',
@@ -68,7 +68,7 @@ const Project = ({
         <CircularProgress size={12} color="inherit" />
       )
     }
-  ] as Tab[]
+  ]
 
   const isAdmin = isProjectAdmin(user.value, project)
   if (isAdmin) {

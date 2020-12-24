@@ -1,6 +1,6 @@
 import { save, load, RLSOptions } from 'redux-localstorage-simple'
 
-const options = { states: ['settings'], namespace: 'accula' } as RLSOptions
+const options: RLSOptions = { states: ['settings'], namespace: 'accula' }
 
 export const saveState = () => save(options)
 export const loadState = () => load(options)
