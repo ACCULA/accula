@@ -1,8 +1,8 @@
 import React from 'react'
-import ReactDiffViewer, { ReactDiffViewerProps } from 'react-diff-viewer'
 import { Accordion, AccordionDetails, AccordionSummary } from '@material-ui/core'
 // import ExpandMoreRoundedIcon from '@material-ui/icons/ExpandMoreRounded'
 import Prism from 'prismjs'
+import ReactDiffViewer, { ReactDiffViewerProps } from '../ReactDiffViewer'
 import 'prismjs/components/prism-java'
 import { codeDiffStyles, useStyles } from './styles'
 

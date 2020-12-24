@@ -50,6 +50,8 @@ const PullClonesTab = ({ project, pull, clones, refreshClones, isAdmin }: PullCl
             getDiffTitle={(clone: IClone) => getTitle(clone)}
             getOldValue={(clone: IClone) => clone.source.content}
             getNewValue={(clone: IClone) => clone.target.content}
+            getLeftOffset={(clone: IClone) => clone.source.fromLine}
+            getRightOffset={(clone: IClone) => clone.target.fromLine}
             compareMethod={DiffMethod.WORDS_WITH_SPACE}
             toolbarButtons={[
               {

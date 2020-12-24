@@ -1,9 +1,9 @@
 import React from 'react'
 import { IconButton, Tooltip, Typography, useTheme } from '@material-ui/core'
-import { ReactDiffViewerProps } from 'react-diff-viewer'
 import { AutoSizer, CellMeasurer, CellMeasurerCache, List, WindowScroller } from 'react-virtualized'
 import { connect, ConnectedProps } from 'react-redux'
 import { AppState } from 'store'
+import { ReactDiffViewerProps } from './ReactDiffViewer'
 import SplitUnifiedViewButton from './CodeDiff/SplitUnifiedViewButton'
 import CodeDiff from './CodeDiff'
 import { useStyles } from './styles'
@@ -15,7 +15,10 @@ export interface ToolBarButton {
 }
 
 interface CodeDiffListProps<ListItem>
-  extends Omit<ReactDiffViewerProps, 'splitView' | 'oldValue' | 'newValue' | 'showDiffOnly'>,
+  extends Omit<
+      ReactDiffViewerProps,
+      'splitView' | 'oldValue' | 'newValue' | 'showDiffOnly' | 'leftOffset' | 'rightOffset'
+    >,
     PropsFromRedux {
   title: string
   toolbarButtons?: ToolBarButton[]
@@ -23,6 +26,8 @@ interface CodeDiffListProps<ListItem>
   getDiffTitle: (listItem: ListItem) => React.ReactNode
   getOldValue: (ListItem: ListItem) => string
   getNewValue: (listItem: ListItem) => string
+  getLeftOffset?: (listItem: ListItem) => number
+  getRightOffset?: (listItem: ListItem) => number
   defaultExpanded?: boolean
   language: string
 }
@@ -36,6 +41,8 @@ const CodeDiffList = <ListItem extends object>({
   getDiffTitle,
   getOldValue,
   getNewValue,
+  getLeftOffset,
+  getRightOffset,
   settings,
   ...props
 }: CodeDiffListProps<ListItem>) => {
@@ -93,6 +100,12 @@ const CodeDiffList = <ListItem extends object>({
                         splitView={settings.splitCodeView === 'split'}
                         oldValue={getOldValue(list[index])}
                         newValue={getNewValue(list[index])}
+                        leftOffset={
+                          getLeftOffset !== undefined ? getLeftOffset(list[index]) : undefined
+                        }
+                        rightOffset={
+                          getRightOffset !== undefined ? getRightOffset(list[index]) : undefined
+                        }
                         language="java"
                         useDarkTheme={theme.palette.type === 'dark'}
                         defaultExpanded

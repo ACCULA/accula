@@ -22,7 +22,7 @@ import PullChangesTab from './PullChangesTab'
 import PullCompareTab from './PullCompareTab'
 import PullClonesTab from './PullClonesTab/PullClonesTab'
 
-const tabValues = ['changes', 'compare', 'clones'] as string[]
+const tabValues: string[] = ['changes', 'compare', 'clones']
 
 const validateTab = (tab: string) => tabValues.includes(tab) || tab === undefined
 
@@ -69,7 +69,7 @@ const Pull = ({
     historyPush(history, `/projects/${projectId}/pulls/${pullId}${t.id ? `/${t.id}` : ''}`)
   }
 
-  const tabs = [
+  const tabs: Tab[] = [
     {
       id: '',
       text: 'Overview',
@@ -97,7 +97,7 @@ const Pull = ({
         <CircularProgress size={12} color="inherit" />
       )
     }
-  ] as Tab[]
+  ]
 
   return (
     <div>

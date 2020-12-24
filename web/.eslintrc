@@ -28,7 +28,8 @@
     "no-console": "off",
     "no-nested-ternary": "off",
     "react/self-closing-comp": "off",
-    "react/destructuring-assignment": "off"
+    "react/destructuring-assignment": "off",
+    "react/static-property-placement": ["off"]
   },
   "settings": {
     "import/resolver": {
