@@ -1,0 +1,26 @@
+package org.accula.api.handler.util;
+
+import reactor.core.publisher.Signal;
+import reactor.util.context.ContextView;
+
+import java.util.Objects;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+
+/**
+ * @author Anton Lamtev
+ */
+public final class ReactorPublishers {
+    private ReactorPublishers() {
+    }
+
+    public static <Next> Consumer<Signal<Next>> onNextWithContext(final BiConsumer<Next, ContextView> nextAndContextConsumer) {
+        return signal -> {
+            if (!signal.isOnNext()) {
+                return;
+            }
+
+            nextAndContextConsumer.accept(Objects.requireNonNull(signal.get()), signal.getContextView());
+        };
+    }
+}

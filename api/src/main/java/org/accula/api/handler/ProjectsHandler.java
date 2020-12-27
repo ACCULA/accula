@@ -16,7 +16,6 @@ import org.accula.api.db.repo.UserRepo;
 import org.accula.api.github.api.GithubClient;
 import org.accula.api.github.api.GithubClientException;
 import org.accula.api.github.model.GithubApiHook;
-import org.accula.api.github.model.GithubApiPull;
 import org.accula.api.github.model.GithubApiPull.State;
 import org.accula.api.github.model.GithubApiRepo;
 import org.accula.api.handler.dto.CreateProjectDto;
@@ -28,6 +27,7 @@ import org.accula.api.handler.exception.CreateProjectException;
 import org.accula.api.handler.exception.Http4xxException;
 import org.accula.api.handler.exception.ResponseConvertibleException;
 import org.accula.api.handler.util.ProjectUpdater;
+import org.accula.api.handler.util.ReactorPublishers;
 import org.accula.api.handler.util.Responses;
 import org.accula.api.util.Lambda;
 import org.springframework.stereotype.Component;
@@ -39,7 +39,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import reactor.function.TupleUtils;
 import reactor.util.function.Tuple2;
-import reactor.util.function.Tuple4;
+import reactor.util.function.Tuple3;
 import reactor.util.function.Tuples;
 
 import java.util.List;
@@ -166,18 +166,15 @@ public final class ProjectsHandler {
                 .onErrorResume(ResponseConvertibleException::onErrorResume);
     }
 
-    private Mono<Tuple4<Boolean, GithubApiRepo, List<GithubApiPull>, User>> retrieveGithubInfoForProjectCreation(final String owner,
-                                                                                                                 final String repo) {
+    private Mono<Tuple3<Boolean, GithubApiRepo, User>> retrieveGithubInfoForProjectCreation(final String owner, final String repo) {
         return Mono.zip(
                 githubClient.hasAdminPermission(owner, repo).subscribeOn(Schedulers.parallel()),
                 githubClient.getRepo(owner, repo).subscribeOn(Schedulers.parallel()),
-                githubClient.getRepositoryPulls(owner, repo, State.ALL, 100).collectList().subscribeOn(Schedulers.parallel()),
                 currentUser.get());
     }
 
     private Mono<ProjectDto> saveProjectData(final boolean isAdmin,
                                              final GithubApiRepo githubApiRepo,
-                                             final List<GithubApiPull> githubApiPulls,
                                              final User currentUser) {
         return Mono.defer(() -> {
             if (!isAdmin) {
@@ -195,8 +192,14 @@ public final class ProjectsHandler {
                     .flatMap(repoOwner -> projectRepo.upsert(projectGithubRepo, currentUser)
                             .doOnError(e -> log.error("Error saving Project: {}-{}", projectGithubRepo.getOwner(), currentUser, e)))
                     .transform(this::saveDefaultConf)
-                    .flatMap(project -> projectUpdater.update(project.getId(), githubApiPulls)
-                            .map(openPullCount -> ModelToDtoConverter.convert(project, openPullCount)));
+                    .map(project -> ModelToDtoConverter.convert(project, 0))
+                    .doOnEach(ReactorPublishers.onNextWithContext((project, ctx) -> githubClient
+                            .getRepositoryPulls(githubApiRepo.getOwner().getLogin(), githubApiRepo.getName(), State.ALL, 100)
+                            .collectList()
+                            .flatMap(pulls -> projectUpdater
+                                    .update(project.getId(), pulls))
+                            .contextWrite(ctx)
+                            .subscribe(res -> log.info("{} open pulls", res))));
         });
     }
 
