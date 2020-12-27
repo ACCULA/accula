@@ -46,8 +46,7 @@ public final class CreateProjectException extends ResponseConvertibleException {
 
     @Override
     public Function<Object, Mono<ServerResponse>> responseFunctionForCode(final ApiError.Code code) {
-        final Error error = (Error) code;
-        return switch (error) {
+        return switch ((Error) code) {
             case BAD_FORMAT, INVALID_URL, WRONG_URL -> Responses::badRequest;
             case NO_PERMISSION -> Responses::forbidden;
             case ALREADY_EXISTS -> Responses::conflict;

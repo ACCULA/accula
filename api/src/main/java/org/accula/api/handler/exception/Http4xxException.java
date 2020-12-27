@@ -38,8 +38,7 @@ public final class Http4xxException extends ResponseConvertibleException {
 
     @Override
     public Function<Object, Mono<ServerResponse>> responseFunctionForCode(final ApiError.Code code) {
-        Status status = (Status) code;
-        return switch (status) {
+        return switch ((Status) code) {
             case BAD_REQUEST -> Responses::badRequest;
             case FORBIDDEN -> Responses::forbidden;
             case NOT_FOUND -> Responses::notFound;
