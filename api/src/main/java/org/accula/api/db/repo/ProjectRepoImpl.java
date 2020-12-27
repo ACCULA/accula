@@ -195,6 +195,67 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
         onConfUpdates.add(onConfUpdate);
     }
 
+    private static PostgresqlStatement selectByIdStatement(final Connection connection) {
+        return selectStatement(connection, """
+                WHERE p.id = $1
+                GROUP BY p.id, project_repo.id, project_repo_owner.id, project_creator.id, project_creator_github_user.id,
+                         pulls.count, admins.ids
+                """);
+    }
+
+    private static PostgresqlStatement selectTopStatement(final Connection connection) {
+        return selectStatement(connection, """
+                GROUP BY p.id, project_repo.id, project_repo_owner.id, project_creator.id, project_creator_github_user.id,
+                         pulls.count, admins.ids
+                LIMIT $1
+                """);
+    }
+
+    private static PostgresqlStatement selectStatement(final Connection connection, final String terminatingCondition) {
+        @Language("SQL") final var sql = """
+                SELECT p.id                                AS project_id,
+                       p.state                             AS project_state,
+                       project_repo.id                     AS project_repo_id,
+                       project_repo.name                   AS project_repo_name,
+                       project_repo.description            AS project_repo_description,
+                       project_repo_owner.id               AS project_repo_owner_id,
+                       project_repo_owner.login            AS project_repo_owner_login,
+                       project_repo_owner.name             AS project_repo_owner_name,
+                       project_repo_owner.avatar           AS project_repo_owner_avatar,
+                       project_repo_owner.is_org           AS project_repo_owner_is_org,
+                       project_creator.id                  AS project_creator_id,
+                       project_creator.github_access_token AS project_creator_github_access_token,
+                       project_creator_github_user.id      AS project_creator_github_user_id,
+                       project_creator_github_user.login   AS project_creator_github_user_login,
+                       project_creator_github_user.name    AS project_creator_github_user_name,
+                       project_creator_github_user.avatar  AS project_creator_github_user_avatar,
+                       project_creator_github_user.is_org  AS project_creator_github_user_is_org,
+                       pulls.count                         AS project_open_pull_count,
+                       admins.ids                          AS project_admins
+
+                FROM project p
+                         JOIN repo_github project_repo
+                              ON p.github_repo_id = project_repo.id
+                         JOIN user_github project_repo_owner
+                              ON project_repo.owner_id = project_repo_owner.id
+                         JOIN user_ project_creator
+                              ON p.creator_id = project_creator.id
+                         JOIN user_github project_creator_github_user
+                              ON project_creator.github_id = project_creator_github_user.id
+                         LEFT JOIN (SELECT count(*) FILTER ( WHERE open ),
+                                           project_id
+                               FROM pull
+                               GROUP BY project_id) pulls
+                              ON p.id = pulls.project_id
+                         LEFT JOIN (SELECT this.project_id,
+                                           array_agg(this.admin_id) AS ids
+                                    FROM project_admin this
+                                    GROUP BY this.project_id) admins
+                                   ON p.id = admins.project_id
+                """;
+        return (PostgresqlStatement) connection.createStatement(String.format("%s %s", sql, terminatingCondition));
+    }
+
     private Mono<Void> upsertAdmins(final Connection connection, final Long projectId, final Project.Conf conf) {
         final var deleteProjectAdmins = ((PostgresqlStatement) connection.createStatement("""
                 DELETE FROM project_admin 
@@ -277,66 +338,5 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
                 .fileMinSimilarityIndex(Converters.integer(row, "file_min_similarity_index"))
                 .excludedFiles(Converters.strings(row, "excluded_files"))
                 .build();
-    }
-
-    private static PostgresqlStatement selectByIdStatement(final Connection connection) {
-        return selectStatement(connection, """
-                WHERE p.id = $1
-                GROUP BY p.id, project_repo.id, project_repo_owner.id, project_creator.id, project_creator_github_user.id,
-                         pulls.count, admins.ids
-                """);
-    }
-
-    private static PostgresqlStatement selectTopStatement(final Connection connection) {
-        return selectStatement(connection, """
-                GROUP BY p.id, project_repo.id, project_repo_owner.id, project_creator.id, project_creator_github_user.id,
-                         pulls.count, admins.ids
-                LIMIT $1
-                """);
-    }
-
-    private static PostgresqlStatement selectStatement(final Connection connection, final String terminatingCondition) {
-        @Language("SQL") final var sql = """
-                SELECT p.id                                AS project_id,
-                       p.state                             AS project_state,
-                       project_repo.id                     AS project_repo_id,
-                       project_repo.name                   AS project_repo_name,
-                       project_repo.description            AS project_repo_description,
-                       project_repo_owner.id               AS project_repo_owner_id,
-                       project_repo_owner.login            AS project_repo_owner_login,
-                       project_repo_owner.name             AS project_repo_owner_name,
-                       project_repo_owner.avatar           AS project_repo_owner_avatar,
-                       project_repo_owner.is_org           AS project_repo_owner_is_org,
-                       project_creator.id                  AS project_creator_id,
-                       project_creator.github_access_token AS project_creator_github_access_token,
-                       project_creator_github_user.id      AS project_creator_github_user_id,
-                       project_creator_github_user.login   AS project_creator_github_user_login,
-                       project_creator_github_user.name    AS project_creator_github_user_name,
-                       project_creator_github_user.avatar  AS project_creator_github_user_avatar,
-                       project_creator_github_user.is_org  AS project_creator_github_user_is_org,
-                       pulls.count                         AS project_open_pull_count,
-                       admins.ids                          AS project_admins
-
-                FROM project p
-                         JOIN repo_github project_repo
-                              ON p.github_repo_id = project_repo.id
-                         JOIN user_github project_repo_owner
-                              ON project_repo.owner_id = project_repo_owner.id
-                         JOIN user_ project_creator
-                              ON p.creator_id = project_creator.id
-                         JOIN user_github project_creator_github_user
-                              ON project_creator.github_id = project_creator_github_user.id
-                         LEFT JOIN (SELECT count(*) FILTER ( WHERE open ),
-                                           project_id
-                               FROM pull
-                               GROUP BY project_id) pulls
-                              ON p.id = pulls.project_id
-                         LEFT JOIN (SELECT this.project_id,
-                                           array_agg(this.admin_id) AS ids
-                                    FROM project_admin this
-                                    GROUP BY this.project_id) admins
-                                   ON p.id = admins.project_id
-                """;
-        return (PostgresqlStatement) connection.createStatement(String.format("%s %s", sql, terminatingCondition));
     }
 }
