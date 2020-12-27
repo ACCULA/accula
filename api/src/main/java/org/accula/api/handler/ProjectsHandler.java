@@ -130,7 +130,7 @@ public final class ProjectsHandler {
                 .onErrorResume(ResponseConvertibleException::onErrorResume);
     }
 
-    public Mono<ServerResponse> headFiles(ServerRequest request) {
+    public Mono<ServerResponse> headFiles(final ServerRequest request) {
         return withProjectId(request)
                 .filterWhen(this::isCurrentUserAdmin)
                 .switchIfEmpty(Mono.error(Http4xxException.forbidden(NOT_ENOUGH_PERMISSIONS)))
