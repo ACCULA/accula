@@ -20,8 +20,8 @@ public interface InputDto {
                 if (field.get(this) == null) {
                     fieldName.accept(field.getName());
                 }
-            } catch (Exception e) {
-                fieldName.accept(field.getName());
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
             }
         }
     }
