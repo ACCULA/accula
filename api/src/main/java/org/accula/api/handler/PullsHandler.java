@@ -3,6 +3,7 @@ package org.accula.api.handler;
 import lombok.RequiredArgsConstructor;
 import org.accula.api.converter.ModelToDtoConverter;
 import org.accula.api.db.repo.PullRepo;
+import org.accula.api.handler.exception.Http4xxException;
 import org.accula.api.handler.util.Responses;
 import org.accula.api.util.Lambda;
 import org.springframework.stereotype.Component;
@@ -17,8 +18,6 @@ import reactor.function.TupleUtils;
 @Component
 @RequiredArgsConstructor
 public final class PullsHandler {
-    //TODO: common handler for all NOT FOUND cases
-    private static final Exception PULL_NOT_FOUND_EXCEPTION = new Exception("PULL_NOT_FOUND_EXCEPTION");
     private static final String PROJECT_ID = "projectId";
     private static final String PULL_NUMBER = "pullNumber";
 
@@ -28,12 +27,11 @@ public final class PullsHandler {
     public Mono<ServerResponse> getMany(final ServerRequest request) {
         return Mono
                 .fromSupplier(() -> Long.parseLong(request.pathVariable(PROJECT_ID)))
-                .onErrorMap(NumberFormatException.class, e -> PULL_NOT_FOUND_EXCEPTION)
                 .flatMapMany(pullRepo::findByProjectId)
                 .map(ModelToDtoConverter::convertShort)
                 .collectList()
                 .flatMap(Responses::ok)
-                .onErrorResume(PULL_NOT_FOUND_EXCEPTION::equals, Lambda.expandingWithArg(Responses::notFound));
+                .onErrorResume(NumberFormatException.class, Lambda.expandingWithArg(Responses::notFound));
     }
 
     public Mono<ServerResponse> get(final ServerRequest request) {
@@ -44,13 +42,13 @@ public final class PullsHandler {
 
                     return pullRepo
                             .findByNumber(projectId, pullNumber)
-                            .switchIfEmpty(Mono.error(PULL_NOT_FOUND_EXCEPTION))
+                            .switchIfEmpty(Mono.error(Http4xxException.notFound()))
                             .flatMap(pull -> Mono.just(pull)
                                     .zipWith(pullRepo.findPrevious(projectId, pullNumber, pull.getAuthor().getId()).collectList())
                                     .map(TupleUtils.function(ModelToDtoConverter::convert))
                                     .flatMap(Responses::ok));
                 })
-                .onErrorMap(NumberFormatException.class, e -> PULL_NOT_FOUND_EXCEPTION)
-                .onErrorResume(PULL_NOT_FOUND_EXCEPTION::equals, Lambda.expandingWithArg(Responses::notFound));
+                .onErrorMap(NumberFormatException.class, Lambda.expandingWithArg(Http4xxException::badRequest))
+                .onErrorResume(Http4xxException::onErrorResume);
     }
 }

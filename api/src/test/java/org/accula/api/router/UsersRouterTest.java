@@ -26,8 +26,8 @@ import reactor.core.publisher.Mono;
 @WebFluxTest
 @ContextConfiguration(classes = {UsersRouter.class, UsersHandler.class, ModelToDtoConverter.class})
 public class UsersRouterTest {
-    private static final GithubUser GITHUB_USER = new GithubUser(1L, "login", "name", "ava", false);
-    private static final User STUB_USER = new User(1L, "token", GITHUB_USER);
+    static final GithubUser GITHUB_USER = new GithubUser(1L, "login", "name", "ava", false);
+    static final User STUB_USER = new User(1L, "token", GITHUB_USER);
     private static final ResponseUser RESPONSE_USER =
             new ResponseUser(STUB_USER.getId(), GITHUB_USER.getLogin(), GITHUB_USER.getName());
 

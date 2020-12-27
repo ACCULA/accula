@@ -1,4 +1,4 @@
-package org.accula.api.handler.request;
+package org.accula.api.handler.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
@@ -10,8 +10,8 @@ import static lombok.AccessLevel.PRIVATE;
  * @author Anton Lamtev
  */
 @Value
-@NoArgsConstructor(force = true, access = PRIVATE)
 @AllArgsConstructor
-public class CreateProjectRequestBody implements RequestBody {
+@NoArgsConstructor(force = true, access = PRIVATE)
+public class CreateProjectDto implements InputDto {
     String githubRepoUrl;
 }

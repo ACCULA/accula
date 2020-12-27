@@ -119,7 +119,7 @@ export const postProject = async (url: string, token: IToken): Promise<IProject 
       }
     )
     .then(resp => resp.data as IProject)
-    .catch(rej => rej.response.data?.error || 'UNKNOWN_ERROR')
+    .catch(rej => rej.response.data?.code || 'UNKNOWN_ERROR')
 }
 
 export const deleteProject = async (id: number, token: IToken): Promise<void> => {
