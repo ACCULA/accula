@@ -1,4 +1,4 @@
-package org.accula.api.handler.util;
+package org.accula.api.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,10 +12,9 @@ import org.accula.api.db.repo.GithubUserRepo;
 import org.accula.api.db.repo.PullRepo;
 import org.accula.api.db.repo.SnapshotRepo;
 import org.accula.api.github.model.GithubApiPull;
-import org.accula.api.util.ReactorSchedulers;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Scheduler;
 
 import java.util.HashSet;
 import java.util.List;
@@ -27,26 +26,24 @@ import java.util.Set;
 @Component
 @Slf4j
 @RequiredArgsConstructor
-public final class ProjectUpdater {
-    private final Scheduler processingScheduler = ReactorSchedulers.boundedElastic(this);
+public final class ProjectService {
     private final GithubUserRepo githubUserRepo;
     private final GithubRepoRepo githubRepoRepo;
     private final SnapshotRepo snapshotRepo;
     private final PullRepo pullRepo;
 
-    public Mono<Integer> update(final Long projectId, final List<GithubApiPull> githubApiPulls) {
+    public Flux<Pull> update(final Long projectId, final List<GithubApiPull> githubApiPulls) {
         if (githubApiPulls.isEmpty()) {
-            return Mono.just(0);
+            return Flux.empty();
         }
 
-        return Mono
+        return Flux
                 .defer(() -> {
                     final var users = new HashSet<GithubUser>();
                     final var repos = new HashSet<GithubRepo>();
                     final var heads = new HashSet<Snapshot>();
                     final var bases = new HashSet<Snapshot>();
                     final var pulls = new HashSet<Pull>();
-                    int openPullCount = 0;
 
                     for (final var githubApiPull : githubApiPulls) {
                         if (!githubApiPull.isValid()) {
@@ -55,10 +52,6 @@ public final class ProjectUpdater {
 
                         final var pull = processGithubApiPull(projectId, githubApiPull, users, repos, heads, bases);
                         pulls.add(pull);
-
-                        if (pull.isOpen()) {
-                            ++openPullCount;
-                        }
                     }
 
                     final var allCommitSnapshots = combine(heads, bases);
@@ -68,38 +61,16 @@ public final class ProjectUpdater {
                             .thenMany(snapshotRepo.insert(allCommitSnapshots))
                             .thenMany(pullRepo.upsert(pulls))
                             .thenMany(snapshotRepo.mapToPulls(heads))
-                            .then(Mono.just(openPullCount));
+                            .thenMany(Flux.fromIterable(pulls));
                 })
-                .doOnSuccess(success -> log.info("Project has been updated successfully with {} pulls", githubApiPulls.size()))
-                .doOnError(e -> log.error("Failed to update project with pulls={}", githubApiPulls, e))
-                .subscribeOn(processingScheduler);
+                .doOnComplete(() -> log.info("Project has been updated successfully with {} pulls", githubApiPulls.size()))
+                .doOnError(e -> log.error("Failed to update project with pulls={}", githubApiPulls, e));
     }
 
     public Mono<Pull> update(final Long projectId, final GithubApiPull githubApiPull) {
-        return Mono
-                .defer(() -> {
-                    if (!githubApiPull.isValid()) {
-                        return Mono.empty();
-                    }
-
-                    final var users = new HashSet<GithubUser>();
-                    final var repos = new HashSet<GithubRepo>();
-                    final var heads = new HashSet<Snapshot>();
-                    final var bases = new HashSet<Snapshot>();
-
-                    final var pull = processGithubApiPull(projectId, githubApiPull, users, repos, heads, bases);
-                    final var allCommitSnapshots = combine(heads, bases);
-
-                    return githubUserRepo.upsert(users)
-                            .thenMany(githubRepoRepo.upsert(repos))
-                            .thenMany(snapshotRepo.insert(allCommitSnapshots))
-                            .then(pullRepo.upsert(pull))
-                            .thenMany(snapshotRepo.mapToPulls(heads))
-                            .then(Mono.just(pull));
-                })
-                .doOnSuccess(success -> log.info("Project has been updated successfully with pull={}", githubApiPull))
-                .doOnError(e -> log.error("Failed to update project with pull={}", githubApiPull, e))
-                .subscribeOn(processingScheduler);
+        return update(projectId, List.of(githubApiPull))
+                .next()
+                .doOnNext(pull -> log.info("Project has been updated successfully with {}", pull));
     }
 
     private Pull processGithubApiPull(final Long projectId,

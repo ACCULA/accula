@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.accula.api.db.model.Pull;
 import org.accula.api.db.repo.ProjectRepo;
 import org.accula.api.github.model.GithubApiHookPayload;
-import org.accula.api.handler.util.ProjectUpdater;
+import org.accula.api.service.ProjectService;
 import org.accula.api.handler.util.Responses;
 import org.accula.api.service.CloneDetectionService;
 import org.accula.api.util.Lambda;
@@ -26,7 +26,7 @@ public final class GithubWebhookHandler {
     private static final String GITHUB_EVENT_PING = "ping";
 
     private final ProjectRepo projectRepo;
-    private final ProjectUpdater projectUpdater;
+    private final ProjectService projectService;
     private final CloneDetectionService cloneDetectionService;
 
     public Mono<ServerResponse> webhook(final ServerRequest request) {
@@ -57,7 +57,7 @@ public final class GithubWebhookHandler {
 
         return projectRepo
                 .idByRepoId(payload.getRepo().getId())
-                .flatMap(projectId -> projectUpdater.update(projectId, githubApiPull));
+                .flatMap(projectId -> projectService.update(projectId, githubApiPull));
     }
 
     private Mono<Void> detectClones(final Mono<Pull> pull) {

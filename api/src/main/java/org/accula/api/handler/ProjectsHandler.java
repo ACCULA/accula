@@ -26,7 +26,7 @@ import org.accula.api.handler.dto.validation.InputDtoValidator;
 import org.accula.api.handler.exception.CreateProjectException;
 import org.accula.api.handler.exception.Http4xxException;
 import org.accula.api.handler.exception.ResponseConvertibleException;
-import org.accula.api.handler.util.ProjectUpdater;
+import org.accula.api.service.ProjectService;
 import org.accula.api.handler.util.ReactorPublishers;
 import org.accula.api.handler.util.Responses;
 import org.accula.api.util.Lambda;
@@ -38,6 +38,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import reactor.function.TupleUtils;
+import reactor.util.context.ContextView;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuple3;
 import reactor.util.function.Tuples;
@@ -63,7 +64,7 @@ public final class ProjectsHandler {
     private final ProjectRepo projectRepo;
     private final GithubUserRepo githubUserRepo;
     private final UserRepo userRepo;
-    private final ProjectUpdater projectUpdater;
+    private final ProjectService projectService;
     private final CodeLoader codeLoader;
 
     public Mono<ServerResponse> getTop(final ServerRequest request) {
@@ -192,15 +193,20 @@ public final class ProjectsHandler {
                     .flatMap(repoOwner -> projectRepo.upsert(projectGithubRepo, currentUser)
                             .doOnError(e -> log.error("Error saving Project: {}-{}", projectGithubRepo.getOwner(), currentUser, e)))
                     .transform(this::saveDefaultConf)
-                    .map(project -> ModelToDtoConverter.convert(project, 0))
-                    .doOnEach(ReactorPublishers.onNextWithContext((project, ctx) -> githubClient
-                            .getRepositoryPulls(githubApiRepo.getOwner().getLogin(), githubApiRepo.getName(), State.ALL, 100)
-                            .collectList()
-                            .flatMap(pulls -> projectUpdater
-                                    .update(project.getId(), pulls))
-                            .contextWrite(ctx)
-                            .subscribe(res -> log.info("{} open pulls", res))));
+                    .map(ModelToDtoConverter::convert)
+                    .doOnEach(ReactorPublishers.onNextWithContext(this::fetchPullsInBackground));
         });
+    }
+
+    private void fetchPullsInBackground(final ProjectDto project, final ContextView context) {
+        final var repoOwner = project.getRepoOwner();
+        final var repoName = project.getRepoName();
+        githubClient.getRepositoryPulls(repoOwner, repoName, State.ALL, 100)
+                .collectList()
+                .flatMap(pulls -> projectService.update(project.getId(), pulls).collectList())
+                .then(projectRepo.updateState(project.getId(), Project.State.CREATED))
+                .contextWrite(context)
+                .subscribe();
     }
 
     private Mono<ProjectDto> createWebhook(final ProjectDto project) {

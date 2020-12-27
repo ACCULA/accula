@@ -28,7 +28,7 @@ import org.accula.api.handler.dto.CreateProjectDto;
 import org.accula.api.handler.dto.ProjectConfDto;
 import org.accula.api.handler.dto.ProjectDto;
 import org.accula.api.handler.dto.UserDto;
-import org.accula.api.handler.util.ProjectUpdater;
+import org.accula.api.service.ProjectService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -71,7 +71,7 @@ class ProjectsRouterTest {
             .author(GITHUB_USER)
             .title("title")
             .head(Snapshot.builder().repo(REPO).branch("branch1").build())
-            .base(Snapshot.builder().repo(REPO).branch("branch1").build())
+            .base(Snapshot.builder().repo(REPO).branch("branch2").build())
             .build();
     static final List<Pull> PULLS = List.of(PULL, PULL, PULL);
     static final String EMPTY = "";
@@ -85,7 +85,7 @@ class ProjectsRouterTest {
     static final GithubApiSnapshot MARKER = new GithubApiSnapshot("", "", GH_OWNER, GH_REPO, "");
     static final GithubApiPull GH_PULL = new GithubApiPull(0L, "", MARKER, MARKER, GH_OWNER, 0, "", State.OPEN, Instant.now(), Instant.now());
     static final GithubApiPull[] OPEN_PULLS = new GithubApiPull[]{GH_PULL, GH_PULL, GH_PULL};
-    static final Project PROJECT = Project.builder().id(1L).githubRepo(REPO).creator(CURRENT_USER).openPullCount(OPEN_PULLS.length).build();
+    static final Project PROJECT = Project.builder().id(1L).state(Project.State.CREATING).githubRepo(REPO).creator(CURRENT_USER).openPullCount(0).build();
     static final CreateProjectDto REQUEST_BODY = new CreateProjectDto(REPO_URL);
     static final String INVALID_REPO_URL = "htps://bad_url";
     static final CreateProjectDto REQUEST_BODY_INVALID_URL = new CreateProjectDto(INVALID_REPO_URL);
@@ -93,7 +93,7 @@ class ProjectsRouterTest {
     static final GithubClientException GH_EXCEPTION = newGithubException();
 
     @MockBean
-    ProjectUpdater projectUpdater;
+    ProjectService projectService;
     @MockBean
     GithubUserRepo githubUserRepo;
     @MockBean
@@ -139,17 +139,20 @@ class ProjectsRouterTest {
         Mockito.when(pullRepo.upsert(Mockito.anyCollection()))
                 .thenReturn(Flux.fromIterable(PULLS));
 
-        Mockito.when(projectUpdater.update(Mockito.anyLong(), Mockito.anyList()))
-                .thenReturn(Mono.just(OPEN_PULLS.length));
+        Mockito.when(projectService.update(Mockito.anyLong(), Mockito.anyList()))
+                .thenReturn(Flux.empty());
 
         Mockito.when(githubClient.hasAdminPermission(Mockito.anyString(), Mockito.anyString()))
                 .thenReturn(Mono.just(TRUE));
 
-        Mockito.when(githubClient.getRepo(GH_REPO.getOwner().getLogin(), GH_REPO.getName()))
+        Mockito.when(githubClient.getRepo(Mockito.anyString(), Mockito.anyString()))
                 .thenReturn(Mono.just(GH_REPO));
 
-        Mockito.when(githubClient.getRepositoryPulls(GH_REPO.getOwner().getLogin(), GH_REPO.getName(), State.ALL, 100))
+        Mockito.when(githubClient.getRepositoryPulls(Mockito.anyString(), Mockito.anyString(), Mockito.any(State.class), Mockito.anyInt()))
                 .thenReturn(Flux.fromArray(OPEN_PULLS));
+
+        Mockito.when(projectRepo.updateState(Mockito.anyLong(), Mockito.any(Project.State.class)))
+                .thenReturn(Mono.empty());
 
         Mockito.when(githubClient.createHook(Mockito.any(), Mockito.any(), Mockito.any()))
                 .thenReturn(Mono.empty());
@@ -162,7 +165,6 @@ class ProjectsRouterTest {
                 .exchange()
                 .expectStatus().isCreated()
                 .expectBody(ProjectDto.class).isEqualTo(expectedBody);
-
     }
 
     @Test

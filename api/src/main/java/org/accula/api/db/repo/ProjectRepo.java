@@ -17,6 +17,8 @@ public interface ProjectRepo {
      */
     Mono<Project> upsert(GithubRepo githubRepo, User creator);
 
+    Mono<Void> updateState(Long id, Project.State state);
+
     Mono<Project> findById(Long id);
 
     Mono<Long> idByRepoId(Long repoId);

@@ -38,11 +38,14 @@ CREATE TABLE IF NOT EXISTS repo_github
     FOREIGN KEY (forked_from_id) REFERENCES repo_github (id)
 );
 
+CREATE TYPE project_state_enum AS ENUM ('CREATING', 'CREATED');
+
 CREATE TABLE IF NOT EXISTS project
 (
     id             BIGSERIAL PRIMARY KEY,
-    github_repo_id BIGINT UNIQUE NOT NULL,
-    creator_id     BIGINT        NOT NULL,
+    state          project_state_enum NOT NULL DEFAULT 'CREATING',
+    github_repo_id BIGINT UNIQUE      NOT NULL,
+    creator_id     BIGINT             NOT NULL,
 
     FOREIGN KEY (github_repo_id) REFERENCES repo_github (id),
     FOREIGN KEY (creator_id) REFERENCES user_ (id)

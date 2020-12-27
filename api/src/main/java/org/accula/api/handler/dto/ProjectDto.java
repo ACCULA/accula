@@ -18,6 +18,7 @@ import static lombok.AccessLevel.PRIVATE;
 @NoArgsConstructor(force = true, access = PRIVATE)
 public class ProjectDto {
     Long id;
+    State state;
     String repoOwner;
     String repoName;
     String repoDescription;
@@ -26,4 +27,10 @@ public class ProjectDto {
     Integer repoOpenPullCount;
     Long creatorId;
     List<Long> adminIds;
+
+    public enum State {
+        CREATING,
+        CREATED,
+        ;
+    }
 }

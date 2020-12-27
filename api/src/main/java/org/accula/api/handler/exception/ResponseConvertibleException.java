@@ -29,7 +29,7 @@ public abstract class ResponseConvertibleException extends RuntimeException {
         return responseConvertible.toResponse();
     }
 
-    public abstract Function<Object, Mono<ServerResponse>> responseFunctionForCode(final ApiError.Code code);
+    public abstract Function<Object, Mono<ServerResponse>> responseFunctionForCode(ApiError.Code code);
 
     @Override
     public synchronized Throwable fillInStackTrace() {
