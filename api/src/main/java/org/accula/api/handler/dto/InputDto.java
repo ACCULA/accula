@@ -21,7 +21,7 @@ public interface InputDto {
                     fieldName.accept(field.getName());
                 }
             } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
+                throw new IllegalStateException(e);
             }
         }
     }
