@@ -59,7 +59,7 @@ public final class ClonesHandler {
                     final var pullNumber = Integer.parseInt(request.pathVariable(PULL_NUMBER));
                     return getLastCommitClones(projectId, pullNumber);
                 })
-                .onErrorResume(NumberFormatException.class, Lambda.expandingWithArg(Responses::notFound));
+                .onErrorResume(NumberFormatException.class, Lambda.expandingWithArg(Responses::badRequest));
     }
 
     public Mono<ServerResponse> refreshClones(final ServerRequest request) {
@@ -77,7 +77,7 @@ public final class ClonesHandler {
                     return toResponse(clones, projectId, pullNumber)
                             .switchIfEmpty(ServerResponse.status(HttpStatus.FORBIDDEN).build());
                 })
-                .onErrorResume(NumberFormatException.class, Lambda.expandingWithArg(Responses::notFound));
+                .onErrorResume(NumberFormatException.class, Lambda.expandingWithArg(Responses::badRequest));
     }
 
     private <T> Flux<T> doIfCurrentUserHasAdminPermissionInProject(final long projectId, final Flux<T> action) {

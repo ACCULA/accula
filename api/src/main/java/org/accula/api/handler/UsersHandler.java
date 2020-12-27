@@ -28,7 +28,7 @@ public final class UsersHandler {
         return Mono
                 .justOrEmpty(request.pathVariable("id"))
                 .map(Long::parseLong)
-                .onErrorMap(NumberFormatException.class, Lambda.expandingWithArg(Http4xxException::notFound))
+                .onErrorMap(NumberFormatException.class, Lambda.expandingWithArg(Http4xxException::badRequest))
                 .flatMap(userRepo::findById)
                 .switchIfEmpty(Mono.error(Http4xxException.notFound()))
                 .map(ModelToDtoConverter::convert)

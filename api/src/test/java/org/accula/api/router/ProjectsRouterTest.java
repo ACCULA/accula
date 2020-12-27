@@ -268,7 +268,14 @@ class ProjectsRouterTest {
     }
 
     @Test
-    void testGetProjectFailure() {
+    void testGetProjectBadRequest() {
+        client.get().uri("/api/projects/notANumber")
+                .exchange()
+                .expectStatus().isBadRequest();
+    }
+
+    @Test
+    void testGetProjectNotFound() {
         Mockito.when(projectRepo.findById(0L))
                 .thenReturn(Mono.empty());
 

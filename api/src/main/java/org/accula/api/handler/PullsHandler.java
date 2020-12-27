@@ -4,11 +4,13 @@ import lombok.RequiredArgsConstructor;
 import org.accula.api.converter.ModelToDtoConverter;
 import org.accula.api.db.repo.PullRepo;
 import org.accula.api.handler.exception.Http4xxException;
+import org.accula.api.handler.exception.ResponseConvertibleException;
 import org.accula.api.handler.util.Responses;
 import org.accula.api.util.Lambda;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.function.TupleUtils;
 
@@ -28,10 +30,12 @@ public final class PullsHandler {
         return Mono
                 .fromSupplier(() -> Long.parseLong(request.pathVariable(PROJECT_ID)))
                 .flatMapMany(pullRepo::findByProjectId)
+                .switchIfEmpty(Flux.error(Http4xxException.notFound()))
                 .map(ModelToDtoConverter::convertShort)
                 .collectList()
                 .flatMap(Responses::ok)
-                .onErrorResume(NumberFormatException.class, Lambda.expandingWithArg(Responses::notFound));
+                .onErrorMap(NumberFormatException.class, Lambda.expandingWithArg(Http4xxException::badRequest))
+                .onErrorResume(ResponseConvertibleException::onErrorResume);
     }
 
     public Mono<ServerResponse> get(final ServerRequest request) {

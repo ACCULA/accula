@@ -5,6 +5,7 @@ import org.accula.api.db.model.Pull;
 import org.accula.api.db.repo.PullRepo;
 import org.accula.api.handler.PullsHandler;
 import org.accula.api.handler.dto.PullDto;
+import org.accula.api.handler.dto.ShortPullDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -19,6 +20,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -72,5 +74,33 @@ class PullsRouterTest {
                 .exchange()
                 .expectStatus().isNotFound()
                 .expectBody(Map.class).isEqualTo(Map.of("code", "NOT_FOUND"));
+    }
+
+    @Test
+    void testGetManyOk() {
+        Mockito.when(repository.findByProjectId(Mockito.anyLong()))
+                .thenReturn(Flux.just(STUB_PULL));
+
+        client.get().uri("/api/projects/{projectId}/pulls", STUB_PULL.getProjectId())
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(ShortPullDto[].class).isEqualTo(ModelToDtoConverter.convertShort(List.of(STUB_PULL)).toArray(new ShortPullDto[0]));
+    }
+
+    @Test
+    void testGetManyBadRequest() {
+        client.get().uri("/api/projects/notANumber/pulls")
+                .exchange()
+                .expectStatus().isBadRequest();
+    }
+
+    @Test
+    void testGetManyNotFound() {
+        Mockito.when(repository.findByProjectId(Mockito.anyLong()))
+                .thenReturn(Flux.empty());
+
+        client.get().uri("/api/projects/{projectId}/pulls", STUB_PULL.getProjectId())
+                .exchange()
+                .expectStatus().isNotFound();
     }
 }

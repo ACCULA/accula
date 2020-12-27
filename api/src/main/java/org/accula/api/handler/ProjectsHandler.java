@@ -232,7 +232,7 @@ public final class ProjectsHandler {
         return Mono
                 .justOrEmpty(request.pathVariable("id"))
                 .map(Long::parseLong)
-                .onErrorMap(NumberFormatException.class, Lambda.expandingWithArg(Http4xxException::notFound));
+                .onErrorMap(NumberFormatException.class, Lambda.expandingWithArg(Http4xxException::badRequest));
     }
 
     private Mono<Boolean> isCurrentUserAdmin(final Long projectId) {

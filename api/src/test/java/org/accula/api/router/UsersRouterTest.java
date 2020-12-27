@@ -56,18 +56,18 @@ public class UsersRouterTest {
     }
 
     @Test
+    public void testGetUserByIdBadRequest() {
+        client.get().uri("/api/users/notANumber")
+                .exchange()
+                .expectStatus().isBadRequest();
+    }
+
+    @Test
     public void testGetUserByIdNotFoundInRepo() {
         Mockito.when(repository.findById(Mockito.anyLong()))
                 .thenReturn(Mono.empty());
 
         client.get().uri("/api/users/{id}", RESPONSE_USER.id)
-                .exchange()
-                .expectStatus().isNotFound();
-    }
-
-    @Test
-    public void testGetUserByIdNotFoundWrongId() {
-        client.get().uri("/api/users/notANumber")
                 .exchange()
                 .expectStatus().isNotFound();
     }

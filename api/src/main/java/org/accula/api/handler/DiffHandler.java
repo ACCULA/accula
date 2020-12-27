@@ -47,7 +47,7 @@ public final class DiffHandler {
                     final var pullNumber = Integer.parseInt(request.pathVariable(PULL_NUMBER));
                     return diff(projectId, pullNumber);
                 })
-                .onErrorMap(NumberFormatException.class, Lambda.expandingWithArg(Http4xxException::notFound))
+                .onErrorMap(NumberFormatException.class, Lambda.expandingWithArg(Http4xxException::badRequest))
                 .onErrorResume(ResponseConvertibleException::onErrorResume);
     }
 
@@ -66,6 +66,7 @@ public final class DiffHandler {
 
                     return diffBetweenPulls(projectId, basePullNumber, headPullNumber);
                 })
+                .onErrorMap(NumberFormatException.class, Lambda.expandingWithArg(Http4xxException::badRequest))
                 .onErrorResume(ResponseConvertibleException::onErrorResume);
     }
 
