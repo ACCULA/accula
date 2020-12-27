@@ -1,16 +1,14 @@
 package org.accula.api.handler.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.util.function.Consumer;
 
 /**
  * @author Anton Lamtev
  */
 public interface InputDto {
-    @JsonIgnore
-    default boolean isValid() {
+    default void enumerateRequiredFields(final Consumer<String> fieldName) {
         for (final var field : this.getClass().getDeclaredFields()) {
             if (field.getAnnotation(OptionalField.class) != null) {
                 continue;
@@ -20,13 +18,12 @@ public interface InputDto {
                     field.setAccessible(true);
                 }
                 if (field.get(this) == null) {
-                    return false;
+                    fieldName.accept(field.getName());
                 }
-            } catch (Exception e) {
-                return false;
+            } catch (IllegalAccessException e) {
+                throw new IllegalStateException(e);
             }
         }
-        return true;
     }
 
     @Retention(RetentionPolicy.RUNTIME)

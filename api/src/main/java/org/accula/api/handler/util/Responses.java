@@ -52,12 +52,6 @@ public final class Responses {
                 .build();
     }
 
-    public static Mono<ServerResponse> notFound() {
-        return ServerResponse
-                .status(HttpStatus.NOT_FOUND)
-                .build();
-    }
-
     public static Mono<ServerResponse> badRequest() {
         return ServerResponse
                 .badRequest()
@@ -80,6 +74,32 @@ public final class Responses {
     public static Mono<ServerResponse> forbidden(final Object body) {
         return ServerResponse
                 .status(HttpStatus.FORBIDDEN)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(body);
+    }
+
+    public static Mono<ServerResponse> notFound() {
+        return ServerResponse
+                .notFound()
+                .build();
+    }
+
+    public static Mono<ServerResponse> notFound(final Object body) {
+        return ServerResponse
+                .status(HttpStatus.NOT_FOUND)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(body);
+    }
+
+    public static Mono<ServerResponse> conflict() {
+        return ServerResponse
+                .status(HttpStatus.CONFLICT)
+                .build();
+    }
+
+    public static Mono<ServerResponse> conflict(final Object body) {
+        return ServerResponse
+                .status(HttpStatus.CONFLICT)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(body);
     }

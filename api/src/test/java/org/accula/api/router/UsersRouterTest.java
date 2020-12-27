@@ -26,8 +26,8 @@ import reactor.core.publisher.Mono;
 @WebFluxTest
 @ContextConfiguration(classes = {UsersRouter.class, UsersHandler.class, ModelToDtoConverter.class})
 public class UsersRouterTest {
-    private static final GithubUser GITHUB_USER = new GithubUser(1L, "login", "name", "ava", false);
-    private static final User STUB_USER = new User(1L, "token", GITHUB_USER);
+    static final GithubUser GITHUB_USER = new GithubUser(1L, "login", "name", "ava", false);
+    static final User STUB_USER = new User(1L, "token", GITHUB_USER);
     private static final ResponseUser RESPONSE_USER =
             new ResponseUser(STUB_USER.getId(), GITHUB_USER.getLogin(), GITHUB_USER.getName());
 
@@ -56,18 +56,18 @@ public class UsersRouterTest {
     }
 
     @Test
+    public void testGetUserByIdBadRequest() {
+        client.get().uri("/api/users/notANumber")
+                .exchange()
+                .expectStatus().isBadRequest();
+    }
+
+    @Test
     public void testGetUserByIdNotFoundInRepo() {
         Mockito.when(repository.findById(Mockito.anyLong()))
                 .thenReturn(Mono.empty());
 
         client.get().uri("/api/users/{id}", RESPONSE_USER.id)
-                .exchange()
-                .expectStatus().isNotFound();
-    }
-
-    @Test
-    public void testGetUserByIdNotFoundWrongId() {
-        client.get().uri("/api/users/notANumber")
                 .exchange()
                 .expectStatus().isNotFound();
     }

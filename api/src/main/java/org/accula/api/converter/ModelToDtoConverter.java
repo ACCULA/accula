@@ -31,12 +31,9 @@ public final class ModelToDtoConverter {
     }
 
     public static ProjectDto convert(final Project project) {
-        return convert(project, project.getOpenPullCount());
-    }
-
-    public static ProjectDto convert(final Project project, final int openPullCount) {
         return ProjectDto.builder()
                 .id(project.getId())
+                .state(convert(project.getState()))
                 .repoOwner(project.getGithubRepo().getOwner().getLogin())
                 .repoName(project.getGithubRepo().getName())
                 .repoDescription(project.getGithubRepo().getDescription())
@@ -44,10 +41,17 @@ public final class ModelToDtoConverter {
                 .repoUrl(String.format(GITHUB_REPO_URL_FORMAT,
                         project.getGithubRepo().getOwner().getLogin(),
                         project.getGithubRepo().getName()))
-                .repoOpenPullCount(openPullCount)
+                .repoOpenPullCount(project.getOpenPullCount())
                 .creatorId(project.getCreator().getId())
                 .adminIds(project.getAdminIds())
                 .build();
+    }
+
+    public static ProjectDto.State convert(final Project.State state) {
+        return switch (state) {
+            case CREATING -> ProjectDto.State.CREATING;
+            case CREATED -> ProjectDto.State.CREATED;
+        };
     }
 
     public static ProjectConfDto convert(final Project.Conf conf) {

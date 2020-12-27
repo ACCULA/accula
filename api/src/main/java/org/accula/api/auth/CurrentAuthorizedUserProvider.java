@@ -18,12 +18,11 @@ public final class CurrentAuthorizedUserProvider {
         return ReactiveSecurityContextHolder
                 .getContext()
                 .flatMap(ctx -> {
-                    final var authentication = ctx.getAuthentication();
-                    if (!(authentication instanceof JwtAuthentication)) {
+                    if (!(ctx.getAuthentication() instanceof JwtAuthentication authentication)) {
                         return Mono.empty();
                     }
 
-                    return Mono.just(((JwtAuthentication) authentication).getPrincipal());
+                    return Mono.just(authentication.getPrincipal());
                 });
     }
 }

@@ -60,7 +60,7 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
                                 FROM upserted_gh_repo
                                 ON CONFLICT (github_repo_id) DO UPDATE
                                     SET creator_id = $5
-                                RETURNING id
+                                RETURNING id, state
                                 """)
                         .bind("$1", githubRepo.getId())
                         .bind("$2", githubRepo.getName())
@@ -71,10 +71,27 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
                 .flatMap(result -> ConnectionProvidedRepo
                         .convert(result, row -> Project.builder()
                                 .id(Converters.value(row, "id", Long.class))
+                                .state(Converters.value(row, "state", Project.State.class))
                                 .githubRepo(githubRepo)
                                 .creator(creator)
                                 .build()
                         )));
+    }
+
+    @Override
+    public Mono<Void> updateState(final Long id, final Project.State state) {
+        return withConnection(connection -> Mono
+                .from(((PostgresqlStatement) connection
+                        .createStatement("""
+                                UPDATE project
+                                SET state = $1
+                                WHERE id = $2
+                                """))
+                        .bind("$1", state)
+                        .bind("$2", id)
+                        .execute())
+                .flatMap(PostgresqlResult::getRowsUpdated)
+                .then());
     }
 
     @Override
@@ -197,6 +214,7 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
     private static PostgresqlStatement selectStatement(final Connection connection, final String terminatingCondition) {
         @Language("SQL") final var sql = """
                 SELECT p.id                                AS project_id,
+                       p.state                             AS project_state,
                        project_repo.id                     AS project_repo_id,
                        project_repo.name                   AS project_repo_name,
                        project_repo.description            AS project_repo_description,
@@ -290,6 +308,7 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
     private Project convert(final Row row) {
         return Project.builder()
                 .id(Converters.value(row, "project_id", Long.class))
+                .state(Converters.value(row, "project_state", Project.State.class))
                 .githubRepo(Converters.convertRepo(row,
                         "project_repo_id",
                         "project_repo_name",

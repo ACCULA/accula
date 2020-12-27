@@ -10,18 +10,25 @@ import java.util.List;
 /**
  * @author Anton Lamtev
  */
-@Builder
+@Builder(toBuilder = true)
 @Value
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Project {
     @EqualsAndHashCode.Include
     Long id;
+    State state;
     GithubRepo githubRepo;
     User creator;
     @Builder.Default
     Integer openPullCount = 0;
     @Builder.Default
     List<Long> adminIds = Collections.emptyList();
+
+    public enum State {
+        CREATING,
+        CREATED,
+        ;
+    }
 
     @Builder(toBuilder = true)
     @Value
