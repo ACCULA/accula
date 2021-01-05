@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Vadim Dyachkov
  * @author Anton Lamtev
  */
-@Builder
+@Builder(toBuilder = true)
 @Value
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Snapshot {

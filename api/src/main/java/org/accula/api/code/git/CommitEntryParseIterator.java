@@ -2,9 +2,9 @@ package org.accula.api.code.git;
 
 import lombok.Value;
 import org.accula.api.util.Strings;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
-import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 
@@ -22,20 +22,18 @@ import java.util.Objects;
  * @author Anton Lamtev
  */
 final class CommitEntryParseIterator implements Iterator<CommitEntryParseIterator.Entry> {
-    private final List<String> lines;
-    private final int lineCount;
-    private State state = State.SHA;
-    private int i = -1;
+    private final Iterator<String> lines;
+    private Type type = Type.SHA;
+    @Nullable
+    private String notYetProcessedNext = null;
 
-    //TODO: process stream/iterator instead of list
-    CommitEntryParseIterator(final List<String> lines) {
+    CommitEntryParseIterator(final Iterator<String> lines) {
         this.lines = lines;
-        this.lineCount = lines.size();
     }
 
     @Override
     public boolean hasNext() {
-        return i < lineCount;
+        return notYetProcessedNext != null || lines.hasNext();
     }
 
     @Override
@@ -44,42 +42,42 @@ final class CommitEntryParseIterator implements Iterator<CommitEntryParseIterato
             throw new NoSuchElementException();
         }
         while (true) {
-            if (i == lineCount - 1) {
-                i = lineCount;
+            if (!hasNext()) {
                 return Entry.TERMINAL;
             }
-            final var line = lines.get(++i);
-            final var next = switch (state) {
+            final var line = notYetProcessedNext != null ? notYetProcessedNext : lines.next();
+            notYetProcessedNext = null;
+            final var next = switch (type) {
                 case SHA -> {
                     final var sha = Strings.suffixAfterPrefix(line, "commit ");
                     if (sha == null) {
                         yield null;
                     }
-                    state = State.MERGE;
-                    yield Entry.of(sha, State.SHA);
+                    type = Type.MERGE;
+                    yield Entry.of(sha, Type.SHA);
                 }
                 case MERGE -> {
-                    state = State.AUTHOR;
+                    type = Type.AUTHOR;
                     final var merge = Strings.suffixAfterPrefix(line, "Merge: ");
                     if (merge == null) {
-                        --i;
+                        notYetProcessedNext = line;
                         yield null;
                     }
-                    yield Entry.of(merge, State.MERGE);
+                    yield Entry.of(merge, Type.MERGE);
                 }
                 case AUTHOR -> {
                     final var author = Strings.suffixAfterPrefix(line, "Author: ");
                     Objects.requireNonNull(author, "author is null at line: '%s'".formatted(line));
-                    state = State.DATE;
-                    yield Entry.of(author, State.AUTHOR);
+                    type = Type.DATE;
+                    yield Entry.of(author, Type.AUTHOR);
                 }
                 case DATE -> {
                     final var date = Strings.suffixAfterPrefix(line, "Date:   ");
                     Objects.requireNonNull(date, "date is null at line: '%s'".formatted(line));
-                    state = State.SHA;
-                    yield Entry.of(date, State.DATE);
+                    type = Type.SHA;
+                    yield Entry.of(date, Type.DATE);
                 }
-                case FINISHED -> throw new NoSuchElementException();
+                case FINISHED -> throw new IllegalStateException();
             };
             if (next != null) {
                 return next;
@@ -87,7 +85,7 @@ final class CommitEntryParseIterator implements Iterator<CommitEntryParseIterato
         }
     }
 
-    enum State {
+    enum Type {
         SHA,
         MERGE,
         AUTHOR,
@@ -98,9 +96,9 @@ final class CommitEntryParseIterator implements Iterator<CommitEntryParseIterato
 
     @Value(staticConstructor = "of")
     static class Entry {
-        private static final Entry TERMINAL = Entry.of("", State.FINISHED);
+        private static final Entry TERMINAL = Entry.of("", Type.FINISHED);
 
         String line;
-        State state;
+        Type type;
     }
 }

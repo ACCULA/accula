@@ -37,7 +37,7 @@ public final class GithubWebhookHandler {
         return switch (Objects.requireNonNull(request.headers().firstHeader(GITHUB_EVENT))) {
             case GITHUB_EVENT_PING -> Responses.ok();
             case GITHUB_EVENT_PULL -> processPull(request);
-            default -> ServerResponse.badRequest().build();
+            default -> Responses.badRequest();
         };
     }
 

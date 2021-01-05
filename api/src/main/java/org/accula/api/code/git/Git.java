@@ -17,6 +17,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -213,7 +214,7 @@ public final class Git {
             return readingAsync(() -> {
                 final var log = git("log", "--no-merges", "--date=rfc", "%s..%s".formatted(fromRefExclusive, toRefInclusive));
                 return usingStdoutLines(log, lines ->
-                        commits(lines.collect(Collectors.toList())))
+                        commits(lines.iterator()))
                         .orElse(Collections.emptyList());
             });
         }
@@ -222,7 +223,7 @@ public final class Git {
             return readingAsync(() -> {
                 final var log = git("rev-list", "--pretty", "--all", "--no-merges", "--date=rfc");
                 return usingStdoutLines(log, lines ->
-                        commits(lines.collect(Collectors.toList())))
+                        commits(lines.iterator()))
                         .orElse(Collections.emptyList());
             });
         }
@@ -299,12 +300,12 @@ public final class Git {
      * can easily convert it to {@link Instant} using built-in {@link DateTimeFormatter}
      * @see Git.Repo#log(String, String)
      */
-    private static List<GitCommit> commits(final List<String> lines) {
+    private static List<GitCommit> commits(final Iterator<String> lines) {
         final List<GitCommit> commits = new ArrayList<>();
         final var commitBuilder = GitCommit.builder();
         new CommitEntryParseIterator(lines).forEachRemaining(entry -> {
             final var line = entry.getLine();
-            switch (entry.getState()) {
+            switch (entry.getType()) {
                 case SHA -> commitBuilder.sha(line);
                 case MERGE -> commitBuilder.isMerge(true);
                 case AUTHOR -> {

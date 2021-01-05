@@ -40,6 +40,10 @@ public class GithubApiPull {
         return head.getRepo() != null && head.getUser() != null && !head.getUser().didDeleteAccount();
     }
 
+    public boolean isNotMerged() {
+        return mergedAt == null;
+    }
+
     public enum State {
         ALL,
         OPEN,

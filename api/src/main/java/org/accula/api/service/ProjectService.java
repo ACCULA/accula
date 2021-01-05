@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.accula.api.code.CodeLoader;
 import org.accula.api.code.git.GitRefs;
 import org.accula.api.converter.GithubApiToModelConverter;
+import org.accula.api.db.model.Commit;
 import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.GithubUser;
 import org.accula.api.db.model.Pull;
@@ -22,6 +23,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -53,7 +55,7 @@ public final class ProjectService {
                     final var bases = new HashSet<Snapshot>();
                     final var pulls = githubApiPulls
                             .stream()
-                            .filter(pull -> pull.isValid() && pull.getMergedAt() == null)
+                            .filter(pull -> pull.isValid() && pull.isNotMerged())
                             .map(pull -> processGithubApiPull(projectId, pull, users, repos, heads, bases))
                             .collect(Collectors.toSet());
 
@@ -105,23 +107,25 @@ public final class ProjectService {
 
                     return githubUserRepo.upsert(users)
                             .thenMany(githubRepoRepo.upsert(repos))
-                            .thenMany(commitsMono.flatMapMany(commitRepo::insert))
-                            //TODO: fill snapshots with commits
-                            .thenMany(snapshotRepo.insert(combine(bases, heads)))
-                            .then(pullRepo.upsert(pull))
-                            .thenMany(snapshotRepo.mapToPulls(heads))
-                            .then(Mono.just(pull));
+                            .then(commitsMono.flatMap(commits -> {
+                                final var completePull = pullFilledWithCommits(pull, commits);
+                                return commitRepo.insert(commits)
+                                        .thenMany(snapshotRepo.insert(combine(bases, heads)))
+                                        .then(pullRepo.upsert(completePull))
+                                        .thenMany(snapshotRepo.mapToPulls(heads))
+                                        .then(Mono.just(completePull));
+                            }));
                 })
                 .doOnSuccess(pull -> log.info("Project has been updated successfully with {}", pull))
                 .doOnError(e -> log.error("Failed to update project with pulls={}", githubApiPull, e));
     }
 
-    private Pull processGithubApiPull(final Long projectId,
-                                      final GithubApiPull githubApiPull,
-                                      final Set<GithubUser> users,
-                                      final Set<GithubRepo> repos,
-                                      final Set<Snapshot> heads,
-                                      final Set<Snapshot> bases) {
+    private static Pull processGithubApiPull(final Long projectId,
+                                             final GithubApiPull githubApiPull,
+                                             final Set<GithubUser> users,
+                                             final Set<GithubRepo> repos,
+                                             final Set<Snapshot> heads,
+                                             final Set<Snapshot> bases) {
         final var pull = GithubApiToModelConverter.convert(githubApiPull, projectId);
 
         final var head = pull.getHead();
@@ -144,5 +148,36 @@ public final class ProjectService {
         combined.addAll(first);
         combined.addAll(second);
         return combined;
+    }
+
+    private static Pull pullFilledWithCommits(final Pull pull, final Set<Commit> commits) {
+        final var head = pull.getHead();
+        final var base = pull.getBase();
+
+        Commit headCommit = null;
+        Commit baseCommit = null;
+
+        for (final var commit : commits) {
+            if (headCommit != null && baseCommit != null) {
+                break;
+            }
+            if (head.getCommit().equals(commit)) {
+                headCommit = commit;
+            } else if (base.getCommit().equals(commit)) {
+                baseCommit = commit;
+            }
+        }
+
+        return pull
+                .toBuilder()
+                .head(head
+                        .toBuilder()
+                        .commit(Objects.requireNonNull(headCommit))
+                        .build())
+                .base(base
+                        .toBuilder()
+                        .commit(Objects.requireNonNull(baseCommit))
+                        .build())
+                .build();
     }
 }
