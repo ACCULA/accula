@@ -10,7 +10,6 @@ import org.accula.api.util.Lambda;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.function.TupleUtils;
 
@@ -30,7 +29,6 @@ public final class PullsHandler {
         return Mono
                 .fromSupplier(() -> Long.parseLong(request.pathVariable(PROJECT_ID)))
                 .flatMapMany(pullRepo::findByProjectId)
-                .switchIfEmpty(Flux.error(Http4xxException.notFound()))
                 .map(ModelToDtoConverter::convertShort)
                 .collectList()
                 .flatMap(Responses::ok)

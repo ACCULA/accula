@@ -2,6 +2,7 @@ package org.accula.api.code.git;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import org.accula.api.util.Strings;
 import org.accula.api.util.Sync;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,6 +12,8 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -30,7 +33,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.stream.Collectors.toSet;
 
 /**
  * @author Anton Lamtev
@@ -45,7 +47,7 @@ public final class Git {
     private static final int SUCCESS = 0;
     private static final byte[] NEWLINE = System.lineSeparator().getBytes(UTF_8);
     private static final String ALREADY_EXISTS = "already exists";
-    private static final String JOINER_NEWLINE = "";
+    private static final String JOINER_NEWLINE = Strings.empty();
     private static final long INTERVAL_SINCE_LAST_FETCH_THRESHOLD = Duration.ofSeconds(5L).toMillis();
 
     private final Map<Path, Repo> repos = new ConcurrentHashMap<>();
@@ -172,7 +174,7 @@ public final class Git {
         public CompletableFuture<Set<String>> remote() {
             return readingAsync(() -> {
                 final var process = git("remote");
-                return usingStdoutLines(process, lines -> lines.collect(toSet()))
+                return usingStdoutLines(process, lines -> lines.collect(Collectors.toSet()))
                         .orElse(Collections.emptySet());
             });
         }
@@ -184,7 +186,7 @@ public final class Git {
                     //TODO: remote-add -f timeout
                     final var ret = process.waitFor();
                     final Predicate<Process> remoteAlreadyExists = proc -> usingStderrLines(proc, Stream::findFirst)
-                            .orElse("")
+                            .orElse(Strings.empty())
                             .contains(ALREADY_EXISTS);
                     return ret == SUCCESS
                             ? this
@@ -204,6 +206,24 @@ public final class Git {
                 } catch (InterruptedException e) {
                     throw wrap(e);
                 }
+            });
+        }
+
+        public CompletableFuture<List<GitCommit>> log(final String fromRefExclusive, final String toRefInclusive) {
+            return readingAsync(() -> {
+                final var log = git("log", "--no-merges", "--date=rfc", "%s..%s".formatted(fromRefExclusive, toRefInclusive));
+                return usingStdoutLines(log, lines ->
+                        commits(lines.collect(Collectors.toList())))
+                        .orElse(Collections.emptyList());
+            });
+        }
+
+        public CompletableFuture<List<GitCommit>> revListAllPretty() {
+            return readingAsync(() -> {
+                final var log = git("rev-list", "--pretty", "--all", "--no-merges", "--date=rfc");
+                return usingStdoutLines(log, lines ->
+                        commits(lines.collect(Collectors.toList())))
+                        .orElse(Collections.emptyList());
             });
         }
 
@@ -270,6 +290,38 @@ public final class Git {
             filesContent.put(objectIds.get(fileToDiscoverIdx - 1), currentFile.toString());
         }
         return filesContent;
+    }
+
+    /**
+     * Forms a {@link GitCommit} list by extracting the components from the given lines using {@link CommitEntryParseIterator}
+     *
+     * @implNote We expect that commit date is in RFC-1123 format, so we
+     * can easily convert it to {@link Instant} using built-in {@link DateTimeFormatter}
+     * @see Git.Repo#log(String, String)
+     */
+    private static List<GitCommit> commits(final List<String> lines) {
+        final List<GitCommit> commits = new ArrayList<>();
+        final var commitBuilder = GitCommit.builder();
+        new CommitEntryParseIterator(lines).forEachRemaining(entry -> {
+            final var line = entry.getLine();
+            switch (entry.getState()) {
+                case SHA -> commitBuilder.sha(line);
+                case MERGE -> commitBuilder.isMerge(true);
+                case AUTHOR -> {
+                    final var nameAndEmail = line.split(" <", 2);
+                    if (nameAndEmail.length != 2) {
+                        throw new IllegalStateException("'Author:' line was of not supported format: %s".formatted(line));
+                    }
+                    commitBuilder.authorName(nameAndEmail[0]);
+                    commitBuilder.authorEmail(nameAndEmail[1].substring(0, nameAndEmail[1].length() - 1));
+                }
+                case DATE -> {
+                    commitBuilder.date(Instant.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(line)));
+                    commits.add(commitBuilder.build());
+                }
+            }
+        });
+        return commits;
     }
 
     /// Line format:

@@ -8,4 +8,3 @@
 application-secrets.*
 /keys
 /repos
-/api/src/main/java/generated/

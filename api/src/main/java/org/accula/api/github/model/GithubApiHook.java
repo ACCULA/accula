@@ -26,7 +26,6 @@ public class GithubApiHook {
 
     public enum Event {
         PULL_REQUEST,
-        PUSH,
         ;
 
         @JsonValue

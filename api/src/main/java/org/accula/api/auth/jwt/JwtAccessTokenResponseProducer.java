@@ -3,6 +3,7 @@ package org.accula.api.auth.jwt;
 import lombok.RequiredArgsConstructor;
 import org.accula.api.auth.jwt.crypto.Jwt;
 import org.accula.api.auth.util.CookieRefreshTokenHelper;
+import org.accula.api.util.Strings;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
@@ -23,7 +24,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 @RequiredArgsConstructor
 public final class JwtAccessTokenResponseProducer {
     private static final String RESPONSE_BODY_FORMAT = "{\"accessToken\":\"%s\"}";
-    private static final byte[] FAILURE_BODY = String.format(RESPONSE_BODY_FORMAT, "").getBytes(UTF_8);
+    private static final byte[] FAILURE_BODY = String.format(RESPONSE_BODY_FORMAT, Strings.empty()).getBytes(UTF_8);
 
     private final Jwt jwt;
     private final Duration accessExpiresIn;

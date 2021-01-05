@@ -1,6 +1,7 @@
 package org.accula.api.code;
 
 import org.accula.api.code.git.Git;
+import org.accula.api.db.model.Commit;
 import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.GithubUser;
 import org.accula.api.db.model.Snapshot;
@@ -33,7 +34,7 @@ class CodeLoaderTest {
     public static final GithubUser USER = new GithubUser(0L, "polis-mail-ru", "name", "ava", true);
     public static final GithubRepo REPO = new GithubRepo(0L, "2019-highload-dht", "descr", USER);
     public static final Snapshot COMMIT = Snapshot.builder()
-            .sha("720cefb3f361895e9e23524c2b4025f9a949d5d2")
+            .commit(Commit.shaOnly("720cefb3f361895e9e23524c2b4025f9a949d5d2"))
             .branch("branch")
             .repo(REPO)
             .build();
@@ -170,8 +171,8 @@ class CodeLoaderTest {
     void testDiff() {
         var headOwner = new GithubUser(1L, "vaddya", "owner", "ava", false);
         var headRepo = new GithubRepo(1L, "2019-highload-dht", "descr", headOwner);
-        var head = Snapshot.builder().sha("a1c28a1b500701819cf9919246f15f3f900bb609").branch("branch").repo(headRepo).build();
-        var base = Snapshot.builder().sha("d6357dccc16c7d5c001fd2a2203298c36fe96b63").branch("branch").repo(REPO).build();
+        var head = Snapshot.builder().commit(Commit.shaOnly("a1c28a1b500701819cf9919246f15f3f900bb609")).branch("branch").repo(headRepo).build();
+        var base = Snapshot.builder().commit(Commit.shaOnly("d6357dccc16c7d5c001fd2a2203298c36fe96b63")).branch("branch").repo(REPO).build();
         StepVerifier.create(codeLoader.loadDiff(base, head, 0, FileFilter.SRC_JAVA))
                 .expectNextCount(11)
                 .expectComplete()
@@ -183,12 +184,12 @@ class CodeLoaderTest {
         final var projectRepo = new GithubRepo(1L, "2017-highload-kv", "descr", USER);
         final var base = Snapshot
                 .builder()
-                .sha("fe675f17ad4aab9a8c853b5f3b07b0bc64f06907")
+                .commit(Commit.shaOnly("fe675f17ad4aab9a8c853b5f3b07b0bc64f06907"))
                 .repo(new GithubRepo(0L, "2017-highload-kv", "", new GithubUser(0L, "lamtev", null, "", false)))
                 .build();
         final var head = Snapshot
                 .builder()
-                .sha("076c99d7bbb06b31c27a9c3164f152d5c18c5010")
+                .commit(Commit.shaOnly("076c99d7bbb06b31c27a9c3164f152d5c18c5010"))
                 .repo(new GithubRepo(0L, "2017-highload-kv", "", new GithubUser(0L, "vaddya", null, "", false)))
                 .build();
 
@@ -208,5 +209,27 @@ class CodeLoaderTest {
         assertNotNull(filenames);
         assertEquals(21, filenames.size());
         assertTrue(filenames.contains(README));
+    }
+
+    @Test
+    void testLoadCommits() {
+        var headOwner = new GithubUser(1L, "vaddya", "owner", "ava", false);
+        var headRepo = new GithubRepo(1L, "2019-highload-dht", "descr", headOwner);
+        var sinceRef = "b5e4943c3690a54c325f7a95db20893f75b0b41b";
+        var untilRef = "50bcdd747aa571e0776bed65fe474784cd73377b";
+        StepVerifier.create(codeLoader.loadCommits(headRepo, sinceRef, untilRef).collectList())
+                .expectNextMatches(commits -> commits.size() == 9)
+                .expectComplete()
+                .verify();
+    }
+
+    @Test
+    void testLoadAllCommits() {
+        var headOwner = new GithubUser(1L, "vaddya", "owner", "ava", false);
+        var headRepo = new GithubRepo(1L, "2019-highload-dht", "descr", headOwner);
+        StepVerifier.create(codeLoader.loadAllCommits(headRepo).collectList())
+                .expectNextMatches(commits -> !commits.isEmpty())
+                .expectComplete()
+                .verify();
     }
 }

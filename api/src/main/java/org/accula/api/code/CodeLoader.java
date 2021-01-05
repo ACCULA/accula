@@ -1,5 +1,6 @@
 package org.accula.api.code;
 
+import org.accula.api.db.model.Commit;
 import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.Snapshot;
 import reactor.core.publisher.Flux;
@@ -60,4 +61,14 @@ public interface CodeLoader {
      * Loads filenames by the project repo.
      */
     Flux<String> loadFilenames(GithubRepo projectRepo);
+
+    /**
+     * Loads all the commits
+     */
+    Flux<Commit> loadAllCommits(GithubRepo repo);
+
+    /**
+     * Loads commits of specified repo in a given ref interval (sinceRefExclusive, untilRefInclusive]
+     */
+    Flux<Commit> loadCommits(GithubRepo repo, String sinceRefExclusive, String untilRefInclusive);
 }

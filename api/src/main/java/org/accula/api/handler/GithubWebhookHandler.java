@@ -14,6 +14,8 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
+import java.util.Objects;
+
 /**
  * @author Anton Lamtev
  * @author Vadim Dyachkov
@@ -24,16 +26,22 @@ import reactor.core.publisher.Mono;
 public final class GithubWebhookHandler {
     private static final String GITHUB_EVENT = "X-GitHub-Event";
     private static final String GITHUB_EVENT_PING = "ping";
+    private static final String GITHUB_EVENT_PULL = "pull_request";
 
     private final ProjectRepo projectRepo;
     private final ProjectService projectService;
     private final CloneDetectionService cloneDetectionService;
 
     public Mono<ServerResponse> webhook(final ServerRequest request) {
-        if (GITHUB_EVENT_PING.equals(request.headers().firstHeader(GITHUB_EVENT))) {
-            return Responses.ok();
-        }
-        // TODO: validate signature in X-Hub-Signature 
+        // TODO: validate signature in X-Hub-Signature
+        return switch (Objects.requireNonNull(request.headers().firstHeader(GITHUB_EVENT))) {
+            case GITHUB_EVENT_PING -> Responses.ok();
+            case GITHUB_EVENT_PULL -> processPull(request);
+            default -> ServerResponse.badRequest().build();
+        };
+    }
+
+    private Mono<ServerResponse> processPull(final ServerRequest request) {
         return request
                 .bodyToMono(GithubApiHookPayload.class)
                 .onErrorResume(GithubWebhookHandler::ignoreNotSupportedAction)
@@ -45,10 +53,10 @@ public final class GithubWebhookHandler {
                 .flatMap(Lambda.expandingWithArg(Responses::ok));
     }
 
-    public Mono<Void> processPayload(final GithubApiHookPayload payload) {
+    private Mono<Void> processPayload(final GithubApiHookPayload payload) {
         return switch (payload.getAction()) {
             case OPENED, SYNCHRONIZE -> updateProject(payload).transform(this::detectClones);
-            case EDITED, CLOSED -> updateProject(payload).then();
+            case EDITED, CLOSED, REOPENED -> updateProject(payload).then();
         };
     }
 

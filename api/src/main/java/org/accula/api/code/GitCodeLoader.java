@@ -9,8 +9,11 @@ import org.accula.api.code.git.GitDiffEntry.Deletion;
 import org.accula.api.code.git.GitDiffEntry.Modification;
 import org.accula.api.code.git.GitDiffEntry.Renaming;
 import org.accula.api.code.git.GitFile;
+import org.accula.api.code.git.GitRefs;
 import org.accula.api.code.git.Identifiable;
 import org.accula.api.code.git.Snippet;
+import org.accula.api.converter.GitToModelConverter;
+import org.accula.api.db.model.Commit;
 import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.Snapshot;
 import org.accula.api.util.Lambda;
@@ -35,7 +38,6 @@ import static java.util.stream.Collectors.toMap;
 public final class GitCodeLoader implements CodeLoader {
     private static final String GITHUB_BASE_URL = "https://github.com/";
     private static final String GIT_EXTENSION = ".git";
-    private static final String ORIGIN_HEAD = "origin/HEAD";
 
     private final Git git;
 
@@ -96,17 +98,36 @@ public final class GitCodeLoader implements CodeLoader {
     @Override
     public Flux<String> loadFilenames(final GithubRepo projectRepo) {
         return withProjectGitRepo(projectRepo)
-                .flatMap(repo -> Mono.fromFuture(repo.lsTree(ORIGIN_HEAD)))
+                .flatMap(repo -> Mono.fromFuture(repo.lsTree(GitRefs.originHead())))
                 .flatMapMany(Flux::fromIterable)
                 .map(GitFile::getName);
     }
 
+    @Override
+    public Flux<Commit> loadAllCommits(final GithubRepo repo) {
+        return withCommonGitRepo(repo)
+                .flatMap(gitRepo -> Mono.fromFuture(gitRepo.revListAllPretty()))
+                .flatMapMany(Flux::fromIterable)
+                .map(GitToModelConverter::convert);
+    }
+
+    @Override
+    public Flux<Commit> loadCommits(final GithubRepo repo, final String sinceRefExclusive, final String untilRefInclusive) {
+        return withCommonGitRepo(repo)
+                .flatMap(gitRepo -> Mono.fromFuture(gitRepo.log(sinceRefExclusive, untilRefInclusive)))
+                .flatMapMany(Flux::fromIterable)
+                .map(GitToModelConverter::convert);
+    }
+
     /// We name each common repo git folder like that: <owner-login>_<repo-name>
-    private Mono<Repo> withCommonGitRepo(final Snapshot snapshot) {
-        final var snapshotRepo = snapshot.getRepo();
-        final var repoGitDirectory = Path.of(snapshotRepo.getOwner().getLogin() + "_" + snapshotRepo.getName());
-        final var repoUrl = repoGitUrl(snapshotRepo);
+    private Mono<Repo> withCommonGitRepo(final GithubRepo repo) {
+        final var repoGitDirectory = Path.of(repo.getOwner().getLogin() + "_" + repo.getName());
+        final var repoUrl = repoGitUrl(repo);
         return withGitRepo(repoGitDirectory, repoUrl);
+    }
+
+    private Mono<Repo> withCommonGitRepo(final Snapshot snapshot) {
+        return withCommonGitRepo(snapshot.getRepo());
     }
 
     private Mono<Repo> withProjectGitRepo(final GithubRepo projectRepo) {

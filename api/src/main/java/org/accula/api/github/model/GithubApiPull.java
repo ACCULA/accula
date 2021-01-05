@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.Value;
+import org.jetbrains.annotations.Nullable;
 
 import java.time.Instant;
 import java.util.Locale;
@@ -31,6 +32,9 @@ public class GithubApiPull {
     Instant createdAt;
     @JsonProperty("updated_at")
     Instant updatedAt;
+    @Nullable
+    @JsonProperty("merged_at")
+    Instant mergedAt;
 
     public boolean isValid() {
         return head.getRepo() != null && head.getUser() != null && !head.getUser().didDeleteAccount();
