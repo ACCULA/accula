@@ -16,6 +16,7 @@ import org.springframework.context.annotation.Bean;
 
 
 import org.springframework.web.reactive.config.WebFluxConfigurer;
+
 import org.springframework.web.reactive.function.client.WebClient;
 import java.io.IOException;
 import java.nio.file.Files;
