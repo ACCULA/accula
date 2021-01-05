@@ -13,6 +13,7 @@ public final class GitToModelConverter {
     public static Commit convert(final GitCommit commit) {
         return Commit.builder()
                 .sha(commit.getSha())
+                .isMerge(commit.isMerge())
                 .authorName(commit.getAuthorName())
                 .authorEmail(commit.getAuthorEmail())
                 .date(commit.getDate())

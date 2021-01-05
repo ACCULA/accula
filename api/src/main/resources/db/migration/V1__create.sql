@@ -74,6 +74,7 @@ CREATE TABLE IF NOT EXISTS project_conf
 CREATE TABLE IF NOT EXISTS commit
 (
     sha          CHAR(40) PRIMARY KEY,
+    is_merge     BOOLEAN                  NOT NULL,
     author_name  VARCHAR(256)             NOT NULL,
     author_email VARCHAR(256)             NOT NULL,
     date         TIMESTAMP WITH TIME ZONE NOT NULL

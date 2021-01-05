@@ -212,7 +212,7 @@ public final class Git {
 
         public CompletableFuture<List<GitCommit>> log(final String fromRefExclusive, final String toRefInclusive) {
             return readingAsync(() -> {
-                final var log = git("log", "--no-merges", "--date=rfc", "%s..%s".formatted(fromRefExclusive, toRefInclusive));
+                final var log = git("log", "--date=rfc", "%s..%s".formatted(fromRefExclusive, toRefInclusive));
                 return usingStdoutLines(log, lines ->
                         commits(lines.iterator()))
                         .orElse(Collections.emptyList());
@@ -221,7 +221,7 @@ public final class Git {
 
         public CompletableFuture<List<GitCommit>> revListAllPretty() {
             return readingAsync(() -> {
-                final var log = git("rev-list", "--pretty", "--all", "--no-merges", "--date=rfc");
+                final var log = git("rev-list", "--pretty", "--all", "--date=rfc");
                 return usingStdoutLines(log, lines ->
                         commits(lines.iterator()))
                         .orElse(Collections.emptyList());
