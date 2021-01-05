@@ -58,7 +58,6 @@ public class WebConfig implements WebFluxConfigurer {
                 1L, TimeUnit.MINUTES,
                 new LinkedBlockingQueue<>(availableProcessors * 50)
         );
-
         return new Git(reposPath, executor);
     }
 
