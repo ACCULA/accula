@@ -67,13 +67,13 @@ final class CommitEntryParseIterator implements Iterator<CommitEntryParseIterato
                 }
                 case AUTHOR -> {
                     final var author = Strings.suffixAfterPrefix(line, "Author: ");
-                    Objects.requireNonNull(author, "author is null at line: '%s'".formatted(line));
+                    Objects.requireNonNull(author, () -> "author is null at line: '%s'".formatted(line));
                     type = Type.DATE;
                     yield Entry.of(author, Type.AUTHOR);
                 }
                 case DATE -> {
                     final var date = Strings.suffixAfterPrefix(line, "Date:   ");
-                    Objects.requireNonNull(date, "date is null at line: '%s'".formatted(line));
+                    Objects.requireNonNull(date, () -> "date is null at line: '%s'".formatted(line));
                     type = Type.SHA;
                     yield Entry.of(date, Type.DATE);
                 }
