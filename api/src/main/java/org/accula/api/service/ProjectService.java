@@ -80,7 +80,8 @@ public final class ProjectService {
                                                 .thenMany(snapshotRepo.insert(combine(heads, bases)))
                                                 .thenMany(pullRepo.upsert(pulls))
                                                 .thenMany(snapshotRepo.mapToPulls(heads))
-                                                .doOnComplete(() -> log.info("Project has been updated successfully with {} pulls", pulls.size()))
+                                                .doOnComplete(() ->
+                                                        log.info("Project has been updated successfully with {} pulls", pulls.size()))
                                                 .doOnError(e -> log.error("Failed to update project with pulls={}", githubApiPulls, e))
                                                 .then();
                                     }));
