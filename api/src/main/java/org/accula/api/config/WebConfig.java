@@ -1,7 +1,6 @@
 package org.accula.api.config;
 
 import lombok.RequiredArgsConstructor;
-
 import org.accula.api.code.CodeLoader;
 import org.accula.api.code.GitCodeLoader;
 import org.accula.api.code.git.Git;
