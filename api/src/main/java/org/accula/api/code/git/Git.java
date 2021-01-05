@@ -142,8 +142,7 @@ public final class Git {
                         throw wrap(e);
                     }
 
-                    final var lineList = lines.collect(Collectors.toList());
-                    return filesContent(lineList, objectIds);
+                    return filesContent(lines.iterator(), objectIds);
                 }).orElse(Collections.emptyMap());
             });
         }
@@ -250,8 +249,8 @@ public final class Git {
         }
     }
 
-    private static Map<Identifiable, String> filesContent(final List<String> lines, final List<? extends Identifiable> objectIds) {
-        if (lines.isEmpty()) {
+    private static Map<Identifiable, String> filesContent(final Iterator<String> lines, final List<? extends Identifiable> objectIds) {
+        if (!lines.hasNext()) {
             return Collections.emptyMap();
         }
         final Map<Identifiable, String> filesContent = new HashMap<>(objectIds.size());
@@ -260,7 +259,8 @@ public final class Git {
         StringJoiner currentFile = null;
         int fromLine = Integer.MIN_VALUE;
         int toLine = Integer.MAX_VALUE;
-        for (final var line : lines) {
+        while (lines.hasNext()) {
+            final var line = lines.next();
             final Identifiable identifiable;
             if (fileToDiscoverIdx < objectIds.size() && line.startsWith((identifiable = objectIds.get(fileToDiscoverIdx)).getId())) {
                 currentFileLineCounter = 1;
