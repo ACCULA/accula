@@ -20,6 +20,7 @@ import org.accula.api.github.model.GithubApiPull;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.HashSet;
 import java.util.List;
@@ -62,7 +63,10 @@ public final class ProjectService {
                     final var commitsMono = projectRepo
                             .findById(projectId)
                             .flatMapMany(project -> codeLoader.loadAllCommits(project.getGithubRepo()))
-                            .concatWith(Flux.fromIterable(repos).flatMap(codeLoader::loadAllCommits))
+                            .concatWith(Flux.fromIterable(repos)
+                                    .flatMap(codeLoader::loadAllCommits)
+                                    .parallel()
+                                    .runOn(Schedulers.parallel()))
                             .collect(Collectors.toSet());
 
                     return githubUserRepo.upsert(users)
