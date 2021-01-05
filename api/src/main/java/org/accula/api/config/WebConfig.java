@@ -55,7 +55,7 @@ public class WebConfig implements WebFluxConfigurer {
         final var executor = new ThreadPoolExecutor(
                 availableProcessors,
                 availableProcessors * 10,
-                2L, TimeUnit.MINUTES,
+                3L, TimeUnit.MINUTES,
                 new LinkedBlockingQueue<>(availableProcessors * 50)
         );
         return new Git(reposPath, executor);
