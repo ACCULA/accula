@@ -8,20 +8,21 @@ plugins {
     pmd
 }
 
-jacoco {
-    toolVersion = "0.8.6"
-}
-
 allprojects {
     group = "org.accula"
 }
 
 configure(subprojects.filterNot(project(":web")::equals)) {
+    repositories {
+        jcenter()
+        maven(url = "https://oss.sonatype.org/content/repositories/snapshots")
+    }
+
     apply(plugin = "java")
     apply(plugin = "jacoco")
 
-    repositories {
-        jcenter()
+    jacoco {
+        toolVersion = "0.8.7-SNAPSHOT"
     }
 
     dependencies {
@@ -35,7 +36,7 @@ configure(subprojects.filterNot(project(":web")::equals)) {
     }
 
     configure<JavaPluginConvention> {
-        sourceCompatibility = JavaVersion.VERSION_14
+        sourceCompatibility = JavaVersion.VERSION_15
     }
 
     tasks {
