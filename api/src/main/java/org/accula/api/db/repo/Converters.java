@@ -8,7 +8,6 @@ import org.accula.api.db.model.GithubUser;
 import org.accula.api.db.model.Pull;
 import org.accula.api.db.model.Snapshot;
 import org.accula.api.db.model.User;
-import org.accula.api.util.Strings;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.Instant;
@@ -21,7 +20,7 @@ import java.util.Objects;
  */
 @SuppressWarnings({"PMD.ConfusingTernary", "PMD.UseObjectForClearerAPI", "PMD.ExcessiveParameterList", "SameParameterValue"})
 final class Converters {
-    static final String NOTHING = Strings.empty();
+    static final String NOTHING = "";
 
     private Converters() {
     }

@@ -9,7 +9,6 @@ import org.accula.api.github.model.GithubApiPull;
 import org.accula.api.github.model.GithubApiRepo;
 import org.accula.api.github.model.GithubApiSnapshot;
 import org.accula.api.github.model.GithubApiUser;
-import org.accula.api.util.Strings;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Component;
 
@@ -77,6 +76,6 @@ public final class GithubApiToModelConverter {
     }
 
     private static String orEmpty(@Nullable final String s) {
-        return s != null && !s.isBlank() ? s : Strings.empty();
+        return s != null && !s.isBlank() ? s : "";
     }
 }

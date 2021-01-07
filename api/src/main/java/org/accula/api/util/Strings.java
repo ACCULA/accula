@@ -6,8 +6,6 @@ import org.jetbrains.annotations.Nullable;
  * @author Anton Lamtev
  */
 public final class Strings {
-    private static final String EMPTY = "";
-
     private Strings() {
     }
 
@@ -26,9 +24,5 @@ public final class Strings {
         }
 
         return string.substring(prefixLength);
-    }
-
-    public static String empty() {
-        return EMPTY;
     }
 }

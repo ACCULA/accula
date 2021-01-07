@@ -2,7 +2,6 @@ package org.accula.api.code.git;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
-import org.accula.api.util.Strings;
 import org.accula.api.util.Sync;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +47,7 @@ public final class Git {
     private static final int SUCCESS = 0;
     private static final byte[] NEWLINE = System.lineSeparator().getBytes(UTF_8);
     private static final String ALREADY_EXISTS = "already exists";
-    private static final String JOINER_NEWLINE = Strings.empty();
+    private static final String JOINER_NEWLINE = "";
     private static final long INTERVAL_SINCE_LAST_FETCH_THRESHOLD = Duration.ofSeconds(5L).toMillis();
 
     private final Map<Path, Repo> repos = new ConcurrentHashMap<>();
@@ -186,7 +185,7 @@ public final class Git {
                     //TODO: remote-add -f timeout
                     final var ret = process.waitFor();
                     final Predicate<Process> remoteAlreadyExists = proc -> usingStderrLines(proc, Stream::findFirst)
-                            .orElse(Strings.empty())
+                            .orElse("")
                             .contains(ALREADY_EXISTS);
                     return ret == SUCCESS
                             ? this
@@ -299,6 +298,7 @@ public final class Git {
      * @implNote We expect that commit date is in RFC-1123 format, so we
      * can easily convert it to {@link Instant} using built-in {@link DateTimeFormatter}
      * @see Git.Repo#log(String, String)
+     * @see Repo#revListAllPretty()
      */
     private static List<GitCommit> commits(final Iterator<String> lines) {
         final List<GitCommit> commits = new ArrayList<>();

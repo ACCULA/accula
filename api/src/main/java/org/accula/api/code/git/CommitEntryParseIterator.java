@@ -15,11 +15,13 @@ import java.util.Objects;
  * Lines format:
  * <pre>{@code
  * commit commit_sha
+ * Merge: commit_sha1 commit_sha2
  * Author: author_name <author@email>
  * Date:   date_in_rfc_format
  * }</pre>
  *
  * @author Anton Lamtev
+ * @apiNote <i>Merge:<i/>-line is optional
  */
 final class CommitEntryParseIterator implements Iterator<CommitEntryParseIterator.Entry> {
     private final Iterator<String> lines;
@@ -53,11 +55,11 @@ final class CommitEntryParseIterator implements Iterator<CommitEntryParseIterato
                     if (sha == null) {
                         yield null;
                     }
-                    type = Type.MERGE;
+                    type = type.next();
                     yield Entry.of(sha, Type.SHA);
                 }
                 case MERGE -> {
-                    type = Type.AUTHOR;
+                    type = type.next();
                     final var merge = Strings.suffixAfterPrefix(line, "Merge: ");
                     if (merge == null) {
                         notYetProcessedNext = line;
@@ -68,13 +70,13 @@ final class CommitEntryParseIterator implements Iterator<CommitEntryParseIterato
                 case AUTHOR -> {
                     final var author = Strings.suffixAfterPrefix(line, "Author: ");
                     Objects.requireNonNull(author, () -> "author is null at line: '%s'".formatted(line));
-                    type = Type.DATE;
+                    type = type.next();
                     yield Entry.of(author, Type.AUTHOR);
                 }
                 case DATE -> {
                     final var date = Strings.suffixAfterPrefix(line, "Date:   ");
                     Objects.requireNonNull(date, () -> "date is null at line: '%s'".formatted(line));
-                    type = Type.SHA;
+                    type = type.next();
                     yield Entry.of(date, Type.DATE);
                 }
                 case FINISHED -> throw new IllegalStateException();
@@ -92,6 +94,17 @@ final class CommitEntryParseIterator implements Iterator<CommitEntryParseIterato
         DATE,
 
         FINISHED,
+        ;
+
+        public Type next() {
+            return switch (this) {
+                case SHA -> MERGE;
+                case MERGE -> AUTHOR;
+                case AUTHOR -> DATE;
+                case DATE -> SHA;
+                case FINISHED -> throw new IllegalStateException("FINISHED state is terminal and have no next state");
+            };
+        }
     }
 
     @Value(staticConstructor = "of")

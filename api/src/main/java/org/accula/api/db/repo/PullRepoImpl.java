@@ -7,7 +7,6 @@ import io.r2dbc.spi.Row;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.accula.api.db.model.Pull;
-import org.accula.api.util.Strings;
 import org.intellij.lang.annotations.Language;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
@@ -21,7 +20,7 @@ import java.util.Collection;
 @Component
 @RequiredArgsConstructor
 public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
-    private static final String EMPTY_CLAUSE = Strings.empty();
+    private static final String EMPTY_CLAUSE = "";
     @Getter
     private final ConnectionProvider connectionProvider;
 
