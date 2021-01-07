@@ -9,7 +9,7 @@ import java.time.Instant;
 /**
  * @author Anton Lamtev
  */
-@Builder
+@Builder(toBuilder = true)
 @Value
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Pull {

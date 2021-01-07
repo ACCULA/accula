@@ -71,12 +71,22 @@ CREATE TABLE IF NOT EXISTS project_conf
     FOREIGN KEY (project_id) REFERENCES project (id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS commit
+(
+    sha          CHAR(40) PRIMARY KEY,
+    is_merge     BOOLEAN                  NOT NULL,
+    author_name  VARCHAR(256)             NOT NULL,
+    author_email VARCHAR(256)             NOT NULL,
+    date         TIMESTAMP WITH TIME ZONE NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS snapshot
 (
     sha     CHAR(40)     NOT NULL,
     repo_id BIGINT       NOT NULL,
     branch  VARCHAR(256) NOT NULL,
 
+    FOREIGN KEY (sha) REFERENCES commit (sha),
     FOREIGN KEY (repo_id) REFERENCES repo_github (id),
     CONSTRAINT snapshot_pk PRIMARY KEY (sha, repo_id)
 );

@@ -2,6 +2,7 @@ package org.accula.api.db.repo;
 
 import io.r2dbc.spi.Row;
 import org.accula.api.db.model.Clone;
+import org.accula.api.db.model.Commit;
 import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.GithubUser;
 import org.accula.api.db.model.Pull;
@@ -69,7 +70,7 @@ final class Converters {
                                           final String repoOwnerAvatar,
                                           final String repoOwnerOrganization) {
         return Snapshot.builder()
-                .sha(value(row, sha, String.class))
+                .commit(Commit.shaOnly(value(row, sha, String.class)))
                 .branch(value(row, branch, String.class))
                 .pullId(nullable(row, pullId, Long.class))
                 .repo(convertRepo(row,

@@ -88,19 +88,20 @@ class PullsRouterTest {
     }
 
     @Test
-    void testGetManyBadRequest() {
-        client.get().uri("/api/projects/notANumber/pulls")
-                .exchange()
-                .expectStatus().isBadRequest();
-    }
-
-    @Test
-    void testGetManyNotFound() {
+    void testGetManyEmpty() {
         Mockito.when(repository.findByProjectId(Mockito.anyLong()))
                 .thenReturn(Flux.empty());
 
         client.get().uri("/api/projects/{projectId}/pulls", STUB_PULL.getProjectId())
                 .exchange()
-                .expectStatus().isNotFound();
+                .expectStatus().isOk()
+                .expectBody(List.class).isEqualTo(Collections.emptyList());
+    }
+
+    @Test
+    void testGetManyBadRequest() {
+        client.get().uri("/api/projects/notANumber/pulls")
+                .exchange()
+                .expectStatus().isBadRequest();
     }
 }

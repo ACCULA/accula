@@ -28,6 +28,7 @@ public class GithubApiHookPayload {
         SYNCHRONIZE,
         EDITED,
         CLOSED,
+        REOPENED,
         ;
 
         @JsonValue

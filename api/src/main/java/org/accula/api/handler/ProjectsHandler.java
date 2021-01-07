@@ -203,7 +203,7 @@ public final class ProjectsHandler {
         final var repoName = project.getRepoName();
         githubClient.getRepositoryPulls(repoOwner, repoName, State.ALL, 100)
                 .collectList()
-                .flatMap(pulls -> projectService.update(project.getId(), pulls).collectList())
+                .flatMap(pulls -> projectService.init(project.getId(), pulls))
                 .then(projectRepo.updateState(project.getId(), Project.State.CREATED))
                 .contextWrite(context)
                 .subscribe();

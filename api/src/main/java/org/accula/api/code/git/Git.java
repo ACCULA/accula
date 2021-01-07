@@ -11,9 +11,12 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -30,7 +33,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.stream.Collectors.toSet;
 
 /**
  * @author Anton Lamtev
@@ -139,8 +141,7 @@ public final class Git {
                         throw wrap(e);
                     }
 
-                    final var lineList = lines.collect(Collectors.toList());
-                    return filesContent(lineList, objectIds);
+                    return filesContent(lines.iterator(), objectIds);
                 }).orElse(Collections.emptyMap());
             });
         }
@@ -172,7 +173,7 @@ public final class Git {
         public CompletableFuture<Set<String>> remote() {
             return readingAsync(() -> {
                 final var process = git("remote");
-                return usingStdoutLines(process, lines -> lines.collect(toSet()))
+                return usingStdoutLines(process, lines -> lines.collect(Collectors.toSet()))
                         .orElse(Collections.emptySet());
             });
         }
@@ -207,6 +208,24 @@ public final class Git {
             });
         }
 
+        public CompletableFuture<List<GitCommit>> log(final String fromRefExclusive, final String toRefInclusive) {
+            return readingAsync(() -> {
+                final var log = git("log", "--date=rfc", "%s..%s".formatted(fromRefExclusive, toRefInclusive));
+                return usingStdoutLines(log, lines ->
+                        commits(lines.iterator()))
+                        .orElse(Collections.emptyList());
+            });
+        }
+
+        public CompletableFuture<List<GitCommit>> revListAllPretty() {
+            return readingAsync(() -> {
+                final var log = git("rev-list", "--pretty", "--all", "--date=rfc");
+                return usingStdoutLines(log, lines ->
+                        commits(lines.iterator()))
+                        .orElse(Collections.emptyList());
+            });
+        }
+
         private Process git(final String... command) {
             try {
                 final var cmd = new ArrayList<String>();
@@ -229,8 +248,8 @@ public final class Git {
         }
     }
 
-    private static Map<Identifiable, String> filesContent(final List<String> lines, final List<? extends Identifiable> objectIds) {
-        if (lines.isEmpty()) {
+    private static Map<Identifiable, String> filesContent(final Iterator<String> lines, final List<? extends Identifiable> objectIds) {
+        if (!lines.hasNext()) {
             return Collections.emptyMap();
         }
         final Map<Identifiable, String> filesContent = new HashMap<>(objectIds.size());
@@ -239,7 +258,8 @@ public final class Git {
         StringJoiner currentFile = null;
         int fromLine = Integer.MIN_VALUE;
         int toLine = Integer.MAX_VALUE;
-        for (final var line : lines) {
+        while (lines.hasNext()) {
+            final var line = lines.next();
             final Identifiable identifiable;
             if (fileToDiscoverIdx < objectIds.size() && line.startsWith((identifiable = objectIds.get(fileToDiscoverIdx)).getId())) {
                 currentFileLineCounter = 1;
@@ -270,6 +290,39 @@ public final class Git {
             filesContent.put(objectIds.get(fileToDiscoverIdx - 1), currentFile.toString());
         }
         return filesContent;
+    }
+
+    /**
+     * Forms a {@link GitCommit} list by extracting the components from the given lines using {@link CommitEntryParseIterator}
+     *
+     * @implNote We expect that commit date is in RFC-1123 format, so we
+     * can easily convert it to {@link Instant} using built-in {@link DateTimeFormatter}
+     * @see Git.Repo#log(String, String)
+     * @see Repo#revListAllPretty()
+     */
+    private static List<GitCommit> commits(final Iterator<String> lines) {
+        final List<GitCommit> commits = new ArrayList<>();
+        final var commitBuilder = GitCommit.builder();
+        new CommitEntryParseIterator(lines).forEachRemaining(entry -> {
+            final var line = entry.getLine();
+            switch (entry.getType()) {
+                case SHA -> commitBuilder.sha(line);
+                case MERGE -> commitBuilder.isMerge(true);
+                case AUTHOR -> {
+                    final var nameAndEmail = line.split(" <", 2);
+                    if (nameAndEmail.length != 2) {
+                        throw new IllegalStateException("'Author:' line was of not supported format: %s".formatted(line));
+                    }
+                    commitBuilder.authorName(nameAndEmail[0]);
+                    commitBuilder.authorEmail(nameAndEmail[1].substring(0, nameAndEmail[1].length() - 1));
+                }
+                case DATE -> {
+                    commitBuilder.date(Instant.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(line)));
+                    commits.add(commitBuilder.build());
+                }
+            }
+        });
+        return commits;
     }
 
     /// Line format:

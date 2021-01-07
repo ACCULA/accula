@@ -9,12 +9,12 @@ import org.jetbrains.annotations.Nullable;
  * @author Vadim Dyachkov
  * @author Anton Lamtev
  */
-@Builder
+@Builder(toBuilder = true)
 @Value
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Snapshot {
     @EqualsAndHashCode.Include
-    String sha;
+    Commit commit;
     String branch;
     @Nullable
     Long pullId;
@@ -22,12 +22,16 @@ public class Snapshot {
     GithubRepo repo;
 
     public Id getId() {
-        return new Id(sha, repo.getId());
+        return new Id(commit.getSha(), repo.getId());
+    }
+
+    public String getSha() {
+        return commit.getSha();
     }
 
     @Override
     public String toString() {
-        return repo.getOwner().getLogin() + "/" + repo.getName() + "/" + sha;
+        return repo.getOwner().getLogin() + "/" + repo.getName() + "/" + commit.getSha();
     }
 
     @SuppressWarnings("PMD.ShortClassName")

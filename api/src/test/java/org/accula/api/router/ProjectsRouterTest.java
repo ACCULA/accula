@@ -83,7 +83,7 @@ class ProjectsRouterTest {
     static final GithubApiUser GH_OWNER = new GithubApiUser(1L, REPO_OWNER, EMPTY, EMPTY, EMPTY, GithubApiUser.Type.USER);
     static final GithubApiRepo GH_REPO = new GithubApiRepo(1L, REPO_URL, REPO_NAME, EMPTY, GH_OWNER);
     static final GithubApiSnapshot MARKER = new GithubApiSnapshot("", "", GH_OWNER, GH_REPO, "");
-    static final GithubApiPull GH_PULL = new GithubApiPull(0L, "", MARKER, MARKER, GH_OWNER, 0, "", State.OPEN, Instant.now(), Instant.now());
+    static final GithubApiPull GH_PULL = new GithubApiPull(0L, "", MARKER, MARKER, GH_OWNER, 0, "", State.OPEN, Instant.now(), Instant.now(), Instant.now());
     static final GithubApiPull[] OPEN_PULLS = new GithubApiPull[]{GH_PULL, GH_PULL, GH_PULL};
     static final Project PROJECT = Project.builder().id(1L).state(Project.State.CREATING).githubRepo(REPO).creator(CURRENT_USER).openPullCount(0).build();
     static final CreateProjectDto REQUEST_BODY = new CreateProjectDto(REPO_URL);
@@ -139,8 +139,8 @@ class ProjectsRouterTest {
         Mockito.when(pullRepo.upsert(Mockito.anyCollection()))
                 .thenReturn(Flux.fromIterable(PULLS));
 
-        Mockito.when(projectService.update(Mockito.anyLong(), Mockito.anyList()))
-                .thenReturn(Flux.empty());
+        Mockito.when(projectService.update(Mockito.anyLong(), Mockito.any(GithubApiPull.class)))
+                .thenReturn(Mono.empty());
 
         Mockito.when(githubClient.hasAdminPermission(Mockito.anyString(), Mockito.anyString()))
                 .thenReturn(Mono.just(TRUE));

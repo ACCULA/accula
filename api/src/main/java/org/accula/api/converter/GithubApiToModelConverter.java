@@ -1,5 +1,6 @@
 package org.accula.api.converter;
 
+import org.accula.api.db.model.Commit;
 import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.GithubUser;
 import org.accula.api.db.model.Pull;
@@ -20,8 +21,6 @@ import java.util.Objects;
 @Component
 @SuppressWarnings("PMD.ConfusingTernary")
 public final class GithubApiToModelConverter {
-    private static final String EMPTY = "";
-
     private GithubApiToModelConverter() {
     }
 
@@ -54,7 +53,7 @@ public final class GithubApiToModelConverter {
 
     public static Snapshot convert(final GithubApiSnapshot snapshot, final Long pullId) {
         return Snapshot.builder()
-                .sha(snapshot.getSha())
+                .commit(Commit.shaOnly(snapshot.getSha()))
                 .branch(snapshot.getRef())
                 .pullId(pullId)
                 .repo(convert(Objects.requireNonNull(snapshot.getRepo())))
@@ -77,6 +76,6 @@ public final class GithubApiToModelConverter {
     }
 
     private static String orEmpty(@Nullable final String s) {
-        return s != null && !s.isBlank() ? s : EMPTY;
+        return s != null && !s.isBlank() ? s : "";
     }
 }
