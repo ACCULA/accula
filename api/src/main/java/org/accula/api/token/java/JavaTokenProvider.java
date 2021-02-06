@@ -30,7 +30,7 @@ public final class JavaTokenProvider<Ref> implements TokenProvider<Ref> {
         return javaPsiFileFactory().flatMapMany(psiFileFactory ->
                 files.flatMapIterable(file ->
                         JavaPsiUtils
-                                .methods(psiFileFactory.createFileFromText(file.getName(), JavaLanguage.INSTANCE, file.getContent()))
+                                .methods(psiFileFactory.createFileFromText(file.name(), JavaLanguage.INSTANCE, file.content()))
                                 .stream()
                                 .map(Lambda.passingTailArg(JavaTokenProvider::methodTokens, file))
                                 .collect(toList())));
@@ -40,7 +40,7 @@ public final class JavaTokenProvider<Ref> implements TokenProvider<Ref> {
         return TraverseUtils
                 .dfs(method.getBody(), TraverseUtils.stream(PsiElement::getChildren))
                 .filter(JavaPsiUtils::isValuableToken)
-                .map(Lambda.passingTailArgs(Token::of, method.getName(), file.getRef()))
+                .map(Lambda.passingTailArgs(Token::of, method.getName(), file.ref()))
                 .collect(toList());
     }
 

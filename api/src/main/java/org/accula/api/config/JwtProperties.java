@@ -1,7 +1,8 @@
 package org.accula.api.config;
 
-import lombok.Data;
+import lombok.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.ConstructorBinding;
 
 import java.nio.file.Path;
 import java.time.Duration;
@@ -9,23 +10,24 @@ import java.time.Duration;
 /**
  * @author Anton Lamtev
  */
+@ConstructorBinding
 @ConfigurationProperties("accula.jwt")
-@Data
-public final class JwtProperties {
-    private Signature signature;
-    private String issuer;
-    private ExpiresIn expiresIn;
-    private String refreshTokenEndpointPath;
+@Value
+public class JwtProperties {
+    Signature signature;
+    String issuer;
+    ExpiresIn expiresIn;
+    String refreshTokenEndpointPath;
 
-    @Data
-    public static final class Signature {
-        private Path publicKey;
-        private Path privateKey;
+    @Value
+    public static class Signature {
+        Path publicKey;
+        Path privateKey;
     }
 
-    @Data
-    public static final class ExpiresIn {
-        private Duration access;
-        private Duration refresh;
+    @Value
+    public static class ExpiresIn {
+        Duration access;
+        Duration refresh;
     }
 }

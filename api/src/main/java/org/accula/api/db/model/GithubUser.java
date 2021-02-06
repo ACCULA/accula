@@ -16,5 +16,5 @@ public class GithubUser {
     @Nullable
     String name;
     String avatar;
-    boolean organization;
+    boolean isOrganization;
 }

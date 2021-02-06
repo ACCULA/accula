@@ -49,7 +49,7 @@ class CodeLoaderTest {
     @Test
     void testGetSingleFile() {
         StepVerifier.create(codeLoader.loadFiles(COMMIT, README::equals))
-                .expectNextMatches(readme -> readme.getContent().startsWith("# 2019-highload-dht"))
+                .expectNextMatches(readme -> readme.content().startsWith("# 2019-highload-dht"))
                 .expectComplete()
                 .verify();
     }
@@ -60,7 +60,7 @@ class CodeLoaderTest {
                 .parallel()
                 .forEach(it -> {
                     Map<String, String> files = codeLoader.loadFiles(COMMIT)
-                            .collectMap(FileEntity::getName, FileEntity::getContent).block();
+                            .collectMap(FileEntity::name, FileEntity::content).block();
                     assertNotNull(files);
                     assertEquals(40, files.size());
                     assertTrue(files.containsKey(README));
@@ -73,7 +73,7 @@ class CodeLoaderTest {
         Pattern excludeRegex = Pattern.compile(".*Test.*");
         FileFilter filter = filename -> filename.endsWith(".java") && !excludeRegex.matcher(filename).matches();
         Map<String, String> files = codeLoader.loadFiles(COMMIT, filter)
-                .collectMap(FileEntity::getName, FileEntity::getContent).block();
+                .collectMap(FileEntity::name, FileEntity::content).block();
         assertNotNull(files);
         assertEquals(10, files.size());
         assertFalse(files.containsKey(README));
@@ -88,7 +88,7 @@ class CodeLoaderTest {
         assertNotNull(snippet);
         assertEquals("""
                 ## Этап 1. HTTP + storage (deadline 2019-10-05)
-                """, snippet.getContent());
+                """, snippet.content());
     }
 
     @Test
@@ -96,7 +96,7 @@ class CodeLoaderTest {
         StepVerifier.create(codeLoader.loadSnippets(COMMIT, List.of(
                 SnippetMarker.of(README, 4, 5),
                 SnippetMarker.of("NOT_EXISTENT_FILE", 1, 1)))
-                .map(FileEntity::getContent))
+                .map(FileEntity::content))
                 .expectNextMatches(content -> content.equals("""
                         ## Этап 1. HTTP + storage (deadline 2019-10-05)
                         ### Fork
@@ -108,7 +108,7 @@ class CodeLoaderTest {
     @Test
     void testGetFileSnippetWrongRange() {
         StepVerifier.create(codeLoader.loadSnippets(COMMIT, List.of(SnippetMarker.of(README, 5, 4))))
-                .expectNextMatches(file -> file.getContent() == null)
+                .expectNextMatches(file -> file.content() == null)
                 .expectComplete()
                 .verify();
     }
@@ -132,7 +132,7 @@ class CodeLoaderTest {
                                 
                 ## Этап 1. HTTP + storage (deadline 2019-10-05)
                 ### Fork
-                """, snippets.get(0).getContent());
+                """, snippets.get(0).content());
         assertEquals("""
                 ## Этап 1. HTTP + storage (deadline 2019-10-05)
                 ### Fork
@@ -141,11 +141,11 @@ class CodeLoaderTest {
                 $ git clone git@github.com:<username>/2019-highload-dht.git
                 Cloning into '2019-highload-dht'...
                 ...
-                """, snippets.get(1).getContent());
+                """, snippets.get(1).content());
         assertEquals("""
                     private static final int[] PORTS = {8080, 8081, 8082};
                     private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-                """, snippets.get(2).getContent());
+                """, snippets.get(2).content());
         assertEquals("""
                 ```
                 $ git clone git@github.com:<username>/2019-highload-dht.git
@@ -156,7 +156,7 @@ class CodeLoaderTest {
                 From github.com:polis-mail-ru/2019-highload-dht
                  * [new branch]      master     -> upstream/master
                 ```
-                """, snippets.get(3).getContent());
+                """, snippets.get(3).content());
         assertEquals("""
                     public static void main(final String[] args) throws IOException {
                         // Fill the topology
@@ -164,7 +164,7 @@ class CodeLoaderTest {
                         for (final int port : PORTS) {
                             topology.add("http://localhost:" + port);
                         }
-                """, snippets.get(4).getContent());
+                """, snippets.get(4).content());
     }
 
     @Test
@@ -197,7 +197,7 @@ class CodeLoaderTest {
         assertEquals(9, diffEntries.size());
         final var possibleRenameCount = diffEntries
                 .stream()
-                .filter(diffEntry -> diffEntry.getSimilarityIndex() > 0)
+                .filter(diffEntry -> diffEntry.similarityIndex() > 0)
                 .count();
         assertEquals(5, possibleRenameCount);
     }

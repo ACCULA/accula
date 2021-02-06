@@ -39,7 +39,7 @@ public final class JwtAccessTokenResponseProducer {
         return Mono.fromRunnable(() -> {
             final var response = exchange.getResponse();
             final var accessTokenDetails = jwt.generate(userId.toString(), accessExpiresIn);
-            final var location = URI.create(webUrl + "/oauth2/redirect?accessToken=" + accessTokenDetails.getToken());
+            final var location = URI.create(webUrl + "/oauth2/redirect?accessToken=" + accessTokenDetails.token());
             response.getHeaders().setLocation(location);
             response.setStatusCode(FOUND);
             cookieRefreshTokenHelper.set(response.getCookies(), refreshToken, refreshExpiresIn);
@@ -55,7 +55,7 @@ public final class JwtAccessTokenResponseProducer {
 
         return response.writeWith(Mono.fromSupplier(() -> {
             final var accessTokenDetails = jwt.generate(userId.toString(), accessExpiresIn);
-            final var respBody = String.format(RESPONSE_BODY_FORMAT, accessTokenDetails.getToken()).getBytes(UTF_8);
+            final var respBody = String.format(RESPONSE_BODY_FORMAT, accessTokenDetails.token()).getBytes(UTF_8);
 
             response.setStatusCode(OK);
             response.getHeaders().setContentType(APPLICATION_JSON);

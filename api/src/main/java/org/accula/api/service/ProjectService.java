@@ -62,7 +62,7 @@ public final class ProjectService {
 
                     final var commitsMono = projectRepo
                             .findById(projectId)
-                            .flatMapMany(project -> codeLoader.loadAllCommits(project.getGithubRepo()))
+                            .flatMapMany(project -> codeLoader.loadAllCommits(project.githubRepo()))
                             .concatWith(Flux.fromIterable(repos)
                                     .flatMap(codeLoader::loadAllCommits)
                                     .parallel()
@@ -73,11 +73,11 @@ public final class ProjectService {
                             .thenMany(githubRepoRepo.upsert(repos))
                             .then(commitsMono
                                     .flatMap(commits -> {
-                                        pulls.removeIf(pull -> !commits.contains(pull.getHead().getCommit()) ||
-                                                               !commits.contains(pull.getBase().getCommit()));
-                                        bases.removeIf(base -> !commits.contains(base.getCommit()));
-                                        heads.removeIf(head -> !commits.contains(head.getCommit()) ||
-                                                               pulls.stream().noneMatch(pull -> pull.getId().equals(head.getPullId())));
+                                        pulls.removeIf(pull -> !commits.contains(pull.head().commit()) ||
+                                                               !commits.contains(pull.base().commit()));
+                                        bases.removeIf(base -> !commits.contains(base.commit()));
+                                        heads.removeIf(head -> !commits.contains(head.commit()) ||
+                                                               pulls.stream().noneMatch(pull -> pull.id().equals(head.pullId())));
 
                                         return commitRepo
                                                 .insert(commits)
@@ -101,13 +101,13 @@ public final class ProjectService {
                     final var bases = new HashSet<Snapshot>();
 
                     final var pull = processGithubApiPull(projectId, githubApiPull, users, repos, heads, bases);
-                    final var head = pull.getHead();
-                    final var base = pull.getBase();
+                    final var head = pull.head();
+                    final var base = pull.base();
 
-                    final var commitsMono = pullRepo.findById(pull.getId())
+                    final var commitsMono = pullRepo.findById(pull.id())
                             .flatMapMany(pullBeforeUpdate -> codeLoader
-                                    .loadCommits(head.getRepo(), pullBeforeUpdate.getHead().getSha(), head.getSha()))
-                            .concatWith(codeLoader.loadCommits(base.getRepo(), GitRefs.inclusive(base.getSha()), base.getSha()))
+                                    .loadCommits(head.repo(), pullBeforeUpdate.head().sha(), head.sha()))
+                            .concatWith(codeLoader.loadCommits(base.repo(), GitRefs.inclusive(base.sha()), base.sha()))
                             .collect(Collectors.toSet());
 
                     return githubUserRepo.upsert(users)
@@ -133,17 +133,17 @@ public final class ProjectService {
                                              final Set<Snapshot> bases) {
         final var pull = GithubApiToModelConverter.convert(githubApiPull, projectId);
 
-        final var head = pull.getHead();
-        users.add(head.getRepo().getOwner());
-        repos.add(head.getRepo());
+        final var head = pull.head();
+        users.add(head.repo().owner());
+        repos.add(head.repo());
         heads.add(head);
 
-        final var base = pull.getBase();
-        users.add(base.getRepo().getOwner());
-        repos.add(base.getRepo());
+        final var base = pull.base();
+        users.add(base.repo().owner());
+        repos.add(base.repo());
         bases.add(base);
 
-        users.add(pull.getAuthor());
+        users.add(pull.author());
 
         return pull;
     }
@@ -156,8 +156,8 @@ public final class ProjectService {
     }
 
     private static Pull pullFilledWithCommits(final Pull pull, final Set<Commit> commits) {
-        final var head = pull.getHead();
-        final var base = pull.getBase();
+        final var head = pull.head();
+        final var base = pull.base();
 
         Commit headCommit = null;
         Commit baseCommit = null;
@@ -166,23 +166,17 @@ public final class ProjectService {
             if (headCommit != null && baseCommit != null) {
                 break;
             }
-            if (head.getCommit().equals(commit)) {
+            if (head.commit().equals(commit)) {
                 headCommit = commit;
-            } else if (base.getCommit().equals(commit)) {
+            } else if (base.commit().equals(commit)) {
                 baseCommit = commit;
             }
         }
 
         return pull
                 .toBuilder()
-                .head(head
-                        .toBuilder()
-                        .commit(Objects.requireNonNull(headCommit))
-                        .build())
-                .base(base
-                        .toBuilder()
-                        .commit(Objects.requireNonNull(baseCommit))
-                        .build())
+                .head(head.withCommit(Objects.requireNonNull(headCommit)))
+                .base(base.withCommit(Objects.requireNonNull(baseCommit)))
                 .build();
     }
 }

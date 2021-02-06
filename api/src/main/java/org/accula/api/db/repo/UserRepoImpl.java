@@ -54,7 +54,7 @@ public final class UserRepoImpl implements UserRepo, ConnectionProvidedRepo {
                                 githubUser
                         ))))
                 .doOnNext(user -> onUpserts
-                        .forEach(onUpsert -> onUpsert.onUpsert(user.getId())));
+                        .forEach(onUpsert -> onUpsert.onUpsert(user.id())));
     }
 
     @Override
@@ -116,14 +116,14 @@ public final class UserRepoImpl implements UserRepo, ConnectionProvidedRepo {
     private static PostgresqlStatement applyInsertBindings(final GithubUser githubUser,
                                                            final String githubAccessToken,
                                                            final PostgresqlStatement statement) {
-        statement.bind("$1", githubUser.getId());
-        statement.bind("$2", githubUser.getLogin());
-        if (githubUser.getName() != null && !githubUser.getName().isBlank()) {
-            statement.bind("$3", githubUser.getName());
+        statement.bind("$1", githubUser.id());
+        statement.bind("$2", githubUser.login());
+        if (githubUser.name() != null && !githubUser.name().isBlank()) {
+            statement.bind("$3", githubUser.name());
         } else {
             statement.bindNull("$3", String.class);
         }
-        statement.bind("$4", githubUser.getAvatar());
+        statement.bind("$4", githubUser.avatar());
         statement.bind("$5", githubUser.isOrganization());
         statement.bind("$6", githubAccessToken);
         return statement;

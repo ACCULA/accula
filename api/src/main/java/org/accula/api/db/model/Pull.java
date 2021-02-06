@@ -17,7 +17,7 @@ public class Pull {
     Long id;
     Integer number;
     String title;
-    boolean open;
+    boolean isOpen;
     Instant createdAt;
     Instant updatedAt;
     Snapshot head;

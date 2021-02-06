@@ -1,22 +1,20 @@
 package org.accula.api.handler.dto;
 
-import lombok.AllArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import lombok.Builder;
-import lombok.NoArgsConstructor;
 import lombok.Value;
 
 import java.time.Instant;
 import java.util.List;
 
-import static lombok.AccessLevel.PRIVATE;
+import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
 
 /**
  * @author Anton Lamtev
  */
+@JsonAutoDetect(fieldVisibility = ANY)
 @Builder
 @Value
-@AllArgsConstructor
-@NoArgsConstructor(force = true, access = PRIVATE)
 public class PullDto {
     Long projectId;
     Integer number;
@@ -34,17 +32,16 @@ public class PullDto {
     GithubUserDto author;
     List<ShortPullDto> previousPulls;
 
-    @Value
-    @AllArgsConstructor
-    @NoArgsConstructor(force = true, access = PRIVATE)
-    public static class Marker {
-        String url;
-        String label;
-    }
-
     public enum CloneStatus {
         PENDING,
         FINISHED,
         ;
+    }
+
+    @JsonAutoDetect(fieldVisibility = ANY)
+    @Value
+    public static class Marker {
+        String url;
+        String label;
     }
 }

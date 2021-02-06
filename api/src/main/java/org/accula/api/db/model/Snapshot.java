@@ -3,13 +3,15 @@ package org.accula.api.db.model;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
+import lombok.With;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vadim Dyachkov
  * @author Anton Lamtev
  */
-@Builder(toBuilder = true)
+@Builder
+@With
 @Value
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Snapshot {
@@ -21,17 +23,17 @@ public class Snapshot {
     @EqualsAndHashCode.Include
     GithubRepo repo;
 
-    public Id getId() {
-        return new Id(commit.getSha(), repo.getId());
+    public Id id() {
+        return new Id(commit.sha(), repo.id());
     }
 
-    public String getSha() {
-        return commit.getSha();
+    public String sha() {
+        return commit.sha();
     }
 
     @Override
     public String toString() {
-        return repo.getOwner().getLogin() + "/" + repo.getName() + "/" + commit.getSha();
+        return repo.owner().login() + "/" + repo.name() + "/" + commit.sha();
     }
 
     @SuppressWarnings("PMD.ShortClassName")

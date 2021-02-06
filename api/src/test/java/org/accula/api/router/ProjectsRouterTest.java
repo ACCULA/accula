@@ -3,7 +3,6 @@ package org.accula.api.router;
 import lombok.SneakyThrows;
 import org.accula.api.code.CodeLoader;
 import org.accula.api.config.WebConfig;
-import org.accula.api.config.WebhookProperties;
 import org.accula.api.converter.ModelToDtoConverter;
 import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.GithubUser;
@@ -53,7 +52,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 @WebFluxTest
-@ContextConfiguration(classes = {ProjectsHandler.class, ProjectsRouter.class, WebhookProperties.class, WebConfig.class})
+@ContextConfiguration(classes = {WebConfig.class, ProjectsHandler.class, ProjectsRouter.class})
 class ProjectsRouterTest {
     static final String REPO_URL = "https://github.com/accula/accula";
     static final String REPO_NAME = "accula";
@@ -65,7 +64,7 @@ class ProjectsRouterTest {
             .id(1L)
             .number(2)
             .projectId(1L)
-            .open(true)
+            .isOpen(true)
             .createdAt(Instant.MIN)
             .updatedAt(Instant.EPOCH)
             .author(GITHUB_USER)
@@ -186,10 +185,10 @@ class ProjectsRouterTest {
         Mockito.when(githubClient.hasAdminPermission(Mockito.anyString(), Mockito.anyString()))
                 .thenReturn(Mono.error(GH_EXCEPTION));
 
-        Mockito.when(githubClient.getRepo(GH_REPO.getOwner().getLogin(), GH_REPO.getName()))
+        Mockito.when(githubClient.getRepo(GH_REPO.owner().login(), GH_REPO.name()))
                 .thenReturn(Mono.error(GH_EXCEPTION));
 
-        Mockito.when(githubClient.getRepositoryPulls(GH_REPO.getOwner().getLogin(), GH_REPO.getName(), State.ALL, 100))
+        Mockito.when(githubClient.getRepositoryPulls(GH_REPO.owner().login(), GH_REPO.name(), State.ALL, 100))
                 .thenReturn(Flux.error(GH_EXCEPTION));
 
         client.post().uri("/api/projects")
@@ -212,10 +211,10 @@ class ProjectsRouterTest {
         Mockito.when(githubClient.hasAdminPermission(Mockito.anyString(), Mockito.anyString()))
                 .thenReturn(Mono.just(TRUE));
 
-        Mockito.when(githubClient.getRepo(GH_REPO.getOwner().getLogin(), GH_REPO.getName()))
+        Mockito.when(githubClient.getRepo(GH_REPO.owner().login(), GH_REPO.name()))
                 .thenReturn(Mono.just(GH_REPO));
 
-        Mockito.when(githubClient.getRepositoryPulls(GH_REPO.getOwner().getLogin(), GH_REPO.getName(), State.ALL, 100))
+        Mockito.when(githubClient.getRepositoryPulls(GH_REPO.owner().login(), GH_REPO.name(), State.ALL, 100))
                 .thenReturn(Flux.fromArray(OPEN_PULLS));
 
         client.post().uri("/api/projects")
@@ -236,10 +235,10 @@ class ProjectsRouterTest {
         Mockito.when(githubClient.hasAdminPermission(Mockito.anyString(), Mockito.anyString()))
                 .thenReturn(Mono.just(FALSE));
 
-        Mockito.when(githubClient.getRepo(GH_REPO.getOwner().getLogin(), GH_REPO.getName()))
+        Mockito.when(githubClient.getRepo(GH_REPO.owner().login(), GH_REPO.name()))
                 .thenReturn(Mono.just(GH_REPO));
 
-        Mockito.when(githubClient.getRepositoryPulls(GH_REPO.getOwner().getLogin(), GH_REPO.getName(), State.ALL, 100))
+        Mockito.when(githubClient.getRepositoryPulls(GH_REPO.owner().login(), GH_REPO.name(), State.ALL, 100))
                 .thenReturn(Flux.fromArray(OPEN_PULLS));
 
         client.post().uri("/api/projects")
@@ -261,7 +260,7 @@ class ProjectsRouterTest {
 
         final var expectedBody = ModelToDtoConverter.convert(PROJECT);
 
-        client.get().uri("/api/projects/{id}", PROJECT.getId())
+        client.get().uri("/api/projects/{id}", PROJECT.id())
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(ProjectDto.class).isEqualTo(expectedBody);
@@ -305,7 +304,7 @@ class ProjectsRouterTest {
         Mockito.when(projectRepo.delete(Mockito.anyLong(), Mockito.anyLong()))
                 .thenReturn(Mono.just(TRUE));
 
-        client.delete().uri("/api/projects/{id}", PROJECT.getId())
+        client.delete().uri("/api/projects/{id}", PROJECT.id())
                 .exchange()
                 .expectStatus().isAccepted();
     }
@@ -323,7 +322,7 @@ class ProjectsRouterTest {
         Mockito.when(userRepo.findByGithubIds(Mockito.anyCollection()))
                 .thenReturn(Flux.fromIterable(List.of(USER_2, USER_3)));
 
-        client.get().uri("/api/projects/{id}/githubAdmins", PROJECT.getId())
+        client.get().uri("/api/projects/{id}/githubAdmins", PROJECT.id())
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(UserDto[].class).value(it -> assertEquals(2, it.length));
@@ -333,7 +332,7 @@ class ProjectsRouterTest {
     void testGetGithubAdminsForbidden() {
         mockForbidden();
 
-        client.get().uri("/api/projects/{id}/githubAdmins", PROJECT.getId())
+        client.get().uri("/api/projects/{id}/githubAdmins", PROJECT.id())
                 .exchange()
                 .expectStatus().isForbidden();
     }
@@ -342,7 +341,7 @@ class ProjectsRouterTest {
     void testGetGithubAdminsNotFound() {
         mockNotFound();
 
-        client.get().uri("/api/projects/{id}/githubAdmins", PROJECT.getId())
+        client.get().uri("/api/projects/{id}/githubAdmins", PROJECT.id())
                 .exchange()
                 .expectStatus().isNotFound();
     }
@@ -355,17 +354,17 @@ class ProjectsRouterTest {
                 .thenReturn(Mono.just(TRUE));
         final var adminIds = List.of(1L, 2L);
         Mockito.when(projectRepo.confById(Mockito.anyLong()))
-                .thenReturn(Mono.just(Project.Conf.DEFAULT.toBuilder().adminIds(adminIds).build()));
+                .thenReturn(Mono.just(Project.Conf.DEFAULT.withAdminIds(adminIds)));
 
-        client.get().uri("/api/projects/{id}/conf", PROJECT.getId())
+        client.get().uri("/api/projects/{id}/conf", PROJECT.id())
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(ProjectConfDto.class)
                 .isEqualTo(ProjectConfDto.builder()
                         .admins(adminIds)
-                        .cloneMinTokenCount(Project.Conf.DEFAULT.getCloneMinTokenCount())
-                        .fileMinSimilarityIndex(Project.Conf.DEFAULT.getFileMinSimilarityIndex())
-                        .excludedFiles(Project.Conf.DEFAULT.getExcludedFiles())
+                        .cloneMinTokenCount(Project.Conf.DEFAULT.cloneMinTokenCount())
+                        .fileMinSimilarityIndex(Project.Conf.DEFAULT.fileMinSimilarityIndex())
+                        .excludedFiles(Project.Conf.DEFAULT.excludedFiles())
                         .build());
     }
 
@@ -373,7 +372,7 @@ class ProjectsRouterTest {
     void testGetConfForbidden() {
         mockForbidden();
 
-        client.get().uri("/api/projects/{id}/conf", PROJECT.getId())
+        client.get().uri("/api/projects/{id}/conf", PROJECT.id())
                 .exchange()
                 .expectStatus().isForbidden();
     }
@@ -384,7 +383,7 @@ class ProjectsRouterTest {
         Mockito.when(projectRepo.confById(Mockito.anyLong()))
                 .thenReturn(Mono.empty());
 
-        client.get().uri("/api/projects/{id}/conf", PROJECT.getId())
+        client.get().uri("/api/projects/{id}/conf", PROJECT.id())
                 .exchange()
                 .expectStatus().isNotFound();
     }
@@ -397,15 +396,15 @@ class ProjectsRouterTest {
                 .thenReturn(Mono.just(TRUE));
         final var adminIds = List.of(1L, 2L);
         Mockito.when(projectRepo.upsertConf(Mockito.anyLong(), Mockito.any(Project.Conf.class)))
-                .thenReturn(Mono.just(Project.Conf.DEFAULT.toBuilder().adminIds(adminIds).build()));
+                .thenReturn(Mono.just(Project.Conf.DEFAULT.withAdminIds(adminIds)));
 
-        client.put().uri("/api/projects/{id}/conf", PROJECT.getId())
+        client.put().uri("/api/projects/{id}/conf", PROJECT.id())
                 .contentType(APPLICATION_JSON)
                 .bodyValue(ProjectConfDto.builder()
                         .admins(adminIds)
-                        .cloneMinTokenCount(Project.Conf.DEFAULT.getCloneMinTokenCount())
-                        .fileMinSimilarityIndex(Project.Conf.DEFAULT.getFileMinSimilarityIndex())
-                        .excludedFiles(Project.Conf.DEFAULT.getExcludedFiles())
+                        .cloneMinTokenCount(Project.Conf.DEFAULT.cloneMinTokenCount())
+                        .fileMinSimilarityIndex(Project.Conf.DEFAULT.fileMinSimilarityIndex())
+                        .excludedFiles(Project.Conf.DEFAULT.excludedFiles())
                         .build())
                 .exchange()
                 .expectStatus().isCreated();
@@ -418,7 +417,7 @@ class ProjectsRouterTest {
         Mockito.when(projectRepo.hasAdmin(Mockito.anyLong(), Mockito.anyLong()))
                 .thenReturn(Mono.just(TRUE));
 
-        client.put().uri("/api/projects/{id}/conf", PROJECT.getId())
+        client.put().uri("/api/projects/{id}/conf", PROJECT.id())
                 .contentType(APPLICATION_JSON)
                 .bodyValue(ProjectConfDto.builder().build())
                 .exchange()
@@ -437,7 +436,7 @@ class ProjectsRouterTest {
         Mockito.when(codeLoader.loadFilenames(Mockito.any()))
                 .thenReturn(Flux.fromArray(expectedFiles));
 
-        client.get().uri("/api/projects/{id}/headFiles", PROJECT.getId())
+        client.get().uri("/api/projects/{id}/headFiles", PROJECT.id())
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(String[].class).value(actualFiles -> assertArrayEquals(expectedFiles, actualFiles));
@@ -447,7 +446,7 @@ class ProjectsRouterTest {
     void testHeadFilesForbidden() {
         mockForbidden();
 
-        client.get().uri("/api/projects/{id}/headFiles", PROJECT.getId())
+        client.get().uri("/api/projects/{id}/headFiles", PROJECT.id())
                 .exchange()
                 .expectStatus().isForbidden();
     }
@@ -456,7 +455,7 @@ class ProjectsRouterTest {
     void testHeadFilesNotFound() {
         mockNotFound();
 
-        client.get().uri("/api/projects/{id}/headFiles", PROJECT.getId())
+        client.get().uri("/api/projects/{id}/headFiles", PROJECT.id())
                 .exchange()
                 .expectStatus().isNotFound();
     }

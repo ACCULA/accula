@@ -133,7 +133,7 @@ public final class Git {
                 return usingStdoutLines(process, lines -> {
                     try (var stdin = process.getOutputStream()) {
                         for (final var objectId : objectIds) {
-                            stdin.write(objectId.getId().getBytes(UTF_8));
+                            stdin.write(objectId.id().getBytes(UTF_8));
                             stdin.write(NEWLINE);
                         }
                         stdin.flush();
@@ -261,11 +261,11 @@ public final class Git {
         while (lines.hasNext()) {
             final var line = lines.next();
             final Identifiable identifiable;
-            if (fileToDiscoverIdx < objectIds.size() && line.startsWith((identifiable = objectIds.get(fileToDiscoverIdx)).getId())) {
+            if (fileToDiscoverIdx < objectIds.size() && line.startsWith((identifiable = objectIds.get(fileToDiscoverIdx)).id())) {
                 currentFileLineCounter = 1;
                 if (identifiable instanceof Snippet snippet) {
-                    fromLine = snippet.getFromLine();
-                    toLine = snippet.getToLine();
+                    fromLine = snippet.fromLine();
+                    toLine = snippet.toLine();
                 } else {
                     fromLine = Integer.MIN_VALUE;
                     toLine = Integer.MAX_VALUE;
@@ -304,8 +304,8 @@ public final class Git {
         final List<GitCommit> commits = new ArrayList<>();
         final var commitBuilder = GitCommit.builder();
         new CommitEntryParseIterator(lines).forEachRemaining(entry -> {
-            final var line = entry.getLine();
-            switch (entry.getType()) {
+            final var line = entry.line();
+            switch (entry.type()) {
                 case SHA -> commitBuilder.sha(line);
                 case MERGE -> commitBuilder.isMerge(true);
                 case AUTHOR -> {

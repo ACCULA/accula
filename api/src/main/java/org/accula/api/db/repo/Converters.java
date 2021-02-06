@@ -204,7 +204,7 @@ final class Converters {
                 .id(Converters.value(row, id, Long.class))
                 .number(Converters.value(row, number, Integer.class))
                 .title(Converters.value(row, title, String.class))
-                .open(Converters.value(row, open, Boolean.class))
+                .isOpen(Converters.value(row, open, Boolean.class))
                 .createdAt(Converters.value(row, createdAt, Instant.class))
                 .updatedAt(Converters.value(row, updatedAt, Instant.class))
                 .head(Converters.convertCommitSnapshot(row,

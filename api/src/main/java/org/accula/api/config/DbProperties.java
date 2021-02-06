@@ -1,27 +1,29 @@
 package org.accula.api.config;
 
-import lombok.Data;
+import lombok.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.ConstructorBinding;
 
 import java.time.Duration;
 
 /**
  * @author Anton Lamtev
  */
+@ConstructorBinding
 @ConfigurationProperties("accula.db")
-@Data
-public final class DbProperties {
-    private String host;
-    private int port;
-    private String user;
-    private String password;
-    private String database;
-    private Pool pool;
+@Value
+public class DbProperties {
+    String host;
+    int port;
+    String user;
+    String password;
+    String database;
+    Pool pool;
 
-    @Data
-    public static final class Pool {
-        private Duration maxIdleTime;
-        private int minSize;
-        private int maxSize;
+    @Value
+    public static class Pool {
+        Duration maxIdleTime;
+        int minSize;
+        int maxSize;
     }
 }

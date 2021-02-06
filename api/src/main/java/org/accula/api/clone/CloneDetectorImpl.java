@@ -53,18 +53,18 @@ public final class CloneDetectorImpl implements CloneDetector {
                         cloneClasses.filter(cloneClass ->
                                 cloneClassMatchesRules(cloneClass, config)
                                 && cloneClassContainsClonesFromCommit(cloneClass, snapshot)
-                                && cloneClassContainsClonesFromReposOtherThan(cloneClass, snapshot.getRepo())));
+                                && cloneClassContainsClonesFromReposOtherThan(cloneClass, snapshot.repo())));
 
         return Mono
                 .fromSupplier(cloneClassesSupplier)
                 .flatMapMany(Flux::fromIterable)
                 .map(cloneClass -> {
                     //TODO: take commit date into account
-                    final var clones = cloneClass.getClones();
+                    final var clones = cloneClass.clones();
                     @SuppressWarnings("OptionalGetWithoutIsPresent")//
                     final var from = clones
                             .stream()
-                            .filter(clone -> !clone.ref().getRepo().equals(snapshot.getRepo()))
+                            .filter(clone -> !clone.ref().repo().equals(snapshot.repo()))
                             .findFirst()
                             .get();
                     @SuppressWarnings("OptionalGetWithoutIsPresent")//
@@ -74,30 +74,30 @@ public final class CloneDetectorImpl implements CloneDetector {
                             .findFirst()
                             .get();
                     return Tuples.of(
-                            new CodeSnippet(to.ref(), to.filename(), to.getFromLine(), to.getToLine()),
-                            new CodeSnippet(from.ref(), from.filename(), from.getFromLine(), from.getToLine()));
+                            new CodeSnippet(to.ref(), to.filename(), to.fromLine(), to.toLine()),
+                            new CodeSnippet(from.ref(), from.filename(), from.fromLine(), from.toLine()));
                 });
     }
 
     private static boolean cloneClassMatchesRules(final CloneClass<Snapshot> cloneClass, final Config rules) {
-        return cloneClass.getLength() >= rules.getCloneMinTokenCount()
+        return cloneClass.length() >= rules.cloneMinTokenCount()
                && cloneClass
-                       .getClones()
+                       .clones()
                        .stream()
-                       .anyMatch(clone -> rules.getFilter().test(clone.getStart().getFilename()));
+                       .anyMatch(clone -> rules.filter().test(clone.start().filename()));
     }
 
     private static boolean cloneClassContainsClonesFromCommit(final CloneClass<Snapshot> cloneClass, final Snapshot commit) {
         return cloneClass
-                .getClones()
+                .clones()
                 .stream()
                 .anyMatch(clone -> clone.ref().equals(commit));
     }
 
     private static boolean cloneClassContainsClonesFromReposOtherThan(final CloneClass<Snapshot> cloneClass, final GithubRepo repo) {
         return cloneClass
-                .getClones()
+                .clones()
                 .stream()
-                .anyMatch(clone -> !clone.ref().getRepo().equals(repo));
+                .anyMatch(clone -> !clone.ref().repo().equals(repo));
     }
 }

@@ -1,18 +1,16 @@
 package org.accula.api.handler.dto;
 
-import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import lombok.Value;
 import org.jetbrains.annotations.Nullable;
 
-import static lombok.AccessLevel.PRIVATE;
+import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
 
 /**
  * @author Anton Lamtev
  */
+@JsonAutoDetect(fieldVisibility = ANY)
 @Value
-@RequiredArgsConstructor
-@NoArgsConstructor(force = true, access = PRIVATE)
 public class UserDto {
     Long id;
     String login;

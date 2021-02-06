@@ -45,16 +45,16 @@ public final class GitCodeLoader implements CodeLoader {
     public Flux<FileEntity<Snapshot>> loadFiles(final Snapshot snapshot, final FileFilter filter) {
         return withCommonGitRepo(snapshot)
                 .flatMap(repo -> Mono
-                        .fromFuture(repo.lsTree(snapshot.getSha()))
+                        .fromFuture(repo.lsTree(snapshot.sha()))
                         .map(files -> files
                                 .stream()
-                                .filter(file -> filter.test(file.getName()))
+                                .filter(file -> filter.test(file.name()))
                                 .collect(toList()))
                         .flatMap(files -> Mono
                                 .fromFuture(repo.catFiles(files))
                                 .map(filesContent -> files
                                         .stream()
-                                        .map(file -> new FileEntity<>(snapshot, file.getName(), filesContent.get(file))))))
+                                        .map(file -> new FileEntity<>(snapshot, file.name(), filesContent.get(file))))))
                 .flatMapMany(Flux::fromStream);
     }
 
@@ -62,14 +62,14 @@ public final class GitCodeLoader implements CodeLoader {
     public Flux<FileEntity<Snapshot>> loadSnippets(final Snapshot snapshot, final List<SnippetMarker> markers) {
         return withCommonGitRepo(snapshot)
                 .flatMap(repo -> Mono
-                        .fromFuture(repo.lsTree(snapshot.getSha()))
+                        .fromFuture(repo.lsTree(snapshot.sha()))
                         .map(files -> convertSnippets(files, markers))
                         .flatMap(snippets -> Mono
                                 .fromFuture(repo.catFiles(snippets))
                                 .map(filesContent -> snippets
                                         .stream()
                                         .map(snippet -> new FileEntity<>(
-                                                snapshot, snippet.getFile().getName(),
+                                                snapshot, snippet.file().name(),
                                                 filesContent.get(snippet))))))
                 .flatMapMany(Flux::fromStream);
     }
@@ -100,7 +100,7 @@ public final class GitCodeLoader implements CodeLoader {
         return withProjectGitRepo(projectRepo)
                 .flatMap(repo -> Mono.fromFuture(repo.lsTree(GitRefs.originHead())))
                 .flatMapMany(Flux::fromIterable)
-                .map(GitFile::getName);
+                .map(GitFile::name);
     }
 
     @Override
@@ -121,17 +121,17 @@ public final class GitCodeLoader implements CodeLoader {
 
     /// We name each common repo git folder like that: <owner-login>_<repo-name>
     private Mono<Repo> withCommonGitRepo(final GithubRepo repo) {
-        final var repoGitDirectory = Path.of(repo.getOwner().getLogin() + "_" + repo.getName());
+        final var repoGitDirectory = Path.of(repo.owner().login() + "_" + repo.name());
         final var repoUrl = repoGitUrl(repo);
         return withGitRepo(repoGitDirectory, repoUrl);
     }
 
     private Mono<Repo> withCommonGitRepo(final Snapshot snapshot) {
-        return withCommonGitRepo(snapshot.getRepo());
+        return withCommonGitRepo(snapshot.repo());
     }
 
     private Mono<Repo> withProjectGitRepo(final GithubRepo projectRepo) {
-        final var projectGitDirectory = Path.of(projectRepo.getName());
+        final var projectGitDirectory = Path.of(projectRepo.name());
         final var projectRepoUrl = repoGitUrl(projectRepo);
         return withGitRepo(projectGitDirectory, projectRepoUrl);
     }
@@ -144,10 +144,10 @@ public final class GitCodeLoader implements CodeLoader {
     }
 
     private Mono<Repo> addOrUpdateRemotes(final Repo repo, final Snapshot base, final Snapshot head) {
-        final var baseRemote = base.getRepo().getOwner().getLogin();
-        final var headRemote = head.getRepo().getOwner().getLogin();
-        final var baseUrl = repoGitUrl(base.getRepo());
-        final var headUrl = repoGitUrl(head.getRepo());
+        final var baseRemote = base.repo().owner().login();
+        final var headRemote = head.repo().owner().login();
+        final var baseUrl = repoGitUrl(base.repo());
+        final var headUrl = repoGitUrl(head.repo());
         return Mono
                 .fromFuture(repo.remote())
                 .flatMap(remotesPresent -> Mono
@@ -159,8 +159,8 @@ public final class GitCodeLoader implements CodeLoader {
     }
 
     private Mono<Repo> addOrUpdateRemote(final Repo repo, final Snapshot remote) {
-        final var url = repoGitUrl(remote.getRepo());
-        final var name = remote.getRepo().getOwner().getLogin();
+        final var url = repoGitUrl(remote.repo());
+        final var name = remote.repo().owner().login();
         return Mono
                 .fromFuture(repo.remote())
                 .flatMap(remotesPresent -> addOrUpdateRemote(repo, url, name, remotesPresent));
@@ -179,7 +179,7 @@ public final class GitCodeLoader implements CodeLoader {
                                                       final int findRenamesMinSimilarityIndex,
                                                       final FileFilter filter) {
         return Mono
-                .fromFuture(repo.diff(base.getSha(), head.getSha(), findRenamesMinSimilarityIndex))
+                .fromFuture(repo.diff(base.sha(), head.sha(), findRenamesMinSimilarityIndex))
                 .map(diffEntries -> diffEntries
                         .stream()
                         .filter(entry -> entry.passes(filter))
@@ -203,26 +203,26 @@ public final class GitCodeLoader implements CodeLoader {
                             if (diffEntry instanceof Addition addition) {
                                 return DiffEntry.of(
                                         FileEntity.absent(base),
-                                        new FileEntity<>(head, addition.getHead().getName(), files.get(addition.getHead()))
+                                        new FileEntity<>(head, addition.head().name(), files.get(addition.head()))
                                 );
                             }
                             if (diffEntry instanceof Deletion deletion) {
                                 return DiffEntry.of(
-                                        new FileEntity<>(base, deletion.getBase().getName(), files.get(deletion.getBase())),
+                                        new FileEntity<>(base, deletion.base().name(), files.get(deletion.base())),
                                         FileEntity.absent(head)
                                 );
                             }
                             if (diffEntry instanceof Modification modification) {
                                 return DiffEntry.of(
-                                        new FileEntity<>(base, modification.getBase().getName(), files.get(modification.getBase())),
-                                        new FileEntity<>(head, modification.getHead().getName(), files.get(modification.getHead()))
+                                        new FileEntity<>(base, modification.base().name(), files.get(modification.base())),
+                                        new FileEntity<>(head, modification.head().name(), files.get(modification.head()))
                                 );
                             }
                             if (diffEntry instanceof Renaming renaming) {
                                 return new DiffEntry<>(
-                                        new FileEntity<>(base, renaming.getBase().getName(), files.get(renaming.getBase())),
-                                        new FileEntity<>(head, renaming.getHead().getName(), files.get(renaming.getHead())),
-                                        renaming.getSimilarityIndex()
+                                        new FileEntity<>(base, renaming.base().name(), files.get(renaming.base())),
+                                        new FileEntity<>(head, renaming.head().name(), files.get(renaming.head())),
+                                        renaming.similarityIndex()
                                 );
                             }
 
@@ -233,21 +233,21 @@ public final class GitCodeLoader implements CodeLoader {
     private static List<Snippet> convertSnippets(final List<GitFile> files, final List<SnippetMarker> markers) {
         final var nameToFileMap = files
                 .stream()
-                .collect(toMap(GitFile::getName, Lambda.identity()));
+                .collect(toMap(GitFile::name, Lambda.identity()));
         return markers
                 .stream()
                 .map(marker -> {
-                    final var file = nameToFileMap.get(marker.getFilename());
+                    final var file = nameToFileMap.get(marker.filename());
                     if (file == null) {
                         return null;
                     }
-                    return Snippet.of(file, marker.getFromLine(), marker.getToLine());
+                    return Snippet.of(file, marker.fromLine(), marker.toLine());
                 })
                 .filter(Objects::nonNull)
                 .collect(toList());
     }
 
     private static String repoGitUrl(final GithubRepo repo) {
-        return GITHUB_BASE_URL + repo.getOwner().getLogin() + "/" + repo.getName() + GIT_EXTENSION;
+        return GITHUB_BASE_URL + repo.owner().login() + "/" + repo.name() + GIT_EXTENSION;
     }
 }

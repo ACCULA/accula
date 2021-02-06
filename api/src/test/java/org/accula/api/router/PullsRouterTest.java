@@ -51,7 +51,7 @@ class PullsRouterTest {
         Mockito.when(repository.findPrevious(Mockito.anyLong(), Mockito.anyInt(), Mockito.anyLong()))
                 .thenReturn(Flux.fromIterable(Collections.emptyList()));
 
-        client.get().uri("/api/projects/{projectId}/pulls/{pullNumber}", STUB_PULL.getProjectId(), STUB_PULL.getNumber())
+        client.get().uri("/api/projects/{projectId}/pulls/{pullNumber}", STUB_PULL.projectId(), STUB_PULL.number())
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(PullDto.class).isEqualTo(ModelToDtoConverter.convert(STUB_PULL, Collections.emptyList()));
@@ -59,7 +59,7 @@ class PullsRouterTest {
 
     @Test
     void testGetBadRequest() {
-        client.get().uri("/api/projects/{projectId}/pulls/notANumber", STUB_PULL.getProjectId())
+        client.get().uri("/api/projects/{projectId}/pulls/notANumber", STUB_PULL.projectId())
                 .exchange()
                 .expectStatus().isBadRequest()
                 .expectBody(Map.class).isEqualTo(Map.of("code", "BAD_REQUEST"));
@@ -70,7 +70,7 @@ class PullsRouterTest {
         Mockito.when(repository.findByNumber(Mockito.anyLong(), Mockito.anyInt()))
                 .thenReturn(Mono.empty());
 
-        client.get().uri("/api/projects/{projectId}/pulls/{pullNumber}", STUB_PULL.getProjectId(), STUB_PULL.getNumber())
+        client.get().uri("/api/projects/{projectId}/pulls/{pullNumber}", STUB_PULL.projectId(), STUB_PULL.number())
                 .exchange()
                 .expectStatus().isNotFound()
                 .expectBody(Map.class).isEqualTo(Map.of("code", "NOT_FOUND"));
@@ -81,7 +81,7 @@ class PullsRouterTest {
         Mockito.when(repository.findByProjectId(Mockito.anyLong()))
                 .thenReturn(Flux.just(STUB_PULL));
 
-        client.get().uri("/api/projects/{projectId}/pulls", STUB_PULL.getProjectId())
+        client.get().uri("/api/projects/{projectId}/pulls", STUB_PULL.projectId())
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(ShortPullDto[].class).isEqualTo(ModelToDtoConverter.convertShort(List.of(STUB_PULL)).toArray(new ShortPullDto[0]));
@@ -92,7 +92,7 @@ class PullsRouterTest {
         Mockito.when(repository.findByProjectId(Mockito.anyLong()))
                 .thenReturn(Flux.empty());
 
-        client.get().uri("/api/projects/{projectId}/pulls", STUB_PULL.getProjectId())
+        client.get().uri("/api/projects/{projectId}/pulls", STUB_PULL.projectId())
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(List.class).isEqualTo(Collections.emptyList());

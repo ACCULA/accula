@@ -101,15 +101,15 @@ public class WebSecurityConfig {
     @Bean
     public Jwt jwt() {
         return new Jwt(
-                EcKeys.privateKey(jwtProperties.getSignature().getPrivateKey()),
-                EcKeys.publicKey(jwtProperties.getSignature().getPublicKey()),
-                jwtProperties.getIssuer()
+                EcKeys.privateKey(jwtProperties.signature().privateKey()),
+                EcKeys.publicKey(jwtProperties.signature().publicKey()),
+                jwtProperties.issuer()
         );
     }
 
     @Bean
     public CookieRefreshTokenHelper cookieRefreshTokenHelper() {
-        return new CookieRefreshTokenHelper(jwtProperties.getRefreshTokenEndpointPath());
+        return new CookieRefreshTokenHelper(jwtProperties.refreshTokenEndpointPath());
     }
 
     @Bean
@@ -118,8 +118,8 @@ public class WebSecurityConfig {
             final CookieRefreshTokenHelper cookieRefreshTokenHelper) {
         return new JwtAccessTokenResponseProducer(
                 jwt,
-                jwtProperties.getExpiresIn().getAccess(),
-                jwtProperties.getExpiresIn().getRefresh(),
+                jwtProperties.expiresIn().access(),
+                jwtProperties.expiresIn().refresh(),
                 cookieRefreshTokenHelper,
                 webUrl
         );
@@ -135,7 +135,7 @@ public class WebSecurityConfig {
         return new OAuth2LoginSuccessHandler(
                 accessTokenResponseProducer,
                 jwt,
-                jwtProperties.getExpiresIn().getRefresh(),
+                jwtProperties.expiresIn().refresh(),
                 authorizedClientService,
                 users,
                 refreshTokens
@@ -175,11 +175,11 @@ public class WebSecurityConfig {
                                       final RefreshTokenRepo refreshTokens,
                                       final CookieRefreshTokenHelper cookieRefreshTokenHelper) {
         return new JwtRefreshFilter(
-                pathMatchers(jwtProperties.getRefreshTokenEndpointPath()),
+                pathMatchers(jwtProperties.refreshTokenEndpointPath()),
                 cookieRefreshTokenHelper,
                 jwtAccessTokenResponseProducer,
                 jwt,
-                jwtProperties.getExpiresIn().getRefresh(),
+                jwtProperties.expiresIn().refresh(),
                 refreshTokens,
                 webUrl
         );

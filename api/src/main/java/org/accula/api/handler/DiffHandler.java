@@ -74,12 +74,12 @@ public final class DiffHandler {
         final var pullMono = pullRepo
                 .findByNumber(projectId, pullNumber)
                 .cache();
-        final var base = pullMono.map(Pull::getBase);
-        final var head = pullMono.map(Pull::getHead);
+        final var base = pullMono.map(Pull::base);
+        final var head = pullMono.map(Pull::head);
         final var minSimilarityIndex = projectRepo
                 .confById(projectId)
                 .switchIfEmpty(Mono.error(Http4xxException.notFound()))
-                .map(Project.Conf::getFileMinSimilarityIndex);
+                .map(Project.Conf::fileMinSimilarityIndex);
 
         final var diff = Mono
                 .zip(base, head, minSimilarityIndex)
@@ -92,19 +92,19 @@ public final class DiffHandler {
         final var basePullSnapshot = pullRepo
                 .findByNumber(projectId, basePullNumber)
                 .switchIfEmpty(Mono.error(Http4xxException.notFound()))
-                .map(Pull::getHead);
+                .map(Pull::head);
         final var headPull = pullRepo
                 .findByNumber(projectId, headPullNumber)
                 .switchIfEmpty(Mono.error(Http4xxException.notFound()))
                 .cache();
         final var headPullSnapshot = headPull
-                .map(Pull::getHead);
+                .map(Pull::head);
         final var projectGithubRepo = headPull
-                .map(pull -> pull.getBase().getRepo());
+                .map(pull -> pull.base().repo());
         final var minSimilarityIndex = projectRepo
                 .confById(projectId)
                 .switchIfEmpty(Mono.error(Http4xxException.notFound()))
-                .map(Project.Conf::getFileMinSimilarityIndex);
+                .map(Project.Conf::fileMinSimilarityIndex);
 
         final var diff = Mono
                 .zip(projectGithubRepo, basePullSnapshot, headPullSnapshot, minSimilarityIndex)
@@ -118,13 +118,13 @@ public final class DiffHandler {
     }
 
     private static DiffDto toDto(final DiffEntry<Snapshot> diff) {
-        final var base = diff.getBase();
-        final var head = diff.getHead();
+        final var base = diff.base();
+        final var head = diff.head();
         return DiffDto.builder()
-                .baseFilename(base.getName())
-                .baseContent(encode(base.getContent()))
-                .headFilename(head.getName())
-                .headContent(encode(head.getContent()))
+                .baseFilename(base.name())
+                .baseContent(encode(base.content()))
+                .headFilename(head.name())
+                .headContent(encode(head.content()))
                 .build();
     }
 

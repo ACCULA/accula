@@ -34,9 +34,9 @@ public final class SnapshotRepoImpl implements SnapshotRepo, ConnectionProvidedR
                     ON CONFLICT (sha, repo_id) DO NOTHING
                     """);
             statement.bind(snapshots, commitSnapshot -> new Object[]{
-                    commitSnapshot.getSha(),
-                    commitSnapshot.getRepo().getId(),
-                    commitSnapshot.getBranch()
+                    commitSnapshot.sha(),
+                    commitSnapshot.repo().id(),
+                    commitSnapshot.branch()
             });
 
             return statement
@@ -52,7 +52,7 @@ public final class SnapshotRepoImpl implements SnapshotRepo, ConnectionProvidedR
             return Flux.empty();
         }
 
-        if (snapshots.stream().anyMatch(commitSnapshot -> commitSnapshot.getPullId() == null)) {
+        if (snapshots.stream().anyMatch(commitSnapshot -> commitSnapshot.pullId() == null)) {
             return Flux.empty();
         }
 
@@ -63,9 +63,9 @@ public final class SnapshotRepoImpl implements SnapshotRepo, ConnectionProvidedR
                     ON CONFLICT (snapshot_sha, snapshot_repo_id, pull_id) DO NOTHING
                     """);
             statement.bind(snapshots, commitSnapshot -> new Object[]{
-                    commitSnapshot.getSha(),
-                    commitSnapshot.getRepo().getId(),
-                    commitSnapshot.getPullId()
+                    commitSnapshot.sha(),
+                    commitSnapshot.repo().id(),
+                    commitSnapshot.pullId()
             });
 
             return statement
@@ -107,15 +107,15 @@ public final class SnapshotRepoImpl implements SnapshotRepo, ConnectionProvidedR
                            JOIN repo_github repo
                                ON snap.repo_id = repo.id
                            JOIN user_github repo_owner
-                               ON repo.owner_id = repo_owner.id 
+                               ON repo.owner_id = repo_owner.id
                         WHERE snap.sha = $1 AND snap.repo_id = $2
                         """);
     }
 
     private static PostgresqlStatement applySelectBindings(final Snapshot.Id id, final PostgresqlStatement statement) {
         return statement
-                .bind("$1", id.getSha())
-                .bind("$2", id.getRepoId());
+                .bind("$1", id.sha())
+                .bind("$2", id.repoId());
     }
 
     private Snapshot convert(final Row row) {

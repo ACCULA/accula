@@ -1,6 +1,6 @@
 plugins {
-    id("org.springframework.boot") version "2.4.1"
-    id("io.spring.dependency-management") version "1.0.10.RELEASE"
+    id("org.springframework.boot") version "2.4.2"
+    id("io.spring.dependency-management") version "1.0.11.RELEASE"
     id("net.bytebuddy.byte-buddy-gradle-plugin") version "1.10.14"
 }
 
@@ -33,7 +33,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
     implementation("org.springframework.security:spring-security-oauth2-client")
 
-    implementation("com.auth0:java-jwt:3.12.0")
+    implementation("com.auth0:java-jwt:3.12.1")
 
     implementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
     implementation("io.r2dbc:r2dbc-postgresql")

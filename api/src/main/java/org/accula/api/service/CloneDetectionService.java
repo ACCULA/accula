@@ -45,10 +45,10 @@ public final class CloneDetectionService {
     }
 
     public Flux<Clone> detectClones(final Pull pull) {
-        final var targetFiles = loader.loadFiles(pull.getHead(), FileFilter.SRC_JAVA);
+        final var targetFiles = loader.loadFiles(pull.head(), FileFilter.SRC_JAVA);
 
-        final var clones = cloneDetector(pull.getProjectId())
-                .findClones(pull.getHead(), targetFiles)
+        final var clones = cloneDetector(pull.projectId())
+                .findClones(pull.head(), targetFiles)
                 .distinct()
                 .map(TupleUtils.function(this::convert));
 
@@ -61,24 +61,24 @@ public final class CloneDetectionService {
     public Mono<Void> fillSuffixTree() {
         return projectRepo
                 .getTop(100)
-                .flatMap(project -> pullRepo.findByProjectId(project.getId()))
-                .groupBy(Pull::getProjectId)
+                .flatMap(project -> pullRepo.findByProjectId(project.id()))
+                .groupBy(Pull::projectId)
                 .flatMap(projectPulls -> cloneDetector(Objects.requireNonNull(projectPulls.key()))
                         .fill(projectPulls
-                                .flatMap(pull -> loader.loadFiles(pull.getHead(), FileFilter.SRC_JAVA))))
+                                .flatMap(pull -> loader.loadFiles(pull.head(), FileFilter.SRC_JAVA))))
                 .then();
     }
 
     private Clone convert(final CodeSnippet target, final CodeSnippet source) {
         return Clone.builder()
-                .targetSnapshot(target.getSnapshot())
-                .targetFile(target.getFile())
-                .targetFromLine(target.getFromLine())
-                .targetToLine(target.getToLine())
-                .sourceSnapshot(source.getSnapshot())
-                .sourceFile(source.getFile())
-                .sourceFromLine(source.getFromLine())
-                .sourceToLine(source.getToLine())
+                .targetSnapshot(target.snapshot())
+                .targetFile(target.file())
+                .targetFromLine(target.fromLine())
+                .targetToLine(target.toLine())
+                .sourceSnapshot(source.snapshot())
+                .sourceFile(source.file())
+                .sourceFromLine(source.fromLine())
+                .sourceToLine(source.toLine())
                 .build();
     }
 
@@ -92,8 +92,8 @@ public final class CloneDetectionService {
                 .switchIfEmpty(projectRepo
                         .confById(projectId)
                         .map(conf -> CloneDetector.Config.builder()
-                                .cloneMinTokenCount(conf.getCloneMinTokenCount())
-                                .filter(FileFilter.SRC_JAVA.and(FileFilter.exclude(conf.getExcludedFiles())))
+                                .cloneMinTokenCount(conf.cloneMinTokenCount())
+                                .filter(FileFilter.SRC_JAVA.and(FileFilter.exclude(conf.excludedFiles())))
                                 .build()))
                 .doOnNext(conf -> cloneDetectorConfigs.put(projectId, conf));
     }
