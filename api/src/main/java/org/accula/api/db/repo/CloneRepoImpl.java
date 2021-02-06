@@ -33,36 +33,36 @@ public final class CloneRepoImpl implements CloneRepo, ConnectionProvidedRepo {
             final var cloneList = clones instanceof ArrayList ? (ArrayList<Clone>) clones : new ArrayList<>(clones);
 
             final var statement = BatchStatement.of(connection, """ 
-                    INSERT INTO clone (target_commit_sha, 
-                                       target_repo_id, 
-                                       target_file, 
-                                       target_from_line, 
-                                       target_to_line, 
-                                       source_commit_sha, 
-                                       source_repo_id, 
-                                       source_file, 
-                                       source_from_line, 
-                                       source_to_line)  
-                    VALUES ($collection) 
+                    INSERT INTO clone (target_commit_sha,
+                                       target_repo_id,
+                                       target_file,
+                                       target_from_line,
+                                       target_to_line,
+                                       source_commit_sha,
+                                       source_repo_id,
+                                       source_file,
+                                       source_from_line,
+                                       source_to_line)
+                    VALUES ($collection)
                     RETURNING id
                     """);
             statement.bind(cloneList, clone -> new Object[]{
-                    clone.getTargetSnapshot().getSha(),
-                    clone.getTargetSnapshot().getRepo().getId(),
-                    clone.getTargetFile(),
-                    clone.getTargetFromLine(),
-                    clone.getTargetToLine(),
-                    clone.getSourceSnapshot().getSha(),
-                    clone.getSourceSnapshot().getRepo().getId(),
-                    clone.getSourceFile(),
-                    clone.getSourceFromLine(),
-                    clone.getSourceToLine()
+                    clone.targetSnapshot().sha(),
+                    clone.targetSnapshot().repo().id(),
+                    clone.targetFile(),
+                    clone.targetFromLine(),
+                    clone.targetToLine(),
+                    clone.sourceSnapshot().sha(),
+                    clone.sourceSnapshot().repo().id(),
+                    clone.sourceFile(),
+                    clone.sourceFromLine(),
+                    clone.sourceToLine()
             });
 
             return statement
                     .execute()
                     .flatMap(result -> ConnectionProvidedRepo.columnFlux(result, "id", Long.class))
-                    .zipWithIterable(cloneList, (id, clone) -> clone.toBuilder().id(id).build());
+                    .zipWithIterable(cloneList, (id, clone) -> clone.withId(id));
         });
     }
 
@@ -141,7 +141,7 @@ public final class CloneRepoImpl implements CloneRepo, ConnectionProvidedRepo {
                         WHERE id IN (SELECT clone.id
                                      FROM pull
                                         JOIN clone
-                                            ON pull.head_snapshot_sha = clone.target_commit_sha 
+                                            ON pull.head_snapshot_sha = clone.target_commit_sha
                                                 AND pull.head_snapshot_repo_id = clone.target_repo_id
                                      WHERE pull.project_id = $1 AND pull.number = $2)
                         """))

@@ -3,6 +3,7 @@ package org.accula.api.db.model;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
+import lombok.With;
 
 import java.util.Collections;
 import java.util.List;
@@ -10,7 +11,7 @@ import java.util.List;
 /**
  * @author Anton Lamtev
  */
-@Builder(toBuilder = true)
+@Builder
 @Value
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Project {
@@ -30,7 +31,8 @@ public class Project {
         ;
     }
 
-    @Builder(toBuilder = true)
+    @Builder
+    @With
     @Value
     public static class Conf {
         public static final Conf DEFAULT = builder()

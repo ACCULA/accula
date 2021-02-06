@@ -1,21 +1,19 @@
 package org.accula.api.handler.dto;
 
-import lombok.AllArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import lombok.Builder;
-import lombok.NoArgsConstructor;
 import lombok.Value;
 
 import java.time.Instant;
 
-import static lombok.AccessLevel.PRIVATE;
+import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
 
 /**
  * @author Vadim Dyachkov
  */
+@JsonAutoDetect(fieldVisibility = ANY)
 @Builder
 @Value
-@AllArgsConstructor
-@NoArgsConstructor(force = true, access = PRIVATE)
 public class ShortPullDto {
     Long projectId;
     Integer number;

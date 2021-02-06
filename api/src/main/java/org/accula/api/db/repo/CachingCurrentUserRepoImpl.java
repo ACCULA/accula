@@ -26,10 +26,10 @@ public final class CachingCurrentUserRepoImpl implements CurrentUserRepo {
         return CurrentAuthorizedUserProvider
                 .get()
                 .flatMap(authorizedUser -> Mono
-                        .justOrEmpty(cache.get(authorizedUser.getId()))
+                        .justOrEmpty(cache.get(authorizedUser.id()))
                         .switchIfEmpty(userRepo
-                                .findById(authorizedUser.getId())
-                                .doOnNext(user -> cache.put(authorizedUser.getId(), user))));
+                                .findById(authorizedUser.id())
+                                .doOnNext(user -> cache.put(authorizedUser.id(), user))));
     }
 
     private void evict(final Long userId) {

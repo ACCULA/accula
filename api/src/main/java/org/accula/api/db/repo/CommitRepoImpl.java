@@ -28,14 +28,14 @@ public final class CommitRepoImpl implements CommitRepo, ConnectionProvidedRepo 
             final var statement = BatchStatement.of(connection, """
                     INSERT INTO commit (sha, is_merge, author_name, author_email, date)
                     VALUES ($collection)
-                    ON CONFLICT (sha) DO NOTHING 
+                    ON CONFLICT (sha) DO NOTHING
                     """);
             statement.bind(commits, commit -> new Object[]{
-                    commit.getSha(),
-                    commit.getIsMerge(),
-                    commit.getAuthorName(),
-                    commit.getAuthorEmail(),
-                    commit.getDate()
+                    commit.sha(),
+                    commit.isMerge(),
+                    commit.authorName(),
+                    commit.authorEmail(),
+                    commit.date()
             });
 
             return statement

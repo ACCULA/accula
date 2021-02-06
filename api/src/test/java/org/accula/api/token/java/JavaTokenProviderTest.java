@@ -45,7 +45,7 @@ class JavaTokenProviderTest {
                     return methods.stream()
                             .filter(method ->
                                     method.stream()
-                                            .allMatch(token -> token.getRef().equals("ref3")))
+                                            .allMatch(token -> token.ref().equals("ref3")))
                             .allMatch(Collection::isEmpty);
                 })
                 .verifyComplete();

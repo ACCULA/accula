@@ -12,7 +12,7 @@ public class Snippet implements Identifiable {
     int toLine;
 
     @Override
-    public String getId() {
-        return file.getId();
+    public String id() {
+        return file.id();
     }
 }

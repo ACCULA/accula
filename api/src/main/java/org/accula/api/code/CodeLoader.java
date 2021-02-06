@@ -33,7 +33,7 @@ public interface CodeLoader {
     /**
      * Loads diff between two commits as {@link DiffEntry} of file entities,
      * each representing two corresponding files in {@code base} and {@code head} commit snapshots.
-     * If a file was added in {@code head}, then {@link FileEntity#getName} and {@link FileEntity#getContent}
+     * If a file was added in {@code head}, then {@link FileEntity#name()} and {@link FileEntity#content()}
      * of the first element of the tuple return {@code null}.
      * If file was removed in {@code head}, then second tuple element values are equal to {@code null}.
      */
@@ -44,7 +44,7 @@ public interface CodeLoader {
     /**
      * Loads diff between two commits as {@link DiffEntry} of file entities that satisfy the filter,
      * each representing two corresponding files in {@code base} and {@code head} commit snapshots.
-     * If a file was added in {@code head}, then {@link FileEntity#getName} and {@link FileEntity#getContent}
+     * If a file was added in {@code head}, then {@link FileEntity#name()} and {@link FileEntity#content()}
      * of the first element of the tuple return {@code null}.
      * If file was removed in {@code head}, then second tuple element values are equal to {@code null}.
      */

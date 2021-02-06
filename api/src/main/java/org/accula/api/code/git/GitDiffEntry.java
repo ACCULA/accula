@@ -48,7 +48,7 @@ public interface GitDiffEntry {
 
         @Override
         public <F extends Predicate<String>> boolean passes(final F filter) {
-            return filter.test(base.getName());
+            return filter.test(base.name());
         }
     }
 
@@ -64,7 +64,7 @@ public interface GitDiffEntry {
 
         @Override
         public <F extends Predicate<String>> boolean passes(final F filter) {
-            return filter.test(head.getName());
+            return filter.test(head.name());
         }
     }
 
@@ -80,7 +80,7 @@ public interface GitDiffEntry {
 
         @Override
         public <F extends Predicate<String>> boolean passes(final F filter) {
-            return filter.test(base.getName());
+            return filter.test(base.name());
         }
     }
 
@@ -98,7 +98,7 @@ public interface GitDiffEntry {
 
         @Override
         public <F extends Predicate<String>> boolean passes(final F filter) {
-            return filter.test(base.getName()) || filter.test(head.getName());
+            return filter.test(base.name()) || filter.test(head.name());
         }
     }
 }

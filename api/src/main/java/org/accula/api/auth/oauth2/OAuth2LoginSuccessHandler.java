@@ -55,12 +55,12 @@ public final class OAuth2LoginSuccessHandler implements ServerAuthenticationSucc
                     .map(authorizedClient -> authorizedClient.getAccessToken().getTokenValue())
                     .flatMap(githubAccessToken -> userRepo.upsert(githubUser, githubAccessToken))
                     .flatMap(user -> {
-                        final var userId = user.getId();
+                        final var userId = user.id();
                         final var refreshJwtDetails = jwt.generate(userId.toString(), refreshExpiresIn);
-                        final var refreshToken = refreshJwtDetails.getToken();
+                        final var refreshToken = refreshJwtDetails.token();
 
                         return refreshTokenRepo
-                                .save(RefreshToken.of(userId, refreshToken, refreshJwtDetails.getExpirationDate()))
+                                .save(RefreshToken.of(userId, refreshToken, refreshJwtDetails.expirationDate()))
                                 .thenReturn(userId)
                                 .zipWith(Mono.just(refreshToken));
                     })

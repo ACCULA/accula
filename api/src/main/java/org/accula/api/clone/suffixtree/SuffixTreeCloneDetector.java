@@ -33,6 +33,6 @@ public final class SuffixTreeCloneDetector<Token extends Comparable<Token>, Ref>
                 .dfs(suffixTree.getRoot(), SuffixTreeUtils::terminalNodes)
                 .filter(SuffixTreeUtils::isCloneNode)
                 .map(CloneClass<Ref>::new)
-                .filter(cloneClass -> !cloneClass.getClones().isEmpty());
+                .filter(cloneClass -> !cloneClass.clones().isEmpty());
     }
 }

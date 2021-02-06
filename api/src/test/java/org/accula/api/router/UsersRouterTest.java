@@ -1,13 +1,20 @@
 package org.accula.api.router;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.SneakyThrows;
+import lombok.Value;
 import org.accula.api.converter.ModelToDtoConverter;
 import org.accula.api.db.model.GithubUser;
 import org.accula.api.db.model.User;
 import org.accula.api.db.repo.UserRepo;
 import org.accula.api.handler.UsersHandler;
+import org.accula.api.handler.dto.UserDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -29,7 +36,7 @@ public class UsersRouterTest {
     static final GithubUser GITHUB_USER = new GithubUser(1L, "login", "name", "ava", false);
     static final User STUB_USER = new User(1L, "token", GITHUB_USER);
     private static final ResponseUser RESPONSE_USER =
-            new ResponseUser(STUB_USER.getId(), GITHUB_USER.getLogin(), GITHUB_USER.getName());
+            new ResponseUser(STUB_USER.id(), GITHUB_USER.login(), GITHUB_USER.name());
 
     @MockBean
     private UserRepo repository;
@@ -44,6 +51,7 @@ public class UsersRouterTest {
                 .build();
     }
 
+    @SneakyThrows
     @Test
     public void testGetUserByIdOk() {
         Mockito.when(repository.findById(Mockito.anyLong()))
@@ -72,9 +80,8 @@ public class UsersRouterTest {
                 .expectStatus().isNotFound();
     }
 
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
+    @JsonInclude
+    @Value
     private static class ResponseUser {
         Long id;
         String login;

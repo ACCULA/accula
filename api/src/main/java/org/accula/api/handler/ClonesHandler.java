@@ -82,7 +82,7 @@ public final class ClonesHandler {
 
     private <T> Flux<T> doIfCurrentUserHasAdminPermissionInProject(final long projectId, final Flux<T> action) {
         return currentUserRepo
-                .get(User::getId)
+                .get(User::id)
                 .filterWhen(currentUserId -> projectRepo.hasAdmin(projectId, currentUserId))
                 .flatMapMany(currentUserId -> action);
     }
@@ -90,11 +90,11 @@ public final class ClonesHandler {
     private Mono<ServerResponse> getLastCommitClones(final long projectId, final int pullNumber) {
         final var pullHead = pullRepo
                 .findByNumber(projectId, pullNumber)
-                .map(Pull::getHead);
+                .map(Pull::head);
 
         final var clones = pullHead
                 .flatMapMany(head -> cloneRepo
-                        .findByTargetCommitSnapshotSha(head.getSha()))
+                        .findByTargetCommitSnapshotSha(head.sha()))
                 .cache();
 
         return toResponse(clones, projectId, pullNumber);
@@ -108,20 +108,20 @@ public final class ClonesHandler {
 
         final var targetFileSnippets = clones
                 .collect(SnippetContainer::new, (container, clone) -> {
-                    container.markers.add(SnippetMarker.of(clone.getTargetFile(), clone.getTargetFromLine(), clone.getTargetToLine()));
-                    container.snapshot = clone.getTargetSnapshot();
+                    container.markers.add(SnippetMarker.of(clone.targetFile(), clone.targetFromLine(), clone.targetToLine()));
+                    container.snapshot = clone.targetSnapshot();
                 })
                 .flatMapMany(container -> codeLoader.loadSnippets(container.snapshot, container.markers));
 
         // TODO: Think out how to read files in a batch mode without losing an original order
         final var sourceFileSnippets = clones
                 .map(clone -> Tuples.of(
-                        clone.getSourceSnapshot(),
-                        List.of(SnippetMarker.of(clone.getSourceFile(), clone.getSourceFromLine(), clone.getSourceToLine()))))
+                        clone.sourceSnapshot(),
+                        List.of(SnippetMarker.of(clone.sourceFile(), clone.sourceFromLine(), clone.sourceToLine()))))
                 .flatMapSequential(TupleUtils.function(codeLoader::loadSnippets));
 
         final var sourcePullNumbers = clones
-                .map(clone -> Objects.requireNonNull(clone.getSourceSnapshot().getPullId()))
+                .map(clone -> Objects.requireNonNull(clone.sourceSnapshot().pullId()))
                 .collectList()
                 .flatMapMany(pullRepo::numbersByIds);
 
@@ -141,30 +141,30 @@ public final class ClonesHandler {
                                        final Integer sourcePullNumber,
                                        final long projectId,
                                        final int targetPullNumber) {
-        final var target = codeSnippetWith(targetFile.getRef(), Objects.requireNonNull(targetFile.getContent()))
+        final var target = codeSnippetWith(targetFile.ref(), Objects.requireNonNull(targetFile.content()))
                 .projectId(projectId)
                 .pullNumber(targetPullNumber)
-                .file(clone.getTargetFile())
-                .fromLine(clone.getTargetFromLine())
-                .toLine(clone.getTargetToLine())
+                .file(clone.targetFile())
+                .fromLine(clone.targetFromLine())
+                .toLine(clone.targetToLine())
                 .build();
 
-        final var source = codeSnippetWith(sourceFile.getRef(), Objects.requireNonNull(sourceFile.getContent()))
+        final var source = codeSnippetWith(sourceFile.ref(), Objects.requireNonNull(sourceFile.content()))
                 .projectId(projectId)
                 .pullNumber(sourcePullNumber)
-                .file(clone.getSourceFile())
-                .fromLine(clone.getSourceFromLine())
-                .toLine(clone.getSourceToLine())
+                .file(clone.sourceFile())
+                .fromLine(clone.sourceFromLine())
+                .toLine(clone.sourceToLine())
                 .build();
 
-        return new CloneDto(clone.getId(), target, source);
+        return new CloneDto(clone.id(), target, source);
     }
 
     private static FlatCodeSnippetBuilder codeSnippetWith(final Snapshot snapshot, final String content) {
         return CloneDto.FlatCodeSnippet.builder()
-                .owner(snapshot.getRepo().getOwner().getLogin())
-                .repo(snapshot.getRepo().getName())
-                .sha(snapshot.getSha())
+                .owner(snapshot.repo().owner().login())
+                .repo(snapshot.repo().name())
+                .sha(snapshot.sha())
                 .content(base64.encodeToString(content.getBytes(UTF_8)));
     }
 }

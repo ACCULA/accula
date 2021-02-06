@@ -38,10 +38,10 @@ public final class GithubUserRepoImpl implements GithubUserRepo, ConnectionProvi
                            avatar = excluded.avatar
                     """);
             statement.bind(users, user -> new Object[]{
-                    user.getId(),
-                    user.getLogin(),
-                    user.getName(),
-                    user.getAvatar(),
+                    user.id(),
+                    user.login(),
+                    user.name(),
+                    user.avatar(),
                     user.isOrganization()
             });
 

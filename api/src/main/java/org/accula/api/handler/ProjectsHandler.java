@@ -105,7 +105,7 @@ public final class ProjectsHandler {
 
     public Mono<ServerResponse> delete(final ServerRequest request) {
         return withProjectId(request)
-                .zipWith(currentUser.get(User::getId))
+                .zipWith(currentUser.get(User::id))
                 .flatMap(TupleUtils.function(projectRepo::delete))
                 .flatMap(Lambda.expandingWithArg(Responses::accepted))
                 .onErrorResume(ResponseConvertibleException::onErrorResume);
@@ -136,7 +136,7 @@ public final class ProjectsHandler {
                 .switchIfEmpty(Mono.error(Http4xxException.forbidden(NOT_ENOUGH_PERMISSIONS)))
                 .flatMap(projectRepo::findById)
                 .switchIfEmpty(Mono.error(Http4xxException.notFound()))
-                .map(Project::getGithubRepo)
+                .map(Project::githubRepo)
                 .flatMapMany(codeLoader::loadFilenames)
                 .collectList()
                 .flatMap(Responses::ok)
@@ -185,13 +185,13 @@ public final class ProjectsHandler {
             final var projectGithubRepo = GithubApiToModelConverter.convert(githubApiRepo);
 
             return projectRepo
-                    .notExists(projectGithubRepo.getId())
+                    .notExists(projectGithubRepo.id())
                     .filter(isEqual(TRUE))
                     .switchIfEmpty(Mono.error(CreateProjectException.alreadyExists()))
-                    .flatMap(ok -> githubUserRepo.upsert(projectGithubRepo.getOwner())
-                            .doOnError(e -> log.error("Error saving github user: {}", projectGithubRepo.getOwner(), e)))
+                    .flatMap(ok -> githubUserRepo.upsert(projectGithubRepo.owner())
+                            .doOnError(e -> log.error("Error saving github user: {}", projectGithubRepo.owner(), e)))
                     .flatMap(repoOwner -> projectRepo.upsert(projectGithubRepo, currentUser)
-                            .doOnError(e -> log.error("Error saving Project: {}-{}", projectGithubRepo.getOwner(), currentUser, e)))
+                            .doOnError(e -> log.error("Error saving Project: {}-{}", projectGithubRepo.owner(), currentUser, e)))
                     .transform(this::saveDefaultConf)
                     .map(ModelToDtoConverter::convert)
                     .doOnEach(ReactorPublishers.onNextWithContext(this::fetchPullsInBackground));
@@ -199,26 +199,26 @@ public final class ProjectsHandler {
     }
 
     private void fetchPullsInBackground(final ProjectDto project, final ContextView context) {
-        final var repoOwner = project.getRepoOwner();
-        final var repoName = project.getRepoName();
+        final var repoOwner = project.repoOwner();
+        final var repoName = project.repoName();
         githubClient.getRepositoryPulls(repoOwner, repoName, State.ALL, 100)
                 .collectList()
-                .flatMap(pulls -> projectService.init(project.getId(), pulls))
-                .then(projectRepo.updateState(project.getId(), Project.State.CREATED))
+                .flatMap(pulls -> projectService.init(project.id(), pulls))
+                .then(projectRepo.updateState(project.id(), Project.State.CREATED))
                 .contextWrite(context)
                 .subscribe();
     }
 
     private Mono<ProjectDto> createWebhook(final ProjectDto project) {
-        final var hook = GithubApiHook.onPullUpdates(webhookProperties.getUrl(), webhookProperties.getSecret());
+        final var hook = GithubApiHook.onPullUpdates(webhookProperties.url(), webhookProperties.secret());
         return githubClient
-                .createHook(project.getRepoOwner(), project.getRepoName(), hook)
+                .createHook(project.repoOwner(), project.repoName(), hook)
                 .thenReturn(project);
     }
 
     private static Tuple2<String, String> extractOwnerAndRepo(final CreateProjectDto requestBody) {
         final var pathSegments = UriComponentsBuilder
-                .fromUriString(requestBody.getGithubRepoUrl())
+                .fromUriString(requestBody.githubRepoUrl())
                 .build()
                 .getPathSegments();
         if (pathSegments.size() != 2) {
@@ -237,20 +237,20 @@ public final class ProjectsHandler {
 
     private Mono<Boolean> isCurrentUserAdmin(final Long projectId) {
         return currentUser
-                .get(User::getId)
+                .get(User::id)
                 .flatMap(currentUserId -> projectRepo.hasAdmin(projectId, currentUserId));
     }
 
     private Mono<List<Long>> githubRepoAdmins(final Project project) {
-        final var repo = project.getGithubRepo();
-        return githubClient.getRepoAdmins(repo.getOwner().getLogin(), repo.getName());
+        final var repo = project.githubRepo();
+        return githubClient.getRepoAdmins(repo.owner().login(), repo.name());
     }
 
     private Mono<Project> saveDefaultConf(final Mono<Project> projectMono) {
         return Mono.usingWhen(
                 projectMono,
                 Mono::just,
-                project -> projectRepo.upsertConf(project.getId(), Project.Conf.DEFAULT)
+                project -> projectRepo.upsertConf(project.id(), Project.Conf.DEFAULT)
         );
     }
 

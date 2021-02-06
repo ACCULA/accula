@@ -1,17 +1,15 @@
 package org.accula.api.handler.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import lombok.Value;
 
-import static lombok.AccessLevel.PRIVATE;
+import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
 
 /**
  * @author Anton Lamtev
  */
+@JsonAutoDetect(fieldVisibility = ANY)
 @Value
-@AllArgsConstructor
-@NoArgsConstructor(force = true, access = PRIVATE)
 public class GithubUserDto {
     String login;
     String avatar;

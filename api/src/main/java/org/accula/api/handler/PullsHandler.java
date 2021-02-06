@@ -46,7 +46,7 @@ public final class PullsHandler {
                             .findByNumber(projectId, pullNumber)
                             .switchIfEmpty(Mono.error(Http4xxException.notFound()))
                             .flatMap(pull -> Mono.just(pull)
-                                    .zipWith(pullRepo.findPrevious(projectId, pullNumber, pull.getAuthor().getId()).collectList())
+                                    .zipWith(pullRepo.findPrevious(projectId, pullNumber, pull.author().id()).collectList())
                                     .map(TupleUtils.function(ModelToDtoConverter::convert))
                                     .flatMap(Responses::ok));
                 })

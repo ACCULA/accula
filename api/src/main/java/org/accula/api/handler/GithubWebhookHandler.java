@@ -54,17 +54,17 @@ public final class GithubWebhookHandler {
     }
 
     private Mono<Void> processPayload(final GithubApiHookPayload payload) {
-        return switch (payload.getAction()) {
+        return switch (payload.action()) {
             case OPENED, SYNCHRONIZE -> updateProject(payload).transform(this::detectClones);
             case EDITED, CLOSED, REOPENED -> updateProject(payload).then();
         };
     }
 
     private Mono<Pull> updateProject(final GithubApiHookPayload payload) {
-        final var githubApiPull = payload.getPull();
+        final var githubApiPull = payload.pull();
 
         return projectRepo
-                .idByRepoId(payload.getRepo().getId())
+                .idByRepoId(payload.repo().id())
                 .flatMap(projectId -> projectService.update(projectId, githubApiPull));
     }
 

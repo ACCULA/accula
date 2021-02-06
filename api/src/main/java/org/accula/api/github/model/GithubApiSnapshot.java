@@ -1,18 +1,12 @@
 package org.accula.api.github.model;
 
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
 import lombok.Value;
 import org.jetbrains.annotations.Nullable;
-
-import static lombok.AccessLevel.PRIVATE;
 
 /**
  * @author Anton Lamtev
  */
 @Value
-@NoArgsConstructor(force = true, access = PRIVATE)
-@AllArgsConstructor
 public class GithubApiSnapshot {
     @Nullable
     String label;

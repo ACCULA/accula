@@ -6,8 +6,7 @@ import lombok.ToString;
 import lombok.Value;
 
 import java.util.List;
-
-import static java.util.stream.Collectors.toList;
+import java.util.stream.Collectors;
 
 /**
  * @author Anton Lamtev
@@ -17,18 +16,18 @@ public class CloneClass<Ref> {
     @ToString.Exclude
     Node node;
     @Getter(lazy = true)
-    int length = length();
+    int length = computeLength();
     @ToString.Exclude
     @Getter(lazy = true)
-    List<Clone<Ref>> clones = clones();
+    List<Clone<Ref>> clones = getClones();
 
-    private int length() {
+    private int computeLength() {
         return SuffixTreeUtils.parentEdges(node)
                 .mapToInt(SuffixTreeUtils::length)
                 .sum();
     }
 
-    private List<Clone<Ref>> clones() {
+    private List<Clone<Ref>> getClones() {
         return SuffixTreeUtils.terminalMap(node)
                 .entrySet()
                 .stream()
@@ -36,13 +35,13 @@ public class CloneClass<Ref> {
                     final var edge = entry.getKey();
                     final var offset = entry.getValue();
                     final var to = edge.getEnd() - offset;
-                    final var from = to - getLength() + 1;
+                    final var from = to - length() + 1;
                     return Clone.<Ref>builder()
                             .parent(this)
                             .end(SuffixTreeUtils.get(edge, to))
                             .start(SuffixTreeUtils.get(edge, from))
                             .build();
                 })
-                .collect(toList());
+                .collect(Collectors.toList());
     }
 }

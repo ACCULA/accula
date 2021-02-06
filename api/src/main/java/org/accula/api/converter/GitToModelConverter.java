@@ -12,11 +12,11 @@ public final class GitToModelConverter {
 
     public static Commit convert(final GitCommit commit) {
         return Commit.builder()
-                .sha(commit.getSha())
+                .sha(commit.sha())
                 .isMerge(commit.isMerge())
-                .authorName(commit.getAuthorName())
-                .authorEmail(commit.getAuthorEmail())
-                .date(commit.getDate())
+                .authorName(commit.authorName())
+                .authorEmail(commit.authorEmail())
+                .date(commit.date())
                 .build();
     }
 }

@@ -43,44 +43,44 @@ class CloneDetectorTest {
 
         var resultSet = Set.of(
                 Tuples.of(
-                        new CodeSnippet(commitSnapshot2, target2.getName(), 5, 19),
-                        new CodeSnippet(commitSnapshot1, source2.getName(), 5, 19)
+                        new CodeSnippet(commitSnapshot2, target2.name(), 5, 19),
+                        new CodeSnippet(commitSnapshot1, source2.name(), 5, 19)
                 ),
                 Tuples.of(
-                        new CodeSnippet(commitSnapshot2, target2.getName(), 7, 19),
-                        new CodeSnippet(commitSnapshot1, source2.getName(), 7, 19)
+                        new CodeSnippet(commitSnapshot2, target2.name(), 7, 19),
+                        new CodeSnippet(commitSnapshot1, source2.name(), 7, 19)
                 ),
                 Tuples.of(
-                        new CodeSnippet(commitSnapshot2, target2.getName(), 3, 19),
-                        new CodeSnippet(commitSnapshot1, source2.getName(), 3, 19)
+                        new CodeSnippet(commitSnapshot2, target2.name(), 3, 19),
+                        new CodeSnippet(commitSnapshot1, source2.name(), 3, 19)
                 ),
                 Tuples.of(
-                        new CodeSnippet(commitSnapshot2, target2.getName(), 10, 19),
-                        new CodeSnippet(commitSnapshot1, source2.getName(), 10, 19)
+                        new CodeSnippet(commitSnapshot2, target2.name(), 10, 19),
+                        new CodeSnippet(commitSnapshot1, source2.name(), 10, 19)
                 ),
                 Tuples.of(
-                        new CodeSnippet(commitSnapshot2, target2.getName(), 12, 19),
-                        new CodeSnippet(commitSnapshot1, source2.getName(), 12, 19)
+                        new CodeSnippet(commitSnapshot2, target2.name(), 12, 19),
+                        new CodeSnippet(commitSnapshot1, source2.name(), 12, 19)
                 ),
                 Tuples.of(
-                        new CodeSnippet(commitSnapshot2, target2.getName(), 14, 19),
-                        new CodeSnippet(commitSnapshot1, source2.getName(), 14, 19)
+                        new CodeSnippet(commitSnapshot2, target2.name(), 14, 19),
+                        new CodeSnippet(commitSnapshot1, source2.name(), 14, 19)
                 ),
                 Tuples.of(
-                        new CodeSnippet(commitSnapshot2, target2.getName(), 8, 19),
-                        new CodeSnippet(commitSnapshot1, source2.getName(), 8, 19)
+                        new CodeSnippet(commitSnapshot2, target2.name(), 8, 19),
+                        new CodeSnippet(commitSnapshot1, source2.name(), 8, 19)
                 ),
                 Tuples.of(
-                        new CodeSnippet(commitSnapshot2, target2.getName(), 16, 19),
-                        new CodeSnippet(commitSnapshot1, source2.getName(), 16, 19)
+                        new CodeSnippet(commitSnapshot2, target2.name(), 16, 19),
+                        new CodeSnippet(commitSnapshot1, source2.name(), 16, 19)
                 ),
                 Tuples.of(
-                        new CodeSnippet(commitSnapshot2, target1.getName(), 5, 6),
-                        new CodeSnippet(commitSnapshot1, source1.getName(), 3, 4)
+                        new CodeSnippet(commitSnapshot2, target1.name(), 5, 6),
+                        new CodeSnippet(commitSnapshot1, source1.name(), 3, 4)
                 ),
                 Tuples.of(
-                        new CodeSnippet(commitSnapshot2, target1.getName(), 9, 9),
-                        new CodeSnippet(commitSnapshot1, source1.getName(), 12, 12)
+                        new CodeSnippet(commitSnapshot2, target1.name(), 9, 9),
+                        new CodeSnippet(commitSnapshot1, source1.name(), 12, 12)
                 )
         );
 

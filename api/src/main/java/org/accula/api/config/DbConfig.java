@@ -28,14 +28,14 @@ public class DbConfig extends AbstractR2dbcConfiguration {
     @Bean
     @Override
     public ConnectionPool connectionFactory() {
-        final var pool = dbProperties.getPool();
+        final var pool = dbProperties.pool();
 
         final var connectionFactory = new PostgresqlConnectionFactory(PostgresqlConnectionConfiguration.builder()
-                .host(dbProperties.getHost())
-                .port(dbProperties.getPort())
-                .username(dbProperties.getUser())
-                .password(dbProperties.getPassword())
-                .database(dbProperties.getDatabase())
+                .host(dbProperties.host())
+                .port(dbProperties.port())
+                .username(dbProperties.user())
+                .password(dbProperties.password())
+                .database(dbProperties.database())
                 .codecRegistrar(EnumCodec.builder()
                         .withEnum(Enums.PROJECT_STATE, Project.State.class)
                         .build())
@@ -43,9 +43,9 @@ public class DbConfig extends AbstractR2dbcConfiguration {
 
         final var poolConfig = ConnectionPoolConfiguration.builder()
                 .connectionFactory(connectionFactory)
-                .initialSize(pool.getMinSize())
-                .maxSize(pool.getMaxSize())
-                .maxIdleTime(pool.getMaxIdleTime())
+                .initialSize(pool.minSize())
+                .maxSize(pool.maxSize())
+                .maxIdleTime(pool.maxIdleTime())
                 .build();
 
         return new ConnectionPool(poolConfig);

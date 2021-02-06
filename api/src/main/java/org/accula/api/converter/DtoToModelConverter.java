@@ -12,10 +12,10 @@ public final class DtoToModelConverter {
 
     public static Project.Conf convert(final ProjectConfDto conf) {
         return Project.Conf.builder()
-                .adminIds(conf.getAdmins())
-                .cloneMinTokenCount(conf.getCloneMinTokenCount())
-                .fileMinSimilarityIndex(conf.getFileMinSimilarityIndex())
-                .excludedFiles(conf.getExcludedFiles())
+                .adminIds(conf.admins())
+                .cloneMinTokenCount(conf.cloneMinTokenCount())
+                .fileMinSimilarityIndex(conf.fileMinSimilarityIndex())
+                .excludedFiles(conf.excludedFiles())
                 .build();
     }
 }

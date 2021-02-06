@@ -3,12 +3,14 @@ package org.accula.api.db.model;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
+import lombok.With;
 
 /**
  * @author Vadim Dyachkov
  * @author Anton Lamtev
  */
-@Builder(toBuilder = true)
+@Builder
+@With
 @Value
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Clone {

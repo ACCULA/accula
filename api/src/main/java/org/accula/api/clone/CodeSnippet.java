@@ -13,7 +13,7 @@ public class CodeSnippet {
     int fromLine;
     int toLine;
 
-    public int getLineCount() {
+    public int lineCount() {
         return toLine - fromLine + 1;
     }
 

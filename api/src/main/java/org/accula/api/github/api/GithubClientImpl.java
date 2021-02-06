@@ -61,7 +61,7 @@ public final class GithubClientImpl implements GithubClient {
         return accessTokenProvider.accessToken()
                 .zipWith(loginProvider.login())
                 .flatMap(TupleUtils.function(requestUserPermissions))
-                .filter(permission -> permission.getPermission() == ADMIN)
+                .filter(permission -> permission.permission() == ADMIN)
                 .hasElement()
                 .onErrorMap(GithubClientException::new);
     }
@@ -86,7 +86,7 @@ public final class GithubClientImpl implements GithubClient {
                 .retrieve()
                 .bodyToFlux(GithubApiCollaborator.class)
                 .filter(GithubApiCollaborator::hasAdminPermissions)
-                .map(GithubApiCollaborator::getId)
+                .map(GithubApiCollaborator::id)
                 .collectList()
                 .onErrorMap(GithubClientException::new));
     }

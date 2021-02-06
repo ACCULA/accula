@@ -1,21 +1,19 @@
 package org.accula.api.handler.dto;
 
-import lombok.AllArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import lombok.Builder;
-import lombok.NoArgsConstructor;
 import lombok.Value;
 
 import java.util.List;
 
-import static lombok.AccessLevel.PRIVATE;
+import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
 
 /**
  * @author Anton Lamtev
  */
+@JsonAutoDetect(fieldVisibility = ANY)
 @Builder
 @Value
-@AllArgsConstructor
-@NoArgsConstructor(force = true, access = PRIVATE)
 public class ProjectDto {
     Long id;
     State state;

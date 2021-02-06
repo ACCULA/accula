@@ -38,12 +38,12 @@ public class WebConfig implements WebFluxConfigurer {
 
     @Bean
     public GithubClient.AccessTokenProvider githubAccessTokenProvider() {
-        return () -> currentUserRepo.get(User::getGithubAccessToken);
+        return () -> currentUserRepo.get(User::githubAccessToken);
     }
 
     @Bean
     public GithubClient.LoginProvider githubLoginProvider() {
-        return () -> currentUserRepo.get(user -> user.getGithubUser().getLogin());
+        return () -> currentUserRepo.get(user -> user.githubUser().login());
     }
 
     @Bean

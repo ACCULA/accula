@@ -17,23 +17,23 @@ public class Clone<Ref> {
     Token<Ref> start;
     Token<Ref> end;
     @Getter(lazy = true)
-    int lineCount = getToLine() - getFromLine() + 1;
+    int lineCount = toLine() - fromLine() + 1;
     @Getter(lazy = true)
-    int fromLine = getStart().getFromLine();
+    int fromLine = start().fromLine();
     @Getter(lazy = true)
-    int toLine = getEnd().getToLine();
+    int toLine = end().toLine();
 
     public Ref ref() {
-        if (!start.getRef().equals(end.getRef())) {
+        if (!start.ref().equals(end.ref())) {
             throw new IllegalStateException("start.ref MUST be equal to end.ref");
         }
-        return start.getRef();
+        return start.ref();
     }
 
     public String filename() {
-        if (!start.getFilename().equals(end.getFilename())) {
+        if (!start.filename().equals(end.filename())) {
             throw new IllegalStateException("start.filename MUST be equal to end.filename");
         }
-        return start.getFilename();
+        return start.filename();
     }
 }

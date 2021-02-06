@@ -1,11 +1,13 @@
 package org.accula.api.github.model;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.Value;
 
 import java.util.Locale;
 
+import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
 import static org.accula.api.github.model.GithubApiHook.Config.Insecurity.YES;
 import static org.accula.api.github.model.GithubApiHook.Event.PULL_REQUEST;
 
@@ -13,6 +15,7 @@ import static org.accula.api.github.model.GithubApiHook.Event.PULL_REQUEST;
  * @author Anton Lamtev
  * @author Vadim Dyachkov
  */
+@JsonAutoDetect(fieldVisibility = ANY)
 @Value
 public class GithubApiHook {
     String name = "web";
@@ -35,6 +38,7 @@ public class GithubApiHook {
         }
     }
 
+    @JsonAutoDetect(fieldVisibility = ANY)
     @Value
     public static class Config {
         @JsonProperty("url")

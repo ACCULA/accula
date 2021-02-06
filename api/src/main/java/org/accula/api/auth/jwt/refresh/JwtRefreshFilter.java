@@ -67,8 +67,8 @@ public final class JwtRefreshFilter implements WebFilter {
                     final var userIdString = jwt.verify(refreshToken);
                     final var userId = Long.valueOf(userIdString);
                     final var newRefreshTokenDetails = jwt.generate(userIdString, refreshExpiresIn);
-                    final var newRefreshToken = newRefreshTokenDetails.getToken();
-                    final var newRefreshTokenExpirationDate = newRefreshTokenDetails.getExpirationDate();
+                    final var newRefreshToken = newRefreshTokenDetails.token();
+                    final var newRefreshTokenExpirationDate = newRefreshTokenDetails.expirationDate();
 
                     return refreshTokens
                             .replaceRefreshToken(userId, refreshToken, newRefreshToken, newRefreshTokenExpirationDate)
@@ -80,7 +80,7 @@ public final class JwtRefreshFilter implements WebFilter {
     }
 
     private Mono<Void> handleRefreshTokenFailure(final RefreshTokenException failure, final ServerWebExchange exchange) {
-        log.info("Failed to refresh token with reason: {}", failure.getReason());
+        log.info("Failed to refresh token with reason: {}", failure.reason());
         return responseProducer.formFailureBody(exchange);
     }
 }

@@ -15,11 +15,11 @@ import java.util.function.Supplier;
  * @author Anton Lamtev
  */
 public interface ConnectionProvidedRepo {
-    ConnectionProvider getConnectionProvider();
+    ConnectionProvider connectionProvider();
 
     default <T> Mono<T> withConnection(final Function<? super Connection, ? extends Mono<T>> connectionUse) {
         return Mono.usingWhen(
-                getConnectionProvider().get(),
+                connectionProvider().get(),
                 connectionUse,
                 Connection::close,
                 Lambda.firstArg(Connection::close),
@@ -29,7 +29,7 @@ public interface ConnectionProvidedRepo {
 
     default <T> Flux<T> manyWithConnection(final Function<? super Connection, ? extends Flux<T>> connectionUse) {
         return Flux.usingWhen(
-                getConnectionProvider().get(),
+                connectionProvider().get(),
                 connectionUse,
                 Connection::close,
                 Lambda.firstArg(Connection::close),

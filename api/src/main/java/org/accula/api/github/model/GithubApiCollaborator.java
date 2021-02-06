@@ -10,15 +10,13 @@ import static lombok.AccessLevel.PRIVATE;
  * @author Vadim Dyachkov
  */
 @Value
-@NoArgsConstructor(force = true, access = PRIVATE)
-@AllArgsConstructor
 public class GithubApiCollaborator {
     Long id;
     String login;
     Permissions permissions;
 
     public boolean hasAdminPermissions() {
-        return permissions != null && permissions.getAdmin() != null && permissions.getAdmin();
+        return permissions != null && permissions.admin() != null && permissions.admin();
     }
 
     @Value

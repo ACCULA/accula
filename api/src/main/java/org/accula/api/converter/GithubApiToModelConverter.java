@@ -26,20 +26,20 @@ public final class GithubApiToModelConverter {
 
     public static GithubRepo convert(final GithubApiRepo apiRepo) {
         return new GithubRepo(
-                apiRepo.getId(),
-                apiRepo.getName(),
-                orEmpty(apiRepo.getDescription()),
-                convert(apiRepo.getOwner())
+                apiRepo.id(),
+                apiRepo.name(),
+                orEmpty(apiRepo.description()),
+                convert(apiRepo.owner())
         );
     }
 
     public static GithubUser convert(final GithubApiUser apiUser) {
         return new GithubUser(
-                apiUser.getId(),
-                apiUser.getLogin(),
-                apiUser.getName(),
-                apiUser.getAvatarUrl(),
-                apiUser.getType() == GithubApiUser.Type.ORGANIZATION
+                apiUser.id(),
+                apiUser.login(),
+                apiUser.name(),
+                apiUser.avatarUrl(),
+                apiUser.type() == GithubApiUser.Type.ORGANIZATION
         );
     }
 
@@ -53,24 +53,24 @@ public final class GithubApiToModelConverter {
 
     public static Snapshot convert(final GithubApiSnapshot snapshot, final Long pullId) {
         return Snapshot.builder()
-                .commit(Commit.shaOnly(snapshot.getSha()))
-                .branch(snapshot.getRef())
+                .commit(Commit.shaOnly(snapshot.sha()))
+                .branch(snapshot.ref())
                 .pullId(pullId)
-                .repo(convert(Objects.requireNonNull(snapshot.getRepo())))
+                .repo(convert(Objects.requireNonNull(snapshot.repo())))
                 .build();
     }
 
     public static Pull convert(final GithubApiPull pull, final Long projectId) {
         return Pull.builder()
-                .id(pull.getId())
-                .number(pull.getNumber())
-                .title(pull.getTitle())
-                .open(pull.getState() == GithubApiPull.State.OPEN)
-                .createdAt(pull.getCreatedAt())
-                .updatedAt(pull.getUpdatedAt())
-                .head(convert(pull.getHead(), pull.getId()))
-                .base(convert(pull.getBase(), pull.getId()))
-                .author(convert(pull.getUser()))
+                .id(pull.id())
+                .number(pull.number())
+                .title(pull.title())
+                .isOpen(pull.state() == GithubApiPull.State.OPEN)
+                .createdAt(pull.createdAt())
+                .updatedAt(pull.updatedAt())
+                .head(convert(pull.head(), pull.id()))
+                .base(convert(pull.base(), pull.id()))
+                .author(convert(pull.user()))
                 .projectId(projectId)
                 .build();
     }

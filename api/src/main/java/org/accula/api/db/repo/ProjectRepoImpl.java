@@ -62,11 +62,11 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
                                     SET creator_id = $5
                                 RETURNING id, state
                                 """)
-                        .bind("$1", githubRepo.getId())
-                        .bind("$2", githubRepo.getName())
-                        .bind("$3", githubRepo.getOwner().getId())
-                        .bind("$4", githubRepo.getDescription())
-                        .bind("$5", creator.getId())
+                        .bind("$1", githubRepo.id())
+                        .bind("$2", githubRepo.name())
+                        .bind("$3", githubRepo.owner().id())
+                        .bind("$4", githubRepo.description())
+                        .bind("$5", creator.id())
                         .execute())
                 .flatMap(result -> ConnectionProvidedRepo
                         .convert(result, row -> Project.builder()
@@ -267,14 +267,14 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
                 .then();
 
         final Mono<Void> insertNewAdmins;
-        if (conf.getAdminIds().isEmpty()) {
+        if (conf.adminIds().isEmpty()) {
             insertNewAdmins = Mono.empty();
         } else {
             final var insertAdminsBackStatement = BatchStatement.of(connection, """
                     INSERT INTO project_admin (project_id, admin_id)
                     VALUES ($collection)
                     """);
-            insertAdminsBackStatement.bind(conf.getAdminIds(), adminId -> new Object[]{
+            insertAdminsBackStatement.bind(conf.adminIds(), adminId -> new Object[]{
                     projectId,
                     adminId
             });
@@ -297,9 +297,9 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
                           excluded_files = $4
                 """))
                 .bind("$1", projectId)
-                .bind("$2", conf.getCloneMinTokenCount())
-                .bind("$3", conf.getFileMinSimilarityIndex())
-                .bind("$4", conf.getExcludedFiles().toArray(new String[0]))
+                .bind("$2", conf.cloneMinTokenCount())
+                .bind("$3", conf.fileMinSimilarityIndex())
+                .bind("$4", conf.excludedFiles().toArray(new String[0]))
                 .execute()
                 .flatMap(PostgresqlResult::getRowsUpdated)
                 .then();

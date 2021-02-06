@@ -32,18 +32,18 @@ public final class ModelToDtoConverter {
 
     public static ProjectDto convert(final Project project) {
         return ProjectDto.builder()
-                .id(project.getId())
-                .state(convert(project.getState()))
-                .repoOwner(project.getGithubRepo().getOwner().getLogin())
-                .repoName(project.getGithubRepo().getName())
-                .repoDescription(project.getGithubRepo().getDescription())
-                .repoOwnerAvatar(project.getGithubRepo().getOwner().getAvatar())
+                .id(project.id())
+                .state(convert(project.state()))
+                .repoOwner(project.githubRepo().owner().login())
+                .repoName(project.githubRepo().name())
+                .repoDescription(project.githubRepo().description())
+                .repoOwnerAvatar(project.githubRepo().owner().avatar())
                 .repoUrl(String.format(GITHUB_REPO_URL_FORMAT,
-                        project.getGithubRepo().getOwner().getLogin(),
-                        project.getGithubRepo().getName()))
-                .repoOpenPullCount(project.getOpenPullCount())
-                .creatorId(project.getCreator().getId())
-                .adminIds(project.getAdminIds())
+                        project.githubRepo().owner().login(),
+                        project.githubRepo().name()))
+                .repoOpenPullCount(project.openPullCount())
+                .creatorId(project.creator().id())
+                .adminIds(project.adminIds())
                 .build();
     }
 
@@ -56,33 +56,33 @@ public final class ModelToDtoConverter {
 
     public static ProjectConfDto convert(final Project.Conf conf) {
         return ProjectConfDto.builder()
-                .admins(conf.getAdminIds())
-                .cloneMinTokenCount(conf.getCloneMinTokenCount())
-                .fileMinSimilarityIndex(conf.getFileMinSimilarityIndex())
-                .excludedFiles(conf.getExcludedFiles())
+                .admins(conf.adminIds())
+                .cloneMinTokenCount(conf.cloneMinTokenCount())
+                .fileMinSimilarityIndex(conf.fileMinSimilarityIndex())
+                .excludedFiles(conf.excludedFiles())
                 .build();
     }
 
     public static UserDto convert(final User user) {
-        return new UserDto(user.getId(), user.getGithubUser().getLogin(), user.getGithubUser().getName(), user.getGithubUser().getAvatar());
+        return new UserDto(user.id(), user.githubUser().login(), user.githubUser().name(), user.githubUser().avatar());
     }
 
     public static GithubUserDto convert(final GithubUser user) {
-        return new GithubUserDto(user.getLogin(), user.getAvatar(), String.format(GITHUB_USER_URL_FORMAT, user.getLogin()));
+        return new GithubUserDto(user.login(), user.avatar(), String.format(GITHUB_USER_URL_FORMAT, user.login()));
     }
 
     public static PullDto convert(final Pull pull, final List<Pull> previousPulls) {
         return PullDto.builder()
-                .projectId(pull.getProjectId())
-                .number(pull.getNumber())
+                .projectId(pull.projectId())
+                .number(pull.number())
                 .url(pullUrl(pull))
-                .title(pull.getTitle())
-                .head(convert(pull.getHead()))
-                .base(convert(pull.getBase()))
+                .title(pull.title())
+                .head(convert(pull.head()))
+                .base(convert(pull.base()))
                 .open(pull.isOpen())
-                .createdAt(pull.getCreatedAt())
-                .updatedAt(pull.getUpdatedAt())
-                .author(convert(pull.getAuthor()))
+                .createdAt(pull.createdAt())
+                .updatedAt(pull.updatedAt())
+                .author(convert(pull.author()))
                 .previousPulls(convertShort(previousPulls))
                 .build();
     }
@@ -91,11 +91,11 @@ public final class ModelToDtoConverter {
         return new PullDto.Marker(
                 String.format(
                         GITHUB_REPO_URL_FORMAT + "/tree/%s",
-                        snapshot.getRepo().getOwner().getLogin(),
-                        snapshot.getRepo().getName(),
-                        URLEncoder.encode(snapshot.getBranch(), StandardCharsets.UTF_8)
+                        snapshot.repo().owner().login(),
+                        snapshot.repo().name(),
+                        URLEncoder.encode(snapshot.branch(), StandardCharsets.UTF_8)
                 ),
-                String.format("%s:%s", snapshot.getRepo().getOwner().getLogin(), snapshot.getBranch())
+                String.format("%s:%s", snapshot.repo().owner().login(), snapshot.branch())
         );
     }
 
@@ -111,19 +111,19 @@ public final class ModelToDtoConverter {
 
     public static ShortPullDto convertShort(final Pull pull) {
         return ShortPullDto.builder()
-                .projectId(pull.getProjectId())
-                .number(pull.getNumber())
+                .projectId(pull.projectId())
+                .number(pull.number())
                 .url(pullUrl(pull))
-                .title(pull.getTitle())
-                .createdAt(pull.getCreatedAt())
-                .updatedAt(pull.getUpdatedAt())
+                .title(pull.title())
+                .createdAt(pull.createdAt())
+                .updatedAt(pull.updatedAt())
                 .open(pull.isOpen())
-                .author(convert(pull.getAuthor()))
+                .author(convert(pull.author()))
                 .build();
     }
 
     private static String pullUrl(final Pull pull) {
-        final var repo = pull.getBase().getRepo();
-        return String.format(GITHUB_PULL_URL_FORMAT, repo.getOwner().getLogin(), repo.getName(), pull.getNumber().toString());
+        final var repo = pull.base().repo();
+        return String.format(GITHUB_PULL_URL_FORMAT, repo.owner().login(), repo.name(), pull.number().toString());
     }
 }

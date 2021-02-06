@@ -1,14 +1,16 @@
 package org.accula.api.config;
 
-import lombok.Data;
+import lombok.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.ConstructorBinding;
 
 /**
  * @author Vadim Dyachkov
  */
+@ConstructorBinding
 @ConfigurationProperties("accula.webhook")
-@Data
+@Value
 public class WebhookProperties {
-    private String url;
-    private String secret;
+    String url;
+    String secret;
 }

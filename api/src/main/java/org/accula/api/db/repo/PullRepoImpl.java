@@ -53,18 +53,18 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
                            base_snapshot_sha = excluded.base_snapshot_sha
                     """);
             statement.bind(pulls, pull -> new Object[]{
-                    pull.getId(),
-                    pull.getNumber(),
-                    pull.getTitle(),
+                    pull.id(),
+                    pull.number(),
+                    pull.title(),
                     pull.isOpen(),
-                    pull.getCreatedAt(),
-                    pull.getUpdatedAt(),
-                    pull.getHead().getSha(),
-                    pull.getHead().getRepo().getId(),
-                    pull.getBase().getSha(),
-                    pull.getBase().getRepo().getId(),
-                    pull.getProjectId(),
-                    pull.getAuthor().getId()
+                    pull.createdAt(),
+                    pull.updatedAt(),
+                    pull.head().sha(),
+                    pull.head().repo().id(),
+                    pull.base().sha(),
+                    pull.base().repo().id(),
+                    pull.projectId(),
+                    pull.author().id()
             });
 
             return statement
@@ -138,7 +138,7 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
 
         return manyWithConnection(connection -> {
             final var statement = (PostgresqlStatement) connection.createStatement("""
-                    SELECT number 
+                    SELECT number
                     FROM pull
                         JOIN unnest($1) WITH ORDINALITY AS arr(id, ord)
                             ON pull.id = arr.id
