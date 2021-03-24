@@ -6,6 +6,8 @@ import it.unimi.dsi.fastutil.ints.IntIterators;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.stream.IntStream;
 
@@ -193,13 +195,15 @@ public interface LineRange extends Comparable<LineRange>, IntIterable {
         }
 
         private static final class Cache {
+            private static final Logger log = LoggerFactory.getLogger(Cache.class);
             private static final LineRange[] LINES;
 
             static {
                 int cacheSize = 0;
                 try {
                     cacheSize = Math.max(Integer.parseInt(System.getProperty(CACHE_SIZE_PROPERTY_KEY, "0")), 0);
-                } catch (NumberFormatException ignored) {
+                } catch (NumberFormatException e) {
+                    log.warn("Using default cache size value due to inability to parse property with exception", e);
                 }
                 LINES = IntStream
                         .rangeClosed(1, cacheSize)
