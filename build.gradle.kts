@@ -82,8 +82,8 @@ configure(subprojects.filterNot(project(":web")::equals)) {
     tasks.withType<Test> {
         jvmArgs("--enable-preview")
 
-        val singleLineRangeCacheSize: String by project
-        systemProperty("org.accula.api.code.lines.LineRange.Single.Cache.size", singleLineRangeCacheSize)
+        val testSingleLineRangeCacheSize: String by project
+        systemProperty("org.accula.api.code.lines.LineRange.Single.Cache.size", testSingleLineRangeCacheSize)
     }
     tasks.withType<JavaExec> {
         jvmArgs("--enable-preview")
