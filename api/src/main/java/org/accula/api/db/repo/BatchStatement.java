@@ -8,9 +8,10 @@ import org.jetbrains.annotations.Nullable;
 import reactor.core.publisher.Flux;
 
 import java.time.Instant;
-import java.util.Collection;
+import java.util.Iterator;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 /**
  * @author Anton Lamtev
@@ -28,7 +29,7 @@ final class BatchStatement {
     private final String sql;
     private final int indexOfCollectionMarker;
     @Nullable
-    private Supplier<String> boundSqlProducer;
+    private Supplier<StringBuilder> boundValuesProducer;
 
     static BatchStatement of(final Connection connection, @Language("SQL") final String sql) {
         return new BatchStatement(connection, sql);
@@ -39,46 +40,63 @@ final class BatchStatement {
         this.sql = sql;
         this.indexOfCollectionMarker = sql.indexOf(COLLECTION_MARKER);
         if (this.indexOfCollectionMarker == -1) {
-            throw new IllegalArgumentException("sql provided does not contain collection marker ($collection)");
+            throw new IllegalArgumentException("sql provided does not contain collection marker " + COLLECTION_MARKER);
         }
     }
 
-    <T> void bind(final Collection<T> collection, final Function<T, Object[]> bind) {
-        boundSqlProducer = () -> {
-            final StringBuilder rowsWithBindings = new StringBuilder();
-            final int collectionSize = collection.size();
-            int collectionIdx = 0;
-            for (final var el : collection) {
+    <T> void bind(final Iterator<T> items, final Function<T, Object[]> bind) {
+        if (!items.hasNext()) {
+            throw new IllegalArgumentException("items must not be empty");
+        }
+        final var oldBoundValuesProducer = boundValuesProducer;
+        final var isFirstBinding = oldBoundValuesProducer == null;
+        boundValuesProducer = () -> {
+            final var boundValues = isFirstBinding ? new StringBuilder() : oldBoundValuesProducer.get();
+            if (!isFirstBinding) {
+                boundValues.append(COMMA);
+            }
+            while (items.hasNext()) {
+                final var el = items.next();
                 final var bindings = bind.apply(el);
                 final var bindingsLength = bindings.length;
                 if (bindingsLength == 0) {
-                    throw new IllegalStateException("Bindings must be present");
+                    throw new IllegalArgumentException("bind must produce non-empty bindings");
                 }
-                rowsWithBindings.append(LEFT_PARENTHESIS);
+                boundValues.append(LEFT_PARENTHESIS);
                 for (int i = 0; i < bindingsLength; ++i) {
-                    addBinding(rowsWithBindings, bindings[i]);
+                    addBinding(boundValues, bindings[i]);
                     if (i != bindingsLength - 1) {
-                        rowsWithBindings.append(COMMA);
+                        boundValues.append(COMMA);
                     }
                 }
-                rowsWithBindings.append(RIGHT_PARENTHESIS);
-                if (collectionIdx != collectionSize - 1) {
-                    rowsWithBindings.append(COMMA);
+                boundValues.append(RIGHT_PARENTHESIS);
+                if (items.hasNext()) {
+                    boundValues.append(COMMA);
                 }
-                ++collectionIdx;
             }
 
-            return sql.substring(0, indexOfCollectionMarker)
-                   + rowsWithBindings.toString()
-                   + sql.substring(indexOfCollectionMarker + COLLECTION_MARKER.length());
+            return boundValues;
         };
     }
 
+    <T> void bind(final Iterable<T> items, final Function<T, Object[]> bind) {
+        bind(items.iterator(), bind);
+    }
+
+    <T> void bind(final Stream<T> items, final Function<T, Object[]> bind) {
+        bind(items.iterator(), bind);
+    }
+
     Flux<PostgresqlResult> execute() {
-        if (boundSqlProducer == null) {
+        if (boundValuesProducer == null) {
             throw new IllegalStateException("Batch statement does not have any bindings");
         }
-        return Flux.defer(() -> ((PostgresqlStatement) connection.createStatement(boundSqlProducer.get())).execute());
+        return Flux.defer(() -> {
+            final var boundSql = sql.substring(0, indexOfCollectionMarker)
+                    + boundValuesProducer.get().toString()
+                    + sql.substring(indexOfCollectionMarker + COLLECTION_MARKER.length());
+            return ((PostgresqlStatement) connection.createStatement(boundSql)).execute();
+        });
     }
 
     private static void addBinding(final StringBuilder sb, @Nullable final Object binding) {
@@ -95,11 +113,11 @@ final class BatchStatement {
         } else if (isInteger(binding) || binding instanceof Boolean) {
             sb.append(binding);
         } else {
-            throw new IllegalStateException("Not yet supported class: " + binding.getClass().getName());
+            throw new IllegalArgumentException("Not yet supported class: " + binding.getClass().getName());
         }
     }
 
     private static boolean isInteger(final Object o) {
-        return o instanceof Byte || o instanceof Short || o instanceof Integer || o instanceof Long;
+        return o instanceof Long || o instanceof Integer || o instanceof Byte || o instanceof Short;
     }
 }

@@ -19,7 +19,7 @@ public interface CloneRepo {
 
     Mono<Clone> findById(Long id);
 
-    Flux<Clone> findByTargetCommitSnapshotSha(String sha);
+    Flux<Clone> findByPullNumber(Long projectId, Integer pullNumber);
 
-    Mono<Void> deleteByPullNumber(final long projectId, final int pullNumber);
+    Mono<Void> deleteByPullNumber(Long projectId, Integer pullNumber);
 }

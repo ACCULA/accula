@@ -72,10 +72,18 @@ configure(subprojects.filterNot(project(":web")::equals)) {
     }
 
     tasks.withType<JavaCompile> {
-        options.compilerArgs.addAll(listOf("--enable-preview", "-Xlint:preview"))
+        options.compilerArgs.addAll(listOf(
+                "--enable-preview",
+                "-Xlint:preview",
+                "-Xlint:deprecation",
+                "-Xlint:unchecked"
+        ))
     }
     tasks.withType<Test> {
         jvmArgs("--enable-preview")
+
+        val singleLineRangeCacheSize: String by project
+        systemProperty("org.accula.api.code.lines.LineRange.Single.Cache.size", singleLineRangeCacheSize)
     }
     tasks.withType<JavaExec> {
         jvmArgs("--enable-preview")

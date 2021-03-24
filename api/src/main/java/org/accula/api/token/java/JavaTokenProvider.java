@@ -1,60 +1,73 @@
 package org.accula.api.token.java;
 
-import com.intellij.core.JavaCoreProjectEnvironment;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementFinder;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiMethod;
 import org.accula.api.code.FileEntity;
 import org.accula.api.token.Token;
 import org.accula.api.token.TokenProvider;
 import org.accula.api.token.TraverseUtils;
-import org.accula.api.token.psi.java.JavaApplicationEnvironment;
+import org.accula.api.token.psi.PsiUtils;
 import org.accula.api.token.psi.java.JavaPsiUtils;
-import org.accula.api.util.Lambda;
+import org.accula.api.token.psi.java.PsiFileFactoryProvider;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
+import reactor.pool.Pool;
+import reactor.pool.PoolBuilder;
 
 import java.util.List;
+import java.util.Objects;
 
+import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.toList;
 
 /**
  * @author Anton Lamtev
  */
 public final class JavaTokenProvider<Ref> implements TokenProvider<Ref> {
+    private final Pool<PsiFileFactory> fileFactoryPool = PoolBuilder
+            .from(PsiFileFactoryProvider.instance().get())
+            .sizeBetween(0, Runtime.getRuntime().availableProcessors())
+            .buildPool();
+
     @Override
     public Flux<List<Token<Ref>>> tokensByMethods(final Flux<FileEntity<Ref>> files) {
-        return javaPsiFileFactory().flatMapMany(psiFileFactory ->
-                files.flatMapIterable(file ->
-                        JavaPsiUtils
-                                .methods(psiFileFactory.createFileFromText(file.name(), JavaLanguage.INSTANCE, file.content()))
-                                .stream()
-                                .map(Lambda.passingTailArg(JavaTokenProvider::methodTokens, file))
-                                .collect(toList())));
+        return files
+                .window(Runtime.getRuntime().availableProcessors() * 4)
+                .flatMap(fileFlux -> fileFactoryPool
+                        .withPoolable(psiFileFactory -> fileFlux
+                                .parallel(Runtime.getRuntime().availableProcessors())
+                                .runOn(Schedulers.parallel())
+                                .flatMap(file -> tokensFromFile(file, psiFileFactory)))
+                );
+    }
+
+    private static <Ref> Flux<List<Token<Ref>>> tokensFromFile(final FileEntity<Ref> file, final PsiFileFactory psiFileFactory) {
+        final var filename = Objects.requireNonNull(file.name());
+        final var content = Objects.requireNonNull(file.content());
+        final var methods = JavaPsiUtils
+                .methods(psiFileFactory.createFileFromText(filename, JavaLanguage.INSTANCE, content), file.lines()::containsAny)
+                .stream()
+                .map(psiFile -> methodTokens(psiFile, file))
+                .filter(not(List::isEmpty));
+        return Flux.fromStream(methods);
     }
 
     private static <Ref> List<Token<Ref>> methodTokens(final PsiMethod method, final FileEntity<Ref> file) {
+        final var body = Objects.requireNonNull(method.getBody());
+        final var filename = method.getContainingFile().getName();
         return TraverseUtils
-                .dfs(method.getBody(), TraverseUtils.stream(PsiElement::getChildren))
+                .dfs(body, TraverseUtils.stream(PsiElement::getChildren))
                 .filter(JavaPsiUtils::isValuableToken)
-                .map(Lambda.passingTailArgs(Token::of, method.getName(), file.ref()))
-                .collect(toList());
-    }
-
-    private static Mono<PsiFileFactory> javaPsiFileFactory() {
-        final var disposable = Disposer.newDisposable();
-        return Mono
-                .fromSupplier(() -> {
-                    final var appEnv = JavaApplicationEnvironment.of(disposable, true);
-                    final var projectEnv = new JavaCoreProjectEnvironment(disposable, appEnv);
-                    @SuppressWarnings("deprecation")//
-                    final var psiElfEpName = PsiElementFinder.EP_NAME;
-                    projectEnv.registerProjectExtensionPoint(psiElfEpName, PsiElementFinder.class);
-                    return PsiFileFactory.getInstance(projectEnv.getProject());
+                .map(token -> {
+                    final var lineRange = PsiUtils.lineRange(token);
+                    if (!file.lines().containsAny(lineRange)) {
+                        return null;
+                    }
+                    return Token.of(token, filename, method.getName(), lineRange, file.ref());
                 })
-                .doFinally(__ -> disposable.dispose());
+                .filter(Objects::nonNull)
+                .collect(toList());
     }
 }

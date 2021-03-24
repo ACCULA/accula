@@ -10,8 +10,8 @@ import java.util.function.Consumer;
 /**
  * @author Anton Lamtev
  */
-public final class ReactorPublishers {
-    private ReactorPublishers() {
+public final class ReactorOperators {
+    private ReactorOperators() {
     }
 
     public static <Next> Consumer<Signal<Next>> onNextWithContext(final BiConsumer<Next, ContextView> nextAndContextConsumer) {
@@ -21,6 +21,15 @@ public final class ReactorPublishers {
             }
 
             nextAndContextConsumer.accept(Objects.requireNonNull(signal.get()), signal.getContextView());
+        };
+    }
+
+    public static <T> Consumer<Signal<T>> doFinally(final Runnable doFinally) {
+        return signal -> {
+            if (!signal.isOnComplete() && !signal.isOnError()) {
+                return;
+            }
+            doFinally.run();
         };
     }
 }

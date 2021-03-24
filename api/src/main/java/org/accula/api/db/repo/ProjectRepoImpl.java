@@ -326,7 +326,7 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
                         "project_creator_github_user_name",
                         "project_creator_github_user_avatar",
                         "project_creator_github_user_is_org"))
-                .openPullCount(Converters.integer(row, "project_open_pull_count"))
+                .openPullCount(Converters.integer(row, "project_open_pull_count", 0))
                 .adminIds(Converters.ids(row, "project_admins"))
                 .build();
     }

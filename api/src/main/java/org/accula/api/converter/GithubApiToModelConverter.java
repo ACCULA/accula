@@ -51,12 +51,16 @@ public final class GithubApiToModelConverter {
         return new GithubUser(id, login, name, avatar, false);
     }
 
-    public static Snapshot convert(final GithubApiSnapshot snapshot, final Long pullId) {
+    public static Snapshot.PullInfo convert(final GithubApiPull pull) {
+        return Snapshot.PullInfo.of(pull.id(), pull.number());
+    }
+
+    public static Snapshot convert(final GithubApiSnapshot snapshot, final GithubApiPull pull) {
         return Snapshot.builder()
                 .commit(Commit.shaOnly(snapshot.sha()))
                 .branch(snapshot.ref())
-                .pullId(pullId)
-                .repo(convert(Objects.requireNonNull(snapshot.repo())))
+                .pullInfo(convert(pull))
+                .repo(convert(Objects.requireNonNull(snapshot.repo(), "GithubApiPull repo MUST NOT be null")))
                 .build();
     }
 
@@ -68,8 +72,8 @@ public final class GithubApiToModelConverter {
                 .isOpen(pull.state() == GithubApiPull.State.OPEN)
                 .createdAt(pull.createdAt())
                 .updatedAt(pull.updatedAt())
-                .head(convert(pull.head(), pull.id()))
-                .base(convert(pull.base(), pull.id()))
+                .head(convert(pull.head(), pull))
+                .base(convert(pull.base(), pull))
                 .author(convert(pull.user()))
                 .projectId(projectId)
                 .build();

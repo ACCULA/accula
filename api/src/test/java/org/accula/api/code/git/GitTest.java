@@ -1,5 +1,6 @@
 package org.accula.api.code.git;
 
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -7,11 +8,16 @@ import org.junit.jupiter.api.io.TempDir;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.stream.IntStream;
 
 import static java.util.stream.Collectors.toList;
+import static org.accula.api.code.lines.LineRange.of;
+import static org.accula.api.code.lines.LineSet.inRange;
+import static org.accula.api.code.lines.LineSet.of;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -128,6 +134,22 @@ final class GitTest {
     }
 
     @Test
+    void testShowMany() {
+        assertDoesNotThrow(() -> {
+            final var repo = git.clone(REPO_URL, REPO_DIR).get();
+            assertNotNull(repo);
+
+            final var shas = Set.of(
+                    "183a85a2342f521e3ddc7ecab87d3dcbc9256dd4",
+                    "ad79a04a8434eadb851053378ad5824f249c8aae",
+                    "2719f27e3fa45988fdcc791fc08e298f9f4b05a5");
+            final var entries = repo.show(shas).get();
+            assertEquals(6, entries.size());
+            entries.forEach((entry, sha) -> assertTrue(shas.contains(sha)));
+        });
+    }
+
+    @Test
     void testLsTree() {
         assertDoesNotThrow(() -> {
             final var repo = git.clone(REPO_URL, REPO_DIR).get();
@@ -210,6 +232,73 @@ final class GitTest {
                             assertDoesNotThrow(() -> {
                                 final var commits = repo.revListAllPretty().get();
                                 assertFalse(commits.isEmpty());
+                            }));
+        });
+    }
+
+    @Test
+    @SneakyThrows
+    void testParseShowEntryRareCases() {
+        var parseShowEntry = git.getClass().getDeclaredMethod("parseShowEntry", String.class);
+        if (!parseShowEntry.canAccess(null)) {
+            parseShowEntry.setAccessible(true);
+        }
+
+        var f1 = (GitFile) parseShowEntry.invoke(null, "::100644 100644 100644 d524b59 70f0dfc eb61c91 MM\tbuild.gradle.kts");
+        assertEquals("eb61c91", f1.id());
+        assertEquals("build.gradle.kts", f1.name());
+
+        var f2 = (GitFile) parseShowEntry.invoke(null, "::100644 100644 100644 d524b59 70f0dfc eb61c91 MR build.gradle.kts build.gradle");
+        assertEquals("eb61c91", f2.id());
+        assertEquals("build.gradle", f2.name());
+    }
+
+    @Test
+    void testFileChanges() {
+        assertDoesNotThrow(() -> {
+            final var repo = git.clone(REPO_URL, REPO_DIR).get();
+            assertNotNull(repo);
+
+            final var expectedChanges = List.of(
+                    GitFileChanges.of(GitFile.of("9b1113b", ".codeclimate.yml"), of(of(10), of(33, 35))),
+                    GitFileChanges.of(GitFile.of("e703c8e", "api/build.gradle.kts"), inRange(of(35))),
+                    GitFileChanges.of(GitFile.of("b84f9ad", "api/src/main/java/org/accula/api/auth/jwt/JwtAccessTokenResponseProducer.java"), of(of(25, 26), of(50, 51), of(53), of(58), of(68, 82))),
+                    GitFileChanges.of(GitFile.of("f3c4044", "api/src/main/java/org/accula/api/auth/jwt/refresh/JwtRefreshFilter.java"), of(of(1), of(4, 5), of(19, 22), of(33), of(36, 38), of(46), of(55, 56), of(65), of(75, 76), of(78, 84))),
+                    GitFileChanges.of(GitFile.of("a77479f", "api/src/main/java/org/accula/api/auth/jwt/refresh/RefreshTokenException.java"), inRange(1, 23)),
+                    GitFileChanges.of(GitFile.of("827e34c", "api/src/main/java/org/accula/api/auth/jwt/refresh/package-info.java"), inRange(1, 4)),
+                    GitFileChanges.of(GitFile.of("0743994", "api/src/main/java/org/accula/api/auth/oauth2/OAuth2LoginSuccessHandler.java"), inRange(31, 32)),
+                    GitFileChanges.of(GitFile.of("d66e521", "api/src/main/java/org/accula/api/config/WebSecurityConfig.java"), of(of(9), of(52, 53), of(125), of(178, 179))),
+                    GitFileChanges.of(GitFile.of("c505a06", "api/src/main/java/org/accula/api/db/RefreshTokenRepository.java"), of(of(17), of(19, 21), of(26))),
+                    GitFileChanges.of(GitFile.of("5910d7c", "pmd.xml"), inRange(59, 69))
+            );
+
+            IntStream.range(0, Runtime.getRuntime().availableProcessors() * 5)
+                    .parallel()
+                    .forEach(it ->
+                            assertDoesNotThrow(() -> {
+                                final var changes = repo.fileChanges("f653ff42259d82f782f1284bd35bae5bec02047f").get();
+                                assertEquals(expectedChanges, changes);
+                            }));
+        });
+    }
+
+    @Test
+    void testFileChangesMany() {
+        assertDoesNotThrow(() -> {
+            final var repo = git.clone(REPO_URL, REPO_DIR).get();
+            assertNotNull(repo);
+
+            IntStream.range(0, Runtime.getRuntime().availableProcessors() * 5)
+                    .parallel()
+                    .forEach(it ->
+                            assertDoesNotThrow(() -> {
+                                final var changes = repo.fileChanges(List.of(
+                                        "3d9df071503e977674b7300900156ab330f553df",
+                                        "ad79a04a8434eadb851053378ad5824f249c8aae",
+                                        "d7c7ec06737b82049140f6baf30ac70d9e6d5ed5",
+                                        "69f552851f0f6093816c3064b6e00438e0ff3b19" // 45 changes, but 4 of them are deletions that we don't track
+                                )).get();
+                                assertEquals(72 + 2 + 1 + 41, changes.size());
                             }));
         });
     }

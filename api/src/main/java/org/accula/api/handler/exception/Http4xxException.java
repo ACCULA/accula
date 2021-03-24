@@ -49,6 +49,5 @@ public final class Http4xxException extends ResponseConvertibleException {
         BAD_REQUEST,
         FORBIDDEN,
         NOT_FOUND,
-        ;
     }
 }

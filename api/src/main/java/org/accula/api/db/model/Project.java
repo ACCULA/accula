@@ -28,7 +28,6 @@ public class Project {
     public enum State {
         CREATING,
         CREATED,
-        ;
     }
 
     @Builder

@@ -4,24 +4,21 @@ import lombok.RequiredArgsConstructor;
 import org.accula.api.code.CodeLoader;
 import org.accula.api.code.DiffEntry;
 import org.accula.api.code.FileFilter;
+import org.accula.api.converter.CodeToDtoConverter;
 import org.accula.api.db.model.Project;
 import org.accula.api.db.model.Pull;
 import org.accula.api.db.model.Snapshot;
 import org.accula.api.db.repo.ProjectRepo;
 import org.accula.api.db.repo.PullRepo;
-import org.accula.api.handler.dto.DiffDto;
 import org.accula.api.handler.exception.Http4xxException;
 import org.accula.api.handler.exception.ResponseConvertibleException;
 import org.accula.api.handler.util.Responses;
 import org.accula.api.util.Lambda;
-import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import java.util.Base64;
 
 /**
  * @author Vadim Dyachkov
@@ -34,8 +31,6 @@ public final class DiffHandler {
     private static final String PULL_NUMBER = "pullNumber";
     private static final String PULL_TO_COMPARE_WITH = "with";
 
-    private static final Base64.Encoder base64 = Base64.getEncoder(); // NOPMD
-
     private final PullRepo pullRepo;
     private final ProjectRepo projectRepo;
     private final CodeLoader codeLoader;
@@ -43,8 +38,8 @@ public final class DiffHandler {
     public Mono<ServerResponse> diff(final ServerRequest request) {
         return Mono
                 .defer(() -> {
-                    final var projectId = Long.parseLong(request.pathVariable(PROJECT_ID));
-                    final var pullNumber = Integer.parseInt(request.pathVariable(PULL_NUMBER));
+                    final var projectId = Long.valueOf(request.pathVariable(PROJECT_ID));
+                    final var pullNumber = Integer.valueOf(request.pathVariable(PULL_NUMBER));
                     return diff(projectId, pullNumber);
                 })
                 .onErrorMap(NumberFormatException.class, Lambda.expandingWithArg(Http4xxException::badRequest))
@@ -61,8 +56,8 @@ public final class DiffHandler {
         return Mono
                 .defer(() -> {
                     final var projectId = Long.parseLong(request.pathVariable(PROJECT_ID));
-                    final var basePullNumber = Integer.parseInt(request.pathVariable(PULL_NUMBER));
-                    final var headPullNumber = Integer.parseInt(pullToCompareWith);
+                    final var basePullNumber = Integer.valueOf(request.pathVariable(PULL_NUMBER));
+                    final var headPullNumber = Integer.valueOf(pullToCompareWith);
 
                     return diffBetweenPulls(projectId, basePullNumber, headPullNumber);
                 })
@@ -70,7 +65,7 @@ public final class DiffHandler {
                 .onErrorResume(ResponseConvertibleException::onErrorResume);
     }
 
-    private Mono<ServerResponse> diff(final long projectId, final int pullNumber) {
+    private Mono<ServerResponse> diff(final Long projectId, final Integer pullNumber) {
         final var pullMono = pullRepo
                 .findByNumber(projectId, pullNumber)
                 .cache();
@@ -88,7 +83,7 @@ public final class DiffHandler {
         return toResponse(diff);
     }
 
-    private Mono<ServerResponse> diffBetweenPulls(final long projectId, final int basePullNumber, final int headPullNumber) {
+    private Mono<ServerResponse> diffBetweenPulls(final Long projectId, final Integer basePullNumber, final Integer headPullNumber) {
         final var basePullSnapshot = pullRepo
                 .findByNumber(projectId, basePullNumber)
                 .switchIfEmpty(Mono.error(Http4xxException.notFound()))
@@ -114,25 +109,10 @@ public final class DiffHandler {
     }
 
     private static Mono<ServerResponse> toResponse(final Flux<DiffEntry<Snapshot>> diff) {
-        return Responses.ok(diff.map(DiffHandler::toDto), DiffDto.class);
-    }
-
-    private static DiffDto toDto(final DiffEntry<Snapshot> diff) {
-        final var base = diff.base();
-        final var head = diff.head();
-        return DiffDto.builder()
-                .baseFilename(base.name())
-                .baseContent(encode(base.content()))
-                .headFilename(head.name())
-                .headContent(encode(head.content()))
-                .build();
-    }
-
-    @Nullable
-    public static String encode(@Nullable final String data) {
-        if (data == null) {
-            return null;
-        }
-        return base64.encodeToString(data.getBytes());
+        return diff
+                .map(CodeToDtoConverter::convert)
+                .collectList()
+                .flatMap(Responses::ok)
+                .onErrorResume(ResponseConvertibleException::onErrorResume);
     }
 }

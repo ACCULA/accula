@@ -1,6 +1,8 @@
 package org.accula.api.code;
 
 import org.accula.api.code.git.Git;
+import org.accula.api.code.lines.LineRange;
+import org.accula.api.code.lines.LineSet;
 import org.accula.api.db.model.Commit;
 import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.GithubUser;
@@ -12,13 +14,9 @@ import reactor.test.StepVerifier;
 
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Executors;
-import java.util.regex.Pattern;
-import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -46,45 +44,34 @@ class CodeLoaderTest {
         codeLoader = new GitCodeLoader(new Git(tempDir, Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())));
     }
 
+
     @Test
-    void testGetSingleFile() {
-        StepVerifier.create(codeLoader.loadFiles(COMMIT, README::equals))
-                .expectNextMatches(readme -> readme.content().startsWith("# 2019-highload-dht"))
+    void testLoadFiles() {
+        StepVerifier.create(codeLoader.loadFiles(COMMIT.repo(), List.of(COMMIT), README::equals))
+                .expectNextMatches(readme -> readme.lines().equals(LineSet.of(LineRange.of(173), LineRange.of(194))))
                 .expectComplete()
                 .verify();
     }
 
     @Test
     void testGetMultipleFiles() {
-        IntStream.range(0, 10)
-                .parallel()
-                .forEach(it -> {
-                    Map<String, String> files = codeLoader.loadFiles(COMMIT)
-                            .collectMap(FileEntity::name, FileEntity::content).block();
-                    assertNotNull(files);
-                    assertEquals(40, files.size());
-                    assertTrue(files.containsKey(README));
-                    assertTrue(files.get(README).startsWith("# 2019-highload-dht"));
-                });
-    }
-
-    @Test
-    void testGetMultipleFilteredFiles() {
-        Pattern excludeRegex = Pattern.compile(".*Test.*");
-        FileFilter filter = filename -> filename.endsWith(".java") && !excludeRegex.matcher(filename).matches();
-        Map<String, String> files = codeLoader.loadFiles(COMMIT, filter)
-                .collectMap(FileEntity::name, FileEntity::content).block();
+        final var s1 = Snapshot
+                .builder()
+                .commit(Commit.shaOnly("ecb40217f36891809693e4d9d37a3e841ff740b9"))
+                .repo(new GithubRepo(0L, "2017-highload-kv", "", new GithubUser(0L, "lamtev", null, "", false)))
+                .build();
+        final var s2 = s1.withCommit(Commit.shaOnly("5d66d3b0c3f07c07eb841b1620dcba2b0a970bc7"));
+        final var s3 = s1.withCommit(Commit.shaOnly("38f07e6b48c6594d9b3cfaa64b76a9aecc811b25"));
+        var files = codeLoader.loadFiles(s1.repo(), List.of(s1, s2, s3), FileFilter.SRC_JAVA)
+                .collectList().block();
         assertNotNull(files);
-        assertEquals(10, files.size());
-        assertFalse(files.containsKey(README));
-        assertFalse(files.containsKey("src/test/java/ru/mail/polis/FilesTest.java"));
-        assertTrue(files.containsKey("src/main/java/ru/mail/polis/dao/DAO.java"));
-        assertTrue(files.get("src/main/java/ru/mail/polis/dao/DAO.java").contains("interface DAO"));
+        assertEquals(9, files.size());
+        assertEquals(4L, files.stream().map(FileEntity::name).distinct().count());
     }
 
     @Test
     void testGetFileSnippetSingleLine() {
-        var snippet = codeLoader.loadSnippets(COMMIT, List.of(SnippetMarker.of(README, 4, 4))).blockFirst();
+        var snippet = codeLoader.loadSnippets(COMMIT, List.of(SnippetMarker.of(README, LineRange.of(4, 4)))).blockFirst();
         assertNotNull(snippet);
         assertEquals("""
                 ## Этап 1. HTTP + storage (deadline 2019-10-05)
@@ -92,10 +79,10 @@ class CodeLoaderTest {
     }
 
     @Test
-    void testGetFileSnippetMultiplyLines() {
+    void testGetFileSnippetMultipleLines() {
         StepVerifier.create(codeLoader.loadSnippets(COMMIT, List.of(
-                SnippetMarker.of(README, 4, 5),
-                SnippetMarker.of("NOT_EXISTENT_FILE", 1, 1)))
+                SnippetMarker.of(README, LineRange.of(4, 5)),
+                SnippetMarker.of("NOT_EXISTENT_FILE", LineRange.of(1, 1))))
                 .map(FileEntity::content))
                 .expectNextMatches(content -> content.equals("""
                         ## Этап 1. HTTP + storage (deadline 2019-10-05)
@@ -106,25 +93,18 @@ class CodeLoaderTest {
     }
 
     @Test
-    void testGetFileSnippetWrongRange() {
-        StepVerifier.create(codeLoader.loadSnippets(COMMIT, List.of(SnippetMarker.of(README, 5, 4))))
-                .expectNextMatches(file -> file.content() == null)
-                .expectComplete()
-                .verify();
-    }
-
-    @Test
     void testLoadManySnippetsFromSameFile() {
         final var snippets = codeLoader
                 .loadSnippets(COMMIT, List.of(
-                        SnippetMarker.of(README, 1, 5),
-                        SnippetMarker.of(README, 4, 10),
-                        SnippetMarker.of(CLUSTER_JAVA, 38, 39),
-                        SnippetMarker.of(README, 7, 15),
-                        SnippetMarker.of(CLUSTER_JAVA, 51, 56)
+                        SnippetMarker.of(README, LineRange.of(1, 5)),
+                        SnippetMarker.of(README, LineRange.of(4, 10)),
+                        SnippetMarker.of(CLUSTER_JAVA, LineRange.of(38, 39)),
+                        SnippetMarker.of(README, LineRange.of(7, 15)),
+                        SnippetMarker.of(CLUSTER_JAVA, LineRange.of(51, 56))
                 ))
                 .collectList()
                 .block();
+        assertNotNull(snippets);
         assertEquals(5, snippets.size());
         assertEquals("""
                 # 2019-highload-dht
@@ -194,6 +174,7 @@ class CodeLoaderTest {
                 .build();
 
         final var diffEntries = codeLoader.loadRemoteDiff(projectRepo, base, head, 1, FileFilter.SRC_JAVA).collectList().block();
+        assertNotNull(diffEntries);
         assertEquals(9, diffEntries.size());
         final var possibleRenameCount = diffEntries
                 .stream()

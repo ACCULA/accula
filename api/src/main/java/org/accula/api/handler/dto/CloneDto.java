@@ -6,13 +6,17 @@ import lombok.Value;
 
 import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
 
+//TODO: Add some useful urls for better user experience:
+// urls to: source and target repos, pulls, commits ...
 /**
  * @author Anton Lamtev
  */
 @JsonAutoDetect(fieldVisibility = ANY)
+@Builder
 @Value
 public class CloneDto {
     Long id;
+    Long projectId;
     FlatCodeSnippet target;
     FlatCodeSnippet source;
 
@@ -20,7 +24,6 @@ public class CloneDto {
     @Builder
     @Value
     public static class FlatCodeSnippet {
-        Long projectId;
         Integer pullNumber;
         String owner;
         String repo;

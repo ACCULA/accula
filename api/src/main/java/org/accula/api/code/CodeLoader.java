@@ -13,16 +13,9 @@ import java.util.List;
  */
 public interface CodeLoader {
     /**
-     * Loads all file entities by the commit snapshot
+     * Loads all file entities that satisfies the filter and have been modified during specified commits
      */
-    default Flux<FileEntity<Snapshot>> loadFiles(Snapshot snapshot) {
-        return loadFiles(snapshot, FileFilter.ALL);
-    }
-
-    /**
-     * Loads all file entities that satisfies the filter by the commit snapshot
-     */
-    Flux<FileEntity<Snapshot>> loadFiles(Snapshot snapshot, FileFilter filter);
+    Flux<FileEntity<Snapshot>> loadFiles(GithubRepo repo, Iterable<Snapshot> snapshots, FileFilter filter);
 
     /**
      * Loads the file snippets (file entities with content of the specified line range)
@@ -71,4 +64,9 @@ public interface CodeLoader {
      * Loads commits of specified repo in a given ref interval (sinceRefExclusive, untilRefInclusive]
      */
     Flux<Commit> loadCommits(GithubRepo repo, String sinceRefExclusive, String untilRefInclusive);
+
+    /**
+     * Loads commits of specified repo from the star to the given ref.
+     */
+    Flux<Commit> loadCommits(GithubRepo repo, String ref);
 }

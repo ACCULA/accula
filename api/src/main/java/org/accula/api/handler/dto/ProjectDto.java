@@ -29,6 +29,5 @@ public class ProjectDto {
     public enum State {
         CREATING,
         CREATED,
-        ;
     }
 }

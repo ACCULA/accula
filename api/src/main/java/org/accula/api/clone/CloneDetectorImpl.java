@@ -2,21 +2,22 @@ package org.accula.api.clone;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.accula.api.clone.suffixtree.Clone;
 import org.accula.api.clone.suffixtree.CloneClass;
 import org.accula.api.clone.suffixtree.SuffixTreeCloneDetector;
 import org.accula.api.code.FileEntity;
-import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.Snapshot;
 import org.accula.api.token.Token;
 import org.accula.api.token.TokenProvider;
+import org.accula.api.token.TokenProvider.Language;
+import org.accula.api.util.Comparators;
 import org.accula.api.util.Lambda;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple2;
-import reactor.util.function.Tuples;
 
 import java.util.List;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 /**
  * @author Anton Lamtev
@@ -26,13 +27,19 @@ import java.util.function.Supplier;
 public final class CloneDetectorImpl implements CloneDetector {
     //FIXME: avoid blocking
     private final SuffixTreeCloneDetector<Token<Snapshot>, Snapshot> suffixTreeCloneDetector = new SuffixTreeCloneDetector<>();
-    private final TokenProvider<Snapshot> tokenProvider = TokenProvider.of(TokenProvider.Language.JAVA);
+    private final TokenProvider<Snapshot> tokenProvider = TokenProvider.of(Language.JAVA);
     private final ConfigProvider configProvider;
 
     @Override
-    public Flux<Tuple2<CodeSnippet, CodeSnippet>> findClones(final Snapshot snapshot, final Flux<FileEntity<Snapshot>> files) {
+    public Flux<CodeClone> readClones(final Snapshot pullSnapshot) {
+        return configProvider.get()
+                .flatMapMany(Lambda.passingFirstArg(this::readClonesFromSuffixTree, pullSnapshot));
+    }
+
+    @Override
+    public Flux<CodeClone> findClones(final Snapshot pullSnapshot, final Flux<FileEntity<Snapshot>> files) {
         return addFilesToSuffixTree(files)
-                .thenMany(configProvider.get().flatMapMany(Lambda.passingFirstArg(this::readClonesFromSuffixTree, snapshot)));
+                .thenMany(readClones(pullSnapshot));
     }
 
     @Override
@@ -47,36 +54,52 @@ public final class CloneDetectorImpl implements CloneDetector {
                 .then();
     }
 
-    private Flux<Tuple2<CodeSnippet, CodeSnippet>> readClonesFromSuffixTree(final Snapshot snapshot, final Config config) {
-        final Supplier<List<CloneClass<Snapshot>>> cloneClassesSupplier = () ->
-                suffixTreeCloneDetector.cloneClassesAfterTransform(cloneClasses ->
-                        cloneClasses.filter(cloneClass ->
-                                cloneClassMatchesRules(cloneClass, config)
-                                && cloneClassContainsClonesFromCommit(cloneClass, snapshot)
-                                && cloneClassContainsClonesFromReposOtherThan(cloneClass, snapshot.repo())));
+    //TODO:
+    // Clearer api: here snapshot is something that references to concrete pull request, not commit
+    private Flux<CodeClone> readClonesFromSuffixTree(final Snapshot snapshot, final Config config) {
+        final Supplier<List<CodeClone>> cloneClassesSupplier = () ->
+                suffixTreeCloneDetector.transform(cloneClasses -> cloneClasses
+                        .filter(cloneClass -> cloneClassMatchesRules(cloneClass, config) &&
+                                              cloneClassContainsClonesForSnapshot(cloneClass, snapshot))
+                        .flatMap(cloneClass -> {
+                            final var clones = cloneClass.clones();
+                            final var source = clones
+                                    .stream()
+                                    .reduce(Comparators.minBy(
+                                            clone -> clone.ref().commit().date(),
+                                            clone -> clone.ref().pullInfo().number()
+                                    ))
+                                    .orElseThrow(IllegalStateException::new);
+
+                            if (source.ref().repo().equals(snapshot.repo())) {
+                                return Stream.empty();
+                            }
+
+                            return clones
+                                    .stream()
+                                    .filter(clone -> snapshot.pullInfo().equals(clone.ref().pullInfo()))
+                                    .map(clone -> convert(source, clone));
+                        }));
 
         return Mono
                 .fromSupplier(cloneClassesSupplier)
-                .flatMapMany(Flux::fromIterable)
-                .map(cloneClass -> {
-                    //TODO: take commit date into account
-                    final var clones = cloneClass.clones();
-                    @SuppressWarnings("OptionalGetWithoutIsPresent")//
-                    final var from = clones
-                            .stream()
-                            .filter(clone -> !clone.ref().repo().equals(snapshot.repo()))
-                            .findFirst()
-                            .get();
-                    @SuppressWarnings("OptionalGetWithoutIsPresent")//
-                    final var to = clones
-                            .stream()
-                            .filter(clone -> clone.ref().equals(snapshot))
-                            .findFirst()
-                            .get();
-                    return Tuples.of(
-                            new CodeSnippet(to.ref(), to.filename(), to.fromLine(), to.toLine()),
-                            new CodeSnippet(from.ref(), from.filename(), from.fromLine(), from.toLine()));
-                });
+                .flatMapMany(Flux::fromIterable);
+    }
+
+    private static CodeClone convert(final Clone<Snapshot> source, final Clone<Snapshot> target) {
+        return CodeClone.builder()
+                .source(covert(source))
+                .target(covert(target))
+                .build();
+    }
+
+    private static CodeClone.Snippet covert(final Clone<Snapshot> clone) {
+        return CodeClone.Snippet.builder()
+                .snapshot(clone.ref())
+                .file(clone.filename())
+                .method(clone.method())
+                .lines(clone.lines())
+                .build();
     }
 
     private static boolean cloneClassMatchesRules(final CloneClass<Snapshot> cloneClass, final Config rules) {
@@ -84,20 +107,25 @@ public final class CloneDetectorImpl implements CloneDetector {
                && cloneClass
                        .clones()
                        .stream()
-                       .anyMatch(clone -> rules.filter().test(clone.start().filename()));
+                       .allMatch(clone -> rules.filter().test(clone.start().filename()));
     }
 
-    private static boolean cloneClassContainsClonesFromCommit(final CloneClass<Snapshot> cloneClass, final Snapshot commit) {
-        return cloneClass
-                .clones()
-                .stream()
-                .anyMatch(clone -> clone.ref().equals(commit));
-    }
-
-    private static boolean cloneClassContainsClonesFromReposOtherThan(final CloneClass<Snapshot> cloneClass, final GithubRepo repo) {
-        return cloneClass
-                .clones()
-                .stream()
-                .anyMatch(clone -> !clone.ref().repo().equals(repo));
+    private static boolean cloneClassContainsClonesForSnapshot(final CloneClass<Snapshot> cloneClass, final Snapshot thisPullSnapshot) {
+        final var clones = cloneClass.clones();
+        var containsCloneFromThisPull = false;
+        var containsCloneFromOtherRepo = false;
+        for (int i = 0, size = clones.size(); i < size; ++i) {
+            final var clone = clones.get(i);
+            if (clone.ref().pullInfo().id().equals(thisPullSnapshot.pullInfo().id())) {
+                containsCloneFromThisPull = true;
+            }
+            if (!clone.ref().repo().equals(thisPullSnapshot.repo())) {
+                containsCloneFromOtherRepo = true;
+            }
+            if (containsCloneFromThisPull && containsCloneFromOtherRepo) {
+                return true;
+            }
+        }
+        return false;
     }
 }

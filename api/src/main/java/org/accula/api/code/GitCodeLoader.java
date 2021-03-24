@@ -1,8 +1,10 @@
 package org.accula.api.code;
 
+import com.google.common.collect.Streams;
 import lombok.RequiredArgsConstructor;
 import org.accula.api.code.git.Git;
 import org.accula.api.code.git.Git.Repo;
+import org.accula.api.code.git.GitCommit;
 import org.accula.api.code.git.GitDiffEntry;
 import org.accula.api.code.git.GitDiffEntry.Addition;
 import org.accula.api.code.git.GitDiffEntry.Deletion;
@@ -12,7 +14,8 @@ import org.accula.api.code.git.GitFile;
 import org.accula.api.code.git.GitRefs;
 import org.accula.api.code.git.Identifiable;
 import org.accula.api.code.git.Snippet;
-import org.accula.api.converter.GitToModelConverter;
+import org.accula.api.code.lines.LineSet;
+import org.accula.api.converter.CodeToModelConverter;
 import org.accula.api.db.model.Commit;
 import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.Snapshot;
@@ -21,11 +24,13 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
@@ -42,19 +47,46 @@ public final class GitCodeLoader implements CodeLoader {
     private final Git git;
 
     @Override
-    public Flux<FileEntity<Snapshot>> loadFiles(final Snapshot snapshot, final FileFilter filter) {
-        return withCommonGitRepo(snapshot)
-                .flatMap(repo -> Mono
-                        .fromFuture(repo.lsTree(snapshot.sha()))
-                        .map(files -> files
-                                .stream()
-                                .filter(file -> filter.test(file.name()))
-                                .collect(toList()))
-                        .flatMap(files -> Mono
-                                .fromFuture(repo.catFiles(files))
-                                .map(filesContent -> files
-                                        .stream()
-                                        .map(file -> new FileEntity<>(snapshot, file.name(), filesContent.get(file))))))
+    public Flux<FileEntity<Snapshot>> loadFiles(final GithubRepo repo, final Iterable<Snapshot> snapshots, final FileFilter filter) {
+        final var snapshotMap = Streams.stream(snapshots)
+                .collect(Collectors.toMap(Snapshot::sha, List::<Snapshot>of, (from, to) -> {
+                    if (from instanceof ArrayList<Snapshot> arrayList) {
+                        if (to.size() == 1) {
+                            arrayList.add(to.get(0));
+                        } else {
+                            assert false;
+                            arrayList.addAll(to);
+                        }
+                        return arrayList;
+                    }
+                    final var arrayList = new ArrayList<Snapshot>();
+                    arrayList.add(from.get(0));
+                    arrayList.add(to.get(0));
+                    return arrayList;
+                }));
+
+        return withCommonGitRepo(repo)
+                .flatMap(gitRepo -> Mono.fromFuture(gitRepo.fileChanges(snapshotMap.keySet()))
+                        .flatMap(changesToSha -> {
+                            changesToSha.entrySet().removeIf(entry -> !filter.test(entry.getKey().file().name()));
+                            return Mono
+                                    .fromFuture(gitRepo.catFiles(changesToSha.keySet()))
+                                    .map(filesContent -> changesToSha
+                                            .entrySet()
+                                            .stream()
+                                            .flatMap(entry -> {
+                                                final var commitSha = entry.getValue();
+                                                final var snaps = snapshotMap.get(commitSha);
+                                                final var file = entry.getKey();
+                                                return snaps
+                                                        .stream()
+                                                        .map(snapshot -> new FileEntity<>(
+                                                                snapshot,
+                                                                file.file().name(),
+                                                                Objects.requireNonNull(filesContent.get(file), "File content MUST be present"),
+                                                                file.changedLines()));
+                                            }));
+                        }))
                 .flatMapMany(Flux::fromStream);
     }
 
@@ -69,8 +101,10 @@ public final class GitCodeLoader implements CodeLoader {
                                 .map(filesContent -> snippets
                                         .stream()
                                         .map(snippet -> new FileEntity<>(
-                                                snapshot, snippet.file().name(),
-                                                filesContent.get(snippet))))))
+                                                snapshot,
+                                                snippet.file().name(),
+                                                Objects.requireNonNull(filesContent.get(snippet), "File content MUST present"),
+                                                LineSet.inRange(snippet.lines()))))))
                 .flatMapMany(Flux::fromStream);
     }
 
@@ -98,9 +132,15 @@ public final class GitCodeLoader implements CodeLoader {
     @Override
     public Flux<String> loadFilenames(final GithubRepo projectRepo) {
         return withProjectGitRepo(projectRepo)
-                .flatMap(repo -> Mono.fromFuture(repo.lsTree(GitRefs.originHead())))
-                .flatMapMany(Flux::fromIterable)
-                .map(GitFile::name);
+                .flatMapMany(repo -> Mono.fromFuture(repo.log(GitRefs.originHead()))
+                        .flatMapMany(Flux::fromIterable)
+                        .map(GitCommit::sha)
+                        .collectList()
+                        .flatMapMany(commits -> Mono.fromFuture(repo.show(commits)))
+                        .map(Map::keySet)
+                        .flatMap(Flux::fromIterable)
+                        .distinct(GitFile::name)
+                        .map(GitFile::name));
     }
 
     @Override
@@ -108,7 +148,7 @@ public final class GitCodeLoader implements CodeLoader {
         return withCommonGitRepo(repo)
                 .flatMap(gitRepo -> Mono.fromFuture(gitRepo.revListAllPretty()))
                 .flatMapMany(Flux::fromIterable)
-                .map(GitToModelConverter::convert);
+                .map(CodeToModelConverter::convert);
     }
 
     @Override
@@ -116,7 +156,15 @@ public final class GitCodeLoader implements CodeLoader {
         return withCommonGitRepo(repo)
                 .flatMap(gitRepo -> Mono.fromFuture(gitRepo.log(sinceRefExclusive, untilRefInclusive)))
                 .flatMapMany(Flux::fromIterable)
-                .map(GitToModelConverter::convert);
+                .map(CodeToModelConverter::convert);
+    }
+
+    @Override
+    public Flux<Commit> loadCommits(final GithubRepo repo, final String ref) {
+        return withCommonGitRepo(repo)
+                .flatMap(gitRepo -> Mono.fromFuture(gitRepo.log(ref)))
+                .flatMapMany(Flux::fromIterable)
+                .map(CodeToModelConverter::convert);
     }
 
     /// We name each common repo git folder like that: <owner-login>_<repo-name>
@@ -203,25 +251,25 @@ public final class GitCodeLoader implements CodeLoader {
                             if (diffEntry instanceof Addition addition) {
                                 return DiffEntry.of(
                                         FileEntity.absent(base),
-                                        new FileEntity<>(head, addition.head().name(), files.get(addition.head()))
+                                        new FileEntity<>(head, addition.head().name(), files.get(addition.head()), LineSet.all())
                                 );
                             }
                             if (diffEntry instanceof Deletion deletion) {
                                 return DiffEntry.of(
-                                        new FileEntity<>(base, deletion.base().name(), files.get(deletion.base())),
+                                        new FileEntity<>(base, deletion.base().name(), files.get(deletion.base()), LineSet.all()),
                                         FileEntity.absent(head)
                                 );
                             }
                             if (diffEntry instanceof Modification modification) {
                                 return DiffEntry.of(
-                                        new FileEntity<>(base, modification.base().name(), files.get(modification.base())),
-                                        new FileEntity<>(head, modification.head().name(), files.get(modification.head()))
+                                        new FileEntity<>(base, modification.base().name(), files.get(modification.base()), LineSet.all()),
+                                        new FileEntity<>(head, modification.head().name(), files.get(modification.head()), LineSet.all())
                                 );
                             }
                             if (diffEntry instanceof Renaming renaming) {
                                 return new DiffEntry<>(
-                                        new FileEntity<>(base, renaming.base().name(), files.get(renaming.base())),
-                                        new FileEntity<>(head, renaming.head().name(), files.get(renaming.head())),
+                                        new FileEntity<>(base, renaming.base().name(), files.get(renaming.base()), LineSet.all()),
+                                        new FileEntity<>(head, renaming.head().name(), files.get(renaming.head()), LineSet.all()),
                                         renaming.similarityIndex()
                                 );
                             }
@@ -233,7 +281,7 @@ public final class GitCodeLoader implements CodeLoader {
     private static List<Snippet> convertSnippets(final List<GitFile> files, final List<SnippetMarker> markers) {
         final var nameToFileMap = files
                 .stream()
-                .collect(toMap(GitFile::name, Lambda.identity()));
+                .collect(toMap(GitFile::name, Function.identity()));
         return markers
                 .stream()
                 .map(marker -> {
@@ -241,7 +289,7 @@ public final class GitCodeLoader implements CodeLoader {
                     if (file == null) {
                         return null;
                     }
-                    return Snippet.of(file, marker.fromLine(), marker.toLine());
+                    return Snippet.of(file, marker.lines());
                 })
                 .filter(Objects::nonNull)
                 .collect(toList());

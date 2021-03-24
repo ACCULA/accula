@@ -4,8 +4,8 @@ import com.intellij.psi.PsiElement;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
-
-import java.util.Objects;
+import org.accula.api.code.lines.LineRange;
+import org.accula.api.token.psi.java.JavaPsiUtils;
 
 import static lombok.AccessLevel.PRIVATE;
 
@@ -21,22 +21,15 @@ public class Token<Ref> implements Comparable<Token<Ref>> {
     String string;
     String methodName;
     String filename;
-    int fromLine;
-    int toLine;
+    LineRange lines;
 
-    public static <Ref> Token<Ref> of(final PsiElement token, final String methodName, final Ref ref) {
-        final var file = token.getContainingFile();
-        final var document = Objects.requireNonNull(file.getViewProvider().getDocument());
-        final var textRange = token.getTextRange();
-        final var fromLine = document.getLineNumber(textRange.getStartOffset()) + 1;
-        final var toLine = document.getLineNumber(textRange.getEndOffset()) + 1;
+    public static <Ref> Token<Ref> of(final PsiElement token, final String filename, final String methodName, final LineRange lineRange, final Ref ref) {
         return Token.<Ref>builder()
                 .ref(ref)
-                .string(token.getNode().getElementType().toString())
+                .string(JavaPsiUtils.optimizeTokenString(token.getNode().getElementType()))
                 .methodName(methodName)
-                .filename(file.getName())
-                .fromLine(fromLine)
-                .toLine(toLine)
+                .filename(filename)
+                .lines(lineRange)
                 .build();
     }
 

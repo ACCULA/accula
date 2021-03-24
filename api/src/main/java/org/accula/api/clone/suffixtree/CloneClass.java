@@ -19,7 +19,7 @@ public class CloneClass<Ref> {
     int length = computeLength();
     @ToString.Exclude
     @Getter(lazy = true)
-    List<Clone<Ref>> clones = getClones();
+    List<Clone<Ref>> clones = traverseClones();
 
     private int computeLength() {
         return SuffixTreeUtils.parentEdges(node)
@@ -27,13 +27,13 @@ public class CloneClass<Ref> {
                 .sum();
     }
 
-    private List<Clone<Ref>> getClones() {
+    private List<Clone<Ref>> traverseClones() {
         return SuffixTreeUtils.terminalMap(node)
-                .entrySet()
+                .object2IntEntrySet()
                 .stream()
                 .map(entry -> {
                     final var edge = entry.getKey();
-                    final var offset = entry.getValue();
+                    final var offset = entry.getIntValue();
                     final var to = edge.getEnd() - offset;
                     final var from = to - length() + 1;
                     return Clone.<Ref>builder()

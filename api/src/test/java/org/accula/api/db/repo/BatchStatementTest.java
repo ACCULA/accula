@@ -37,12 +37,10 @@ class BatchStatementTest {
 
         @Language("SQL")//
         String expectedSql = """
-                INSERT INTO user_github
-                VALUES (0,'login0','name 0','avatar',false),\
+                (0,'login0','name 0','avatar',false),\
                 (1,'login1',null,'avatar',false),\
                 (2,'login2','Firstname D'' Lastnamiano','avatar',false),\
-                (3,'login3','Just many '' '' '' '' '' '' single quotes','avatar',false)
-                ON CONFLICT DO NOTHING
+                (3,'login3','Just many '' '' '' '' '' '' single quotes','avatar',false)\
                 """;
 
         assertEquals(expectedSql, sql(statement));
@@ -60,8 +58,8 @@ class BatchStatementTest {
 
     @SneakyThrows
     String sql(BatchStatement s) {
-        var f = s.getClass().getDeclaredField("boundSqlProducer");
+        var f = s.getClass().getDeclaredField("boundValuesProducer");
         f.setAccessible(true);
-        return ((Supplier<String>) f.get(s)).get();
+        return ((Supplier<StringBuilder>) f.get(s)).get().toString();
     }
 }
