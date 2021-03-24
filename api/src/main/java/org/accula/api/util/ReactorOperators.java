@@ -23,13 +23,4 @@ public final class ReactorOperators {
             nextAndContextConsumer.accept(Objects.requireNonNull(signal.get()), signal.getContextView());
         };
     }
-
-    public static <T> Consumer<Signal<T>> doFinally(final Runnable doFinally) {
-        return signal -> {
-            if (!signal.isOnComplete() && !signal.isOnError()) {
-                return;
-            }
-            doFinally.run();
-        };
-    }
 }
