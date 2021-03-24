@@ -50,6 +50,8 @@ plugins:
         enabled: false
       GenericsNaming:
         enabled: false # why can not we give our generics clear names?
+      DoNotUseThreads:
+        enabled: false
 
     config:
       file: pmd.xml

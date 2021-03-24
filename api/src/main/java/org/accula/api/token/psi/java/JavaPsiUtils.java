@@ -76,10 +76,8 @@ public final class JavaPsiUtils {
     public static List<PsiMethod> methods(final PsiElement root, @Nullable final Predicate<LineRange> lineRangeFilter) {
         final var methods = new ArrayList<PsiMethod>();
         PsiUtils.forEachDescendantOfType(root, PsiMethod.class, method -> {
-            if (method.getBody() != null) {
-                if (lineRangeFilter == null || lineRangeFilter.test(PsiUtils.lineRange(method))) {
-                    methods.add(method);
-                }
+            if (method.getBody() != null && matchesLineRangeFilter(method, lineRangeFilter)) {
+                methods.add(method);
             }
         });
         return methods;
@@ -90,13 +88,16 @@ public final class JavaPsiUtils {
     }
 
     public static String optimizeTokenString(final IElementType token) {
-        final var tokenString = token.toString();
         if (LITERALS.contains(token)) {
             return "_LITERAL";
         }
         if (TYPE_KEYWORDS_AND_REFS.contains(token)) {
             return "_TYPE";
         }
-        return tokenString;
+        return token.toString();
+    }
+
+    private static boolean matchesLineRangeFilter(final PsiMethod method, @Nullable final Predicate<LineRange> lineRangeFilter) {
+        return lineRangeFilter == null || lineRangeFilter.test(PsiUtils.lineRange(method));
     }
 }

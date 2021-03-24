@@ -32,5 +32,8 @@ public final class PsiFileFactoryProvider implements Supplier<Mono<PsiFileFactor
 
     private static final class Holder {
         private static final PsiFileFactoryProvider INSTANCE = new PsiFileFactoryProvider();
+
+        private Holder() {
+        }
     }
 }

@@ -15,7 +15,6 @@ public final class Sync {
 
     public <T> Supplier<T> reading(final Supplier<T> readOp) {
         return () -> {
-            final var readLock = this.readLock;
             readLock.lock();
             try {
                 return readOp.get();
@@ -26,7 +25,6 @@ public final class Sync {
     }
 
     public <T> T read(final Supplier<T> readOp) {
-        final var readLock = this.readLock;
         readLock.lock();
         try {
             return readOp.get();
@@ -37,7 +35,6 @@ public final class Sync {
 
     public <T> Supplier<T> writing(final Supplier<T> writeOp) {
         return () -> {
-            final var writeLock = this.writeLock;
             writeLock.lock();
             try {
                 return writeOp.get();
@@ -48,7 +45,6 @@ public final class Sync {
     }
 
     public <T> T write(final Supplier<T> writeOp) {
-        final var writeLock = this.writeLock;
         writeLock.lock();
         try {
             return writeOp.get();

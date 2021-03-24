@@ -23,7 +23,11 @@ public class Token<Ref> implements Comparable<Token<Ref>> {
     String filename;
     LineRange lines;
 
-    public static <Ref> Token<Ref> of(final PsiElement token, final String filename, final String methodName, final LineRange lineRange, final Ref ref) {
+    public static <Ref> Token<Ref> of(final PsiElement token,
+                                      final String filename,
+                                      final String methodName,
+                                      final LineRange lineRange,
+                                      final Ref ref) {
         return Token.<Ref>builder()
                 .ref(ref)
                 .string(JavaPsiUtils.optimizeTokenString(token.getNode().getElementType()))

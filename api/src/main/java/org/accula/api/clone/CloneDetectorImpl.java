@@ -114,7 +114,8 @@ public final class CloneDetectorImpl implements CloneDetector {
         final var clones = cloneClass.clones();
         var containsCloneFromThisPull = false;
         var containsCloneFromOtherRepo = false;
-        for (int i = 0, size = clones.size(); i < size; ++i) {
+        final var cloneCount = clones.size();
+        for (int i = 0; i < cloneCount; ++i) {
             final var clone = clones.get(i);
             if (clone.ref().pullInfo().id().equals(thisPullSnapshot.pullInfo().id())) {
                 containsCloneFromThisPull = true;

@@ -58,7 +58,7 @@ class LineSetLineRangesImpl implements LineSet {
     }
 
     private final class Iterator implements IntIterator {
-        private int rangeIndex = 0;
+        private int rangeIndex;
         private IntIterator rangeIterator = lineRanges[rangeIndex].iterator();
 
         @Override

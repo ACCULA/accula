@@ -16,12 +16,13 @@ public class GitFile implements Identifiable {
     @EqualsAndHashCode.Exclude
     String name;
 
-    static GitFile devNull() {
+    public static GitFile devNull() {
         return DEV_NULL;
     }
 
     public boolean isDeleted() {
-        for (int i = 0, len = Math.min(id.length(), 40); i < len; ++i) {
+        final int length = Math.min(id.length(), 40);
+        for (int i = 0; i < length; ++i) {
             if (id.charAt(i) != '0') {
                 return false;
             }

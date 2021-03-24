@@ -114,14 +114,14 @@ public final class ClonesHandler {
 
         final var responseClones = Mono
                 .zip(clones.collectList(), fileSnippets)
-                .flatMapMany(Lambda.passingTailArg(ClonesHandler::$, projectId));
+                .flatMapMany(Lambda.passingTailArg(ClonesHandler::convert, projectId));
 
         return Responses.ok(responseClones, CloneDto.class);
     }
 
-    private static Flux<CloneDto> $(final List<Clone> clones,
-                                    final Map<Clone.Snippet, FileEntity<Snapshot>> files,
-                                    final Long projectId) {
+    private static Flux<CloneDto> convert(final List<Clone> clones,
+                                          final Map<Clone.Snippet, FileEntity<Snapshot>> files,
+                                          final Long projectId) {
         Preconditions.checkArgument(clones.stream().flatMap(c -> Stream.of(c.target(), c.source())).distinct().count() == files.size());
         return Flux.push(sink -> {
             for (final var clone : clones) {
