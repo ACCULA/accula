@@ -83,7 +83,8 @@ public final class GitCodeLoader implements CodeLoader {
                                                         .map(snapshot -> new FileEntity<>(
                                                                 snapshot,
                                                                 file.file().name(),
-                                                                Objects.requireNonNull(filesContent.get(file), "File content MUST be present"),
+                                                                Objects.requireNonNull(filesContent.get(file),
+                                                                        "File content MUST be present"),
                                                                 file.changedLines()));
                                             }));
                         }))
