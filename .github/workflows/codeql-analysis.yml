@@ -26,6 +26,10 @@ on:
   schedule:
     - cron: '0 6 * * 1'
 
+# Keep in sync with build.yml
+env:
+  java: 15
+
 jobs:
   analyze:
     name: Analyze
