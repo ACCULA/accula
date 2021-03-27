@@ -258,7 +258,7 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
 
     private Mono<Void> upsertAdmins(final Connection connection, final Long projectId, final Project.Conf conf) {
         final var deleteProjectAdmins = ((PostgresqlStatement) connection.createStatement("""
-                DELETE FROM project_admin 
+                DELETE FROM project_admin
                 WHERE project_id = $1
                 """))
                 .bind("$1", projectId)

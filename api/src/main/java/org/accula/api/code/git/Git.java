@@ -18,7 +18,6 @@ import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -123,13 +122,13 @@ public final class Git {
                         .map(Git::parseDiffEntry)
                         .filter(Objects::nonNull)
                         .collect(Collectors.toList()))
-                        .orElse(Collections.emptyList());
+                        .orElse(List.of());
             });
         }
 
         public <I extends Identifiable> CompletableFuture<Map<I, String>> catFiles(final Iterable<I> identifiableObjects) {
             if (org.accula.api.util.Iterables.isEmptyCollection(identifiableObjects)) {
-                return CompletableFuture.completedFuture(Collections.emptyMap());
+                return CompletableFuture.completedFuture(Map.of());
             }
             return readingAsync(() -> {
                 final var process = git("cat-file", "--batch");
@@ -145,7 +144,7 @@ public final class Git {
                         throw wrap(e);
                     }
                     return filesContent(lines.iterator(), identifiableObjects);
-                }).orElse(Collections.emptyMap());
+                }).orElse(Map.of());
             });
         }
 
@@ -157,7 +156,7 @@ public final class Git {
                         .map(Git::parseShowEntry)
                         .filter(file -> file != null && !file.isDeleted())
                         .collect(Collectors.toList()))
-                        .orElse(Collections.emptyList());
+                        .orElse(List.of());
             });
         }
 
@@ -169,14 +168,14 @@ public final class Git {
                 show.add("--format=oneline");
                 Iterables.addAll(show, commitsSha);
                 return usingStdoutLines(git(show), lines -> showEntries(lines.iterator()))
-                        .orElse(Collections.emptyMap());
+                        .orElse(Map.of());
             });
         }
 
         public CompletableFuture<List<GitFileChanges>> fileChanges(final String commitSha) {
             return readingAsync(() ->
                     usingStdoutLines(git("show", "--format=oneline", commitSha), lines -> changes(lines.iterator()))
-                            .orElse(Collections.emptyList()));
+                            .orElse(List.of()));
         }
 
         public CompletableFuture<Map<GitFileChanges, String>> fileChanges(final Iterable<String> commitsSha) {
@@ -186,7 +185,7 @@ public final class Git {
                 show.add("--format=oneline");
                 Iterables.addAll(show, commitsSha);
                 return usingStdoutLines(git(show), lines -> changesMap(lines.iterator()))
-                        .orElse(Collections.emptyMap());
+                        .orElse(Map.of());
             });
         }
 
@@ -198,7 +197,7 @@ public final class Git {
                         .map(Git::parseLsEntry)
                         .filter(Objects::nonNull)
                         .collect(Collectors.toList()))
-                        .orElse(Collections.emptyList());
+                        .orElse(List.of());
             });
         }
 
@@ -206,7 +205,7 @@ public final class Git {
             return readingAsync(() -> {
                 final var process = git("remote");
                 return usingStdoutLines(process, lines -> lines.collect(Collectors.toSet()))
-                        .orElse(Collections.emptySet());
+                        .orElse(Set.of());
             });
         }
 
@@ -244,7 +243,7 @@ public final class Git {
             return readingAsync(() ->
                     usingStdoutLines(git("log", "--date=rfc", ref), lines ->
                             commits(lines.iterator()))
-                            .orElse(Collections.emptyList()));
+                            .orElse(List.of()));
         }
 
         public CompletableFuture<List<GitCommit>> log(final String fromRefExclusive, final String toRefInclusive) {
@@ -252,7 +251,7 @@ public final class Git {
                 final var log = git("log", "--date=rfc", "%s..%s".formatted(fromRefExclusive, toRefInclusive));
                 return usingStdoutLines(log, lines ->
                         commits(lines.iterator()))
-                        .orElse(Collections.emptyList());
+                        .orElse(List.of());
             });
         }
 
@@ -261,7 +260,7 @@ public final class Git {
                 final var log = git("rev-list", "--pretty", "--all", "--date=rfc");
                 return usingStdoutLines(log, lines ->
                         commits(lines.iterator()))
-                        .orElse(Collections.emptyList());
+                        .orElse(List.of());
             });
         }
 
@@ -302,7 +301,7 @@ public final class Git {
                                                                         final Iterable<I> identifiableObjects) {
         final Iterator<I> identifiableObjectsIterator = identifiableObjects.iterator();
         if (!lines.hasNext() || !identifiableObjectsIterator.hasNext()) {
-            return Collections.emptyMap();
+            return Map.of();
         }
         final Map<I, String> filesContent = new HashMap<>((identifiableObjects instanceof Collection<?> col) ? col.size() : 16);
         I prevObjIdentifiable = null;
@@ -390,7 +389,7 @@ public final class Git {
 
     private static Map<GitFile, String> showEntries(final Iterator<String> lines) {
         if (!lines.hasNext()) {
-            return Collections.emptyMap();
+            return Map.of();
         }
         final var entries = new LinkedHashMap<GitFile, String>();
         var sha = (String) null;
@@ -415,7 +414,7 @@ public final class Git {
     @SuppressWarnings("UnstableApiUsage")
     private static List<GitFileChanges> changes(final Iterator<String> lines) {
         if (!lines.hasNext()) {
-            return Collections.emptyList();
+            return List.of();
         }
         return Streams.stream(new FileChangesParseIterator(Iterators.nextResettable(lines)))
                 .filter(GitFileChanges.class::isInstance)
@@ -425,7 +424,7 @@ public final class Git {
 
     private static Map<GitFileChanges, String> changesMap(final Iterator<String> lines) {
         if (!lines.hasNext()) {
-            return Collections.emptyMap();
+            return Map.of();
         }
         final var entries = new LinkedHashMap<GitFileChanges, String>();
         final var nextResettableIter = Iterators.nextResettable(lines);

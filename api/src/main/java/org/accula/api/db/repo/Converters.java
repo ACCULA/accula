@@ -11,7 +11,6 @@ import org.accula.api.db.model.User;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.Instant;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -394,12 +393,12 @@ final class Converters {
 
     static List<Long> ids(final Row row, final String name) {
         final var ids = row.get(name, Long[].class);
-        return ids != null ? List.of(ids) : Collections.emptyList();
+        return ids != null ? List.of(ids) : List.of();
     }
 
     static List<String> strings(final Row row, final String name) {
         final var strings = row.get(name, String[].class);
-        return strings != null ? List.of(strings) : Collections.emptyList();
+        return strings != null ? List.of(strings) : List.of();
     }
 
     private static <T> T or(@Nullable final T value, final T defaultValue) {

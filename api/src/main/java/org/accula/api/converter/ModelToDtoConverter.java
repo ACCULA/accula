@@ -19,7 +19,6 @@ import org.accula.api.handler.dto.UserDto;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -109,7 +108,7 @@ public final class ModelToDtoConverter {
 
     public static List<ShortPullDto> convertShort(final List<Pull> pulls) {
         if (pulls.isEmpty()) {
-            return Collections.emptyList();
+            return List.of();
         }
         return pulls
                 .stream()

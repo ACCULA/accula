@@ -7,14 +7,16 @@ import io.r2dbc.spi.Row;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.accula.api.db.model.Clone;
+import org.accula.api.util.Lambda;
 import org.intellij.lang.annotations.Language;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 /**
  * @author Anton Lamtev
@@ -31,53 +33,8 @@ public final class CloneRepoImpl implements CloneRepo, ConnectionProvidedRepo {
             return Flux.empty();
         }
 
-        return transactionalMany(connection -> {
-            final var cloneList = clones instanceof ArrayList ? (ArrayList<Clone>) clones : new ArrayList<>(clones);
-            final var snippets = new ArrayList<Clone.Snippet>(clones.size() * 2);
-            cloneList.forEach(clone -> {
-                snippets.add(clone.target());
-                snippets.add(clone.source());
-            });
-
-            final var snippetsStatement = BatchStatement.of(connection, """
-                    INSERT INTO clone_snippet (commit_sha, repo_id, branch, pull_id, file, from_line, to_line)
-                    VALUES ($collection)
-                    RETURNING id
-                    """);
-            snippetsStatement.bind(snippets, snippet -> new Object[]{
-                    snippet.snapshot().sha(),
-                    snippet.snapshot().repo().id(),
-                    snippet.snapshot().branch(),
-                    Objects.requireNonNull(snippet.snapshot().pullInfo(), "Snapshot pullInfo MUST NOT be null").id(),
-                    snippet.file(),
-                    snippet.fromLine(),
-                    snippet.toLine()
-            });
-
-            final var snippetIdsMono = snippetsStatement
-                    .execute()
-                    .flatMap(result -> ConnectionProvidedRepo.columnFlux(result, "id", Long.class))
-                    .window(2)
-                    .flatMap(Flux::collectList)
-                    .collectList();
-
-            return snippetIdsMono
-                    .flatMapMany(snippetIds -> {
-                        final var statement = BatchStatement.of(connection, """
-                                INSERT INTO clone (target_id, source_id)
-                                VALUES ($collection)
-                                RETURNING id
-                                """);
-                        statement.bind(snippetIds, targetAndSource -> new Object[]{
-                                targetAndSource.get(0),
-                                targetAndSource.get(1)
-                        });
-                        return statement
-                                .execute()
-                                .flatMap(result -> ConnectionProvidedRepo.columnFlux(result, "id", Long.class))
-                                .zipWithIterable(cloneList, (id, clone) -> clone.withId(id));
-                    });
-        });
+        return transactionalMany(connection -> insertSnippets(connection, clones)
+                .flatMapMany(Lambda.passingFirstArg(CloneRepoImpl::insertClones, connection)));
     }
 
     @Override
@@ -98,6 +55,55 @@ public final class CloneRepoImpl implements CloneRepo, ConnectionProvidedRepo {
     public Mono<Void> deleteByPullNumber(final Long projectId, final Integer pullNumber) {
         return transactional(connection -> deleteClonesByPullNumber(connection, projectId, pullNumber)
                 .then(deleteNoLongerReferencedCloneSnippets(connection)));
+    }
+
+    private static Mono<List<Clone>> insertSnippets(final Connection connection, final Collection<Clone> clones) {
+        final var snippets = clones
+                .stream()
+                .flatMap(clone -> Stream.of(clone.target(), clone.source()));
+
+        final var snippetsStatement = BatchStatement.of(connection, """
+                INSERT INTO clone_snippet (commit_sha, repo_id, branch, pull_id, file, from_line, to_line)
+                VALUES ($collection)
+                RETURNING id
+                """);
+        snippetsStatement.bind(snippets, snippet -> new Object[]{
+                snippet.snapshot().sha(),
+                snippet.snapshot().repo().id(),
+                snippet.snapshot().branch(),
+                Objects.requireNonNull(snippet.snapshot().pullInfo(), "Snapshot pullInfo MUST NOT be null").id(),
+                snippet.file(),
+                snippet.fromLine(),
+                snippet.toLine()
+        });
+
+        return snippetsStatement
+                .execute()
+                .flatMap(result -> ConnectionProvidedRepo.columnFlux(result, "id", Long.class))
+                .window(2)
+                .flatMap(Flux::collectList)
+                .zipWithIterable(clones, (targetAndSourceIds, clone) -> clone
+                        .toBuilder()
+                        .target(clone.target().withId(targetAndSourceIds.get(0)))
+                        .source(clone.source().withId(targetAndSourceIds.get(1)))
+                        .build())
+                .collectList();
+    }
+
+    private static Flux<Clone> insertClones(final Connection connection, final List<Clone> clones) {
+        final var statement = BatchStatement.of(connection, """
+                INSERT INTO clone (target_id, source_id)
+                VALUES ($collection)
+                RETURNING id
+                """);
+        statement.bind(clones, clone -> new Object[]{
+                clone.target().id(),
+                clone.source().id()
+        });
+        return statement
+                .execute()
+                .flatMap(result -> ConnectionProvidedRepo.columnFlux(result, "id", Long.class))
+                .zipWithIterable(clones, (id, clone) -> clone.withId(id));
     }
 
     private static PostgresqlStatement selectStatement(final Connection connection) {

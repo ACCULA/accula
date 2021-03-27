@@ -9,7 +9,7 @@ import lombok.With;
  * @author Vadim Dyachkov
  * @author Anton Lamtev
  */
-@Builder
+@Builder(toBuilder = true)
 @With
 @Value
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
@@ -23,6 +23,7 @@ public class Clone {
     Boolean suppressed = Boolean.FALSE;
 
     @Builder
+    @With
     @Value
     public static class Snippet {
         @Builder.Default
