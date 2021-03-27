@@ -52,6 +52,7 @@ public final class Git {
     private static final String ALREADY_EXISTS = "already exists";
     private static final String JOINER_NEWLINE = "";
     private static final long INTERVAL_SINCE_LAST_FETCH_THRESHOLD = Duration.ofSeconds(5L).toMillis();
+    private static final String FORMAT_ONE_LINE = "--format=oneline";
 
     private final Map<Path, Repo> repos = new ConcurrentHashMap<>();
     private final Path root;
@@ -150,7 +151,7 @@ public final class Git {
 
         public CompletableFuture<List<GitFile>> show(final String commitSha) {
             return readingAsync(() -> {
-                final var process = git("show", "--raw", "--format=oneline", commitSha);
+                final var process = git("show", "--raw", FORMAT_ONE_LINE, commitSha);
 
                 return usingStdoutLines(process, lines -> lines
                         .map(Git::parseShowEntry)
@@ -165,7 +166,7 @@ public final class Git {
                 final var show = new ArrayList<String>(4 + (commitsSha instanceof Collection<?> col ? col.size() : 10));
                 show.add("show");
                 show.add("--raw");
-                show.add("--format=oneline");
+                show.add(FORMAT_ONE_LINE);
                 Iterables.addAll(show, commitsSha);
                 return usingStdoutLines(git(show), lines -> showEntries(lines.iterator()))
                         .orElse(Map.of());
@@ -174,7 +175,7 @@ public final class Git {
 
         public CompletableFuture<List<GitFileChanges>> fileChanges(final String commitSha) {
             return readingAsync(() ->
-                    usingStdoutLines(git("show", "--format=oneline", commitSha), lines -> changes(lines.iterator()))
+                    usingStdoutLines(git("show", FORMAT_ONE_LINE, commitSha), lines -> changes(lines.iterator()))
                             .orElse(List.of()));
         }
 
@@ -182,7 +183,7 @@ public final class Git {
             return readingAsync(() -> {
                 final var show = new ArrayList<String>(3 + (commitsSha instanceof Collection<?> col ? col.size() : 10));
                 show.add("show");
-                show.add("--format=oneline");
+                show.add(FORMAT_ONE_LINE);
                 Iterables.addAll(show, commitsSha);
                 return usingStdoutLines(git(show), lines -> changesMap(lines.iterator()))
                         .orElse(Map.of());

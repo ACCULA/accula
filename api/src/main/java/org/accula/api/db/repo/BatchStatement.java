@@ -40,13 +40,13 @@ final class BatchStatement {
         this.sql = sql;
         this.indexOfCollectionMarker = sql.indexOf(COLLECTION_MARKER);
         if (this.indexOfCollectionMarker == -1) {
-            throw new IllegalArgumentException("sql provided does not contain collection marker " + COLLECTION_MARKER);
+            throw new IllegalArgumentException("Sql provided does not contain collection marker " + COLLECTION_MARKER);
         }
     }
 
     <T> void bind(final Iterator<T> items, final Function<T, Object[]> bind) {
         if (!items.hasNext()) {
-            throw new IllegalArgumentException("items must not be empty");
+            throw new IllegalArgumentException("Items must not be empty");
         }
         final var oldBoundValuesProducer = boundValuesProducer;
         final var isFirstBinding = oldBoundValuesProducer == null;

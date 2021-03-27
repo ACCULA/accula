@@ -11,6 +11,7 @@ import org.accula.api.code.git.GitDiffEntry.Deletion;
 import org.accula.api.code.git.GitDiffEntry.Modification;
 import org.accula.api.code.git.GitDiffEntry.Renaming;
 import org.accula.api.code.git.GitFile;
+import org.accula.api.code.git.GitFileChanges;
 import org.accula.api.code.git.GitRefs;
 import org.accula.api.code.git.Identifiable;
 import org.accula.api.code.git.Snippet;
@@ -48,46 +49,11 @@ public final class GitCodeLoader implements CodeLoader {
 
     @Override
     public Flux<FileEntity<Snapshot>> loadFiles(final GithubRepo repo, final Iterable<Snapshot> snapshots, final FileFilter filter) {
-        final var snapshotMap = Streams.stream(snapshots)
-                .collect(Collectors.toMap(Snapshot::sha, List::<Snapshot>of, (from, to) -> {
-                    if (from instanceof ArrayList<Snapshot> arrayList) {
-                        if (to.size() == 1) {
-                            arrayList.add(to.get(0));
-                        } else {
-                            assert false;
-                            arrayList.addAll(to);
-                        }
-                        return arrayList;
-                    }
-                    final var arrayList = new ArrayList<Snapshot>();
-                    arrayList.add(from.get(0));
-                    arrayList.add(to.get(0));
-                    return arrayList;
-                }));
-
+        final var snapshotMap = snapshotMap(snapshots);
         return withCommonGitRepo(repo)
-                .flatMap(gitRepo -> Mono.fromFuture(gitRepo.fileChanges(snapshotMap.keySet()))
-                        .flatMap(changesToSha -> {
-                            changesToSha.entrySet().removeIf(entry -> !filter.test(entry.getKey().file().name()));
-                            return Mono
-                                    .fromFuture(gitRepo.catFiles(changesToSha.keySet()))
-                                    .map(filesContent -> changesToSha
-                                            .entrySet()
-                                            .stream()
-                                            .flatMap(entry -> {
-                                                final var commitSha = entry.getValue();
-                                                final var snaps = snapshotMap.get(commitSha);
-                                                final var file = entry.getKey();
-                                                return snaps
-                                                        .stream()
-                                                        .map(snapshot -> new FileEntity<>(
-                                                                snapshot,
-                                                                file.file().name(),
-                                                                Objects.requireNonNull(filesContent.get(file),
-                                                                        "File content MUST be present"),
-                                                                file.changedLines()));
-                                            }));
-                        }))
+                .flatMap(gitRepo -> Mono
+                        .fromFuture(gitRepo.fileChanges(snapshotMap.keySet()))
+                        .flatMap(changesToSha -> loadFiles(changesToSha, filter, gitRepo, snapshotMap)))
                 .flatMapMany(Flux::fromStream);
     }
 
@@ -192,7 +158,64 @@ public final class GitCodeLoader implements CodeLoader {
                 .flatMap(repo -> Mono.fromFuture(repo.fetch()));
     }
 
-    private Mono<Repo> addOrUpdateRemotes(final Repo repo, final Snapshot base, final Snapshot head) {
+    private static Map<String, List<Snapshot>> snapshotMap(final Iterable<Snapshot> snapshots) {
+        return Streams.stream(snapshots)
+                .collect(Collectors.toMap(Snapshot::sha, List::<Snapshot>of, (from, to) -> {
+                    if (from instanceof ArrayList<Snapshot> arrayList) {
+                        if (to.size() == 1) {
+                            arrayList.add(to.get(0));
+                        } else {
+                            assert false;
+                            arrayList.addAll(to);
+                        }
+                        return arrayList;
+                    }
+                    final var arrayList = new ArrayList<Snapshot>();
+                    arrayList.add(from.get(0));
+                    arrayList.add(to.get(0));
+                    return arrayList;
+                }));
+    }
+
+    private static Mono<Stream<FileEntity<Snapshot>>> loadFiles(final Map<GitFileChanges, String> changesToSha,
+                                                                final FileFilter filter,
+                                                                final Repo repo,
+                                                                final Map<String, List<Snapshot>> snapshotMap) {
+        changesToSha.entrySet().removeIf(entry -> !filter.test(entry.getKey().file().name()));
+        return Mono
+                .fromFuture(repo.catFiles(changesToSha.keySet()))
+                .map(filesContent -> convertFiles(changesToSha, snapshotMap, filesContent));
+    }
+
+    private static Stream<FileEntity<Snapshot>> convertFiles(final Map<GitFileChanges, String> changesToSha,
+                                                             final Map<String, List<Snapshot>> snapshotMap,
+                                                             final Map<GitFileChanges, String> filesContent) {
+        return changesToSha
+                .entrySet()
+                .stream()
+                .flatMap(fileChangesAndCommitSha -> {
+                    final var fileChanges = fileChangesAndCommitSha.getKey();
+                    final var commitSha = fileChangesAndCommitSha.getValue();
+                    final var fileContent = Objects.requireNonNull(filesContent.get(fileChanges), "File content MUST be present");
+                    final var snapshot = snapshotMap.get(commitSha);
+                    return convertFiles(snapshot, fileChanges, fileContent);
+                });
+    }
+
+    private static Stream<FileEntity<Snapshot>> convertFiles(final List<Snapshot> snapshots,
+                                                             final GitFileChanges fileChanges,
+                                                             final String fileContent) {
+        return snapshots
+                .stream()
+                .map(snapshot -> new FileEntity<>(
+                        snapshot,
+                        fileChanges.file().name(),
+                        fileContent,
+                        fileChanges.changedLines()
+                ));
+    }
+
+    private static Mono<Repo> addOrUpdateRemotes(final Repo repo, final Snapshot base, final Snapshot head) {
         final var baseRemote = base.repo().owner().login();
         final var headRemote = head.repo().owner().login();
         final var baseUrl = repoGitUrl(base.repo());
@@ -207,7 +230,7 @@ public final class GitCodeLoader implements CodeLoader {
                         ));
     }
 
-    private Mono<Repo> addOrUpdateRemote(final Repo repo, final Snapshot remote) {
+    private static Mono<Repo> addOrUpdateRemote(final Repo repo, final Snapshot remote) {
         final var url = repoGitUrl(remote.repo());
         final var name = remote.repo().owner().login();
         return Mono
