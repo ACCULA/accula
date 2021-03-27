@@ -96,44 +96,8 @@ public final class CloneRepoImpl implements CloneRepo, ConnectionProvidedRepo {
 
     @Override
     public Mono<Void> deleteByPullNumber(final Long projectId, final Integer pullNumber) {
-        return transactional(connection -> {
-            final var deleteClones = ((PostgresqlStatement) connection
-                    .createStatement("""
-                            DELETE
-                            FROM clone
-                            WHERE clone.id IN (SELECT clone.id
-                                               FROM pull
-                                                        JOIN clone_snippet target
-                                                             ON pull.id = target.pull_id
-                                                        JOIN clone
-                                                             ON target.id = clone.target_id
-                                               WHERE pull.project_id = $1
-                                                 AND pull.number = $2)
-                            """))
-                    .bind("$1", projectId)
-                    .bind("$2", pullNumber)
-                    .execute()
-                    .flatMap(PostgresqlResult::getRowsUpdated)
-                    .then();
-
-            final var deleteSnippetsNotReferencedFromClones = ((PostgresqlStatement) connection
-                    .createStatement("""
-                            DELETE
-                            FROM clone_snippet snippet
-                            WHERE NOT EXISTS(
-                                    SELECT
-                                    FROM clone
-                                    WHERE snippet.id = clone.source_id
-                                       OR snippet.id = clone.target_id
-                                )
-                            """))
-                    .execute()
-                    .flatMap(PostgresqlResult::getRowsUpdated)
-                    .then();
-
-            return deleteClones
-                    .then(deleteSnippetsNotReferencedFromClones);
-        });
+        return transactional(connection -> deleteClonesByPullNumber(connection, projectId, pullNumber)
+                .then(deleteNoLongerReferencedCloneSnippets(connection)));
     }
 
     private static PostgresqlStatement selectStatement(final Connection connection) {
@@ -213,6 +177,44 @@ public final class CloneRepoImpl implements CloneRepo, ConnectionProvidedRepo {
                    OR source_pull.project_id = $1 AND source_pull.number = $2
                 """;
         return (PostgresqlStatement) connection.createStatement(sql);
+    }
+
+    private static Mono<Void> deleteClonesByPullNumber(final Connection connection, final Long projectId, final Integer pullNumber) {
+        return ((PostgresqlStatement) connection
+                .createStatement("""
+                        DELETE
+                        FROM clone
+                        WHERE clone.id IN (SELECT clone.id
+                                           FROM pull
+                                                    JOIN clone_snippet target
+                                                         ON pull.id = target.pull_id
+                                                    JOIN clone
+                                                         ON target.id = clone.target_id
+                                           WHERE pull.project_id = $1
+                                             AND pull.number = $2)
+                        """))
+                .bind("$1", projectId)
+                .bind("$2", pullNumber)
+                .execute()
+                .flatMap(PostgresqlResult::getRowsUpdated)
+                .then();
+    }
+
+    private static Mono<Void> deleteNoLongerReferencedCloneSnippets(final Connection connection) {
+        return ((PostgresqlStatement) connection
+                .createStatement("""
+                        DELETE
+                        FROM clone_snippet snippet
+                        WHERE NOT EXISTS(
+                                SELECT
+                                FROM clone
+                                WHERE snippet.id = clone.source_id
+                                   OR snippet.id = clone.target_id
+                            )
+                        """))
+                .execute()
+                .flatMap(PostgresqlResult::getRowsUpdated)
+                .then();
     }
 
     private static Clone convert(final Row row) {
