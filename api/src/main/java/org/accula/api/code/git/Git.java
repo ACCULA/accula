@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -392,7 +391,7 @@ public final class Git {
         if (!lines.hasNext()) {
             return Map.of();
         }
-        final var entries = new LinkedHashMap<GitFile, String>();
+        final var entries = new HashMap<GitFile, String>();
         var sha = (String) null;
         while (lines.hasNext()) {
             final var line = lines.next();
@@ -427,7 +426,7 @@ public final class Git {
         if (!lines.hasNext()) {
             return Map.of();
         }
-        final var entries = new LinkedHashMap<GitFileChanges, String>();
+        final var entries = new HashMap<GitFileChanges, String>();
         final var nextResettableIter = Iterators.nextResettable(lines);
         final var iter = new FileChangesParseIterator(nextResettableIter);
         var sha = (String) null;
