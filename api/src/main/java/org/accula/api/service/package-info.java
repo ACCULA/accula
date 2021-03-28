@@ -1,4 +1,4 @@
 @NonNullApi
 package org.accula.api.service;
 
-import org.springframework.lang.NonNullApi;
+import org.accula.api.annotation.NonNullApi;

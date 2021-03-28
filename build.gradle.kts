@@ -26,7 +26,7 @@ configure(subprojects.filterNot(project(":web")::equals)) {
     }
 
     dependencies {
-        implementation("org.jetbrains:annotations:20.1.0")
+        compileOnly("org.jetbrains:annotations:20.1.0")
 
         val lombok = "org.projectlombok:lombok:1.18.16"
         compileOnly(lombok)

@@ -1,4 +1,4 @@
 @NonNullApi
 package org.accula.api.clone;
 
-import org.springframework.lang.NonNullApi;
+import org.accula.api.annotation.NonNullApi;
