@@ -1,19 +1,19 @@
 package org.accula.api.service;
 
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Streams;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.accula.api.code.CodeLoader;
 import org.accula.api.code.git.GitRefs;
 import org.accula.api.converter.GithubApiToModelConverter;
-import org.accula.api.db.model.Commit;
 import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.GithubUser;
 import org.accula.api.db.model.Pull;
+import org.accula.api.db.model.PullSnapshots;
 import org.accula.api.db.model.Snapshot;
-import org.accula.api.db.repo.CommitRepo;
 import org.accula.api.db.repo.GithubRepoRepo;
 import org.accula.api.db.repo.GithubUserRepo;
-import org.accula.api.db.repo.ProjectRepo;
 import org.accula.api.db.repo.PullRepo;
 import org.accula.api.db.repo.SnapshotRepo;
 import org.accula.api.github.model.GithubApiPull;
@@ -24,9 +24,11 @@ import reactor.core.scheduler.Schedulers;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static java.util.function.Predicate.not;
 
 /**
  * @author Anton Lamtev
@@ -35,12 +37,10 @@ import java.util.stream.Collectors;
 @Slf4j
 @RequiredArgsConstructor
 public final class ProjectService {
-    private final ProjectRepo projectRepo;
     private final GithubUserRepo githubUserRepo;
     private final GithubRepoRepo githubRepoRepo;
     private final SnapshotRepo snapshotRepo;
     private final PullRepo pullRepo;
-    private final CommitRepo commitRepo;
     private final CodeLoader codeLoader;
 
     public Mono<Void> init(final Long projectId, final List<GithubApiPull> githubApiPulls) {
@@ -52,74 +52,29 @@ public final class ProjectService {
                 .defer(() -> {
                     final var users = new HashSet<GithubUser>();
                     final var repos = new HashSet<GithubRepo>();
-                    final var heads = new HashSet<Snapshot>();
-                    final var bases = new HashSet<Snapshot>();
                     final var pulls = githubApiPulls
                             .stream()
                             .filter(pull -> pull.isValid() && pull.isNotMerged())
-                            .map(pull -> processGithubApiPull(projectId, pull, users, repos, heads, bases))
+                            .map(pull -> processGithubApiPull(projectId, pull, users, repos))
                             .collect(Collectors.toSet());
 
-                    final var commitsMono = projectRepo
-                            .findById(projectId)
-                            .flatMapMany(project -> codeLoader.loadAllCommits(project.githubRepo()))
-                            .concatWith(Flux.fromIterable(repos)
-                                    .flatMap(codeLoader::loadAllCommits)
-                                    .parallel()
-                                    .runOn(Schedulers.parallel()))
-                            .collect(Collectors.toSet());
-
-                    return githubUserRepo.upsert(users)
-                            .thenMany(githubRepoRepo.upsert(repos))
-                            .then(commitsMono
-                                    .flatMap(commits -> {
-                                        pulls.removeIf(pull -> !commits.contains(pull.head().commit()) ||
-                                                               !commits.contains(pull.base().commit()));
-                                        bases.removeIf(base -> !commits.contains(base.commit()));
-                                        heads.removeIf(head -> !commits.contains(head.commit()) ||
-                                                               pulls.stream().noneMatch(pull -> pull.id().equals(head.pullId())));
-
-                                        return commitRepo
-                                                .insert(commits)
-                                                .thenMany(snapshotRepo.insert(combine(heads, bases)))
-                                                .thenMany(pullRepo.upsert(pulls))
-                                                .thenMany(snapshotRepo.mapToPulls(heads))
-                                                .doOnComplete(() ->
-                                                        log.info("Project has been updated successfully with {} pulls", pulls.size()))
-                                                .doOnError(e -> log.error("Failed to update project with pulls={}", githubApiPulls, e))
-                                                .then();
-                                    }));
-                });
+                    return upsertUsersAndReposToDb(users, repos)
+                            .then(insertPullsInfoToDb(pulls));
+                })
+                .doOnSuccess(pulls -> log.info("Project has been updated successfully with {} pulls", pulls.size()))
+                .doOnError(e -> log.error("Failed to update project with pulls={}", githubApiPulls, e))
+                .then();
     }
 
-    public Mono<Pull> update(final Long projectId, final GithubApiPull githubApiPull) {
+    public Mono<PullSnapshots> update(final Long projectId, final GithubApiPull githubApiPull) {
         return Mono
                 .defer(() -> {
                     final var users = new HashSet<GithubUser>();
                     final var repos = new HashSet<GithubRepo>();
-                    final var heads = new HashSet<Snapshot>();
-                    final var bases = new HashSet<Snapshot>();
+                    final var pull = processGithubApiPull(projectId, githubApiPull, users, repos);
 
-                    final var pull = processGithubApiPull(projectId, githubApiPull, users, repos, heads, bases);
-                    final var head = pull.head();
-                    final var base = pull.base();
-
-                    final var commitsMono = pullRepo.findById(pull.id())
-                            .flatMapMany(pullBeforeUpdate -> codeLoader
-                                    .loadCommits(head.repo(), pullBeforeUpdate.head().sha(), head.sha()))
-                            .concatWith(codeLoader.loadCommits(base.repo(), GitRefs.inclusive(base.sha()), base.sha()))
-                            .collect(Collectors.toSet());
-
-                    return githubUserRepo.upsert(users)
-                            .thenMany(githubRepoRepo.upsert(repos))
-                            .then(commitsMono.flatMap(commits -> {
-                                final var completePull = pullFilledWithCommits(pull, commits);
-                                return commitRepo.insert(commits)
-                                        .thenMany(snapshotRepo.insert(combine(bases, heads)))
-                                        .then(pullRepo.upsert(completePull))
-                                        .thenMany(snapshotRepo.mapToPulls(heads))
-                                        .then(Mono.just(completePull));
-                            }));
+                    return upsertUsersAndReposToDb(users, repos)
+                            .then(updatePullInfoInDb(pull));
                 })
                 .doOnSuccess(pull -> log.info("Project has been updated successfully with {}", pull))
                 .doOnError(e -> log.error("Failed to update project with pulls={}", githubApiPull, e));
@@ -128,55 +83,113 @@ public final class ProjectService {
     private static Pull processGithubApiPull(final Long projectId,
                                              final GithubApiPull githubApiPull,
                                              final Set<GithubUser> users,
-                                             final Set<GithubRepo> repos,
-                                             final Set<Snapshot> heads,
-                                             final Set<Snapshot> bases) {
+                                             final Set<GithubRepo> repos) {
         final var pull = GithubApiToModelConverter.convert(githubApiPull, projectId);
 
         final var head = pull.head();
         users.add(head.repo().owner());
         repos.add(head.repo());
-        heads.add(head);
 
         final var base = pull.base();
         users.add(base.repo().owner());
         repos.add(base.repo());
-        bases.add(base);
 
         users.add(pull.author());
 
         return pull;
     }
 
-    private static <T> Set<T> combine(final Set<T> first, final Set<T> second) {
-        final var combined = new HashSet<T>(first.size() + second.size());
-        combined.addAll(first);
-        combined.addAll(second);
-        return combined;
+    private Mono<Void> upsertUsersAndReposToDb(final Set<GithubUser> users, final Set<GithubRepo> repos) {
+        return githubUserRepo.upsert(users)
+                .thenMany(githubRepoRepo.upsert(repos))
+                .then();
     }
 
-    private static Pull pullFilledWithCommits(final Pull pull, final Set<Commit> commits) {
+    private Mono<Set<Pull>> insertPullsInfoToDb(final Set<Pull> pulls) {
+        final var completeHeadSnapshots = pullHeadSnapshots(pulls);
+        final var completeBaseSnapshots = completeSnapshotsWithCommits(Iterables.transform(pulls, Pull::base));
+        return completeHeadSnapshots
+                .zipWith(completeBaseSnapshots)
+                .flatMap(headAndBaseSnapshots -> {
+                    final var headSnapshots = headAndBaseSnapshots.getT1();
+                    final var baseSnapshots = headAndBaseSnapshots.getT2();
+                    final var snapshots = Stream.concat(
+                            baseSnapshots.stream(),
+                            headSnapshots
+                                    .stream()
+                                    .flatMap(x -> Streams.stream(x.snapshots()))
+                    ).collect(Collectors.toSet());
+
+                    pulls.removeIf(pull -> !snapshots.contains(pull.head()) ||
+                                           !snapshots.contains(pull.base()));
+
+                    return snapshotRepo.insert(snapshots)
+                            .thenMany(pullRepo.upsert(pulls))
+                            .thenMany(pullRepo.mapSnapshots(headSnapshots))
+                            .then();
+                })
+                .thenReturn(pulls);
+    }
+
+    private Mono<PullSnapshots> updatePullInfoInDb(final Pull pull) {
+        final var newHeadSnapshots = newHeadCommitsSnapshots(pull);
+        final var baseSnapshots = baseCommitSnapshot(pull.base());
+        return newHeadSnapshots
+                .zipWith(baseSnapshots)
+                .flatMap(commits -> {
+                    final var newHeadCommitSnapshots = commits.getT1();
+                    final var baseCommitSnapshot = commits.getT2();
+                    final var snapshots = Iterables.concat(newHeadCommitSnapshots, List.of(baseCommitSnapshot));
+                    return snapshotRepo.insert(snapshots)
+                            .then(pullRepo.upsert(pull))
+                            .thenMany(pullRepo.mapSnapshots(PullSnapshots.of(pull, newHeadCommitSnapshots)))
+                            .then(Mono.just(PullSnapshots.of(pull, newHeadCommitSnapshots)));
+                });
+    }
+
+    private Mono<Set<Snapshot>> completeSnapshotsWithCommits(final Iterable<Snapshot> snapshots) {
+        return Flux
+                .fromIterable(snapshots)
+                .parallel()
+                .runOn(Schedulers.parallel())
+                .flatMap(this::completeSnapshotWithCommits)
+                .sequential()
+                .collect(Collectors.toSet());
+    }
+
+    private Mono<List<PullSnapshots>> pullHeadSnapshots(final Iterable<Pull> pulls) {
+        return Flux
+                .fromIterable(pulls)
+                .parallel()
+                .runOn(Schedulers.parallel())
+                .flatMap(pull -> completeSnapshotWithCommits(pull.head())
+                        .collectList()
+                        .filter(not(List::isEmpty))
+                        .map(snapshots -> PullSnapshots.of(pull, snapshots)))
+                .sequential()
+                .collectList();
+    }
+
+    private Flux<Snapshot> completeSnapshotWithCommits(final Snapshot snapshot) {
+        return codeLoader
+                .loadCommits(snapshot.repo(), snapshot.sha())
+                .map(snapshot::withCommit);
+    }
+
+    private Mono<List<Snapshot>> newHeadCommitsSnapshots(final Pull pull) {
         final var head = pull.head();
-        final var base = pull.base();
+        return pullRepo.findById(pull.id())
+                .flatMap(pullBeforeUpdate -> codeLoader
+                        .loadCommits(head.repo(), pullBeforeUpdate.head().sha(), head.sha())
+                        .map(commit -> pullBeforeUpdate.head().withCommit(commit))
+                        .collectList())
+                .switchIfEmpty(completeSnapshotWithCommits(head).collectList())
+                .filter(not(List::isEmpty));
+    }
 
-        Commit headCommit = null;
-        Commit baseCommit = null;
-
-        for (final var commit : commits) {
-            if (headCommit != null && baseCommit != null) {
-                break;
-            }
-            if (head.commit().equals(commit)) {
-                headCommit = commit;
-            } else if (base.commit().equals(commit)) {
-                baseCommit = commit;
-            }
-        }
-
-        return pull
-                .toBuilder()
-                .head(head.withCommit(Objects.requireNonNull(headCommit)))
-                .base(base.withCommit(Objects.requireNonNull(baseCommit)))
-                .build();
+    private Mono<Snapshot> baseCommitSnapshot(final Snapshot base) {
+        return codeLoader.loadCommits(base.repo(), GitRefs.inclusive(base.sha()), base.sha())
+                .map(base::withCommit)
+                .next();
     }
 }

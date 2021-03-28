@@ -11,7 +11,6 @@ import org.accula.api.db.model.User;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.Instant;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -32,10 +31,10 @@ final class Converters {
                                   final String avatar,
                                   final String organization) {
         return new GithubUser(
-                value(row, id, Long.class),
-                value(row, login, String.class),
+                longInteger(row, id),
+                string(row, login),
                 nullable(row, name, String.class),
-                value(row, avatar, String.class),
+                string(row, avatar),
                 value(row, organization, Boolean.class)
         );
     }
@@ -50,29 +49,64 @@ final class Converters {
                                   final String ownerAvatar,
                                   final String ownerOrganization) {
         return new GithubRepo(
-                value(row, id, Long.class),
-                value(row, name, String.class),
-                value(row, description, String.class),
+                longInteger(row, id),
+                string(row, name),
+                string(row, description),
                 convertUser(row, ownerId, ownerLogin, ownerName, ownerAvatar, ownerOrganization)
         );
     }
 
-    static Snapshot convertCommitSnapshot(final Row row,
-                                          final String sha,
-                                          final String branch,
-                                          final String pullId,
-                                          final String repoId,
-                                          final String repoName,
-                                          final String repoDescription,
-                                          final String repoOwnerId,
-                                          final String repoOwnerLogin,
-                                          final String repoOwnerName,
-                                          final String repoOwnerAvatar,
-                                          final String repoOwnerOrganization) {
+    static Commit convertCommit(final Row row,
+                                final String sha,
+                                final String isMerge,
+                                final String authorName,
+                                final String authorEmail,
+                                final String date) {
+        return Commit.builder()
+                .sha(string(row, sha))
+                .isMerge(value(row, isMerge, Boolean.class))
+                .authorName(string(row, authorName))
+                .authorEmail(string(row, authorEmail))
+                .date(value(row, date, Instant.class))
+                .build();
+    }
+
+    @Nullable
+    static Snapshot.PullInfo convertSnapshotPullInfo(final Row row,
+                                                     final String pullId,
+                                                     final String pullNumber) {
+        if (NOTHING.equals(pullId) || NOTHING.equals(pullNumber)) {
+            return null;
+        }
+        return Snapshot.PullInfo.of(longInteger(row, pullId), integer(row, pullNumber));
+    }
+
+    static Snapshot convertSnapshot(final Row row,
+                                    final String commitSha,
+                                    final String commitIsMerge,
+                                    final String commitAuthorName,
+                                    final String commitAuthorEmail,
+                                    final String commitDate,
+                                    final String branch,
+                                    final String pullId,
+                                    final String pullNumber,
+                                    final String repoId,
+                                    final String repoName,
+                                    final String repoDescription,
+                                    final String repoOwnerId,
+                                    final String repoOwnerLogin,
+                                    final String repoOwnerName,
+                                    final String repoOwnerAvatar,
+                                    final String repoOwnerOrganization) {
         return Snapshot.builder()
-                .commit(Commit.shaOnly(value(row, sha, String.class)))
-                .branch(value(row, branch, String.class))
-                .pullId(nullable(row, pullId, Long.class))
+                .commit(convertCommit(row,
+                        commitSha,
+                        commitIsMerge,
+                        commitAuthorName,
+                        commitAuthorEmail,
+                        commitDate))
+                .branch(string(row, branch))
+                .pullInfo(convertSnapshotPullInfo(row, pullId, pullNumber))
                 .repo(convertRepo(row,
                         repoId,
                         repoName,
@@ -94,17 +128,23 @@ final class Converters {
                             final String githubAvatar,
                             final String githubOrganization) {
         return new User(
-                value(row, id, Long.class),
-                value(row, accessToken, String.class),
+                longInteger(row, id),
+                string(row, accessToken),
                 convertUser(row, githubId, githubLogin, githubName, githubAvatar, githubOrganization)
         );
     }
 
     static Clone convertClone(final Row row,
                               final String id,
-                              final String targetSha,
+                              final String targetSnippetId,
+                              final String targetCommitSha,
+                              final String targetCommitIsMerge,
+                              final String targetCommitAuthorName,
+                              final String targetCommitAuthorEmail,
+                              final String targetCommitDate,
                               final String targetBranch,
                               final String targetPullId,
+                              final String targetPullNumber,
                               final String targetRepoId,
                               final String targetRepoName,
                               final String targetRepoDescription,
@@ -116,9 +156,15 @@ final class Converters {
                               final String targetFile,
                               final String targetFromLine,
                               final String targetToLine,
-                              final String sourceSha,
+                              final String sourceSnippetId,
+                              final String sourceCommitSha,
+                              final String sourceCommitIsMerge,
+                              final String sourceCommitAuthorName,
+                              final String sourceCommitAuthorEmail,
+                              final String sourceCommitDate,
                               final String sourceBranch,
                               final String sourcePullId,
+                              final String sourcePullNumber,
                               final String sourceRepoId,
                               final String sourceRepoName,
                               final String sourceRepoDescription,
@@ -131,11 +177,17 @@ final class Converters {
                               final String sourceFromLine,
                               final String sourceToLine) {
         return Clone.builder()
-                .id(value(row, id, Long.class))
-                .targetSnapshot(convertCommitSnapshot(row,
-                        targetSha,
+                .id(longInteger(row, id))
+                .target(convertCloneSnippet(row,
+                        targetSnippetId,
+                        targetCommitSha,
+                        targetCommitIsMerge,
+                        targetCommitAuthorName,
+                        targetCommitAuthorEmail,
+                        targetCommitDate,
                         targetBranch,
                         targetPullId,
+                        targetPullNumber,
                         targetRepoId,
                         targetRepoName,
                         targetRepoDescription,
@@ -143,14 +195,20 @@ final class Converters {
                         targetRepoOwnerLogin,
                         targetRepoOwnerName,
                         targetRepoOwnerAvatar,
-                        targetRepoOwnerIsOrg))
-                .targetFile(value(row, targetFile, String.class))
-                .targetFromLine(value(row, targetFromLine, Integer.class))
-                .targetToLine(value(row, targetToLine, Integer.class))
-                .sourceSnapshot(convertCommitSnapshot(row,
-                        sourceSha,
+                        targetRepoOwnerIsOrg,
+                        targetFile,
+                        targetFromLine,
+                        targetToLine))
+                .source(convertCloneSnippet(row,
+                        sourceSnippetId,
+                        sourceCommitSha,
+                        sourceCommitIsMerge,
+                        sourceCommitAuthorName,
+                        sourceCommitAuthorEmail,
+                        sourceCommitDate,
                         sourceBranch,
                         sourcePullId,
+                        sourcePullNumber,
                         sourceRepoId,
                         sourceRepoName,
                         sourceRepoDescription,
@@ -158,10 +216,56 @@ final class Converters {
                         sourceRepoOwnerLogin,
                         sourceRepoOwnerName,
                         sourceRepoOwnerAvatar,
-                        sourceRepoOwnerIsOrg))
-                .sourceFile(value(row, sourceFile, String.class))
-                .sourceFromLine(value(row, sourceFromLine, Integer.class))
-                .sourceToLine(value(row, sourceToLine, Integer.class))
+                        sourceRepoOwnerIsOrg,
+                        sourceFile,
+                        sourceFromLine,
+                        sourceToLine))
+                .build();
+    }
+
+    static Clone.Snippet convertCloneSnippet(final Row row,
+                                             final String id,
+                                             final String commitSha,
+                                             final String commitIsMerge,
+                                             final String commitAuthorName,
+                                             final String commitAuthorEmail,
+                                             final String commitDate,
+                                             final String branch,
+                                             final String pullId,
+                                             final String pullNumber,
+                                             final String repoId,
+                                             final String repoName,
+                                             final String repoDescription,
+                                             final String repoOwnerId,
+                                             final String repoOwnerLogin,
+                                             final String repoOwnerName,
+                                             final String repoOwnerAvatar,
+                                             final String repoOwnerIsOrg,
+                                             final String file,
+                                             final String fromLine,
+                                             final String toLine) {
+        return Clone.Snippet.builder()
+                .id(longInteger(row, id))
+                .snapshot(convertSnapshot(row,
+                        commitSha,
+                        commitIsMerge,
+                        commitAuthorName,
+                        commitAuthorEmail,
+                        commitDate,
+                        branch,
+                        pullId,
+                        pullNumber,
+                        repoId,
+                        repoName,
+                        repoDescription,
+                        repoOwnerId,
+                        repoOwnerLogin,
+                        repoOwnerName,
+                        repoOwnerAvatar,
+                        repoOwnerIsOrg))
+                .file(string(row, file))
+                .fromLine(integer(row, fromLine))
+                .toLine(integer(row, toLine))
                 .build();
     }
 
@@ -172,9 +276,14 @@ final class Converters {
                             final String open,
                             final String createdAt,
                             final String updatedAt,
-                            final String headSnapSha,
+                            final String headCommitSha,
+                            final String headCommitIsMerge,
+                            final String headCommitAuthorName,
+                            final String headCommitAuthorEmail,
+                            final String headCommitDate,
                             final String headSnapBranch,
                             final String headSnapPullId,
+                            final String headSnapPullNumber,
                             final String headRepoId,
                             final String headRepoName,
                             final String headRepoDescription,
@@ -183,9 +292,12 @@ final class Converters {
                             final String headRepoOwnerName,
                             final String headRepoOwnerAvatar,
                             final String headRepoOwnerIsOrg,
-                            final String baseSnapSha,
+                            final String baseCommitSha,
+                            final String baseCommitIsMerge,
+                            final String baseCommitAuthorName,
+                            final String baseCommitAuthorEmail,
+                            final String baseCommitDate,
                             final String baseSnapBranch,
-                            final String baseSnapPullId,
                             final String baseRepoId,
                             final String baseRepoName,
                             final String baseRepoDescription,
@@ -201,16 +313,21 @@ final class Converters {
                             final String authorIsOrg,
                             final String projectId) {
         return Pull.builder()
-                .id(Converters.value(row, id, Long.class))
-                .number(Converters.value(row, number, Integer.class))
-                .title(Converters.value(row, title, String.class))
-                .isOpen(Converters.value(row, open, Boolean.class))
-                .createdAt(Converters.value(row, createdAt, Instant.class))
-                .updatedAt(Converters.value(row, updatedAt, Instant.class))
-                .head(Converters.convertCommitSnapshot(row,
-                        headSnapSha,
+                .id(longInteger(row, id))
+                .number(integer(row, number))
+                .title(string(row, title))
+                .isOpen(value(row, open, Boolean.class))
+                .createdAt(value(row, createdAt, Instant.class))
+                .updatedAt(value(row, updatedAt, Instant.class))
+                .head(convertSnapshot(row,
+                        headCommitSha,
+                        headCommitIsMerge,
+                        headCommitAuthorName,
+                        headCommitAuthorEmail,
+                        headCommitDate,
                         headSnapBranch,
                         headSnapPullId,
+                        headSnapPullNumber,
                         headRepoId,
                         headRepoName,
                         headRepoDescription,
@@ -219,10 +336,15 @@ final class Converters {
                         headRepoOwnerName,
                         headRepoOwnerAvatar,
                         headRepoOwnerIsOrg))
-                .base(Converters.convertCommitSnapshot(row,
-                        baseSnapSha,
+                .base(convertSnapshot(row,
+                        baseCommitSha,
+                        baseCommitIsMerge,
+                        baseCommitAuthorName,
+                        baseCommitAuthorEmail,
+                        baseCommitDate,
                         baseSnapBranch,
-                        baseSnapPullId,
+                        NOTHING,
+                        NOTHING,
                         baseRepoId,
                         baseRepoName,
                         baseRepoDescription,
@@ -231,14 +353,18 @@ final class Converters {
                         baseRepoOwnerName,
                         baseRepoOwnerAvatar,
                         baseRepoOwnerOrganization))
-                .author(Converters.convertUser(row,
+                .author(convertUser(row,
                         authorId,
                         authorLogin,
                         authorName,
                         authorAvatar,
                         authorIsOrg))
-                .projectId(Converters.value(row, projectId, Long.class))
+                .projectId(longInteger(row, projectId))
                 .build();
+    }
+
+    static String string(final Row row, final String name) {
+        return value(row, name, String.class);
     }
 
     static <T> T value(final Row row, final String name, final Class<T> clazz) {
@@ -253,18 +379,26 @@ final class Converters {
         return row.get(name, clazz);
     }
 
+    static Integer integer(final Row row, final String name, final Integer fallback) {
+        return or(row.get(name, Integer.class), fallback);
+    }
+
     static Integer integer(final Row row, final String name) {
-        return or(row.get(name, Integer.class), 0);
+        return Objects.requireNonNull(row.get(name, Integer.class));
+    }
+
+    static Long longInteger(final Row row, final String name) {
+        return Objects.requireNonNull(row.get(name, Long.class));
     }
 
     static List<Long> ids(final Row row, final String name) {
         final var ids = row.get(name, Long[].class);
-        return ids != null ? List.of(ids) : Collections.emptyList();
+        return ids != null ? List.of(ids) : List.of();
     }
 
     static List<String> strings(final Row row, final String name) {
         final var strings = row.get(name, String[].class);
-        return strings != null ? List.of(strings) : Collections.emptyList();
+        return strings != null ? List.of(strings) : List.of();
     }
 
     private static <T> T or(@Nullable final T value, final T defaultValue) {

@@ -5,7 +5,7 @@ import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.Authentication;
 
 import java.io.Serial;
-import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Anton Lamtev
@@ -17,7 +17,7 @@ public final class JwtAuthentication extends AbstractAuthenticationToken impleme
     private final AuthorizedUser user;
 
     public JwtAuthentication(final AuthorizedUser user) {
-        super(Collections.emptyList());
+        super(List.of());
         this.user = user;
     }
 

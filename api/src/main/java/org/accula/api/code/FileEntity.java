@@ -2,6 +2,7 @@ package org.accula.api.code;
 
 import lombok.EqualsAndHashCode;
 import lombok.Value;
+import org.accula.api.code.lines.LineSet;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -16,9 +17,10 @@ public class FileEntity<Ref> {
     @EqualsAndHashCode.Exclude
     @Nullable
     String content;
+    LineSet lines;
 
     public static <Ref> FileEntity<Ref> absent(final Ref ref) {
-        return new FileEntity<>(ref, null, null);
+        return new FileEntity<>(ref, null, null, null);
     }
 
     @Override

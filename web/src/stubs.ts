@@ -173,8 +173,8 @@ Mono<Void> replaceRefreshToken(final Long userId,
 export const clones: IClone[] = [
   {
     id: 1,
+    projectId: 1,
     target: {
-      projectId: 1,
       pullNumber: 6,
       owner: 'vaddya',
       repo: '2019-highload',
@@ -185,7 +185,6 @@ export const clones: IClone[] = [
       content: btoa(oldCode2)
     },
     source: {
-      projectId: 2,
       pullNumber: 4,
       owner: 'lamtev',
       repo: '2019-highload',
@@ -198,8 +197,8 @@ export const clones: IClone[] = [
   },
   {
     id: 2,
+    projectId: 2,
     target: {
-      projectId: 2,
       pullNumber: 1,
       owner: 'lamtev',
       repo: '2019-highload',
@@ -210,7 +209,6 @@ export const clones: IClone[] = [
       content: btoa(oldCode2)
     },
     source: {
-      projectId: 2,
       pullNumber: 4,
       owner: 'vaddya',
       repo: '2019-highload',

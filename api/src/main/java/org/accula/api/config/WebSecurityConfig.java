@@ -31,7 +31,7 @@ import org.springframework.web.cors.reactive.CorsWebFilter;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 import org.springframework.web.server.WebFilter;
 
-import java.util.Collections;
+import java.util.List;
 
 import static org.springframework.http.HttpMethod.GET;
 import static org.springframework.http.HttpStatus.FORBIDDEN;
@@ -150,7 +150,7 @@ public class WebSecurityConfig {
     @Bean
     public CorsWebFilter corsWebFilter(@Value("${accula.cluster.webUrl}") final String webUrl) {
         final var corsConfig = new CorsConfiguration();
-        corsConfig.setAllowedOrigins(Collections.singletonList(webUrl));
+        corsConfig.setAllowedOrigins(List.of(webUrl));
         corsConfig.addAllowedMethod(CorsConfiguration.ALL);
         corsConfig.addAllowedHeader(CorsConfiguration.ALL);
         corsConfig.setAllowCredentials(true);

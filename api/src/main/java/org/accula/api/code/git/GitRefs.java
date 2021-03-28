@@ -14,6 +14,16 @@ public final class GitRefs {
     }
 
     public static String inclusive(final String ref) {
+        if (ref.endsWith("^")) {
+            return ref;
+        }
         return ref + "^";
+    }
+
+    public static String origin(final String ref) {
+        if (ref.contains("origin/")) {
+            return ref;
+        }
+        return "origin/" + ref;
     }
 }

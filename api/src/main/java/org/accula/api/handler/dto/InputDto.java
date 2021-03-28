@@ -8,7 +8,7 @@ import java.util.function.Consumer;
  * @author Anton Lamtev
  */
 public interface InputDto {
-    default void enumerateRequiredFields(final Consumer<String> fieldName) {
+    default void enumerateMissingRequiredFields(final Consumer<String> fieldName) {
         for (final var field : this.getClass().getDeclaredFields()) {
             if (field.getAnnotation(OptionalField.class) != null) {
                 continue;

@@ -9,7 +9,7 @@ import lombok.With;
  * @author Vadim Dyachkov
  * @author Anton Lamtev
  */
-@Builder
+@Builder(toBuilder = true)
 @With
 @Value
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
@@ -17,14 +17,20 @@ public class Clone {
     @EqualsAndHashCode.Include
     @Builder.Default
     Long id = -1L;
-    Snapshot targetSnapshot;
-    String targetFile;
-    Integer targetFromLine;
-    Integer targetToLine;
-    Snapshot sourceSnapshot;
-    String sourceFile;
-    Integer sourceFromLine;
-    Integer sourceToLine;
+    Snippet target;
+    Snippet source;
     @Builder.Default
     Boolean suppressed = Boolean.FALSE;
+
+    @Builder
+    @With
+    @Value
+    public static class Snippet {
+        @Builder.Default
+        Long id = -1L;
+        Snapshot snapshot;
+        String file;
+        Integer fromLine;
+        Integer toLine;
+    }
 }

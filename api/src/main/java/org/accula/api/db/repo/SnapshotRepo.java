@@ -15,13 +15,15 @@ public interface SnapshotRepo {
         return insert(List.of(snapshot)).next();
     }
 
-    Flux<Snapshot> insert(Collection<Snapshot> snapshots);
-
-    Flux<Snapshot> mapToPulls(Collection<Snapshot> snapshots);
+    Flux<Snapshot> insert(Iterable<Snapshot> snapshots);
 
     default Mono<Snapshot> findById(final Snapshot.Id id) {
         return findById(List.of(id)).next();
     }
 
     Flux<Snapshot> findById(Collection<Snapshot.Id> ids);
+
+    Flux<Snapshot> findByRepoId(Long repoId);
+
+    Flux<Snapshot> findByPullId(Long pullId);
 }

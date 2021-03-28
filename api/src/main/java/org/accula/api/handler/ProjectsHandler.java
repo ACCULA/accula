@@ -27,9 +27,10 @@ import org.accula.api.handler.exception.CreateProjectException;
 import org.accula.api.handler.exception.Http4xxException;
 import org.accula.api.handler.exception.ResponseConvertibleException;
 import org.accula.api.handler.util.Responses;
+import org.accula.api.service.CloneDetectionService;
 import org.accula.api.service.ProjectService;
 import org.accula.api.util.Lambda;
-import org.accula.api.util.ReactorPublishers;
+import org.accula.api.util.ReactorOperators;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.Validator;
 import org.springframework.web.reactive.function.server.ServerRequest;
@@ -66,6 +67,7 @@ public final class ProjectsHandler {
     private final UserRepo userRepo;
     private final ProjectService projectService;
     private final CodeLoader codeLoader;
+    private final CloneDetectionService cloneDetectionService;
 
     public Mono<ServerResponse> getTop(final ServerRequest request) {
         return Mono
@@ -194,17 +196,19 @@ public final class ProjectsHandler {
                             .doOnError(e -> log.error("Error saving Project: {}-{}", projectGithubRepo.owner(), currentUser, e)))
                     .transform(this::saveDefaultConf)
                     .map(ModelToDtoConverter::convert)
-                    .doOnEach(ReactorPublishers.onNextWithContext(this::fetchPullsInBackground));
+                    .doOnEach(ReactorOperators.onNextWithContext(this::fetchPullsAndFillSuffixTreeInBackground));
         });
     }
 
-    private void fetchPullsInBackground(final ProjectDto project, final ContextView context) {
+    private void fetchPullsAndFillSuffixTreeInBackground(final ProjectDto project, final ContextView context) {
         final var repoOwner = project.repoOwner();
         final var repoName = project.repoName();
+        final var projectId = project.id();
         githubClient.getRepositoryPulls(repoOwner, repoName, State.ALL, 100)
                 .collectList()
-                .flatMap(pulls -> projectService.init(project.id(), pulls))
-                .then(projectRepo.updateState(project.id(), Project.State.CREATED))
+                .flatMap(pulls -> projectService.init(projectId, pulls))
+                .then(projectRepo.updateState(projectId, Project.State.CREATED))
+                .then(cloneDetectionService.fillSuffixTree(projectId))
                 .contextWrite(context)
                 .subscribe();
     }

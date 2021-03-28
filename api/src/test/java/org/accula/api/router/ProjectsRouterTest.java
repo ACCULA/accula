@@ -27,6 +27,7 @@ import org.accula.api.handler.dto.CreateProjectDto;
 import org.accula.api.handler.dto.ProjectConfDto;
 import org.accula.api.handler.dto.ProjectDto;
 import org.accula.api.handler.dto.UserDto;
+import org.accula.api.service.CloneDetectionService;
 import org.accula.api.service.ProjectService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -110,6 +111,8 @@ class ProjectsRouterTest {
     WebTestClient client;
     @MockBean
     CodeLoader codeLoader;
+    @MockBean
+    CloneDetectionService cloneDetectionService;
 
     @BeforeEach
     void setUp() {
@@ -154,6 +157,9 @@ class ProjectsRouterTest {
                 .thenReturn(Mono.empty());
 
         Mockito.when(githubClient.createHook(Mockito.any(), Mockito.any(), Mockito.any()))
+                .thenReturn(Mono.empty());
+
+        Mockito.when(cloneDetectionService.fillSuffixTree(Mockito.anyLong()))
                 .thenReturn(Mono.empty());
 
         final var expectedBody = ModelToDtoConverter.convert(PROJECT);
@@ -460,13 +466,6 @@ class ProjectsRouterTest {
                 .expectStatus().isNotFound();
     }
 
-    @SneakyThrows
-    private static GithubClientException newGithubException() {
-        final var ctor = GithubClientException.class.getDeclaredConstructor(Throwable.class);
-        ctor.setAccessible(true);
-        return ctor.newInstance(new RuntimeException());
-    }
-
     private void mockNotFound() {
         Mockito.when(currentUser.get(Mockito.any()))
                 .thenReturn(Mono.just(0L));
@@ -481,5 +480,12 @@ class ProjectsRouterTest {
                 .thenReturn(Mono.just(0L));
         Mockito.when(projectRepo.hasAdmin(Mockito.anyLong(), Mockito.anyLong()))
                 .thenReturn(Mono.just(FALSE));
+    }
+
+    @SneakyThrows
+    private static GithubClientException newGithubException() {
+        final var ctor = GithubClientException.class.getDeclaredConstructor(Throwable.class);
+        ctor.setAccessible(true);
+        return ctor.newInstance(new RuntimeException());
     }
 }

@@ -258,7 +258,7 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
 
     private Mono<Void> upsertAdmins(final Connection connection, final Long projectId, final Project.Conf conf) {
         final var deleteProjectAdmins = ((PostgresqlStatement) connection.createStatement("""
-                DELETE FROM project_admin 
+                DELETE FROM project_admin
                 WHERE project_id = $1
                 """))
                 .bind("$1", projectId)
@@ -326,7 +326,7 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
                         "project_creator_github_user_name",
                         "project_creator_github_user_avatar",
                         "project_creator_github_user_is_org"))
-                .openPullCount(Converters.integer(row, "project_open_pull_count"))
+                .openPullCount(Converters.integer(row, "project_open_pull_count", 0))
                 .adminIds(Converters.ids(row, "project_admins"))
                 .build();
     }

@@ -147,7 +147,6 @@ export interface ICompareRef {
 }
 
 export interface ICodeSnippet {
-  projectId: number
   pullNumber: number
   owner: string
   repo: string
@@ -160,6 +159,7 @@ export interface ICodeSnippet {
 
 export interface IClone {
   id: number
+  projectId: number
   target: ICodeSnippet
   source: ICodeSnippet
 }

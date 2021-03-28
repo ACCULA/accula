@@ -31,10 +31,18 @@ const PullClonesTab = ({ project, pull, clones, refreshClones, isAdmin }: PullCl
         <PullLabel
           className={classes.fromTitle}
           type="removed"
-          text={`#${clone.source.pullNumber}@${clone.source.repo}:${clone.source.file}`}
+          text={`${clone.source.sha.substr(0, 7)}:#${clone.source.pullNumber}@${
+            clone.source.owner
+          }/${clone.source.repo}:${clone.source.file}`}
         />
         <span className={classes.cloneTitleText}>into</span>
-        <PullLabel type="added" className={classes.intoTitle} text={clone.target.file} />
+        <PullLabel
+          type="added"
+          className={classes.intoTitle}
+          text={`${clone.target.sha.substr(0, 7)}:#${clone.target.pullNumber}@${
+              clone.target.owner
+          }/${clone.target.repo}:${clone.target.file}`}
+        />
       </>
     )
   }

@@ -25,4 +25,17 @@ public final class Strings {
 
         return string.substring(prefixLength);
     }
+
+    public static boolean startsWithSha40(final String string) {
+        if (string.length() < 40) {
+            return false;
+        }
+        for (int i = 0; i < 40; ++i) {
+            final var ch = string.charAt(i);
+            if (!('0' <= ch && ch <= '9') && !('a' <= ch && ch <= 'f')) {
+                return false;
+            }
+        }
+        return true;
+    }
 }

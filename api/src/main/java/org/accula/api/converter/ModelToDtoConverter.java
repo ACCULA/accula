@@ -1,10 +1,14 @@
 package org.accula.api.converter;
 
+import com.google.common.base.Preconditions;
+import org.accula.api.code.FileEntity;
+import org.accula.api.db.model.Clone;
 import org.accula.api.db.model.GithubUser;
 import org.accula.api.db.model.Project;
 import org.accula.api.db.model.Pull;
 import org.accula.api.db.model.Snapshot;
 import org.accula.api.db.model.User;
+import org.accula.api.handler.dto.CloneDto;
 import org.accula.api.handler.dto.GithubUserDto;
 import org.accula.api.handler.dto.ProjectConfDto;
 import org.accula.api.handler.dto.ProjectDto;
@@ -14,9 +18,12 @@ import org.accula.api.handler.dto.UserDto;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
+import java.util.Base64;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * @author Anton Lamtev
@@ -101,7 +108,7 @@ public final class ModelToDtoConverter {
 
     public static List<ShortPullDto> convertShort(final List<Pull> pulls) {
         if (pulls.isEmpty()) {
-            return Collections.emptyList();
+            return List.of();
         }
         return pulls
                 .stream()
@@ -119,6 +126,39 @@ public final class ModelToDtoConverter {
                 .updatedAt(pull.updatedAt())
                 .open(pull.isOpen())
                 .author(convert(pull.author()))
+                .build();
+    }
+
+    public static CloneDto convert(final Clone clone,
+                                   final Long projectId,
+                                   final FileEntity<Snapshot> targetFile,
+                                   final FileEntity<Snapshot> sourceFile) {
+        return CloneDto.builder()
+                .id(clone.id())
+                .projectId(projectId)
+                .target(convert(clone.target(), targetFile))
+                .source(convert(clone.source(), sourceFile))
+                .build();
+    }
+
+    private static CloneDto.FlatCodeSnippet convert(final Clone.Snippet snippet,
+                                                    final FileEntity<Snapshot> file) {
+        final var snapshot = snippet.snapshot();
+        final var pullInfo = Objects.requireNonNull(snapshot.pullInfo(), "PullInfo MUST NOT be null");
+        final var fileContent = Objects.requireNonNull(file.content(), "FileEntity content MUST NOT be null").getBytes(UTF_8);
+
+        Preconditions.checkArgument(snapshot.equals(file.ref()));
+        Preconditions.checkArgument(snippet.file().equals(file.name()));
+
+        return CloneDto.FlatCodeSnippet.builder()
+                .pullNumber(pullInfo.number())
+                .owner(snapshot.repo().owner().login())
+                .repo(snapshot.repo().name())
+                .sha(snapshot.sha())
+                .file(snippet.file())
+                .fromLine(snippet.fromLine())
+                .toLine(snippet.toLine())
+                .content(Base64.getEncoder().encodeToString(fileContent))
                 .build();
     }
 

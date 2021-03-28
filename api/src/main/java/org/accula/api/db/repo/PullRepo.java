@@ -1,6 +1,8 @@
 package org.accula.api.db.repo;
 
 import org.accula.api.db.model.Pull;
+import org.accula.api.db.model.PullSnapshots;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -32,4 +34,10 @@ public interface PullRepo {
     Flux<Pull> findByProjectId(Long projectId);
 
     Flux<Integer> numbersByIds(Collection<Long> ids);
+
+    default Publisher<Void> mapSnapshots(final PullSnapshots pullSnapshots) {
+        return mapSnapshots(List.of(pullSnapshots));
+    }
+
+    Publisher<Void> mapSnapshots(final Iterable<PullSnapshots> pullSnapshots);
 }

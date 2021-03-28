@@ -7,7 +7,6 @@ import org.accula.api.code.FileFilter;
 import org.accula.api.db.model.Snapshot;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple2;
 
 import java.util.function.Supplier;
 
@@ -16,7 +15,9 @@ import java.util.function.Supplier;
  * @author Anton Lamtev
  */
 public interface CloneDetector {
-    Flux<Tuple2<CodeSnippet, CodeSnippet>> findClones(Snapshot snapshot, Flux<FileEntity<Snapshot>> files);
+    Flux<CodeClone> readClones(Snapshot pullSnapshot);
+
+    Flux<CodeClone> findClones(Snapshot pullSnapshot, Flux<FileEntity<Snapshot>> files);
 
     Mono<Void> fill(Flux<FileEntity<Snapshot>> files);
 

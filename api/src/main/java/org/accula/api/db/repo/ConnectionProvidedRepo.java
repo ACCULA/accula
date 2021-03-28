@@ -49,14 +49,32 @@ public interface ConnectionProvidedRepo {
                 ));
     }
 
+    default <T> Flux<T> transactionalMany(final Function<? super Connection, ? extends Flux<T>> connectionUse) {
+        return manyWithConnection(connection -> Flux
+                .usingWhen(
+                        Mono.fromDirect(connection.beginTransaction())
+                                .then(Mono.just(connection)),
+                        connectionUse,
+                        Connection::commitTransaction,
+                        Lambda.firstArg(Connection::rollbackTransaction),
+                        Connection::rollbackTransaction
+                ));
+    }
+
     static <T> Mono<T> column(final Result result, final String name, final Class<T> clazz) {
         return Mono.from(result
-                .map((row, metadata) -> Objects.requireNonNull(row.get(name, clazz))));
+                .map((row, metadata) -> Objects.requireNonNull(
+                        row.get(name, clazz),
+                        () -> "Row MUST contain column named %s of class %s".formatted(name, clazz.getCanonicalName())
+                )));
     }
 
     static <T> Flux<T> columnFlux(final Result result, final String name, final Class<T> clazz) {
         return Flux.from(result
-                .map((row, metadata) -> Objects.requireNonNull(row.get(name, clazz))));
+                .map((row, metadata) -> Objects.requireNonNull(
+                        row.get(name, clazz),
+                        () -> "Row MUST contain column named %s of class %s".formatted(name, clazz.getCanonicalName())
+                )));
     }
 
     static <T> Mono<T> convert(final Result result, final Function<Row, T> transform) {

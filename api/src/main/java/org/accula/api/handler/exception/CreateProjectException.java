@@ -59,6 +59,5 @@ public final class CreateProjectException extends ResponseConvertibleException {
         ALREADY_EXISTS,
         WRONG_URL,
         NO_PERMISSION,
-        ;
     }
 }

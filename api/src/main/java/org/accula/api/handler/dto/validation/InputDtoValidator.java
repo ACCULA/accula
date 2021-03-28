@@ -21,7 +21,7 @@ public abstract class InputDtoValidator implements Validator {
     @Override
     public void validate(final Object target, final Errors errors) {
         final var input = (InputDto) target;
-        input.enumerateRequiredFields(field ->
+        input.enumerateMissingRequiredFields(field ->
                 ValidationUtils.rejectIfEmpty(errors, field, "%s.empty".formatted(field), "%s is empty".formatted(field)));
     }
 }

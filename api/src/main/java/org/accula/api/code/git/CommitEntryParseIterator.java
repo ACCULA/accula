@@ -38,6 +38,7 @@ final class CommitEntryParseIterator implements Iterator<CommitEntryParseIterato
         return notYetProcessedNext != null || lines.hasNext();
     }
 
+    //TODO: rewrite like a FileChangesParseIterator
     @Override
     public Entry next() {
         if (!hasNext()) {
@@ -102,7 +103,7 @@ final class CommitEntryParseIterator implements Iterator<CommitEntryParseIterato
                 case MERGE -> AUTHOR;
                 case AUTHOR -> DATE;
                 case DATE -> SHA;
-                case FINISHED -> throw new IllegalStateException("FINISHED state is terminal and have no next state");
+                case FINISHED -> throw new IllegalStateException("FINISHED state is terminal and has no next state");
             };
         }
     }

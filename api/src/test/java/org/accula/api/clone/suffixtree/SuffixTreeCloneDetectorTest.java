@@ -1,6 +1,7 @@
 package org.accula.api.clone.suffixtree;
 
 import org.accula.api.code.FileEntity;
+import org.accula.api.code.lines.LineSet;
 import org.accula.api.token.Token;
 import org.accula.api.token.TokenProvider;
 import org.junit.jupiter.api.BeforeEach;
@@ -103,32 +104,36 @@ public class SuffixTreeCloneDetectorTest {
 
     @Test
     void test1() {
-        final var f1 = new FileEntity<>("ref1", "Cell.java", F1);
-        final var f2 = new FileEntity<>("ref2", "Cell.java", F2);
+        final var f1 = new FileEntity<>("ref1", "Cell.java", F1, LineSet.all());
+        final var f2 = new FileEntity<>("ref2", "Cell.java", F2, LineSet.all());
 
         StepVerifier.create(tokenProvider.tokensByMethods(Flux.just(f1, f2))
                 .collectList())
                 .expectNextMatches(methods -> {
                     methods.forEach(method -> detector.addTokens(method));
-                    return detector.cloneClassesAfterTransform(Function.identity()).size() == 3;
+                    final var cloneClasses = detector.transform(Function.identity());
+                    return cloneClasses
+                                   .stream()
+                                   .mapToInt(cc -> cc.clones().size())
+                                   .sum() == 6;
                 })
                 .verifyComplete();
     }
 
     @Test
     void test2() {
-        final var f1 = new FileEntity<>("ref1", "SSTable.java", F3);
-        final var f2 = new FileEntity<>("ref2", "SSTable.java", F4);
+        final var f1 = new FileEntity<>("ref1", "SSTable.java", F3, LineSet.all());
+        final var f2 = new FileEntity<>("ref2", "SSTable.java", F4, LineSet.all());
 
         StepVerifier.create(tokenProvider.tokensByMethods(Flux.just(f1, f2))
                 .collectList())
                 .expectNextMatches(methods -> {
                     methods.forEach(method -> detector.addTokens(method));
-                    final var cloneClasses = detector.cloneClassesAfterTransform(Function.identity());
-                    //It is not straightforward but there are 5 clone classes here
-                    //Actually 4 of them are subclasses of the largest one
-                    //Since SuffixTreeCloneDetector do not perform any smart filtering, the result is ok
-                    return cloneClasses.size() == 5;
+                    final var cloneClasses = detector.transform(Function.identity());
+                    return cloneClasses
+                                   .stream()
+                                   .mapToInt(cc -> cc.clones().size())
+                                   .sum() == 10;
                 })
                 .verifyComplete();
     }

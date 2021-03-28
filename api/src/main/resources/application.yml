@@ -64,3 +64,7 @@ accula:
   webhook:
     url: ${WEBHOOK_URL}/api/webhook
     secret: ${WEBHOOK_SECRET}
+
+  code:
+    lines:
+      cache: 500

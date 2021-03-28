@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
-import reactor.function.TupleUtils;
 
 /**
  * @author Anton Lamtev
@@ -45,9 +44,10 @@ public final class PullsHandler {
                     return pullRepo
                             .findByNumber(projectId, pullNumber)
                             .switchIfEmpty(Mono.error(Http4xxException.notFound()))
-                            .flatMap(pull -> Mono.just(pull)
-                                    .zipWith(pullRepo.findPrevious(projectId, pullNumber, pull.author().id()).collectList())
-                                    .map(TupleUtils.function(ModelToDtoConverter::convert))
+                            .flatMap(pull -> pullRepo
+                                    .findPrevious(projectId, pullNumber, pull.author().id())
+                                    .collectList()
+                                    .map(prevPulls -> ModelToDtoConverter.convert(pull, prevPulls))
                                     .flatMap(Responses::ok));
                 })
                 .onErrorMap(NumberFormatException.class, Lambda.expandingWithArg(Http4xxException::badRequest))

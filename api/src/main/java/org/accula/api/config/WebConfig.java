@@ -17,7 +17,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -54,9 +54,9 @@ public class WebConfig implements WebFluxConfigurer {
         final var availableProcessors = Runtime.getRuntime().availableProcessors();
         final var executor = new ThreadPoolExecutor(
                 availableProcessors,
-                availableProcessors * 10,
+                availableProcessors * 100,
                 60L, TimeUnit.SECONDS,
-                new LinkedBlockingQueue<>(availableProcessors * 50)
+                new ArrayBlockingQueue<>(availableProcessors * 50_000)
         );
         return new Git(reposPath, executor);
     }

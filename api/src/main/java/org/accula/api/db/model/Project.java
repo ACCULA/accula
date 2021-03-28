@@ -5,7 +5,6 @@ import lombok.EqualsAndHashCode;
 import lombok.Value;
 import lombok.With;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -23,12 +22,11 @@ public class Project {
     @Builder.Default
     Integer openPullCount = 0;
     @Builder.Default
-    List<Long> adminIds = Collections.emptyList();
+    List<Long> adminIds = List.of();
 
     public enum State {
         CREATING,
         CREATED,
-        ;
     }
 
     @Builder
@@ -36,10 +34,10 @@ public class Project {
     @Value
     public static class Conf {
         public static final Conf DEFAULT = builder()
-                .adminIds(Collections.emptyList())
+                .adminIds(List.of())
                 .cloneMinTokenCount(15)
                 .fileMinSimilarityIndex(5)
-                .excludedFiles(Collections.emptyList())
+                .excludedFiles(List.of())
                 .build();
 
         List<Long> adminIds;

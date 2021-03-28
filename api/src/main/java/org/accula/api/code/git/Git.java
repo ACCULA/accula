@@ -1,7 +1,10 @@
 package org.accula.api.code.git;
 
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Streams;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import org.accula.api.util.Iterators;
 import org.accula.api.util.Sync;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,7 +17,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -43,12 +46,12 @@ public final class Git {
     private static final String DELETION = "D";
     private static final String MODIFICATION = "M";
     private static final String RENAMING = "R";
-    private static final String DELETED_OBJECT_ID = "0000000";
     private static final int SUCCESS = 0;
     private static final byte[] NEWLINE = System.lineSeparator().getBytes(UTF_8);
     private static final String ALREADY_EXISTS = "already exists";
     private static final String JOINER_NEWLINE = "";
     private static final long INTERVAL_SINCE_LAST_FETCH_THRESHOLD = Duration.ofSeconds(5L).toMillis();
+    private static final String FORMAT_ONE_LINE = "--format=oneline";
 
     private final Map<Path, Repo> repos = new ConcurrentHashMap<>();
     private final Path root;
@@ -119,20 +122,20 @@ public final class Git {
                         .map(Git::parseDiffEntry)
                         .filter(Objects::nonNull)
                         .collect(Collectors.toList()))
-                        .orElse(Collections.emptyList());
+                        .orElse(List.of());
             });
         }
 
-        public CompletableFuture<Map<Identifiable, String>> catFiles(final List<? extends Identifiable> objectIds) {
-            if (objectIds.isEmpty()) {
-                return CompletableFuture.completedFuture(Collections.emptyMap());
+        public <I extends Identifiable> CompletableFuture<Map<I, String>> catFiles(final Iterable<I> identifiableObjects) {
+            if (org.accula.api.util.Iterables.isEmptyCollection(identifiableObjects)) {
+                return CompletableFuture.completedFuture(Map.of());
             }
             return readingAsync(() -> {
                 final var process = git("cat-file", "--batch");
 
                 return usingStdoutLines(process, lines -> {
                     try (var stdin = process.getOutputStream()) {
-                        for (final var objectId : objectIds) {
+                        for (final var objectId : identifiableObjects) {
                             stdin.write(objectId.id().getBytes(UTF_8));
                             stdin.write(NEWLINE);
                         }
@@ -140,21 +143,49 @@ public final class Git {
                     } catch (IOException e) {
                         throw wrap(e);
                     }
-
-                    return filesContent(lines.iterator(), objectIds);
-                }).orElse(Collections.emptyMap());
+                    return filesContent(lines.iterator(), identifiableObjects);
+                }).orElse(Map.of());
             });
         }
 
         public CompletableFuture<List<GitFile>> show(final String commitSha) {
             return readingAsync(() -> {
-                final var process = git("show", "--raw", commitSha);
+                final var process = git("show", "--raw", FORMAT_ONE_LINE, commitSha);
 
                 return usingStdoutLines(process, lines -> lines
                         .map(Git::parseShowEntry)
-                        .filter(Objects::nonNull)
+                        .filter(file -> file != null && !file.isDeleted())
                         .collect(Collectors.toList()))
-                        .orElse(Collections.emptyList());
+                        .orElse(List.of());
+            });
+        }
+
+        public CompletableFuture<Map<GitFile, String>> show(final Iterable<String> commitsSha) {
+            return readingAsync(() -> {
+                final var show = new ArrayList<String>(4 + (commitsSha instanceof Collection<?> col ? col.size() : 10));
+                show.add("show");
+                show.add("--raw");
+                show.add(FORMAT_ONE_LINE);
+                Iterables.addAll(show, commitsSha);
+                return usingStdoutLines(git(show), lines -> showEntries(lines.iterator()))
+                        .orElse(Map.of());
+            });
+        }
+
+        public CompletableFuture<List<GitFileChanges>> fileChanges(final String commitSha) {
+            return readingAsync(() ->
+                    usingStdoutLines(git("show", FORMAT_ONE_LINE, commitSha), lines -> changes(lines.iterator()))
+                            .orElse(List.of()));
+        }
+
+        public CompletableFuture<Map<GitFileChanges, String>> fileChanges(final Iterable<String> commitsSha) {
+            return readingAsync(() -> {
+                final var show = new ArrayList<String>(3 + (commitsSha instanceof Collection<?> col ? col.size() : 10));
+                show.add("show");
+                show.add(FORMAT_ONE_LINE);
+                Iterables.addAll(show, commitsSha);
+                return usingStdoutLines(git(show), lines -> changesMap(lines.iterator()))
+                        .orElse(Map.of());
             });
         }
 
@@ -166,7 +197,7 @@ public final class Git {
                         .map(Git::parseLsEntry)
                         .filter(Objects::nonNull)
                         .collect(Collectors.toList()))
-                        .orElse(Collections.emptyList());
+                        .orElse(List.of());
             });
         }
 
@@ -174,7 +205,7 @@ public final class Git {
             return readingAsync(() -> {
                 final var process = git("remote");
                 return usingStdoutLines(process, lines -> lines.collect(Collectors.toSet()))
-                        .orElse(Collections.emptySet());
+                        .orElse(Set.of());
             });
         }
 
@@ -208,12 +239,19 @@ public final class Git {
             });
         }
 
+        public CompletableFuture<List<GitCommit>> log(final String ref) {
+            return readingAsync(() ->
+                    usingStdoutLines(git("log", "--date=rfc", ref), lines ->
+                            commits(lines.iterator()))
+                            .orElse(List.of()));
+        }
+
         public CompletableFuture<List<GitCommit>> log(final String fromRefExclusive, final String toRefInclusive) {
             return readingAsync(() -> {
                 final var log = git("log", "--date=rfc", "%s..%s".formatted(fromRefExclusive, toRefInclusive));
                 return usingStdoutLines(log, lines ->
                         commits(lines.iterator()))
-                        .orElse(Collections.emptyList());
+                        .orElse(List.of());
             });
         }
 
@@ -222,7 +260,7 @@ public final class Git {
                 final var log = git("rev-list", "--pretty", "--all", "--date=rfc");
                 return usingStdoutLines(log, lines ->
                         commits(lines.iterator()))
-                        .orElse(Collections.emptyList());
+                        .orElse(List.of());
             });
         }
 
@@ -239,6 +277,17 @@ public final class Git {
             }
         }
 
+        private Process git(final ArrayList<String> command) {
+            try {
+                command.add(0, "git");
+                return new ProcessBuilder(command)
+                        .directory(root.resolve(directory).toFile())
+                        .start();
+            } catch (IOException e) {
+                throw wrap(e);
+            }
+        }
+
         private <T> CompletableFuture<T> readingAsync(final Supplier<T> readOp) {
             return CompletableFuture.supplyAsync(sync.reading(readOp), executor);
         }
@@ -248,32 +297,40 @@ public final class Git {
         }
     }
 
-    private static Map<Identifiable, String> filesContent(final Iterator<String> lines, final List<? extends Identifiable> objectIds) {
-        if (!lines.hasNext()) {
-            return Collections.emptyMap();
+    private static <I extends Identifiable> Map<I, String> filesContent(final Iterator<String> lines,
+                                                                        final Iterable<I> identifiableObjects) {
+        final Iterator<I> identifiableObjectsIterator = identifiableObjects.iterator();
+        if (!lines.hasNext() || !identifiableObjectsIterator.hasNext()) {
+            return Map.of();
         }
-        final Map<Identifiable, String> filesContent = new HashMap<>(objectIds.size());
-        int fileToDiscoverIdx = 0;
+        final Map<I, String> filesContent = new HashMap<>((identifiableObjects instanceof Collection<?> col) ? col.size() : 16);
+        I prevObjIdentifiable = null;
+        I currObjIdentifiable = identifiableObjectsIterator.next();
         int currentFileLineCounter = 1;
         StringJoiner currentFile = null;
         int fromLine = Integer.MIN_VALUE;
         int toLine = Integer.MAX_VALUE;
         while (lines.hasNext()) {
             final var line = lines.next();
-            final Identifiable identifiable;
-            if (fileToDiscoverIdx < objectIds.size() && line.startsWith((identifiable = objectIds.get(fileToDiscoverIdx)).id())) {
+            if ((identifiableObjectsIterator.hasNext() || currObjIdentifiable != null) && line.startsWith(currObjIdentifiable.id())) {
                 currentFileLineCounter = 1;
-                if (identifiable instanceof Snippet snippet) {
-                    fromLine = snippet.fromLine();
-                    toLine = snippet.toLine();
+                if (currObjIdentifiable instanceof Snippet snippet) {
+                    final var range = snippet.lines();
+                    fromLine = range.from();
+                    toLine = range.to();
                 } else {
                     fromLine = Integer.MIN_VALUE;
                     toLine = Integer.MAX_VALUE;
                 }
-                if (fileToDiscoverIdx != 0 && currentFile.length() > 0) {
-                    filesContent.put(objectIds.get(fileToDiscoverIdx - 1), currentFile.toString());
+                if (prevObjIdentifiable != null && currentFile.length() > 0) {
+                    filesContent.put(prevObjIdentifiable, currentFile.toString());
                 }
-                ++fileToDiscoverIdx;
+                prevObjIdentifiable = currObjIdentifiable;
+                if (identifiableObjectsIterator.hasNext()) {
+                    currObjIdentifiable = identifiableObjectsIterator.next();
+                } else {
+                    currObjIdentifiable = null;
+                }
 
                 currentFile = new StringJoiner(System.lineSeparator());
                 continue;
@@ -286,8 +343,8 @@ public final class Git {
                 currentFile.add(JOINER_NEWLINE);
             }
         }
-        if (fileToDiscoverIdx != 0 && currentFile.length() > 0) {
-            filesContent.put(objectIds.get(fileToDiscoverIdx - 1), currentFile.toString());
+        if (prevObjIdentifiable != null && currentFile.length() > 0) {
+            filesContent.put(prevObjIdentifiable, currentFile.toString());
         }
         return filesContent;
     }
@@ -302,27 +359,89 @@ public final class Git {
      */
     private static List<GitCommit> commits(final Iterator<String> lines) {
         final List<GitCommit> commits = new ArrayList<>();
-        final var commitBuilder = GitCommit.builder();
+        final var cb = new Object() {
+            GitCommit.GitCommitBuilder commitBuilder;
+        };
         new CommitEntryParseIterator(lines).forEachRemaining(entry -> {
             final var line = entry.line();
             switch (entry.type()) {
-                case SHA -> commitBuilder.sha(line);
-                case MERGE -> commitBuilder.isMerge(true);
+                case SHA -> {
+                    cb.commitBuilder = GitCommit.builder();
+                    cb.commitBuilder.sha(line);
+                }
+                case MERGE -> cb.commitBuilder.isMerge(true);
                 case AUTHOR -> {
                     final var nameAndEmail = line.split(" <", 2);
                     if (nameAndEmail.length != 2) {
-                        throw new IllegalStateException("'Author:' line was of not supported format: %s".formatted(line));
+                        throw new IllegalStateException("'Author:' line was of not supported format: %s" .formatted(line));
                     }
-                    commitBuilder.authorName(nameAndEmail[0]);
-                    commitBuilder.authorEmail(nameAndEmail[1].substring(0, nameAndEmail[1].length() - 1));
+                    cb.commitBuilder.authorName(nameAndEmail[0]);
+                    cb.commitBuilder.authorEmail(nameAndEmail[1].substring(0, nameAndEmail[1].length() - 1));
                 }
                 case DATE -> {
-                    commitBuilder.date(Instant.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(line)));
-                    commits.add(commitBuilder.build());
+                    cb.commitBuilder.date(Instant.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(line)));
+                    commits.add(cb.commitBuilder.build());
                 }
             }
         });
         return commits;
+    }
+
+    private static Map<GitFile, String> showEntries(final Iterator<String> lines) {
+        if (!lines.hasNext()) {
+            return Map.of();
+        }
+        final var entries = new HashMap<GitFile, String>();
+        var sha = (String) null;
+        while (lines.hasNext()) {
+            final var line = lines.next();
+            if (line.isEmpty()) {
+                continue;
+            }
+            final var entry = parseShowEntry(line);
+            if (entry == null) {
+                if (!lines.hasNext()) {
+                    break;
+                }
+                sha = line.substring(0, 40);
+            } else if (!entry.isDeleted()) {
+                entries.put(entry, sha);
+            }
+        }
+        return entries;
+    }
+
+    @SuppressWarnings("UnstableApiUsage")
+    private static List<GitFileChanges> changes(final Iterator<String> lines) {
+        if (!lines.hasNext()) {
+            return List.of();
+        }
+        return Streams.stream(new FileChangesParseIterator(Iterators.nextResettable(lines)))
+                .filter(GitFileChanges.class::isInstance)
+                .map(GitFileChanges.class::cast)
+                .collect(Collectors.toList());
+    }
+
+    private static Map<GitFileChanges, String> changesMap(final Iterator<String> lines) {
+        if (!lines.hasNext()) {
+            return Map.of();
+        }
+        final var entries = new HashMap<GitFileChanges, String>();
+        final var nextResettableIter = Iterators.nextResettable(lines);
+        final var iter = new FileChangesParseIterator(nextResettableIter);
+        var sha = (String) null;
+        while (iter.hasNext()) {
+            final var next = iter.next();
+            if (next instanceof String sh) {
+                sha = sh.substring(0, 40);
+                continue;
+            }
+            final var fileChanges = (GitFileChanges) next;
+            if (!fileChanges.file().isDeleted() && !fileChanges.changedLines().isEmpty()) {
+                entries.put(fileChanges, Objects.requireNonNull(sha, "sha MUST not be null here"));
+            }
+        }
+        return entries;
     }
 
     /// Line format:
@@ -368,16 +487,14 @@ public final class Git {
             return null;
         }
         final var components = line.split("\\s+");
-        if (components.length != 6 && components.length != 7) {
-            return null;
-        }
-        final var objectId = components[3];
-        if (objectId.startsWith(DELETED_OBJECT_ID)) {
+        if (components.length < 6 || components.length > 9) {
             return null;
         }
         return switch (components.length) {
-            case 6 -> GitFile.of(objectId, components[5]);
-            case 7 -> GitFile.of(objectId, components[6]);
+            case 6 -> GitFile.of(components[3], components[5]);
+            case 7 -> GitFile.of(components[3], components[6]);
+            case 8 -> GitFile.of(components[5], components[7]);
+            case 9 -> GitFile.of(components[5], components[8]);
             default -> null;
         };
     }

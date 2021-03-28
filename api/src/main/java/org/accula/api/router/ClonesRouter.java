@@ -21,7 +21,7 @@ public final class ClonesRouter {
         return RouterFunctions
                 .route()
                 .path("/api/projects/{projectId}/pulls/{pullNumber}/clones", b -> b
-                        .GET("", clonesHandler::getLastCommitClones)
+                        .GET("", clonesHandler::getPullClones)
                         .POST("/refresh", clonesHandler::refreshClones))
                 .build();
     }

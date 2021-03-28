@@ -31,6 +31,7 @@ const decodeClones = (wrapper: Wrapper<IClone[]>): Wrapper<IClone[]> => ({
     wrapper.value &&
     wrapper.value.map(diff => ({
       id: diff.id,
+      projectId: diff.projectId,
       target: {
         ...diff.target,
         content: atob(diff.target.content)

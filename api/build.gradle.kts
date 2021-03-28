@@ -1,5 +1,5 @@
 plugins {
-    id("org.springframework.boot") version "2.4.2"
+    id("org.springframework.boot") version "2.4.4"
     id("io.spring.dependency-management") version "1.0.11.RELEASE"
     id("net.bytebuddy.byte-buddy-gradle-plugin") version "1.10.14"
 }
@@ -50,8 +50,9 @@ dependencies {
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
     implementation("com.suhininalex:suffixtree:1.0.2")
-    implementation("com.jetbrains.intellij.java:java-psi-impl:202.6948.69")
+    implementation("com.jetbrains.intellij.java:java-psi-impl:203.7148.57")
     implementation("com.google.guava:guava:30.1-jre")
+    implementation("it.unimi.dsi:fastutil:8.5.2")
 }
 
 byteBuddy {

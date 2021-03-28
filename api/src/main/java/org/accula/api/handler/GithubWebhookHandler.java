@@ -2,12 +2,12 @@ package org.accula.api.handler;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.accula.api.db.model.Pull;
 import org.accula.api.db.repo.ProjectRepo;
 import org.accula.api.github.model.GithubApiHookPayload;
 import org.accula.api.handler.util.Responses;
 import org.accula.api.service.CloneDetectionService;
 import org.accula.api.service.ProjectService;
+import org.accula.api.db.model.PullSnapshots;
 import org.accula.api.util.Lambda;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
@@ -54,13 +54,13 @@ public final class GithubWebhookHandler {
     }
 
     private Mono<Void> processPayload(final GithubApiHookPayload payload) {
-        return switch (payload.action()) {
-            case OPENED, SYNCHRONIZE -> updateProject(payload).transform(this::detectClones);
-            case EDITED, CLOSED, REOPENED -> updateProject(payload).then();
-        };
+        return (switch (payload.action()) {
+            case OPENED, SYNCHRONIZE -> updateProject(payload).doOnNext(this::detectClonesInBackground);
+            case EDITED, CLOSED, REOPENED -> updateProject(payload);
+        }).then();
     }
 
-    private Mono<Pull> updateProject(final GithubApiHookPayload payload) {
+    private Mono<PullSnapshots> updateProject(final GithubApiHookPayload payload) {
         final var githubApiPull = payload.pull();
 
         return projectRepo
@@ -68,10 +68,10 @@ public final class GithubWebhookHandler {
                 .flatMap(projectId -> projectService.update(projectId, githubApiPull));
     }
 
-    private Mono<Void> detectClones(final Mono<Pull> pull) {
-        return pull
-                .flatMapMany(cloneDetectionService::detectClones)
-                .then();
+    private void detectClonesInBackground(final PullSnapshots update) {
+        cloneDetectionService
+                .detectClones(update.pull(), update.snapshots())
+                .subscribe();
     }
 
     private static <E extends Throwable, T> Mono<T> ignoreNotSupportedAction(final E error) {

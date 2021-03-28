@@ -88,7 +88,7 @@ CREATE TABLE IF NOT EXISTS snapshot
 
     FOREIGN KEY (sha) REFERENCES commit (sha),
     FOREIGN KEY (repo_id) REFERENCES repo_github (id),
-    CONSTRAINT snapshot_pk PRIMARY KEY (sha, repo_id)
+    CONSTRAINT snapshot_pk PRIMARY KEY (sha, repo_id, branch)
 );
 
 CREATE TABLE IF NOT EXISTS pull
@@ -102,46 +102,57 @@ CREATE TABLE IF NOT EXISTS pull
 
     head_snapshot_sha     CHAR(40)                 NOT NULL,
     head_snapshot_repo_id BIGINT                   NOT NULL,
+    head_snapshot_branch  VARCHAR(256)             NOT NULL,
 
     base_snapshot_sha     CHAR(40)                 NOT NULL,
     base_snapshot_repo_id BIGINT                   NOT NULL,
+    base_snapshot_branch  VARCHAR(256)             NOT NULL,
 
     project_id            BIGINT                   NOT NULL,
     author_github_id      BIGINT                   NOT NULL,
 
-    FOREIGN KEY (head_snapshot_sha, head_snapshot_repo_id) REFERENCES snapshot (sha, repo_id),
-    FOREIGN KEY (base_snapshot_sha, base_snapshot_repo_id) REFERENCES snapshot (sha, repo_id),
+    FOREIGN KEY (head_snapshot_sha, head_snapshot_repo_id, head_snapshot_branch) REFERENCES snapshot (sha, repo_id, branch),
+    FOREIGN KEY (base_snapshot_sha, base_snapshot_repo_id, base_snapshot_branch) REFERENCES snapshot (sha, repo_id, branch),
     FOREIGN KEY (project_id) REFERENCES project (id) ON DELETE CASCADE,
     FOREIGN KEY (author_github_id) REFERENCES user_github (id)
 );
 
 CREATE TABLE IF NOT EXISTS snapshot_pull
 (
-    snapshot_sha     CHAR(40) NOT NULL,
-    snapshot_repo_id BIGINT   NOT NULL,
-    pull_id          BIGINT   NOT NULL,
+    snapshot_sha     CHAR(40)     NOT NULL,
+    snapshot_repo_id BIGINT       NOT NULL,
+    snapshot_branch  VARCHAR(256) NOT NULL,
+    pull_id          BIGINT       NOT NULL,
 
-    FOREIGN KEY (snapshot_sha, snapshot_repo_id) REFERENCES snapshot (sha, repo_id),
+    FOREIGN KEY (snapshot_sha, snapshot_repo_id, snapshot_branch) REFERENCES snapshot (sha, repo_id, branch),
     FOREIGN KEY (pull_id) REFERENCES pull (id) ON DELETE CASCADE,
-    CONSTRAINT snapshot_pull_pk PRIMARY KEY (snapshot_sha, snapshot_repo_id, pull_id)
+    CONSTRAINT snapshot_pull_pk PRIMARY KEY (snapshot_sha, snapshot_repo_id, snapshot_branch, pull_id)
 );
 
---  TODO: extract (target | source)_ ... into separate table
+CREATE TABLE IF NOT EXISTS clone_snippet
+(
+    id         BIGSERIAL PRIMARY KEY,
+    commit_sha CHAR(40)     NOT NULL,
+    repo_id    BIGINT       NOT NULL,
+    branch     VARCHAR(256) NOT NULL,
+    pull_id    BIGINT       NOT NULL,
+
+    file       TEXT         NOT NULL,
+    from_line  INT          NOT NULL,
+    to_line    INT          NOT NULL,
+
+    FOREIGN KEY (commit_sha, repo_id, branch, pull_id) REFERENCES
+        snapshot_pull (snapshot_sha, snapshot_repo_id, snapshot_branch, pull_id)
+);
+
 CREATE TABLE IF NOT EXISTS clone
 (
-    id                BIGSERIAL PRIMARY KEY,
-    target_commit_sha CHAR(40)     NOT NULL,
-    target_repo_id    BIGINT       NOT NULL,
-    target_file       VARCHAR(256) NOT NULL,
-    target_from_line  INT          NOT NULL,
-    target_to_line    INT          NOT NULL,
-    source_commit_sha CHAR(40)     NOT NULL,
-    source_repo_id    BIGINT       NOT NULL,
-    source_file       VARCHAR(256) NOT NULL,
-    source_from_line  INT          NOT NULL,
-    source_to_line    INT          NOT NULL,
-    suppressed        BOOLEAN      NOT NULL DEFAULT FALSE,
+    id         BIGSERIAL PRIMARY KEY,
+    target_id  BIGINT  NOT NULL,
+    source_id  BIGINT  NOT NULL,
 
-    FOREIGN KEY (target_commit_sha, target_repo_id) REFERENCES snapshot (sha, repo_id),
-    FOREIGN KEY (source_commit_sha, source_repo_id) REFERENCES snapshot (sha, repo_id)
+    suppressed BOOLEAN NOT NULL DEFAULT FALSE,
+
+    FOREIGN KEY (target_id) REFERENCES clone_snippet (id) ON DELETE CASCADE,
+    FOREIGN KEY (source_id) REFERENCES clone_snippet (id) ON DELETE CASCADE
 );

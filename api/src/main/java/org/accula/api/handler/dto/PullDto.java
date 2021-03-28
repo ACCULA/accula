@@ -35,7 +35,6 @@ public class PullDto {
     public enum CloneStatus {
         PENDING,
         FINISHED,
-        ;
     }
 
     @JsonAutoDetect(fieldVisibility = ANY)
