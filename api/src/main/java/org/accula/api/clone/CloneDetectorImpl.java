@@ -88,12 +88,12 @@ public final class CloneDetectorImpl implements CloneDetector {
 
     private static CodeClone convert(final Clone<Snapshot> source, final Clone<Snapshot> target) {
         return CodeClone.builder()
-                .source(covert(source))
-                .target(covert(target))
+                .source(convert(source))
+                .target(convert(target))
                 .build();
     }
 
-    private static CodeClone.Snippet covert(final Clone<Snapshot> clone) {
+    private static CodeClone.Snippet convert(final Clone<Snapshot> clone) {
         return CodeClone.Snippet.builder()
                 .snapshot(clone.ref())
                 .file(clone.filename())
