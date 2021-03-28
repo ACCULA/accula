@@ -1,4 +1,4 @@
 @NonNullApi
-package org.accula.api.code.lines;
+package org.accula.api.converter;
 
 import org.accula.api.annotation.NonNullApi;
