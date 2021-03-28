@@ -60,7 +60,7 @@ public final class CloneDetectorImpl implements CloneDetector {
         final Supplier<List<CodeClone>> cloneClassesSupplier = () ->
                 suffixTreeCloneDetector.transform(cloneClasses -> cloneClasses
                         .filter(cloneClass -> cloneClassMatchesRules(cloneClass, config) &&
-                                              cloneClassContainsClonesForSnapshot(cloneClass, snapshot))
+                                              cloneClassContainsClonesFromThisPrAndOtherRepo(cloneClass, snapshot))
                         .flatMap(cloneClass -> {
                             final var clones = cloneClass.clones();
                             final var source = clones
@@ -110,7 +110,8 @@ public final class CloneDetectorImpl implements CloneDetector {
                        .allMatch(clone -> rules.filter().test(clone.start().filename()));
     }
 
-    private static boolean cloneClassContainsClonesForSnapshot(final CloneClass<Snapshot> cloneClass, final Snapshot thisPullSnapshot) {
+    private static boolean cloneClassContainsClonesFromThisPrAndOtherRepo(final CloneClass<Snapshot> cloneClass,
+                                                                          final Snapshot thisPullSnapshot) {
         final var clones = cloneClass.clones();
         var containsCloneFromThisPull = false;
         var containsCloneFromOtherRepo = false;
