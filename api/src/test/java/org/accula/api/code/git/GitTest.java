@@ -1,6 +1,7 @@
 package org.accula.api.code.git;
 
 import lombok.SneakyThrows;
+import org.accula.api.code.lines.LineRange;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -87,6 +88,11 @@ final class GitTest {
             final var diffEntries2 = repo.diff(BASE_REF, HEAD_REF, 100).get();
             assertEquals(45, diffEntries1.size());
             assertEquals(diffEntries1, diffEntries2);
+
+            final var diffEntries3 = repo.diff(BASE_REF, HEAD_REF, 3).get();
+            final var diffEntries4 = repo.diff(BASE_REF, HEAD_REF, 7).get();
+            assertEquals(41, diffEntries3.size());
+            assertEquals(44, diffEntries4.size());
         });
     }
 
@@ -119,6 +125,55 @@ final class GitTest {
             assertNotNull(repo);
 
             assertTrue(repo.catFiles(Collections.emptyList()).get().isEmpty());
+        });
+    }
+
+    @Test
+    void testCatSnippets() {
+        assertDoesNotThrow(() -> {
+            final var repo = git.clone(REPO_URL, REPO_DIR).get();
+            assertNotNull(repo);
+
+            final var snippet = Snippet.of(
+                    GitFile.of("3c19d0d", "api/src/main/java/org/accula/api/auth/jwt/JwtRefreshFilter.java"),
+                    LineRange.of(10, 38)
+            );
+
+            final var snippetsContent = repo.catFiles(List.of(snippet)).get();
+            assertNotNull(snippetsContent);
+            assertEquals(1, snippetsContent.size());
+
+            assertEquals("""
+                    import org.springframework.web.server.WebFilterChain;
+                    import reactor.core.publisher.Mono;
+                                        
+                    import java.time.Duration;
+                                        
+                    /**
+                     * Web filter that refreshes an access token using refresh token provided in cookies.
+                     * <p>New refresh token replaces the previous one in DB
+                     * ({@link RefreshTokenRepository}) as well as in client cookies.
+                     * <p>Response is constructed using {@link JwtAccessTokenResponseProducer}.
+                     *
+                     * @author Anton Lamtev
+                     */
+                    @RequiredArgsConstructor
+                    public final class JwtRefreshFilter implements WebFilter {
+                        private final ServerWebExchangeMatcher endpointMatcher;
+                        private final JwtAccessTokenResponseProducer responseProducer;
+                        private final Jwt jwt;
+                        private final Duration refreshExpiresIn;
+                        private final RefreshTokenRepository refreshTokens;
+                                        
+                        @Override
+                        public Mono<Void> filter(final ServerWebExchange exchange, final WebFilterChain chain) {
+                            return endpointMatcher
+                                    .matches(exchange)
+                                    .filter(ServerWebExchangeMatcher.MatchResult::isMatch)
+                                    .flatMap(match -> doRefreshToken(exchange))
+                                    .switchIfEmpty(chain.filter(exchange).then(Mono.empty()));
+                        }
+                    """, snippetsContent.values().iterator().next());
         });
     }
 
@@ -216,6 +271,23 @@ final class GitTest {
                                         .authorEmail("antonlamtev@gmail.com")
                                         .date(Instant.parse("2020-05-03T13:27:09Z"))
                                         .build(), commits.get(0));
+                            }));
+        });
+    }
+
+    @Test
+    void testLogUntilRef() {
+        assertDoesNotThrow(() -> {
+            final var repo = git.clone(REPO_URL, REPO_DIR).get();
+            assertNotNull(repo);
+
+            IntStream.range(0, Runtime.getRuntime().availableProcessors() * 5)
+                    .parallel()
+                    .forEach(it ->
+                            assertDoesNotThrow(() -> {
+                                final var commits = repo.log(HEAD_REF).get();
+                                assertEquals(10, commits.size());
+                                ;
                             }));
         });
     }

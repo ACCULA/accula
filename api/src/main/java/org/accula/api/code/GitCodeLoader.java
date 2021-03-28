@@ -298,7 +298,7 @@ public final class GitCodeLoader implements CodeLoader {
                                 );
                             }
 
-                            return null;
+                            throw new IllegalStateException("Unexpected diffEntry class: " + diffEntry.getClass().getName());
                         }));
     }
 

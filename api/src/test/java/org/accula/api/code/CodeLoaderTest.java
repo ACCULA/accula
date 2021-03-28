@@ -44,7 +44,6 @@ class CodeLoaderTest {
         codeLoader = new GitCodeLoader(new Git(tempDir, Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())));
     }
 
-
     @Test
     void testLoadFiles() {
         StepVerifier.create(codeLoader.loadFiles(COMMIT.repo(), List.of(COMMIT), README::equals))
@@ -59,13 +58,20 @@ class CodeLoaderTest {
                 .builder()
                 .commit(Commit.shaOnly("ecb40217f36891809693e4d9d37a3e841ff740b9"))
                 .repo(new GithubRepo(0L, "2017-highload-kv", "", new GithubUser(0L, "lamtev", null, "", false)))
+                .pullInfo(Snapshot.PullInfo.of(10L, 7))
                 .build();
-        final var s2 = s1.withCommit(Commit.shaOnly("5d66d3b0c3f07c07eb841b1620dcba2b0a970bc7"));
-        final var s3 = s1.withCommit(Commit.shaOnly("38f07e6b48c6594d9b3cfaa64b76a9aecc811b25"));
-        var files = codeLoader.loadFiles(s1.repo(), List.of(s1, s2, s3), FileFilter.SRC_JAVA)
+        final var s2 = s1.withCommit(Commit.shaOnly("5d66d3b0c3f07c07eb841b1620dcba2b0a970bc7"))
+                .withPullInfo(Snapshot.PullInfo.of(11L, 10));
+        final var s3 = s1.withCommit(Commit.shaOnly("38f07e6b48c6594d9b3cfaa64b76a9aecc811b25"))
+                .withPullInfo(Snapshot.PullInfo.of(12L, 11));
+        final var s4 = s3.withCommit(Commit.shaOnly("38f07e6b48c6594d9b3cfaa64b76a9aecc811b25"))
+                .withPullInfo(Snapshot.PullInfo.of(13L, 12));
+        final var s5 = s3.withCommit(Commit.shaOnly("38f07e6b48c6594d9b3cfaa64b76a9aecc811b25"))
+                .withPullInfo(Snapshot.PullInfo.of(14L, 13));
+        var files = codeLoader.loadFiles(s1.repo(), List.of(s1, s2, s5, s3, s1, s4), FileFilter.SRC_JAVA)
                 .collectList().block();
         assertNotNull(files);
-        assertEquals(9, files.size());
+        assertEquals(19, files.size());
         assertEquals(4L, files.stream().map(FileEntity::name).distinct().count());
     }
 
@@ -210,6 +216,16 @@ class CodeLoaderTest {
         var headRepo = new GithubRepo(1L, "2019-highload-dht", "descr", headOwner);
         StepVerifier.create(codeLoader.loadAllCommits(headRepo).collectList())
                 .expectNextMatches(commits -> !commits.isEmpty())
+                .expectComplete()
+                .verify();
+    }
+
+    @Test
+    void testLoadCommitsUntilRef() {
+        var headOwner = new GithubUser(1L, "vaddya", "owner", "ava", false);
+        var headRepo = new GithubRepo(1L, "2019-highload-dht", "descr", headOwner);
+        StepVerifier.create(codeLoader.loadCommits(headRepo, "7a490a1e518df228c203c3690100bd2d0ab559c5").collectList())
+                .expectNextMatches(commits -> commits.size() == 145)
                 .expectComplete()
                 .verify();
     }
