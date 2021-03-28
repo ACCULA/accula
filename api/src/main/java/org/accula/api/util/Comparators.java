@@ -19,24 +19,21 @@ public final class Comparators {
     }
 
     public static <T> BinaryOperator<T> minBy(final Comparator<T> comparator, final Comparator<T> collisionResolvingComparator) {
-        final var res = new Object() {
-            T value;
-        };
         return (min, curr) -> {
             final var cmp = comparator.compare(min, curr);
             if (cmp < 0) {
-                res.value = min;
+                return min;
             } else if (cmp > 0) {
-                res.value = curr;
+                return curr;
             } else {
                 final var collisionCmp = collisionResolvingComparator.compare(min, curr);
                 if (collisionCmp < 0) {
-                    res.value = min;
+                    return min;
                 } else if (collisionCmp > 0) {
-                    res.value = curr;
+                    return curr;
                 }
             }
-            return res.value;
+            return min;
         };
     }
 }
