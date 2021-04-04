@@ -1,4 +1,4 @@
-package org.accula.api.handler;
+package org.accula.api.handler.suggestion;
 
 import info.debatty.java.stringsimilarity.NGram;
 import info.debatty.java.stringsimilarity.interfaces.StringDistance;

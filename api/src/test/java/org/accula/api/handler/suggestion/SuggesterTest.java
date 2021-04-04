@@ -1,4 +1,4 @@
-package org.accula.api.handler;
+package org.accula.api.handler.suggestion;
 
 import org.junit.jupiter.api.Test;
 

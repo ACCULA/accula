@@ -6,6 +6,7 @@ import org.accula.api.db.repo.PullRepo;
 import org.accula.api.handler.PullsHandler;
 import org.accula.api.handler.dto.PullDto;
 import org.accula.api.handler.dto.ShortPullDto;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -61,7 +62,7 @@ class PullsRouterTest {
         client.get().uri("/api/projects/{projectId}/pulls/notANumber", 1L)
                 .exchange()
                 .expectStatus().isBadRequest()
-                .expectBody(Void.class);
+                .expectBody(Void.class).value(Matchers.nullValue());
     }
 
     @Test
@@ -72,7 +73,7 @@ class PullsRouterTest {
         client.get().uri("/api/projects/{projectId}/pulls/{pullNumber}", 1L, STUB_PULL.number())
                 .exchange()
                 .expectStatus().isNotFound()
-                .expectBody(Void.class);
+                .expectBody(Void.class).value(Matchers.nullValue());
     }
 
     @Test

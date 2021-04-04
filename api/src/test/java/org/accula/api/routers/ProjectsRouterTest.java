@@ -25,14 +25,17 @@ import org.accula.api.github.model.GithubApiSnapshot;
 import org.accula.api.github.model.GithubApiUser;
 import org.accula.api.handler.ProjectsHandler;
 import org.accula.api.handler.dto.ApiError;
+import org.accula.api.handler.dto.AttachRepoDto;
 import org.accula.api.handler.dto.CreateProjectDto;
 import org.accula.api.handler.dto.ProjectConfDto;
 import org.accula.api.handler.dto.ProjectDto;
+import org.accula.api.handler.dto.RepoShortDto;
 import org.accula.api.handler.dto.UserDto;
 import org.accula.api.handler.exception.ProjectsHandlerException;
 import org.accula.api.handler.exception.ResponseConvertibleException;
 import org.accula.api.service.CloneDetectionService;
 import org.accula.api.service.ProjectService;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -62,6 +65,14 @@ class ProjectsRouterTest {
     static final String REPO_URL = "https://github.com/accula/accula";
     static final String REPO_NAME = "accula";
     static final String REPO_OWNER = "accula";
+    static final String REPO_OWNER_HIGHLOAD = "polis-mail-ru";
+    static final String REPO_NAME_HIGHLOAD1 = "2020-highload-dht";
+    static final String REPO_NAME_HIGHLOAD2 = "2019-highload-dht";
+    static final String REPO_NAME_HIGHLOAD3 = "2018-highload-kv";
+    static final String REPO_NAME_HIGHLOAD4 = "2021-highload-dht";
+    static final String REPO_URL_HIGHLOAD1 = "https://github.com/%s/%s".formatted(REPO_OWNER_HIGHLOAD, REPO_NAME_HIGHLOAD1);
+    static final String REPO_URL_HIGHLOAD2 = "https://github.com/%s/%s".formatted(REPO_OWNER_HIGHLOAD, REPO_NAME_HIGHLOAD2);
+    static final String REPO_URL_HIGHLOAD3 = "https://github.com/%s/%s".formatted(REPO_OWNER_HIGHLOAD, REPO_NAME_HIGHLOAD3);
 
     static final GithubUser GITHUB_USER = new GithubUser(1L, "accula", "name", "avatar", false);
     static final GithubRepo REPO = new GithubRepo(1L, "accula", "description", GITHUB_USER);
@@ -77,6 +88,8 @@ class ProjectsRouterTest {
             .base(Snapshot.builder().repo(REPO).branch("branch2").build())
             .primaryProjectId(1L)
             .build();
+    static final GithubUser GITHUB_USER_HIGHLOAD = new GithubUser(1L, REPO_OWNER_HIGHLOAD, REPO_OWNER_HIGHLOAD, "avatar", false);
+    static final GithubRepo REPO_HIGHLOAD = new GithubRepo(1L, REPO_NAME_HIGHLOAD4, "description", GITHUB_USER_HIGHLOAD);
     static final List<Pull> PULLS = List.of(PULL, PULL, PULL);
     static final String EMPTY = "";
     static final User CURRENT_USER = new User(0L, "", GITHUB_USER);
@@ -85,11 +98,16 @@ class ProjectsRouterTest {
     static final GithubUser GH_USER_3 = new GithubUser(3L, "l", "n", "a", false);
     static final User USER_3 = new User(2L, "", GH_USER_3);
     static final GithubApiUser GH_OWNER = new GithubApiUser(1L, REPO_OWNER, EMPTY, EMPTY, EMPTY, GithubApiUser.Type.USER);
+    static final GithubApiUser GH_OWNER_HIGHLOAD = new GithubApiUser(1L, REPO_OWNER_HIGHLOAD, EMPTY, EMPTY, EMPTY, GithubApiUser.Type.USER);
     static final GithubApiRepo GH_REPO = new GithubApiRepo(1L, REPO_URL, REPO_NAME, EMPTY, GH_OWNER);
+    static final GithubApiRepo GH_REPO_HIGHLOAD1 = new GithubApiRepo(2L, REPO_URL_HIGHLOAD1, REPO_NAME_HIGHLOAD1, EMPTY, GH_OWNER_HIGHLOAD);
+    static final GithubApiRepo GH_REPO_HIGHLOAD2 = new GithubApiRepo(3L, REPO_URL_HIGHLOAD2, REPO_NAME_HIGHLOAD2, EMPTY, GH_OWNER_HIGHLOAD);
+    static final GithubApiRepo GH_REPO_HIGHLOAD3 = new GithubApiRepo(4L, REPO_URL_HIGHLOAD3, REPO_NAME_HIGHLOAD3, EMPTY, GH_OWNER_HIGHLOAD);
     static final GithubApiSnapshot MARKER = new GithubApiSnapshot("", "", GH_OWNER, GH_REPO, "");
     static final GithubApiPull GH_PULL = new GithubApiPull(0L, "", MARKER, MARKER, GH_OWNER, 0, "", State.OPEN, Instant.now(), Instant.now(), Instant.now());
     static final GithubApiPull[] OPEN_PULLS = new GithubApiPull[]{GH_PULL, GH_PULL, GH_PULL};
     static final Project PROJECT = Project.builder().id(1L).state(Project.State.CONFIGURING).githubRepo(REPO).creator(CURRENT_USER).openPullCount(0).build();
+    static final Project PROJECT_HIGHLOAD = Project.builder().id(2L).state(Project.State.CONFIGURING).githubRepo(REPO_HIGHLOAD).creator(CURRENT_USER).openPullCount(0).build();
     static final CreateProjectDto REQUEST_BODY = new CreateProjectDto(REPO_URL);
     static final String INVALID_REPO_URL = "htps://bad_url";
     static final CreateProjectDto REQUEST_BODY_INVALID_URL = new CreateProjectDto(INVALID_REPO_URL);
@@ -470,6 +488,141 @@ class ProjectsRouterTest {
         client.get().uri("/api/projects/{id}/headFiles", PROJECT.id())
                 .exchange()
                 .expectStatus().isNotFound();
+    }
+
+    @Test
+    void testRepoSuggestionOk() {
+        Mockito.when(currentUser.get(Mockito.any()))
+            .thenReturn(Mono.just(0L));
+        Mockito.when(projectRepo.hasAdmin(Mockito.anyLong(), Mockito.anyLong()))
+            .thenReturn(Mono.just(TRUE));
+        Mockito.when(projectRepo.findById(Mockito.anyLong()))
+            .thenReturn(Mono.just(PROJECT_HIGHLOAD));
+        Mockito.when(githubClient.getAllRepos(Mockito.anyInt()))
+            .thenReturn(Flux.just(GH_REPO_HIGHLOAD2, GH_REPO, GH_REPO_HIGHLOAD3, GH_REPO_HIGHLOAD1));
+
+        final var suggestion = List.of(
+            RepoShortDto.builder()
+                .id(GH_REPO_HIGHLOAD1.id())
+                .owner(REPO_OWNER_HIGHLOAD)
+                .name(REPO_NAME_HIGHLOAD1)
+                .build(),
+            RepoShortDto.builder()
+                .id(GH_REPO_HIGHLOAD2.id())
+                .owner(REPO_OWNER_HIGHLOAD)
+                .name(REPO_NAME_HIGHLOAD2)
+                .build(),
+            RepoShortDto.builder()
+                .id(GH_REPO_HIGHLOAD3.id())
+                .owner(REPO_OWNER_HIGHLOAD)
+                .name(REPO_NAME_HIGHLOAD3)
+                .build(),
+            RepoShortDto.builder()
+                .id(GH_REPO.id())
+                .owner(REPO_OWNER)
+                .name(REPO_NAME)
+                .build()
+        ).toArray(new RepoShortDto[0]);
+
+        client.get().uri("/api/projects/{id}/repoSuggestion", PROJECT_HIGHLOAD.id())
+            .exchange()
+            .expectStatus().isOk()
+            .expectBody(RepoShortDto[].class).isEqualTo(suggestion);
+    }
+
+    @Test
+    void testRepoSuggestionForbidden() {
+        Mockito.when(currentUser.get(Mockito.any()))
+            .thenReturn(Mono.just(0L));
+        Mockito.when(projectRepo.hasAdmin(Mockito.anyLong(), Mockito.anyLong()))
+            .thenReturn(Mono.just(FALSE));
+        Mockito.when(projectRepo.findById(Mockito.anyLong()))
+            .thenReturn(Mono.just(PROJECT_HIGHLOAD));
+        Mockito.when(githubClient.getAllRepos(Mockito.anyInt()))
+            .thenReturn(Flux.just(GH_REPO_HIGHLOAD2, GH_REPO, GH_REPO_HIGHLOAD3, GH_REPO_HIGHLOAD1));
+
+        client.get().uri("/api/projects/{id}/repoSuggestion", PROJECT_HIGHLOAD.id())
+            .exchange()
+            .expectStatus().isForbidden()
+            .expectBody(Void.class).value(Matchers.nullValue());
+    }
+
+    @Test
+    void testAttachRepoByUrlOk() {
+        Mockito.when(currentUser.get(Mockito.any()))
+            .thenReturn(Mono.just(0L));
+        Mockito.when(projectRepo.hasAdmin(Mockito.anyLong(), Mockito.anyLong()))
+            .thenReturn(Mono.just(TRUE));
+        Mockito.when(projectRepo.findById(Mockito.anyLong()))
+            .thenReturn(Mono.just(PROJECT_HIGHLOAD));
+        Mockito.when(repoRepo.upsert(REPO_HIGHLOAD))
+            .thenReturn(Mono.just(REPO_HIGHLOAD));
+        Mockito.when(repoRepo.findByName(Mockito.anyString(), Mockito.anyString()))
+            .thenReturn(Mono.just(REPO_HIGHLOAD));
+        Mockito.when(projectRepo.attachRepos(Mockito.anyLong(), Mockito.anyCollection()))
+            .thenReturn(Mono.empty());
+        Mockito.when(githubClient.hasAdminPermission(Mockito.anyString(), Mockito.anyString()))
+            .thenReturn(Mono.just(TRUE));
+        Mockito.when(githubClient.getRepo(Mockito.anyString(), Mockito.anyString()))
+            .thenReturn(Mono.just(GH_REPO));
+        Mockito.when(githubClient.getRepositoryPulls(Mockito.anyString(), Mockito.anyString(), Mockito.any(State.class), Mockito.anyInt()))
+            .thenReturn(Flux.fromArray(OPEN_PULLS));
+        Mockito.when(projectRepo.updateState(Mockito.anyLong(), Mockito.any(Project.State.class)))
+            .thenReturn(Mono.empty());
+
+        client.post().uri("/api/projects/{id}/attachRepoByUrl", PROJECT_HIGHLOAD.id())
+            .bodyValue(new AttachRepoDto.ByUrl(REPO_URL_HIGHLOAD1))
+            .exchange()
+            .expectStatus().isOk()
+            .expectBody(Void.class).value(Matchers.nullValue());
+    }
+
+    @Test
+    void testAttachRepoForbidden() {
+        Mockito.when(currentUser.get(Mockito.any()))
+            .thenReturn(Mono.just(0L));
+        Mockito.when(projectRepo.hasAdmin(Mockito.anyLong(), Mockito.anyLong()))
+            .thenReturn(Mono.just(FALSE));
+
+        client.post().uri("/api/projects/{id}/attachRepoByUrl", PROJECT_HIGHLOAD.id())
+            .bodyValue(new AttachRepoDto.ByUrl(REPO_URL_HIGHLOAD1))
+            .exchange()
+            .expectStatus().isForbidden()
+            .expectBody(Void.class).value(Matchers.nullValue());
+    }
+
+    @Test
+    void testAttachRepoByInfoOk() {
+        Mockito.when(currentUser.get(Mockito.any()))
+            .thenReturn(Mono.just(0L));
+        Mockito.when(projectRepo.hasAdmin(Mockito.anyLong(), Mockito.anyLong()))
+            .thenReturn(Mono.just(TRUE));
+        Mockito.when(projectRepo.findById(Mockito.anyLong()))
+            .thenReturn(Mono.just(PROJECT_HIGHLOAD));
+        Mockito.when(repoRepo.upsert(REPO_HIGHLOAD))
+            .thenReturn(Mono.just(REPO_HIGHLOAD));
+        Mockito.when(repoRepo.findByName(Mockito.anyString(), Mockito.anyString()))
+            .thenReturn(Mono.empty());
+        Mockito.when(projectRepo.attachRepos(Mockito.anyLong(), Mockito.anyCollection()))
+            .thenReturn(Mono.empty());
+        Mockito.when(githubClient.hasAdminPermission(Mockito.anyString(), Mockito.anyString()))
+            .thenReturn(Mono.just(TRUE));
+        Mockito.when(githubClient.getRepo(Mockito.anyString(), Mockito.anyString()))
+            .thenReturn(Mono.just(GH_REPO));
+        Mockito.when(githubClient.getRepositoryPulls(Mockito.anyString(), Mockito.anyString(), Mockito.any(State.class), Mockito.anyInt()))
+            .thenReturn(Flux.fromArray(OPEN_PULLS));
+        Mockito.when(projectRepo.updateState(Mockito.anyLong(), Mockito.any(Project.State.class)))
+            .thenReturn(Mono.empty());
+
+        client.post().uri("/api/projects/{id}/attachRepoByInfo", PROJECT_HIGHLOAD.id())
+            .bodyValue(new AttachRepoDto.ByInfo(RepoShortDto.builder()
+                .id(GH_REPO_HIGHLOAD1.id())
+                .owner(REPO_OWNER_HIGHLOAD)
+                .name(REPO_NAME_HIGHLOAD1)
+                .build()))
+            .exchange()
+            .expectStatus().isOk()
+            .expectBody(Void.class).value(Matchers.nullValue());
     }
 
     private void mockNotFound() {
