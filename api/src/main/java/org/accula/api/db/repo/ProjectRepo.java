@@ -6,6 +6,8 @@ import org.accula.api.db.model.User;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Collection;
+
 /**
  * @author Anton Lamtev
  */
@@ -32,6 +34,8 @@ public interface ProjectRepo {
     Mono<Project.Conf> upsertConf(Long id, Project.Conf conf);
 
     Mono<Project.Conf> confById(Long id);
+
+    Mono<Void> attachRepos(Long projectId, Collection<Long> repoIds);
 
     void addOnConfUpdate(OnConfUpdate onConfUpdate);
 

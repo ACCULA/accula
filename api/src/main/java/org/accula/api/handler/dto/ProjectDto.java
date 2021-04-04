@@ -25,6 +25,7 @@ public class ProjectDto {
     Integer repoOpenPullCount;
     Long creatorId;
     List<Long> adminIds;
+    List<RepoShortDto> secondaryRepos;
 
     public enum State {
         CREATING,

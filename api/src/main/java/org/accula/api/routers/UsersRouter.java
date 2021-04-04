@@ -1,7 +1,7 @@
-package org.accula.api.router;
+package org.accula.api.routers;
 
 import lombok.RequiredArgsConstructor;
-import org.accula.api.handler.ClonesHandler;
+import org.accula.api.handler.UsersHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.RouterFunction;
@@ -13,16 +13,14 @@ import org.springframework.web.reactive.function.server.ServerResponse;
  */
 @Component
 @RequiredArgsConstructor
-public final class ClonesRouter {
-    private final ClonesHandler clonesHandler;
+public final class UsersRouter {
+    private final UsersHandler usersHandler;
 
     @Bean
-    public RouterFunction<ServerResponse> clonesRoute() {
+    public RouterFunction<ServerResponse> usersRoute() {
         return RouterFunctions
                 .route()
-                .path("/api/projects/{projectId}/pulls/{pullNumber}/clones", b -> b
-                        .GET("", clonesHandler::getPullClones)
-                        .POST("/refresh", clonesHandler::refreshClones))
+                .GET("/api/users/{id}", usersHandler::getById)
                 .build();
     }
 }

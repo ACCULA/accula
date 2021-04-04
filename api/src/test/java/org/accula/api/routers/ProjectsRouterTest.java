@@ -1,4 +1,4 @@
-package org.accula.api.router;
+package org.accula.api.routers;
 
 import lombok.SneakyThrows;
 import org.accula.api.code.CodeLoader;
@@ -11,6 +11,7 @@ import org.accula.api.db.model.Pull;
 import org.accula.api.db.model.Snapshot;
 import org.accula.api.db.model.User;
 import org.accula.api.db.repo.CurrentUserRepo;
+import org.accula.api.db.repo.GithubRepoRepo;
 import org.accula.api.db.repo.GithubUserRepo;
 import org.accula.api.db.repo.ProjectRepo;
 import org.accula.api.db.repo.PullRepo;
@@ -23,10 +24,13 @@ import org.accula.api.github.model.GithubApiRepo;
 import org.accula.api.github.model.GithubApiSnapshot;
 import org.accula.api.github.model.GithubApiUser;
 import org.accula.api.handler.ProjectsHandler;
+import org.accula.api.handler.dto.ApiError;
 import org.accula.api.handler.dto.CreateProjectDto;
 import org.accula.api.handler.dto.ProjectConfDto;
 import org.accula.api.handler.dto.ProjectDto;
 import org.accula.api.handler.dto.UserDto;
+import org.accula.api.handler.exception.ProjectsHandlerException;
+import org.accula.api.handler.exception.ResponseConvertibleException;
 import org.accula.api.service.CloneDetectionService;
 import org.accula.api.service.ProjectService;
 import org.junit.jupiter.api.BeforeEach;
@@ -59,12 +63,11 @@ class ProjectsRouterTest {
     static final String REPO_NAME = "accula";
     static final String REPO_OWNER = "accula";
 
-    static final GithubUser GITHUB_USER = new GithubUser(1L, "login", "name", "avatar", false);
-    static final GithubRepo REPO = new GithubRepo(1L, "name", "description", GITHUB_USER);
+    static final GithubUser GITHUB_USER = new GithubUser(1L, "accula", "name", "avatar", false);
+    static final GithubRepo REPO = new GithubRepo(1L, "accula", "description", GITHUB_USER);
     static final Pull PULL = Pull.builder()
             .id(1L)
             .number(2)
-            .projectId(1L)
             .isOpen(true)
             .createdAt(Instant.MIN)
             .updatedAt(Instant.EPOCH)
@@ -72,6 +75,7 @@ class ProjectsRouterTest {
             .title("title")
             .head(Snapshot.builder().repo(REPO).branch("branch1").build())
             .base(Snapshot.builder().repo(REPO).branch("branch2").build())
+            .primaryProjectId(1L)
             .build();
     static final List<Pull> PULLS = List.of(PULL, PULL, PULL);
     static final String EMPTY = "";
@@ -85,7 +89,7 @@ class ProjectsRouterTest {
     static final GithubApiSnapshot MARKER = new GithubApiSnapshot("", "", GH_OWNER, GH_REPO, "");
     static final GithubApiPull GH_PULL = new GithubApiPull(0L, "", MARKER, MARKER, GH_OWNER, 0, "", State.OPEN, Instant.now(), Instant.now(), Instant.now());
     static final GithubApiPull[] OPEN_PULLS = new GithubApiPull[]{GH_PULL, GH_PULL, GH_PULL};
-    static final Project PROJECT = Project.builder().id(1L).state(Project.State.CREATING).githubRepo(REPO).creator(CURRENT_USER).openPullCount(0).build();
+    static final Project PROJECT = Project.builder().id(1L).state(Project.State.CONFIGURING).githubRepo(REPO).creator(CURRENT_USER).openPullCount(0).build();
     static final CreateProjectDto REQUEST_BODY = new CreateProjectDto(REPO_URL);
     static final String INVALID_REPO_URL = "htps://bad_url";
     static final CreateProjectDto REQUEST_BODY_INVALID_URL = new CreateProjectDto(INVALID_REPO_URL);
@@ -113,6 +117,8 @@ class ProjectsRouterTest {
     CodeLoader codeLoader;
     @MockBean
     CloneDetectionService cloneDetectionService;
+    @MockBean
+    GithubRepoRepo repoRepo;
 
     @BeforeEach
     void setUp() {
@@ -141,7 +147,7 @@ class ProjectsRouterTest {
         Mockito.when(pullRepo.upsert(Mockito.anyCollection()))
                 .thenReturn(Flux.fromIterable(PULLS));
 
-        Mockito.when(projectService.update(Mockito.anyLong(), Mockito.any(GithubApiPull.class)))
+        Mockito.when(projectService.init(Mockito.anyList()))
                 .thenReturn(Mono.empty());
 
         Mockito.when(githubClient.hasAdminPermission(Mockito.anyString(), Mockito.anyString()))
@@ -159,7 +165,7 @@ class ProjectsRouterTest {
         Mockito.when(githubClient.createHook(Mockito.any(), Mockito.any(), Mockito.any()))
                 .thenReturn(Mono.empty());
 
-        Mockito.when(cloneDetectionService.fillSuffixTree(Mockito.anyLong()))
+        Mockito.when(cloneDetectionService.fillSuffixTree(Mockito.anyLong(), Flux.fromIterable(Mockito.anyCollection())))
                 .thenReturn(Mono.empty());
 
         final var expectedBody = ModelToDtoConverter.convert(PROJECT);
@@ -179,7 +185,7 @@ class ProjectsRouterTest {
                 .bodyValue(REQUEST_BODY_INVALID_URL)
                 .exchange()
                 .expectStatus().isBadRequest()
-                .expectBody(String.class).isEqualTo(String.format(ERROR_FORMAT, "INVALID_URL"));
+                .expectBody(ApiError.class).isEqualTo(toApiError(ProjectsHandlerException.invalidUrl(INVALID_REPO_URL)));
     }
 
     @Test
@@ -202,7 +208,7 @@ class ProjectsRouterTest {
                 .bodyValue(REQUEST_BODY)
                 .exchange()
                 .expectStatus().isBadRequest()
-                .expectBody(String.class).isEqualTo(String.format(ERROR_FORMAT, "WRONG_URL"));
+                .expectBody(ApiError.class).isEqualTo(toApiError(ProjectsHandlerException.unableRetrieveGithubRepo("accula", "accula")));
     }
 
     @Test
@@ -228,7 +234,7 @@ class ProjectsRouterTest {
                 .bodyValue(REQUEST_BODY)
                 .exchange()
                 .expectStatus().isEqualTo(HttpStatus.CONFLICT)
-                .expectBody(String.class).isEqualTo(String.format(ERROR_FORMAT, "ALREADY_EXISTS"));
+                .expectBody(ApiError.class).isEqualTo(toApiError(ProjectsHandlerException.alreadyExists(REPO)));
 
     }
 
@@ -487,5 +493,12 @@ class ProjectsRouterTest {
         final var ctor = GithubClientException.class.getDeclaredConstructor(Throwable.class);
         ctor.setAccessible(true);
         return ctor.newInstance(new RuntimeException());
+    }
+
+    @SneakyThrows
+    private ApiError toApiError(ResponseConvertibleException e) {
+        final var toApiError = ResponseConvertibleException.class.getDeclaredMethod("toApiError");
+        toApiError.setAccessible(true);
+        return (ApiError) toApiError.invoke(e);
     }
 }

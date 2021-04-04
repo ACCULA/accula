@@ -43,7 +43,7 @@ public final class ProjectService {
     private final PullRepo pullRepo;
     private final CodeLoader codeLoader;
 
-    public Mono<Void> init(final Long projectId, final List<GithubApiPull> githubApiPulls) {
+    public Mono<Set<Pull>> init(final List<GithubApiPull> githubApiPulls) {
         if (githubApiPulls.isEmpty()) {
             return Mono.empty();
         }
@@ -55,23 +55,22 @@ public final class ProjectService {
                     final var pulls = githubApiPulls
                             .stream()
                             .filter(pull -> pull.isValid() && pull.isNotMerged())
-                            .map(pull -> processGithubApiPull(projectId, pull, users, repos))
+                            .map(pull -> processGithubApiPull(pull, users, repos))
                             .collect(Collectors.toSet());
 
                     return upsertUsersAndReposToDb(users, repos)
                             .then(insertPullsInfoToDb(pulls));
                 })
                 .doOnSuccess(pulls -> log.info("Project has been updated successfully with {} pulls", pulls.size()))
-                .doOnError(e -> log.error("Failed to update project with pulls={}", githubApiPulls, e))
-                .then();
+                .doOnError(e -> log.error("Failed to update project with pulls={}", githubApiPulls, e));
     }
 
-    public Mono<PullSnapshots> update(final Long projectId, final GithubApiPull githubApiPull) {
+    public Mono<PullSnapshots> update(final GithubApiPull githubApiPull) {
         return Mono
                 .defer(() -> {
                     final var users = new HashSet<GithubUser>();
                     final var repos = new HashSet<GithubRepo>();
-                    final var pull = processGithubApiPull(projectId, githubApiPull, users, repos);
+                    final var pull = processGithubApiPull(githubApiPull, users, repos);
 
                     return upsertUsersAndReposToDb(users, repos)
                             .then(updatePullInfoInDb(pull));
@@ -80,11 +79,10 @@ public final class ProjectService {
                 .doOnError(e -> log.error("Failed to update project with pulls={}", githubApiPull, e));
     }
 
-    private static Pull processGithubApiPull(final Long projectId,
-                                             final GithubApiPull githubApiPull,
+    private static Pull processGithubApiPull(final GithubApiPull githubApiPull,
                                              final Set<GithubUser> users,
                                              final Set<GithubRepo> repos) {
-        final var pull = GithubApiToModelConverter.convert(githubApiPull, projectId);
+        final var pull = GithubApiToModelConverter.convert(githubApiPull);
 
         final var head = pull.head();
         users.add(head.repo().owner());
@@ -140,10 +138,11 @@ public final class ProjectService {
                     final var newHeadCommitSnapshots = commits.getT1();
                     final var baseCommitSnapshot = commits.getT2();
                     final var snapshots = Iterables.concat(newHeadCommitSnapshots, List.of(baseCommitSnapshot));
+                    final var pullSnapshots = PullSnapshots.of(pull, newHeadCommitSnapshots);
                     return snapshotRepo.insert(snapshots)
                             .then(pullRepo.upsert(pull))
-                            .thenMany(pullRepo.mapSnapshots(PullSnapshots.of(pull, newHeadCommitSnapshots)))
-                            .then(Mono.just(PullSnapshots.of(pull, newHeadCommitSnapshots)));
+                            .thenMany(pullRepo.mapSnapshots(pullSnapshots))
+                            .then(Mono.just(pullSnapshots));
                 });
     }
 

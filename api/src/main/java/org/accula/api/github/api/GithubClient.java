@@ -12,9 +12,15 @@ import java.util.List;
  * @author Anton Lamtev
  */
 public interface GithubClient {
+    int MAX_PAGE_SIZE = 100;
+
     Mono<Boolean> hasAdminPermission(String owner, String repo);
 
     Mono<GithubApiRepo> getRepo(String owner, String repo);
+
+    Flux<GithubApiRepo> getAllRepos(int perPage);
+
+    Mono<GithubApiRepo[]> getAllRepos(int perPage, int page);
 
     Mono<List<Long>> getRepoAdmins(String owner, String repo);
 

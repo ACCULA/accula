@@ -7,6 +7,7 @@ import org.accula.api.code.git.Git;
 import org.accula.api.db.model.User;
 import org.accula.api.db.repo.CurrentUserRepo;
 import org.accula.api.github.api.GithubClient;
+import org.accula.api.handler.dto.validation.InputDtoValidator;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -64,5 +65,10 @@ public class WebConfig implements WebFluxConfigurer {
     @Bean
     public CodeLoader codeLoader(final Git git) {
         return new GitCodeLoader(git);
+    }
+
+    @Bean
+    public InputDtoValidator validator() {
+        return new InputDtoValidator();
     }
 }

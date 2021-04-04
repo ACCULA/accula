@@ -31,17 +31,18 @@ public abstract class ResponseConvertibleException extends RuntimeException {
 
     public abstract Function<Object, Mono<ServerResponse>> responseFunctionForCode(ApiError.Code code);
 
-    @Override
-    public synchronized Throwable fillInStackTrace() {
-        return this;
-    }
+    public abstract boolean needsResponseBody();
 
     private Mono<ServerResponse> toResponse() {
         final var apiError = toApiError();
         return responseFunctionForCode(code).apply(apiError);
     }
 
+    @Nullable
     private ApiError toApiError() {
+        if (!needsResponseBody()) {
+            return null;
+        }
         final var description = getMessage();
         if (description == null) {
             return ApiError.with(code);

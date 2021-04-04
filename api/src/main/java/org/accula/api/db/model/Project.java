@@ -11,6 +11,7 @@ import java.util.List;
  * @author Anton Lamtev
  */
 @Builder
+@With
 @Value
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Project {
@@ -18,6 +19,8 @@ public class Project {
     Long id;
     State state;
     GithubRepo githubRepo;
+    @Builder.Default
+    List<GithubRepo> secondaryRepos = List.of();
     User creator;
     @Builder.Default
     Integer openPullCount = 0;
@@ -25,8 +28,8 @@ public class Project {
     List<Long> adminIds = List.of();
 
     public enum State {
-        CREATING,
-        CREATED,
+        CONFIGURING,
+        CONFIGURED,
     }
 
     @Builder

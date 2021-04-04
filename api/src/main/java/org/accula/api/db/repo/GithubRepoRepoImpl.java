@@ -7,6 +7,7 @@ import io.r2dbc.spi.Row;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.accula.api.db.model.GithubRepo;
+import org.intellij.lang.annotations.Language;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -54,31 +55,41 @@ public final class GithubRepoRepoImpl implements GithubRepoRepo, ConnectionProvi
     @Override
     public Mono<GithubRepo> findById(final Long id) {
         return withConnection(connection -> Mono
-                .from(selectStatement(connection)
+                .from(selectStatement(connection, Converters.NOTHING, "WHERE repo.id = $1")
                         .bind("$1", id)
                         .execute())
-                .flatMap(result -> ConnectionProvidedRepo.convert(result, this::convert)));
+                .flatMap(result -> ConnectionProvidedRepo.convert(result, GithubRepoRepoImpl::convert)));
     }
 
-    private static PostgresqlStatement selectStatement(final Connection connection) {
-        return (PostgresqlStatement) connection
-                .createStatement("""
-                        SELECT repo.id          AS repo_id,
-                               repo.name        AS repo_name,
-                               repo.description AS repo_description,
-                               usr.id           AS repo_owner_id,
-                               usr.login        AS repo_owner_login,
-                               usr.name         AS repo_owner_name,
-                               usr.avatar       AS repo_owner_avatar,
-                               usr.is_org       AS repo_owner_is_org
-                        FROM repo_github repo
-                           JOIN user_github usr
-                               ON repo.owner_id = usr.id
-                        WHERE repo.id = $1
-                        """);
+    @Override
+    public Mono<GithubRepo> findByName(final String owner, final String name) {
+        return withConnection(connection ->
+                selectStatement(connection, Converters.NOTHING, "WHERE usr.login = $1 AND repo.name = $2")
+                        .bind("$1", owner)
+                        .bind("$2", name)
+                        .execute()
+                        .next()
+                        .flatMap(result -> ConnectionProvidedRepo.convert(result, GithubRepoRepoImpl::convert)));
     }
 
-    private GithubRepo convert(final Row row) {
+    static PostgresqlStatement selectStatement(final Connection connection, final String join, final String whereClause) {
+        @Language("SQL") final var sql = """
+                SELECT repo.id          AS repo_id,
+                       repo.name        AS repo_name,
+                       repo.description AS repo_description,
+                       usr.id           AS repo_owner_id,
+                       usr.login        AS repo_owner_login,
+                       usr.name         AS repo_owner_name,
+                       usr.avatar       AS repo_owner_avatar,
+                       usr.is_org       AS repo_owner_is_org
+                FROM repo_github repo
+                   JOIN user_github usr
+                       ON repo.owner_id = usr.id
+                """;
+        return (PostgresqlStatement) connection.createStatement("%s %s %s".formatted(sql, join, whereClause));
+    }
+
+    static GithubRepo convert(final Row row) {
         return Converters.convertRepo(row,
                 "repo_id",
                 "repo_name",

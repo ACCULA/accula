@@ -311,7 +311,7 @@ final class Converters {
                             final String authorName,
                             final String authorAvatar,
                             final String authorIsOrg,
-                            final String projectId) {
+                            final String primaryProjectId) {
         return Pull.builder()
                 .id(longInteger(row, id))
                 .number(integer(row, number))
@@ -359,7 +359,7 @@ final class Converters {
                         authorName,
                         authorAvatar,
                         authorIsOrg))
-                .projectId(longInteger(row, projectId))
+                .primaryProjectId(nullable(row, primaryProjectId, Long.class))
                 .build();
     }
 

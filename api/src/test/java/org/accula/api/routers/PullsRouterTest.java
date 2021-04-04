@@ -1,4 +1,4 @@
-package org.accula.api.router;
+package org.accula.api.routers;
 
 import org.accula.api.converter.ModelToDtoConverter;
 import org.accula.api.db.model.Pull;
@@ -21,7 +21,6 @@ import reactor.core.publisher.Mono;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Anton Lamtev
@@ -51,7 +50,7 @@ class PullsRouterTest {
         Mockito.when(repository.findPrevious(Mockito.anyLong(), Mockito.anyInt(), Mockito.anyLong()))
                 .thenReturn(Flux.fromIterable(Collections.emptyList()));
 
-        client.get().uri("/api/projects/{projectId}/pulls/{pullNumber}", STUB_PULL.projectId(), STUB_PULL.number())
+        client.get().uri("/api/projects/{projectId}/pulls/{pullNumber}", 1L, STUB_PULL.number())
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(PullDto.class).isEqualTo(ModelToDtoConverter.convert(STUB_PULL, Collections.emptyList()));
@@ -59,10 +58,10 @@ class PullsRouterTest {
 
     @Test
     void testGetBadRequest() {
-        client.get().uri("/api/projects/{projectId}/pulls/notANumber", STUB_PULL.projectId())
+        client.get().uri("/api/projects/{projectId}/pulls/notANumber", 1L)
                 .exchange()
                 .expectStatus().isBadRequest()
-                .expectBody(Map.class).isEqualTo(Map.of("code", "BAD_REQUEST"));
+                .expectBody(Void.class);
     }
 
     @Test
@@ -70,10 +69,10 @@ class PullsRouterTest {
         Mockito.when(repository.findByNumber(Mockito.anyLong(), Mockito.anyInt()))
                 .thenReturn(Mono.empty());
 
-        client.get().uri("/api/projects/{projectId}/pulls/{pullNumber}", STUB_PULL.projectId(), STUB_PULL.number())
+        client.get().uri("/api/projects/{projectId}/pulls/{pullNumber}", 1L, STUB_PULL.number())
                 .exchange()
                 .expectStatus().isNotFound()
-                .expectBody(Map.class).isEqualTo(Map.of("code", "NOT_FOUND"));
+                .expectBody(Void.class);
     }
 
     @Test
@@ -81,7 +80,7 @@ class PullsRouterTest {
         Mockito.when(repository.findByProjectId(Mockito.anyLong()))
                 .thenReturn(Flux.just(STUB_PULL));
 
-        client.get().uri("/api/projects/{projectId}/pulls", STUB_PULL.projectId())
+        client.get().uri("/api/projects/{projectId}/pulls", 1L)
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(ShortPullDto[].class).isEqualTo(ModelToDtoConverter.convertShort(List.of(STUB_PULL)).toArray(new ShortPullDto[0]));
@@ -92,7 +91,7 @@ class PullsRouterTest {
         Mockito.when(repository.findByProjectId(Mockito.anyLong()))
                 .thenReturn(Flux.empty());
 
-        client.get().uri("/api/projects/{projectId}/pulls", STUB_PULL.projectId())
+        client.get().uri("/api/projects/{projectId}/pulls", 1L)
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(List.class).isEqualTo(Collections.emptyList());

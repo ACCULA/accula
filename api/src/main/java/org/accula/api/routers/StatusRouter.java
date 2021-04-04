@@ -1,4 +1,4 @@
-package org.accula.api.router;
+package org.accula.api.routers;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;

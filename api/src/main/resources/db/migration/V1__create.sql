@@ -38,12 +38,12 @@ CREATE TABLE IF NOT EXISTS repo_github
     FOREIGN KEY (forked_from_id) REFERENCES repo_github (id)
 );
 
-CREATE TYPE project_state_enum AS ENUM ('CREATING', 'CREATED');
+CREATE TYPE project_state_enum AS ENUM ('CONFIGURING', 'CONFIGURED');
 
 CREATE TABLE IF NOT EXISTS project
 (
     id             BIGSERIAL PRIMARY KEY,
-    state          project_state_enum NOT NULL DEFAULT 'CREATING',
+    state          project_state_enum NOT NULL DEFAULT 'CONFIGURING',
     github_repo_id BIGINT UNIQUE      NOT NULL,
     creator_id     BIGINT             NOT NULL,
 
@@ -51,10 +51,20 @@ CREATE TABLE IF NOT EXISTS project
     FOREIGN KEY (creator_id) REFERENCES user_ (id)
 );
 
+CREATE TABLE IF NOT EXISTS project_repo
+(
+    project_id BIGINT NOT NULL,
+    repo_id    BIGINT NOT NULL,
+
+    FOREIGN KEY (project_id) REFERENCES project (id),
+    FOREIGN KEY (repo_id) REFERENCES repo_github (id),
+    CONSTRAINT project_repo_pk PRIMARY KEY (project_id, repo_id)
+);
+
 CREATE TABLE IF NOT EXISTS project_admin
 (
-    project_id BIGSERIAL NOT NULL,
-    admin_id   BIGSERIAL NOT NULL,
+    project_id BIGINT NOT NULL,
+    admin_id   BIGINT NOT NULL,
 
     FOREIGN KEY (project_id) REFERENCES project (id) ON DELETE CASCADE,
     FOREIGN KEY (admin_id) REFERENCES user_ (id),
@@ -108,12 +118,10 @@ CREATE TABLE IF NOT EXISTS pull
     base_snapshot_repo_id BIGINT                   NOT NULL,
     base_snapshot_branch  VARCHAR(256)             NOT NULL,
 
-    project_id            BIGINT                   NOT NULL,
     author_github_id      BIGINT                   NOT NULL,
 
     FOREIGN KEY (head_snapshot_sha, head_snapshot_repo_id, head_snapshot_branch) REFERENCES snapshot (sha, repo_id, branch),
     FOREIGN KEY (base_snapshot_sha, base_snapshot_repo_id, base_snapshot_branch) REFERENCES snapshot (sha, repo_id, branch),
-    FOREIGN KEY (project_id) REFERENCES project (id) ON DELETE CASCADE,
     FOREIGN KEY (author_github_id) REFERENCES user_github (id)
 );
 
