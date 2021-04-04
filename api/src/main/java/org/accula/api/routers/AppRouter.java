@@ -22,7 +22,7 @@ public final class AppRouter {
     public RouterFunction<ServerResponse> appRoute() {
         return RouterFunctions
             .route()
-            .path("/app", b -> b
+            .path("/api/app", b -> b
                 .GET("/settingsUrl", request -> Responses
                     .ok(Map.of("settingsUrl", "https://github.com/settings/connections/applications/" + githubClientId))))
             .build();
