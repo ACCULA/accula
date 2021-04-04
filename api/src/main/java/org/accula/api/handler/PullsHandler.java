@@ -5,6 +5,7 @@ import org.accula.api.converter.ModelToDtoConverter;
 import org.accula.api.db.repo.PullRepo;
 import org.accula.api.handler.exception.Http4xxException;
 import org.accula.api.handler.exception.ResponseConvertibleException;
+import org.accula.api.handler.util.PathVariableExtractor;
 import org.accula.api.handler.util.Responses;
 import org.accula.api.util.Lambda;
 import org.springframework.stereotype.Component;
@@ -18,15 +19,12 @@ import reactor.core.publisher.Mono;
 @Component
 @RequiredArgsConstructor
 public final class PullsHandler {
-    private static final String PROJECT_ID = "projectId";
-    private static final String PULL_NUMBER = "pullNumber";
-
     private final PullRepo pullRepo;
 
     //TODO: handle github errors
     public Mono<ServerResponse> getMany(final ServerRequest request) {
         return Mono
-                .fromSupplier(() -> Long.parseLong(request.pathVariable(PROJECT_ID)))
+                .fromSupplier(() -> PathVariableExtractor.projectId(request))
                 .flatMapMany(pullRepo::findByProjectId)
                 .map(ModelToDtoConverter::convertShort)
                 .collectList()
@@ -38,8 +36,8 @@ public final class PullsHandler {
     public Mono<ServerResponse> get(final ServerRequest request) {
         return Mono
                 .defer(() -> {
-                    final var projectId = Long.parseLong(request.pathVariable(PROJECT_ID));
-                    final var pullNumber = Integer.parseInt(request.pathVariable(PULL_NUMBER));
+                    final var projectId = PathVariableExtractor.projectId(request);
+                    final var pullNumber = PathVariableExtractor.pullNumber(request);
 
                     return pullRepo
                             .findByNumber(projectId, pullNumber)

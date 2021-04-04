@@ -17,6 +17,7 @@ import org.accula.api.db.repo.PullRepo;
 import org.accula.api.handler.dto.CloneDto;
 import org.accula.api.handler.exception.Http4xxException;
 import org.accula.api.handler.exception.ResponseConvertibleException;
+import org.accula.api.handler.util.PathVariableExtractor;
 import org.accula.api.handler.util.Responses;
 import org.accula.api.service.CloneDetectionService;
 import org.accula.api.util.Lambda;
@@ -40,9 +41,6 @@ import java.util.stream.Stream;
 @Component
 @RequiredArgsConstructor
 public final class ClonesHandler {
-    private static final String PROJECT_ID = "projectId";
-    private static final String PULL_NUMBER = "pullNumber";
-
     private final PullRepo pullRepo;
     private final CloneRepo cloneRepo;
     private final CurrentUserRepo currentUserRepo;
@@ -54,8 +52,8 @@ public final class ClonesHandler {
     public Mono<ServerResponse> getPullClones(final ServerRequest request) {
         return Mono
                 .defer(() -> {
-                    final var projectId = Long.valueOf(request.pathVariable(PROJECT_ID));
-                    final var pullNumber = Integer.valueOf(request.pathVariable(PULL_NUMBER));
+                    final var projectId = PathVariableExtractor.projectId(request);
+                    final var pullNumber = PathVariableExtractor.pullNumber(request);
                     return getPullClones(projectId, pullNumber);
                 })
                 .onErrorResume(NumberFormatException.class, Lambda.expandingWithArg(Responses::badRequest))
@@ -65,8 +63,8 @@ public final class ClonesHandler {
     public Mono<ServerResponse> refreshClones(final ServerRequest request) {
         return Mono
                 .defer(() -> {
-                    final var projectId = Long.valueOf(request.pathVariable(PROJECT_ID));
-                    final var pullNumber = Integer.valueOf(request.pathVariable(PULL_NUMBER));
+                    final var projectId = PathVariableExtractor.projectId(request);
+                    final var pullNumber = PathVariableExtractor.pullNumber(request);
 
                     final var clones = havingAdminPermissionAtProject(projectId, cloneRepo
                             .deleteByPullNumber(projectId, pullNumber)

@@ -15,7 +15,6 @@ import org.accula.api.db.repo.PullRepo;
 import org.accula.api.db.repo.SnapshotRepo;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.GroupedFlux;
 import reactor.core.publisher.Mono;
 
 import java.util.Map;
@@ -96,10 +95,7 @@ public final class CloneDetectionService {
     }
 
     private Mono<Void> fillSuffixTree(final Long projectId) {
-        return fillSuffixTree(
-            projectId,
-            pullRepo.findByProjectId(projectId)
-        ).then();
+        return fillSuffixTree(projectId, pullRepo.findByProjectId(projectId));
     }
 
     private CloneDetector cloneDetector(final Long projectId) {

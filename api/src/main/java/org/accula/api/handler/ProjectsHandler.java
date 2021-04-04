@@ -65,7 +65,7 @@ public final class ProjectsHandler {
     private final Suggester suggester = new Suggester();
     private final InputDtoValidator validator;
     private final WebhookProperties webhookProperties;
-    private final CurrentUserRepo currentUser;
+    private final CurrentUserRepo currentUserRepo;
     private final GithubClient githubClient;
     private final ProjectRepo projectRepo;
     private final GithubRepoRepo repoRepo;
@@ -109,7 +109,7 @@ public final class ProjectsHandler {
 
     public Mono<ServerResponse> delete(final ServerRequest request) {
         return withProjectId(request)
-                .zipWith(currentUser.get(User::id))
+                .zipWith(currentUserRepo.get(User::id))
                 .flatMap(TupleUtils.function(projectRepo::delete))
                 .flatMap(Lambda.expandingWithArg(Responses::accepted))
                 .onErrorResume(ResponseConvertibleException::onErrorResume);
@@ -224,7 +224,7 @@ public final class ProjectsHandler {
             .switchIfEmpty(Mono.error(ProjectsHandlerException.alreadyExists(repo)))
             .flatMap(ok -> githubUserRepo.upsert(repo.owner())
                 .doOnError(e -> log.error("Error saving github user: {}", repo.owner(), e)))
-            .then(currentUser.get())
+            .then(currentUserRepo.get())
             .flatMap(currentUser -> projectRepo.upsert(repo, currentUser)
                 .doOnError(e -> log.error("Error saving Project: {}-{}", repo.owner(), currentUser, e)))
             .transform(this::saveDefaultConf)
@@ -284,12 +284,11 @@ public final class ProjectsHandler {
     private Mono<Long> havingAdminPermissionAtProject(final ServerRequest request) {
         return withProjectId(request)
             .filterWhen(this::isCurrentUserAdmin)
-            .map(it -> it)
             .switchIfEmpty(Mono.error(Http4xxException.forbidden()));
     }
 
     private Mono<Boolean> isCurrentUserAdmin(final Long projectId) {
-        return currentUser
+        return currentUserRepo
                 .get(User::id)
                 .flatMap(currentUserId -> projectRepo.hasAdmin(projectId, currentUserId));
     }

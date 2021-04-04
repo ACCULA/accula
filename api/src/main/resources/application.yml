@@ -40,7 +40,7 @@ accula:
       privateKey: ${JWT_SIGNATURE_PRIVATE_KEY}
     issuer: accula
     expiresIn:
-      access: 100m
+      access: 1m
       refresh: 90d
     refreshTokenEndpointPath: /api/refreshToken
 

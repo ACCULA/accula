@@ -12,6 +12,7 @@ import org.accula.api.db.repo.ProjectRepo;
 import org.accula.api.db.repo.PullRepo;
 import org.accula.api.handler.exception.Http4xxException;
 import org.accula.api.handler.exception.ResponseConvertibleException;
+import org.accula.api.handler.util.PathVariableExtractor;
 import org.accula.api.handler.util.Responses;
 import org.accula.api.util.Lambda;
 import org.springframework.stereotype.Component;
@@ -27,8 +28,6 @@ import reactor.core.publisher.Mono;
 @Component
 @RequiredArgsConstructor
 public final class DiffHandler {
-    private static final String PROJECT_ID = "projectId";
-    private static final String PULL_NUMBER = "pullNumber";
     private static final String PULL_TO_COMPARE_WITH = "with";
 
     private final PullRepo pullRepo;
@@ -38,8 +37,8 @@ public final class DiffHandler {
     public Mono<ServerResponse> diff(final ServerRequest request) {
         return Mono
                 .defer(() -> {
-                    final var projectId = Long.valueOf(request.pathVariable(PROJECT_ID));
-                    final var pullNumber = Integer.valueOf(request.pathVariable(PULL_NUMBER));
+                    final var projectId = PathVariableExtractor.projectId(request);
+                    final var pullNumber = PathVariableExtractor.pullNumber(request);
                     return diff(projectId, pullNumber);
                 })
                 .onErrorMap(NumberFormatException.class, Lambda.expandingWithArg(Http4xxException::badRequest))
@@ -55,8 +54,8 @@ public final class DiffHandler {
 
         return Mono
                 .defer(() -> {
-                    final var projectId = Long.parseLong(request.pathVariable(PROJECT_ID));
-                    final var basePullNumber = Integer.valueOf(request.pathVariable(PULL_NUMBER));
+                    final var projectId = PathVariableExtractor.projectId(request);
+                    final var basePullNumber = PathVariableExtractor.pullNumber(request);
                     final var headPullNumber = Integer.valueOf(pullToCompareWith);
 
                     return diffBetweenPulls(projectId, basePullNumber, headPullNumber);
