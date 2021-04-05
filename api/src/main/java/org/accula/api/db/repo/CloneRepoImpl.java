@@ -161,7 +161,7 @@ public final class CloneRepoImpl implements CloneRepo, ConnectionProvidedRepo {
                   JOIN pull target_pull
                       ON target_snap_to_pull.pull_id = target_pull.id
                   JOIN project
-                      ON target_repo.id = project.github_repo_id
+                      ON target_pull.base_snapshot_repo_id = project.github_repo_id
                   JOIN clone_snippet source_snippet
                       ON clone.source_id = source_snippet.id
                   JOIN snapshot_pull source_snap_to_pull
