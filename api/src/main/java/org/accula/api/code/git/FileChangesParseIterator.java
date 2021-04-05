@@ -81,6 +81,9 @@ final class FileChangesParseIterator implements Iterator<Object> {
                             filename = components[4];
                             return GitFileChanges.of(GitFile.of(fileId, filename), LineSet.all());
                         }
+                    } else if (isFileStart(line)) {
+                        lines.resetNext(line);
+                        return GitFileChanges.empty();
                     }
                 }
                 case LINES_INFO -> {
@@ -150,7 +153,7 @@ final class FileChangesParseIterator implements Iterator<Object> {
         }
 
         if (isRename || "".equals(lines.lastReturnedNext())) {
-            return GitFileChanges.of(GitFile.devNull(), LineSet.empty());
+            return GitFileChanges.empty();
         }
 
         throw new IllegalStateException("Something went wrong");
