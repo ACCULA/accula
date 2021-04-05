@@ -21,10 +21,6 @@ public final class ProjectsHandlerException extends ResponseConvertibleException
         super(error, description);
     }
 
-    private ProjectsHandlerException(final Error error) {
-        this(error, null);
-    }
-
     public static ProjectsHandlerException badFormat(final String description) {
         return new ProjectsHandlerException(Error.BAD_FORMAT, description);
     }
@@ -44,7 +40,7 @@ public final class ProjectsHandlerException extends ResponseConvertibleException
     }
 
     public static ProjectsHandlerException noPermission() {
-        return new ProjectsHandlerException(Error.NO_PERMISSION);
+        return new ProjectsHandlerException(Error.NO_PERMISSION, null);
     }
 
     @Override

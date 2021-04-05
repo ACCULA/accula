@@ -38,11 +38,6 @@ public final class CloneRepoImpl implements CloneRepo, ConnectionProvidedRepo {
     }
 
     @Override
-    public Mono<Clone> findById(final Long id) {
-        return Mono.error(new UnsupportedOperationException());
-    }
-
-    @Override
     public Flux<Clone> findByPullNumber(final Long projectId, final Integer pullNumber) {
         return manyWithConnection(connection -> selectStatement(connection)
                 .bind("$1", projectId)

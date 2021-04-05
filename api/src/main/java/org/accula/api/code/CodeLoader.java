@@ -24,17 +24,6 @@ public interface CodeLoader {
     Flux<FileEntity<Snapshot>> loadSnippets(Snapshot snapshot, List<SnippetMarker> markers);
 
     /**
-     * Loads diff between two commits as {@link DiffEntry} of file entities,
-     * each representing two corresponding files in {@code base} and {@code head} commit snapshots.
-     * If a file was added in {@code head}, then {@link FileEntity#name()} and {@link FileEntity#content()}
-     * of the first element of the tuple return {@code null}.
-     * If file was removed in {@code head}, then second tuple element values are equal to {@code null}.
-     */
-    default Flux<DiffEntry<Snapshot>> loadDiff(Snapshot base, Snapshot head) {
-        return loadDiff(base, head, 0, FileFilter.ALL);
-    }
-
-    /**
      * Loads diff between two commits as {@link DiffEntry} of file entities that satisfy the filter,
      * each representing two corresponding files in {@code base} and {@code head} commit snapshots.
      * If a file was added in {@code head}, then {@link FileEntity#name()} and {@link FileEntity#content()}
