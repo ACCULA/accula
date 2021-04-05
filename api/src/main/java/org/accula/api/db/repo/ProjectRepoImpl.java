@@ -34,8 +34,8 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
         return withConnection(connection -> Mono
                 .from(connection
                         .createStatement("""
-                                SELECT NOT exists(SELECT 0 
-                                                  FROM project 
+                                SELECT NOT exists(SELECT 0
+                                                  FROM project
                                                   WHERE github_repo_id = $1) AS not_exists
                                 """)
                         .bind("$1", githubRepoId)
@@ -326,7 +326,7 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
 
     private Mono<Void> upsertConf(final Connection connection, final Long projectId, final Project.Conf conf) {
         return ((PostgresqlStatement) connection.createStatement("""
-                INSERT INTO project_conf (project_id, clone_min_token_count, file_min_similarity_index, excluded_files)             
+                INSERT INTO project_conf (project_id, clone_min_token_count, file_min_similarity_index, excluded_files)
                 VALUES ($1, $2, $3, $4)
                 ON CONFLICT (project_id) DO UPDATE
                       SET clone_min_token_count = $2,
