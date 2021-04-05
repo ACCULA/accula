@@ -30,8 +30,8 @@ public final class ProjectsRouter {
                         .nest(path("/{id}"), b2 -> b2
                                 .GET("", projectsHandler::get)
                                 .DELETE("", projectsHandler::delete)
-                                .POST("/attachRepoByUrl", projectsHandler::attachRepoByUrl)
-                                .POST("/attachRepoByInfo", projectsHandler::attachRepoByInfo)
+                                .POST("/addRepoByUrl", projectsHandler::addRepoByUrl)
+                                .POST("/addRepoByInfo", projectsHandler::addRepoByInfo)
                                 .GET("/githubAdmins", projectsHandler::githubAdmins)
                                 .GET("/headFiles", projectsHandler::headFiles)
                                 .GET("/repoSuggestion", projectsHandler::repoSuggestion)

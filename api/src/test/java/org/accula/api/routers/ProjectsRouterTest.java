@@ -24,8 +24,8 @@ import org.accula.api.github.model.GithubApiRepo;
 import org.accula.api.github.model.GithubApiSnapshot;
 import org.accula.api.github.model.GithubApiUser;
 import org.accula.api.handler.ProjectsHandler;
+import org.accula.api.handler.dto.AddRepoDto;
 import org.accula.api.handler.dto.ApiError;
-import org.accula.api.handler.dto.AttachRepoDto;
 import org.accula.api.handler.dto.CreateProjectDto;
 import org.accula.api.handler.dto.ProjectConfDto;
 import org.accula.api.handler.dto.ProjectDto;
@@ -549,7 +549,7 @@ class ProjectsRouterTest {
     }
 
     @Test
-    void testAttachRepoByUrlOk() {
+    void testAddRepoByUrlOk() {
         when(currentUser.get(Mockito.any()))
             .thenReturn(Mono.just(0L));
         when(projectRepo.hasAdmin(Mockito.anyLong(), Mockito.anyLong()))
@@ -571,29 +571,29 @@ class ProjectsRouterTest {
         when(projectRepo.updateState(Mockito.anyLong(), Mockito.any(Project.State.class)))
             .thenReturn(Mono.empty());
 
-        client.post().uri("/api/projects/{id}/attachRepoByUrl", PROJECT_HIGHLOAD.id())
-            .bodyValue(new AttachRepoDto.ByUrl(REPO_URL_HIGHLOAD1))
+        client.post().uri("/api/projects/{id}/addRepoByUrl", PROJECT_HIGHLOAD.id())
+            .bodyValue(new AddRepoDto.ByUrl(REPO_URL_HIGHLOAD1))
             .exchange()
             .expectStatus().isOk()
             .expectBody(Void.class).value(Matchers.nullValue());
     }
 
     @Test
-    void testAttachRepoForbidden() {
+    void testAddRepoForbidden() {
         when(currentUser.get(Mockito.any()))
             .thenReturn(Mono.just(0L));
         when(projectRepo.hasAdmin(Mockito.anyLong(), Mockito.anyLong()))
             .thenReturn(Mono.just(FALSE));
 
-        client.post().uri("/api/projects/{id}/attachRepoByUrl", PROJECT_HIGHLOAD.id())
-            .bodyValue(new AttachRepoDto.ByUrl(REPO_URL_HIGHLOAD1))
+        client.post().uri("/api/projects/{id}/addRepoByUrl", PROJECT_HIGHLOAD.id())
+            .bodyValue(new AddRepoDto.ByUrl(REPO_URL_HIGHLOAD1))
             .exchange()
             .expectStatus().isForbidden()
             .expectBody(Void.class).value(Matchers.nullValue());
     }
 
     @Test
-    void testAttachRepoByInfoOk() {
+    void testAddRepoByInfoOk() {
         when(currentUser.get(Mockito.any()))
             .thenReturn(Mono.just(0L));
         when(projectRepo.hasAdmin(Mockito.anyLong(), Mockito.anyLong()))
@@ -615,8 +615,8 @@ class ProjectsRouterTest {
         when(projectRepo.updateState(Mockito.anyLong(), Mockito.any(Project.State.class)))
             .thenReturn(Mono.empty());
 
-        client.post().uri("/api/projects/{id}/attachRepoByInfo", PROJECT_HIGHLOAD.id())
-            .bodyValue(new AttachRepoDto.ByInfo(RepoShortDto.builder()
+        client.post().uri("/api/projects/{id}/addRepoByInfo", PROJECT_HIGHLOAD.id())
+            .bodyValue(new AddRepoDto.ByInfo(RepoShortDto.builder()
                 .id(GH_REPO_HIGHLOAD1.id())
                 .owner(REPO_OWNER_HIGHLOAD)
                 .name(REPO_NAME_HIGHLOAD1)

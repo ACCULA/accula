@@ -8,8 +8,8 @@ import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
 /**
  * @author Anton Lamtev
  */
-public final class AttachRepoDto {
-    private AttachRepoDto() {
+public final class AddRepoDto {
+    private AddRepoDto() {
     }
 
     @JsonAutoDetect(fieldVisibility = ANY)

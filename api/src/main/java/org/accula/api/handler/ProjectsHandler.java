@@ -19,7 +19,7 @@ import org.accula.api.github.api.GithubClient;
 import org.accula.api.github.api.GithubClientException;
 import org.accula.api.github.model.GithubApiHook;
 import org.accula.api.github.model.GithubApiPull.State;
-import org.accula.api.handler.dto.AttachRepoDto;
+import org.accula.api.handler.dto.AddRepoDto;
 import org.accula.api.handler.dto.CreateProjectDto;
 import org.accula.api.handler.dto.InputDto;
 import org.accula.api.handler.dto.ProjectConfDto;
@@ -163,9 +163,9 @@ public final class ProjectsHandler {
                 .onErrorResume(ResponseConvertibleException::onErrorResume);
     }
 
-    public Mono<ServerResponse> attachRepoByUrl(final ServerRequest request) {
+    public Mono<ServerResponse> addRepoByUrl(final ServerRequest request) {
         return attachRepo(request, () -> request
-            .bodyToMono(AttachRepoDto.ByUrl.class)
+            .bodyToMono(AddRepoDto.ByUrl.class)
             .doOnNext(this::validate)
             .map(ProjectsHandler::extractOwnerAndRepo)
             .flatMap(ownerAndName -> repoRepo
@@ -173,11 +173,11 @@ public final class ProjectsHandler {
                 .switchIfEmpty(retrieveGithubRepoInfo(ownerAndName.getT1(), ownerAndName.getT2()))));
     }
 
-    public Mono<ServerResponse> attachRepoByInfo(final ServerRequest request) {
+    public Mono<ServerResponse> addRepoByInfo(final ServerRequest request) {
         return attachRepo(request, () -> request
-            .bodyToMono(AttachRepoDto.ByInfo.class)
+            .bodyToMono(AddRepoDto.ByInfo.class)
             .doOnNext(this::validate)
-            .map(AttachRepoDto.ByInfo::info)
+            .map(AddRepoDto.ByInfo::info)
             .flatMap(repoInfo -> retrieveGithubRepoInfo(repoInfo.owner(), repoInfo.name())));
     }
 
@@ -259,7 +259,7 @@ public final class ProjectsHandler {
         return extractOwnerAndRepo(requestBody.githubRepoUrl());
     }
 
-    private static Tuple2<String, String> extractOwnerAndRepo(final AttachRepoDto.ByUrl requestBody) {
+    private static Tuple2<String, String> extractOwnerAndRepo(final AddRepoDto.ByUrl requestBody) {
         return extractOwnerAndRepo(requestBody.url());
     }
 
