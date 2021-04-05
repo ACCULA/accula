@@ -157,4 +157,35 @@ class FileChangesParseIteratorTest {
         assertEquals(GitFileChanges.of(GitFile.of("28044f2", "src/main/java/ru/mail/polis/service/ServiceFactory.java"), LineSet.of(LineRange.of(21))), iter.next());
         assertFalse(iter.hasNext());
     }
+
+    @Test
+    void testRenameWithSimilarity100() {
+        final var diff = """
+            06a7e9f1f8c3391dcb68356617964ce76d695eb8 Эм, все как обычно, валимся перед дедлайном. попытка фикса n1.
+            diff --git a/src/main/java/ru/mail/polis/DAOImpl.java b/src/main/java/ru/mail/polis/valaubr/DAOImpl.java
+            similarity index 100%
+            rename from src/main/java/ru/mail/polis/DAOImpl.java
+            rename to src/main/java/ru/mail/polis/valaubr/DAOImpl.java
+            """;
+        final var iter = new FileChangesParseIterator(Iterators.nextResettable(diff.lines().iterator()));
+        assertTrue(iter.hasNext());
+        assertEquals("06a7e9f1f8c3391dcb68356617964ce76d695eb8 Эм, все как обычно, валимся перед дедлайном. попытка фикса n1.", iter.next());
+        assertTrue(iter.hasNext());
+        assertEquals(GitFileChanges.of(GitFile.devNull(), LineSet.empty()), iter.next());
+        assertFalse(iter.hasNext());
+    }
+
+    @Test
+    void testEmptyDiff() {
+        final var diff = """
+            16624d43ddc49c777ef8541406d677efbdc56c4a Merge branch 'master' of https://github.com/polis-mail-ru/2020-db-lsm into task3
+            
+            """;
+        final var iter = new FileChangesParseIterator(Iterators.nextResettable(diff.lines().iterator()));
+        assertTrue(iter.hasNext());
+        assertEquals("16624d43ddc49c777ef8541406d677efbdc56c4a Merge branch 'master' of https://github.com/polis-mail-ru/2020-db-lsm into task3", iter.next());
+        assertTrue(iter.hasNext());
+        assertEquals(GitFileChanges.of(GitFile.devNull(), LineSet.empty()), iter.next());
+        assertFalse(iter.hasNext());
+    }
 }

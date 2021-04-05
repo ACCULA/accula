@@ -34,6 +34,7 @@ final class FileChangesParseIterator implements Iterator<Object> {
         var fileId = (String) null;
         var filename = (String) null;
         final var lineRanges = new ArrayList<LineRange>();
+        var isRename = false;
 
         while (hasNext()) {
             final var possibleSha = lines.next();
@@ -60,6 +61,8 @@ final class FileChangesParseIterator implements Iterator<Object> {
                             fileId = fileIds.substring(fileIdStart);
                             expectedLineType = expectedLineType.next();
                         }
+                    } else {
+                        isRename = isRename(line);
                     }
                 }
                 case FILENAME -> {
@@ -146,6 +149,10 @@ final class FileChangesParseIterator implements Iterator<Object> {
             return GitFileChanges.of(GitFile.of(fileId, filename), LineSet.empty());
         }
 
+        if (isRename || "".equals(lines.lastReturnedNext())) {
+            return GitFileChanges.of(GitFile.devNull(), LineSet.empty());
+        }
+
         throw new IllegalStateException("Something went wrong");
     }
 
@@ -155,6 +162,10 @@ final class FileChangesParseIterator implements Iterator<Object> {
 
     private static boolean isBinaryFiles(final String line) {
         return line.startsWith("Binary files");
+    }
+
+    private static boolean isRename(final String line) {
+        return "similarity index 100%".equals(line) || line.startsWith("rename from") || line.startsWith("rename to");
     }
 
     private enum LineType {
