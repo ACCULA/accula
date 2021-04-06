@@ -28,7 +28,7 @@
 
     <rule ref="category/java/codestyle.xml/ShortClassName">
         <properties>
-            <property name="minimum" value="3"/>
+            <property name="minimum" value="2"/>
         </properties>
     </rule>
 
@@ -47,7 +47,7 @@
 
     <rule ref="category/java/design.xml/TooManyMethods">
         <properties>
-            <property name="maxmethods" value="15"/>
+            <property name="maxmethods" value="25"/>
         </properties>
     </rule>
 
@@ -60,11 +60,21 @@
     <rule ref="category/java/codestyle.xml/FieldNamingConventions">
         <properties>
             <property name="publicConstantPattern" value="[A-Z][A-Z_0-9]*" />
-            <property name="constantPattern" value="[A-Z][A-Z_0-9]*|serialVersionUID" />
+            <property name="constantPattern" value="[A-Z][A-Z_0-9]*" />
             <property name="enumConstantPattern" value="[A-Z][A-Z_0-9]*" />
             <property name="finalFieldPattern" value="[a-z][a-zA-Z0-9]*" />
             <property name="staticFieldPattern" value="[a-z][a-zA-Z0-9]*" />
             <property name="defaultFieldPattern" value="[a-z][a-zA-Z0-9]*" />
+            <property name="exclusions" value="serialVersionUID|serialPersistentFields" />
+        </properties>
+    </rule>
+
+    <rule ref="category/java/codestyle.xml/FormalParameterNamingConventions">
+        <properties>
+            <property name="methodParameterPattern" value="[a-z][a-zA-Z0-9]*" />
+            <property name="finalMethodParameterPattern" value="[a-z][a-zA-Z0-9]*" />
+            <property name="lambdaParameterPattern" value="[a-z][a-zA-Z0-9]*|__" />
+            <property name="explicitLambdaParameterPattern" value="[a-z][a-zA-Z0-9]*" />
         </properties>
     </rule>
 
