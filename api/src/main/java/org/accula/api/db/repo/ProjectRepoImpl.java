@@ -195,25 +195,6 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
     }
 
     @Override
-    public Mono<Boolean> repoIsPartOfAnyProject(final Long repoId) {
-        return withConnection(connection -> Mono
-            .from(((PostgresqlStatement) connection
-                .createStatement("""
-                    SELECT exists(SELECT 1
-                                  FROM project
-                                  WHERE github_repo_id = $1)
-                               OR
-                           exists(SELECT 1
-                                  FROM project_repo
-                                  WHERE repo_id = $1)
-                               AS exists
-                    """))
-                .bind("$1", repoId)
-                .execute())
-            .flatMap(result -> ConnectionProvidedRepo.column(result, "exists", Boolean.class)));
-    }
-
-    @Override
     public Mono<Boolean> repoIsNotPartOfProject(final Long projectId, final Long repoId) {
         return withConnection(connection -> Mono
             .from(((PostgresqlStatement) connection

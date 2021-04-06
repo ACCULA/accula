@@ -236,13 +236,23 @@ public final class ProjectsHandler {
         final var fetchReposMono = githubClient
             .getRepositoryPulls(repoOwner, repoName, State.ALL, GithubClient.MAX_PAGE_SIZE)
             .collectList();
-        projectRepo.updateState(projectId, Project.State.CONFIGURING)
-            .then(fetchReposMono)
-            .flatMap(projectService::init)
-            .flatMap(pulls -> projectRepo.updateState(projectId, Project.State.CONFIGURED)
-                .then(cloneDetectionService.fillSuffixTree(projectId, Flux.fromIterable(pulls))))
+
+        configuringProject(
+            projectId,
+            fetchReposMono
+                .flatMap(projectService::init)
+            )
+            .flatMap(pulls -> cloneDetectionService.fillSuffixTree(projectId, Flux.fromIterable(pulls)))
             .contextWrite(context)
             .subscribe();
+    }
+
+    private <T> Mono<T> configuringProject(final Long projectId, final Mono<T> mono) {
+        return Mono.usingWhen(
+            projectRepo.updateState(projectId, Project.State.CONFIGURING).then(mono),
+            Mono::just,
+            __ -> projectRepo.updateState(projectId, Project.State.CONFIGURED)
+        );
     }
 
     private Mono<ProjectDto> createWebhook(final ProjectDto project) {
@@ -287,10 +297,7 @@ public final class ProjectsHandler {
     private Mono<ServerResponse> addRepo(final ServerRequest request, final Supplier<Mono<GithubRepo.Identity>> repoIdSupplier) {
         return havingAdminPermissionAtProject(request)
             .flatMap(projectId -> repoIdSupplier.get()
-                .flatMap(repoIdentity -> repoRepo
-                    .findByName(repoIdentity.owner(), repoIdentity.name())
-                    .filterWhen(repo -> projectRepo.repoIsPartOfAnyProject(repo.id()))
-                    .switchIfEmpty(retrieveGithubRepoInfo(repoIdentity))
+                .flatMap(repoIdentity -> retrieveGithubRepoInfo(repoIdentity)
                     .filterWhen(repo -> projectRepo.repoIsNotPartOfProject(projectId, repo.id()))
                     .switchIfEmpty(Mono.error(ProjectsHandlerException.alreadyExists(repoIdentity))))
                 .flatMap(repoRepo::upsert)

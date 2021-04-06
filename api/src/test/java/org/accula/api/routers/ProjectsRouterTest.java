@@ -566,8 +566,6 @@ class ProjectsRouterTest {
             .thenReturn(Flux.fromArray(OPEN_PULLS));
         when(projectRepo.updateState(anyLong(), Mockito.any(Project.State.class)))
             .thenReturn(Mono.empty());
-        when(projectRepo.repoIsPartOfAnyProject(anyLong()))
-            .thenReturn(Mono.just(FALSE));
         when(projectRepo.repoIsNotPartOfProject(anyLong(), anyLong()))
             .thenReturn(Mono.just(TRUE));
 
@@ -614,8 +612,6 @@ class ProjectsRouterTest {
             .thenReturn(Flux.fromArray(OPEN_PULLS));
         when(projectRepo.updateState(anyLong(), Mockito.any(Project.State.class)))
             .thenReturn(Mono.empty());
-        when(projectRepo.repoIsPartOfAnyProject(anyLong()))
-            .thenReturn(Mono.just(TRUE));
         when(projectRepo.repoIsNotPartOfProject(anyLong(), anyLong()))
             .thenReturn(Mono.just(TRUE));
 
@@ -648,8 +644,6 @@ class ProjectsRouterTest {
             .thenReturn(Flux.fromArray(OPEN_PULLS));
         when(projectRepo.updateState(anyLong(), Mockito.any(Project.State.class)))
             .thenReturn(Mono.empty());
-        when(projectRepo.repoIsPartOfAnyProject(anyLong()))
-            .thenReturn(Mono.just(TRUE));
         when(projectRepo.repoIsNotPartOfProject(anyLong(), anyLong()))
             .thenReturn(Mono.just(FALSE));
 
