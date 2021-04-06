@@ -60,12 +60,11 @@
     <rule ref="category/java/codestyle.xml/FieldNamingConventions">
         <properties>
             <property name="publicConstantPattern" value="[A-Z][A-Z_0-9]*" />
-            <property name="constantPattern" value="[A-Z][A-Z_0-9]*" />
+            <property name="constantPattern" value="[A-Z][A-Z_0-9]*|serialVersionUID" />
             <property name="enumConstantPattern" value="[A-Z][A-Z_0-9]*" />
             <property name="finalFieldPattern" value="[a-z][a-zA-Z0-9]*" />
             <property name="staticFieldPattern" value="[a-z][a-zA-Z0-9]*" />
             <property name="defaultFieldPattern" value="[a-z][a-zA-Z0-9]*" />
-            <property name="exclusions" value="serialVersionUID|serialPersistentFields" />
         </properties>
     </rule>
 
