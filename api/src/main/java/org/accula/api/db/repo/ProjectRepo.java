@@ -35,6 +35,10 @@ public interface ProjectRepo {
 
     Mono<Project.Conf> confById(Long id);
 
+    Mono<Boolean> repoIsPartOfAnyProject(final Long repoId);
+
+    Mono<Boolean> repoIsNotPartOfProject(final Long projectId, final Long repoId);
+
     Mono<Void> attachRepos(Long projectId, Collection<Long> repoIds);
 
     void addOnConfUpdate(OnConfUpdate onConfUpdate);

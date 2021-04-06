@@ -27,7 +27,7 @@ public final class UsersHandler {
     public Mono<ServerResponse> getById(final ServerRequest request) {
         return Mono
                 .justOrEmpty(request.pathVariable("id"))
-                .map(Long::parseLong)
+                .map(Long::valueOf)
                 .onErrorMap(NumberFormatException.class, Lambda.expandingWithArg(Http4xxException::badRequest))
                 .flatMap(userRepo::findById)
                 .switchIfEmpty(Mono.error(Http4xxException.notFound()))

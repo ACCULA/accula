@@ -29,9 +29,9 @@ public final class ProjectsHandlerException extends ResponseConvertibleException
         return new ProjectsHandlerException(Error.INVALID_URL, "Invalid url: " + url);
     }
 
-    public static ProjectsHandlerException alreadyExists(final GithubRepo repo) {
+    public static ProjectsHandlerException alreadyExists(final GithubRepo.Identity repoIdentity) {
         return new ProjectsHandlerException(Error.ALREADY_EXISTS,
-                "Repo %s/%s already exists".formatted(repo.owner().login(), repo.name()));
+                "Repo %s/%s already exists".formatted(repoIdentity.owner(), repoIdentity.name()));
     }
 
     public static ProjectsHandlerException unableRetrieveGithubRepo(final String owner, final String repo) {

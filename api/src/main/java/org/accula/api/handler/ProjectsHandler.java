@@ -31,6 +31,7 @@ import org.accula.api.handler.exception.Http4xxException;
 import org.accula.api.handler.exception.ProjectsHandlerException;
 import org.accula.api.handler.exception.ResponseConvertibleException;
 import org.accula.api.handler.suggestion.Suggester;
+import org.accula.api.handler.util.RepoIdentityExtractor;
 import org.accula.api.handler.util.Responses;
 import org.accula.api.service.CloneDetectionService;
 import org.accula.api.service.ProjectService;
@@ -39,18 +40,17 @@ import org.accula.api.util.ReactorOperators;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
-import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import reactor.function.TupleUtils;
 import reactor.util.context.ContextView;
-import reactor.util.function.Tuple2;
-import reactor.util.function.Tuples;
 
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.lang.Boolean.TRUE;
 import static java.util.function.Predicate.isEqual;
@@ -99,8 +99,8 @@ public final class ProjectsHandler {
         return request
                 .bodyToMono(CreateProjectDto.class)
                 .doOnNext(this::validate)
-                .map(ProjectsHandler::extractOwnerAndRepo)
-                .flatMap(TupleUtils.function(this::retrieveGithubRepoInfo))
+                .map(RepoIdentityExtractor::repoIdentity)
+                .flatMap(this::retrieveGithubRepoInfo)
                 .flatMap(this::saveProjectData)
                 .flatMap(this::createWebhook)
                 .flatMap(Responses::created)
@@ -164,27 +164,22 @@ public final class ProjectsHandler {
     }
 
     public Mono<ServerResponse> addRepoByUrl(final ServerRequest request) {
-        return attachRepo(request, () -> request
+        return addRepo(request, () -> request
             .bodyToMono(AddRepoDto.ByUrl.class)
             .doOnNext(this::validate)
-            .map(ProjectsHandler::extractOwnerAndRepo)
-            .flatMap(ownerAndName -> repoRepo
-                .findByName(ownerAndName.getT1(), ownerAndName.getT2())
-                .switchIfEmpty(retrieveGithubRepoInfo(ownerAndName.getT1(), ownerAndName.getT2()))));
+            .map(RepoIdentityExtractor::repoIdentity));
     }
 
     public Mono<ServerResponse> addRepoByInfo(final ServerRequest request) {
-        return attachRepo(request, () -> request
+        return addRepo(request, () -> request
             .bodyToMono(AddRepoDto.ByInfo.class)
             .doOnNext(this::validate)
-            .map(AddRepoDto.ByInfo::info)
-            .flatMap(repoInfo -> retrieveGithubRepoInfo(repoInfo.owner(), repoInfo.name())));
+            .map(RepoIdentityExtractor::repoIdentity));
     }
 
     public Mono<ServerResponse> repoSuggestion(final ServerRequest request) {
         return havingAdminPermissionAtProject(request)
             .flatMap(projectRepo::findById)
-            .map(Project::githubRepo)
             .zipWith(githubClient.getAllRepos(GithubClient.MAX_PAGE_SIZE)
                 .map(GithubApiToModelConverter::convert)
                 .map(repo -> RepoShortDto.builder()
@@ -198,12 +193,14 @@ public final class ProjectsHandler {
             .onErrorResume(ResponseConvertibleException::onErrorResume);
     }
 
-    private Mono<GithubRepo> retrieveGithubRepoInfo(final String owner, final String repo) {
+    private Mono<GithubRepo> retrieveGithubRepoInfo(final GithubRepo.Identity identity) {
+        final var owner = identity.owner();
+        final var repo = identity.name();
         return Mono
             .zip(githubClient.hasAdminPermission(owner, repo).subscribeOn(Schedulers.parallel()),
                 githubClient.getRepo(owner, repo).subscribeOn(Schedulers.parallel()))
             .onErrorMap(GithubClientException.class, e -> {
-                log.error("Github Api Client error:", e);
+                log.warn("Github Api Client error:", e);
                 return ProjectsHandlerException.unableRetrieveGithubRepo(owner, repo);
             })
             .handle((hasAdminPermissionAndRepo, sink) -> {
@@ -221,7 +218,7 @@ public final class ProjectsHandler {
         return projectRepo
             .notExists(repo.id())
             .filter(isEqual(TRUE))
-            .switchIfEmpty(Mono.error(ProjectsHandlerException.alreadyExists(repo)))
+            .switchIfEmpty(Mono.error(ProjectsHandlerException.alreadyExists(repo.identity())))
             .flatMap(ok -> githubUserRepo.upsert(repo.owner())
                 .doOnError(e -> log.error("Error saving github user: {}", repo.owner(), e)))
             .then(currentUserRepo.get())
@@ -253,25 +250,6 @@ public final class ProjectsHandler {
         return githubClient
                 .createHook(project.repoOwner(), project.repoName(), hook)
                 .thenReturn(project);
-    }
-
-    private static Tuple2<String, String> extractOwnerAndRepo(final CreateProjectDto requestBody) {
-        return extractOwnerAndRepo(requestBody.githubRepoUrl());
-    }
-
-    private static Tuple2<String, String> extractOwnerAndRepo(final AddRepoDto.ByUrl requestBody) {
-        return extractOwnerAndRepo(requestBody.url());
-    }
-
-    private static Tuple2<String, String> extractOwnerAndRepo(final String url) {
-        final var pathSegments = UriComponentsBuilder
-                .fromUriString(url)
-                .build()
-                .getPathSegments();
-        if (pathSegments.size() != 2) {
-            throw ProjectsHandlerException.invalidUrl(url);
-        }
-        return Tuples.of(pathSegments.get(0), pathSegments.get(1));
     }
 
     private static Mono<Long> withProjectId(final ServerRequest request) {
@@ -306,9 +284,15 @@ public final class ProjectsHandler {
         );
     }
 
-    private Mono<ServerResponse> attachRepo(final ServerRequest request, final Supplier<Mono<GithubRepo>> repoSupplier) {
+    private Mono<ServerResponse> addRepo(final ServerRequest request, final Supplier<Mono<GithubRepo.Identity>> repoIdSupplier) {
         return havingAdminPermissionAtProject(request)
-            .flatMap(projectId -> repoSupplier.get()
+            .flatMap(projectId -> repoIdSupplier.get()
+                .flatMap(repoIdentity -> repoRepo
+                    .findByName(repoIdentity.owner(), repoIdentity.name())
+                    .filterWhen(repo -> projectRepo.repoIsPartOfAnyProject(repo.id()))
+                    .switchIfEmpty(retrieveGithubRepoInfo(repoIdentity))
+                    .filterWhen(repo -> projectRepo.repoIsNotPartOfProject(projectId, repo.id()))
+                    .switchIfEmpty(Mono.error(ProjectsHandlerException.alreadyExists(repoIdentity))))
                 .flatMap(repoRepo::upsert)
                 .flatMap(repo -> projectRepo.attachRepos(projectId, List.of(repo.id()))
                     .thenReturn(repo))
@@ -318,8 +302,15 @@ public final class ProjectsHandler {
             .onErrorResume(ResponseConvertibleException::onErrorResume);
     }
 
-    private List<RepoShortDto> suggestRepos(final GithubRepo mainRepo, final List<RepoShortDto> reposUserHasAccessTo) {
-        return suggester.suggest(mainRepo.name(), reposUserHasAccessTo, RepoShortDto::name);
+    private List<RepoShortDto> suggestRepos(final Project project, final List<RepoShortDto> reposUserHasAccessTo) {
+        final var projectRepos = Stream.of(List.of(project.githubRepo()), project.secondaryRepos())
+            .flatMap(List::stream)
+            .map(GithubRepo::id)
+            .collect(Collectors.toSet());
+        return suggester
+            .suggest(project.githubRepo().name(), reposUserHasAccessTo, RepoShortDto::name)
+            .filter(repo -> !projectRepos.contains(repo.id()))
+            .collect(Collectors.toList());
     }
 
     private void validate(final InputDto dto) {

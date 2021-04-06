@@ -35,7 +35,7 @@ class SuggesterTest {
         final var highloadExpected = orig.stream()
             .filter(s -> s.contains("highload"))
             .collect(Collectors.toSet());
-        final var highloadActual = highloadRes.stream()
+        final var highloadActual = highloadRes
             .limit(4)
             .collect(Collectors.toSet());
         assertEquals(highloadExpected, highloadActual);
@@ -44,7 +44,7 @@ class SuggesterTest {
         final var dbExpected = orig.stream()
             .filter(s -> s.contains("db"))
             .collect(Collectors.toSet());
-        final var dbActual = dbRes.stream()
+        final var dbActual = dbRes
             .limit(3)
             .collect(Collectors.toSet());
         assertEquals(dbExpected, dbActual);

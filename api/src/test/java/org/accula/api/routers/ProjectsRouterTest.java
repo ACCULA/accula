@@ -57,6 +57,7 @@ import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
@@ -157,10 +158,10 @@ class ProjectsRouterTest {
         when(projectRepo.upsert(Mockito.any(GithubRepo.class), Mockito.any(User.class)))
                 .thenReturn(Mono.just(PROJECT));
 
-        when(projectRepo.notExists(Mockito.anyLong()))
+        when(projectRepo.notExists(anyLong()))
                 .thenReturn(Mono.just(TRUE));
 
-        when(projectRepo.upsertConf(Mockito.anyLong(), Mockito.any(Project.Conf.class)))
+        when(projectRepo.upsertConf(anyLong(), Mockito.any(Project.Conf.class)))
                 .thenReturn(Mono.just(Project.Conf.DEFAULT));
 
         when(pullRepo.upsert(Mockito.anyCollection()))
@@ -178,13 +179,13 @@ class ProjectsRouterTest {
         when(githubClient.getRepositoryPulls(Mockito.anyString(), Mockito.anyString(), Mockito.any(State.class), Mockito.anyInt()))
                 .thenReturn(Flux.fromArray(OPEN_PULLS));
 
-        when(projectRepo.updateState(Mockito.anyLong(), Mockito.any(Project.State.class)))
+        when(projectRepo.updateState(anyLong(), Mockito.any(Project.State.class)))
                 .thenReturn(Mono.empty());
 
         when(githubClient.createHook(Mockito.any(), Mockito.any(), Mockito.any()))
                 .thenReturn(Mono.empty());
 
-        when(cloneDetectionService.fillSuffixTree(Mockito.anyLong(), Flux.fromIterable(Mockito.anyCollection())))
+        when(cloneDetectionService.fillSuffixTree(anyLong(), Flux.fromIterable(Mockito.anyCollection())))
                 .thenReturn(Mono.empty());
 
         final var expectedBody = ModelToDtoConverter.convert(PROJECT);
@@ -236,7 +237,7 @@ class ProjectsRouterTest {
                 .thenReturn(Mono.just(CURRENT_USER));
 
         // make repo existing
-        when(projectRepo.notExists(Mockito.anyLong()))
+        when(projectRepo.notExists(anyLong()))
                 .thenReturn(Mono.just(FALSE));
 
         when(githubClient.hasAdminPermission(Mockito.anyString(), Mockito.anyString()))
@@ -253,7 +254,7 @@ class ProjectsRouterTest {
                 .bodyValue(REQUEST_BODY)
                 .exchange()
                 .expectStatus().isEqualTo(HttpStatus.CONFLICT)
-                .expectBody(ApiError.class).isEqualTo(toApiError(ProjectsHandlerException.alreadyExists(REPO)));
+                .expectBody(ApiError.class).isEqualTo(toApiError(ProjectsHandlerException.alreadyExists(REPO.identity())));
 
     }
 
@@ -286,7 +287,7 @@ class ProjectsRouterTest {
         when(githubUserRepo.upsert(Mockito.any(GithubUser.class)))
                 .thenReturn(Mono.just(GITHUB_USER));
 
-        when(projectRepo.findById(Mockito.anyLong()))
+        when(projectRepo.findById(anyLong()))
                 .thenReturn(Mono.just(PROJECT));
 
         final var expectedBody = ModelToDtoConverter.convert(PROJECT);
@@ -332,7 +333,7 @@ class ProjectsRouterTest {
         when(currentUser.get(Mockito.any()))
                 .thenReturn(Mono.just(0L));
 
-        when(projectRepo.delete(Mockito.anyLong(), Mockito.anyLong()))
+        when(projectRepo.delete(anyLong(), anyLong()))
                 .thenReturn(Mono.just(TRUE));
 
         client.delete().uri("/api/projects/{id}", PROJECT.id())
@@ -344,9 +345,9 @@ class ProjectsRouterTest {
     void testGetGithubAdmins() {
         when(currentUser.get(Mockito.any()))
                 .thenReturn(Mono.just(0L));
-        when(projectRepo.hasAdmin(Mockito.anyLong(), Mockito.anyLong()))
+        when(projectRepo.hasAdmin(anyLong(), anyLong()))
                 .thenReturn(Mono.just(TRUE));
-        when(projectRepo.findById(Mockito.anyLong()))
+        when(projectRepo.findById(anyLong()))
                 .thenReturn(Mono.just(PROJECT));
         when(githubClient.getRepoAdmins(Mockito.anyString(), Mockito.anyString()))
                 .thenReturn(Mono.just(List.of(1L, 2L)));
@@ -381,10 +382,10 @@ class ProjectsRouterTest {
     void testGetConf() {
         when(currentUser.get(Mockito.any()))
                 .thenReturn(Mono.just(0L));
-        when(projectRepo.hasAdmin(Mockito.anyLong(), Mockito.anyLong()))
+        when(projectRepo.hasAdmin(anyLong(), anyLong()))
                 .thenReturn(Mono.just(TRUE));
         final var adminIds = List.of(1L, 2L);
-        when(projectRepo.confById(Mockito.anyLong()))
+        when(projectRepo.confById(anyLong()))
                 .thenReturn(Mono.just(Project.Conf.DEFAULT.withAdminIds(adminIds)));
 
         client.get().uri("/api/projects/{id}/conf", PROJECT.id())
@@ -411,7 +412,7 @@ class ProjectsRouterTest {
     @Test
     void testGetConfNotFound() {
         mockNotFound();
-        when(projectRepo.confById(Mockito.anyLong()))
+        when(projectRepo.confById(anyLong()))
                 .thenReturn(Mono.empty());
 
         client.get().uri("/api/projects/{id}/conf", PROJECT.id())
@@ -423,10 +424,10 @@ class ProjectsRouterTest {
     void testPutConf() {
         when(currentUser.get(Mockito.any()))
                 .thenReturn(Mono.just(0L));
-        when(projectRepo.hasAdmin(Mockito.anyLong(), Mockito.anyLong()))
+        when(projectRepo.hasAdmin(anyLong(), anyLong()))
                 .thenReturn(Mono.just(TRUE));
         final var adminIds = List.of(1L, 2L);
-        when(projectRepo.upsertConf(Mockito.anyLong(), Mockito.any(Project.Conf.class)))
+        when(projectRepo.upsertConf(anyLong(), Mockito.any(Project.Conf.class)))
                 .thenReturn(Mono.just(Project.Conf.DEFAULT.withAdminIds(adminIds)));
 
         client.put().uri("/api/projects/{id}/conf", PROJECT.id())
@@ -445,7 +446,7 @@ class ProjectsRouterTest {
     void testPutConfBadRequest() {
         when(currentUser.get(Mockito.any()))
                 .thenReturn(Mono.just(0L));
-        when(projectRepo.hasAdmin(Mockito.anyLong(), Mockito.anyLong()))
+        when(projectRepo.hasAdmin(anyLong(), anyLong()))
                 .thenReturn(Mono.just(TRUE));
 
         client.put().uri("/api/projects/{id}/conf", PROJECT.id())
@@ -460,9 +461,9 @@ class ProjectsRouterTest {
         final var expectedFiles = new String[]{"file1", "file2", "file3"};
         when(currentUser.get(Mockito.any()))
                 .thenReturn(Mono.just(0L));
-        when(projectRepo.hasAdmin(Mockito.anyLong(), Mockito.anyLong()))
+        when(projectRepo.hasAdmin(anyLong(), anyLong()))
                 .thenReturn(Mono.just(TRUE));
-        when(projectRepo.findById(Mockito.anyLong()))
+        when(projectRepo.findById(anyLong()))
                 .thenReturn(Mono.just(PROJECT));
         when(codeLoader.loadFilenames(Mockito.any()))
                 .thenReturn(Flux.fromArray(expectedFiles));
@@ -495,9 +496,9 @@ class ProjectsRouterTest {
     void testRepoSuggestionOk() {
         when(currentUser.get(Mockito.any()))
             .thenReturn(Mono.just(0L));
-        when(projectRepo.hasAdmin(Mockito.anyLong(), Mockito.anyLong()))
+        when(projectRepo.hasAdmin(anyLong(), anyLong()))
             .thenReturn(Mono.just(TRUE));
-        when(projectRepo.findById(Mockito.anyLong()))
+        when(projectRepo.findById(anyLong()))
             .thenReturn(Mono.just(PROJECT_HIGHLOAD));
         when(githubClient.getAllRepos(Mockito.anyInt()))
             .thenReturn(Flux.just(GH_REPO_HIGHLOAD2, GH_REPO, GH_REPO_HIGHLOAD3, GH_REPO_HIGHLOAD1));
@@ -517,11 +518,6 @@ class ProjectsRouterTest {
                 .id(GH_REPO_HIGHLOAD3.id())
                 .owner(REPO_OWNER_HIGHLOAD)
                 .name(REPO_NAME_HIGHLOAD3)
-                .build(),
-            RepoShortDto.builder()
-                .id(GH_REPO.id())
-                .owner(REPO_OWNER)
-                .name(REPO_NAME)
                 .build()
         ).toArray(new RepoShortDto[0]);
 
@@ -535,9 +531,9 @@ class ProjectsRouterTest {
     void testRepoSuggestionForbidden() {
         when(currentUser.get(Mockito.any()))
             .thenReturn(Mono.just(0L));
-        when(projectRepo.hasAdmin(Mockito.anyLong(), Mockito.anyLong()))
+        when(projectRepo.hasAdmin(anyLong(), anyLong()))
             .thenReturn(Mono.just(FALSE));
-        when(projectRepo.findById(Mockito.anyLong()))
+        when(projectRepo.findById(anyLong()))
             .thenReturn(Mono.just(PROJECT_HIGHLOAD));
         when(githubClient.getAllRepos(Mockito.anyInt()))
             .thenReturn(Flux.just(GH_REPO_HIGHLOAD2, GH_REPO, GH_REPO_HIGHLOAD3, GH_REPO_HIGHLOAD1));
@@ -552,15 +548,15 @@ class ProjectsRouterTest {
     void testAddRepoByUrlOk() {
         when(currentUser.get(Mockito.any()))
             .thenReturn(Mono.just(0L));
-        when(projectRepo.hasAdmin(Mockito.anyLong(), Mockito.anyLong()))
+        when(projectRepo.hasAdmin(anyLong(), anyLong()))
             .thenReturn(Mono.just(TRUE));
-        when(projectRepo.findById(Mockito.anyLong()))
+        when(projectRepo.findById(anyLong()))
             .thenReturn(Mono.just(PROJECT_HIGHLOAD));
         when(repoRepo.upsert(REPO_HIGHLOAD))
             .thenReturn(Mono.just(REPO_HIGHLOAD));
         when(repoRepo.findByName(Mockito.anyString(), Mockito.anyString()))
             .thenReturn(Mono.just(REPO_HIGHLOAD));
-        when(projectRepo.attachRepos(Mockito.anyLong(), Mockito.anyCollection()))
+        when(projectRepo.attachRepos(anyLong(), Mockito.anyCollection()))
             .thenReturn(Mono.empty());
         when(githubClient.hasAdminPermission(Mockito.anyString(), Mockito.anyString()))
             .thenReturn(Mono.just(TRUE));
@@ -568,8 +564,12 @@ class ProjectsRouterTest {
             .thenReturn(Mono.just(GH_REPO));
         when(githubClient.getRepositoryPulls(Mockito.anyString(), Mockito.anyString(), Mockito.any(State.class), Mockito.anyInt()))
             .thenReturn(Flux.fromArray(OPEN_PULLS));
-        when(projectRepo.updateState(Mockito.anyLong(), Mockito.any(Project.State.class)))
+        when(projectRepo.updateState(anyLong(), Mockito.any(Project.State.class)))
             .thenReturn(Mono.empty());
+        when(projectRepo.repoIsPartOfAnyProject(anyLong()))
+            .thenReturn(Mono.just(FALSE));
+        when(projectRepo.repoIsNotPartOfProject(anyLong(), anyLong()))
+            .thenReturn(Mono.just(TRUE));
 
         client.post().uri("/api/projects/{id}/addRepoByUrl", PROJECT_HIGHLOAD.id())
             .bodyValue(new AddRepoDto.ByUrl(REPO_URL_HIGHLOAD1))
@@ -582,7 +582,7 @@ class ProjectsRouterTest {
     void testAddRepoForbidden() {
         when(currentUser.get(Mockito.any()))
             .thenReturn(Mono.just(0L));
-        when(projectRepo.hasAdmin(Mockito.anyLong(), Mockito.anyLong()))
+        when(projectRepo.hasAdmin(anyLong(), anyLong()))
             .thenReturn(Mono.just(FALSE));
 
         client.post().uri("/api/projects/{id}/addRepoByUrl", PROJECT_HIGHLOAD.id())
@@ -596,15 +596,15 @@ class ProjectsRouterTest {
     void testAddRepoByInfoOk() {
         when(currentUser.get(Mockito.any()))
             .thenReturn(Mono.just(0L));
-        when(projectRepo.hasAdmin(Mockito.anyLong(), Mockito.anyLong()))
+        when(projectRepo.hasAdmin(anyLong(), anyLong()))
             .thenReturn(Mono.just(TRUE));
-        when(projectRepo.findById(Mockito.anyLong()))
+        when(projectRepo.findById(anyLong()))
             .thenReturn(Mono.just(PROJECT_HIGHLOAD));
         when(repoRepo.upsert(REPO_HIGHLOAD))
             .thenReturn(Mono.just(REPO_HIGHLOAD));
         when(repoRepo.findByName(Mockito.anyString(), Mockito.anyString()))
             .thenReturn(Mono.empty());
-        when(projectRepo.attachRepos(Mockito.anyLong(), Mockito.anyCollection()))
+        when(projectRepo.attachRepos(anyLong(), Mockito.anyCollection()))
             .thenReturn(Mono.empty());
         when(githubClient.hasAdminPermission(Mockito.anyString(), Mockito.anyString()))
             .thenReturn(Mono.just(TRUE));
@@ -612,8 +612,12 @@ class ProjectsRouterTest {
             .thenReturn(Mono.just(GH_REPO));
         when(githubClient.getRepositoryPulls(Mockito.anyString(), Mockito.anyString(), Mockito.any(State.class), Mockito.anyInt()))
             .thenReturn(Flux.fromArray(OPEN_PULLS));
-        when(projectRepo.updateState(Mockito.anyLong(), Mockito.any(Project.State.class)))
+        when(projectRepo.updateState(anyLong(), Mockito.any(Project.State.class)))
             .thenReturn(Mono.empty());
+        when(projectRepo.repoIsPartOfAnyProject(anyLong()))
+            .thenReturn(Mono.just(TRUE));
+        when(projectRepo.repoIsNotPartOfProject(anyLong(), anyLong()))
+            .thenReturn(Mono.just(TRUE));
 
         client.post().uri("/api/projects/{id}/addRepoByInfo", PROJECT_HIGHLOAD.id())
             .bodyValue(new AddRepoDto.ByInfo(RepoShortDto.builder()
@@ -626,19 +630,55 @@ class ProjectsRouterTest {
             .expectBody(Void.class).value(Matchers.nullValue());
     }
 
+    @Test
+    void testAddRepoByInfoConflictAlreadyExists() {
+        when(currentUser.get(Mockito.any()))
+            .thenReturn(Mono.just(0L));
+        when(projectRepo.hasAdmin(anyLong(), anyLong()))
+            .thenReturn(Mono.just(TRUE));
+        when(projectRepo.findById(anyLong()))
+            .thenReturn(Mono.just(PROJECT_HIGHLOAD));
+        when(repoRepo.findByName(Mockito.anyString(), Mockito.anyString()))
+            .thenReturn(Mono.empty());
+        when(githubClient.hasAdminPermission(Mockito.anyString(), Mockito.anyString()))
+            .thenReturn(Mono.just(TRUE));
+        when(githubClient.getRepo(Mockito.anyString(), Mockito.anyString()))
+            .thenReturn(Mono.just(GH_REPO));
+        when(githubClient.getRepositoryPulls(Mockito.anyString(), Mockito.anyString(), Mockito.any(State.class), Mockito.anyInt()))
+            .thenReturn(Flux.fromArray(OPEN_PULLS));
+        when(projectRepo.updateState(anyLong(), Mockito.any(Project.State.class)))
+            .thenReturn(Mono.empty());
+        when(projectRepo.repoIsPartOfAnyProject(anyLong()))
+            .thenReturn(Mono.just(TRUE));
+        when(projectRepo.repoIsNotPartOfProject(anyLong(), anyLong()))
+            .thenReturn(Mono.just(FALSE));
+
+        var repoIdentity = GithubRepo.Identity.of(GH_REPO_HIGHLOAD1.owner().login(), GH_REPO_HIGHLOAD1.name());
+
+        client.post().uri("/api/projects/{id}/addRepoByInfo", PROJECT_HIGHLOAD.id())
+            .bodyValue(new AddRepoDto.ByInfo(RepoShortDto.builder()
+                .id(GH_REPO_HIGHLOAD1.id())
+                .owner(REPO_OWNER_HIGHLOAD)
+                .name(REPO_NAME_HIGHLOAD1)
+                .build()))
+            .exchange()
+            .expectStatus().isEqualTo(HttpStatus.CONFLICT)
+            .expectBody(ApiError.class).isEqualTo(toApiError(ProjectsHandlerException.alreadyExists(repoIdentity)));
+    }
+
     private void mockNotFound() {
         when(currentUser.get(Mockito.any()))
                 .thenReturn(Mono.just(0L));
-        when(projectRepo.hasAdmin(Mockito.anyLong(), Mockito.anyLong()))
+        when(projectRepo.hasAdmin(anyLong(), anyLong()))
                 .thenReturn(Mono.just(TRUE));
-        when(projectRepo.findById(Mockito.anyLong()))
+        when(projectRepo.findById(anyLong()))
                 .thenReturn(Mono.empty());
     }
 
     private void mockForbidden() {
         when(currentUser.get(Mockito.any()))
                 .thenReturn(Mono.just(0L));
-        when(projectRepo.hasAdmin(Mockito.anyLong(), Mockito.anyLong()))
+        when(projectRepo.hasAdmin(anyLong(), anyLong()))
                 .thenReturn(Mono.just(FALSE));
     }
 

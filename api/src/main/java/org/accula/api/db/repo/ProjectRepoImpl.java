@@ -195,6 +195,45 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
     }
 
     @Override
+    public Mono<Boolean> repoIsPartOfAnyProject(final Long repoId) {
+        return withConnection(connection -> Mono
+            .from(((PostgresqlStatement) connection
+                .createStatement("""
+                    SELECT exists(SELECT 1
+                                  FROM project
+                                  WHERE github_repo_id = $1)
+                               OR
+                           exists(SELECT 1
+                                  FROM project_repo
+                                  WHERE repo_id = $1)
+                               AS exists
+                    """))
+                .bind("$1", repoId)
+                .execute())
+            .flatMap(result -> ConnectionProvidedRepo.column(result, "exists", Boolean.class)));
+    }
+
+    @Override
+    public Mono<Boolean> repoIsNotPartOfProject(final Long projectId, final Long repoId) {
+        return withConnection(connection -> Mono
+            .from(((PostgresqlStatement) connection
+                .createStatement("""
+                    SELECT NOT exists(SELECT 1
+                                      FROM project
+                                      WHERE id = $1 AND github_repo_id = $2)
+                               AND
+                           NOT exists(SELECT 1
+                                      FROM project_repo
+                                      WHERE project_id = $1 AND repo_id = $2)
+                               AS not_exists
+                    """))
+                .bind("$1", projectId)
+                .bind("$2", repoId)
+                .execute())
+            .flatMap(result -> ConnectionProvidedRepo.column(result, "not_exists", Boolean.class)));
+    }
+
+    @Override
     public Mono<Void> attachRepos(final Long projectId, final Collection<Long> repoIds) {
         return withConnection(connection -> {
             final var statement = BatchStatement.of(connection, """
