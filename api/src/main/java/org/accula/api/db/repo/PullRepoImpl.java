@@ -56,7 +56,7 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
                            head_snapshot_sha = excluded.head_snapshot_sha,
                            base_snapshot_sha = excluded.base_snapshot_sha
                     """);
-            statement.bind(pulls, pull -> new Object[]{
+            statement.bind(pulls, pull -> Bindings.of(
                     pull.id(),
                     pull.number(),
                     pull.title(),
@@ -70,7 +70,7 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
                     pull.base().repo().id(),
                     pull.base().branch(),
                     pull.author().id()
-            });
+            ));
 
             return statement
                     .execute()
@@ -139,12 +139,12 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
                     """);
             for (final var item : pullSnapshots) {
                 final var pullId = item.pull().id();
-                statement.bind(item.snapshots(), commitSnapshot -> new Object[]{
+                statement.bind(item.snapshots(), commitSnapshot -> Bindings.of(
                         commitSnapshot.sha(),
                         commitSnapshot.repo().id(),
                         commitSnapshot.branch(),
                         pullId
-                });
+                ));
             }
 
             return statement

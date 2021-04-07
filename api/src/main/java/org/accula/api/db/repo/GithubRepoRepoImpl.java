@@ -38,12 +38,12 @@ public final class GithubRepoRepoImpl implements GithubRepoRepo, ConnectionProvi
                            owner_id = excluded.owner_id,
                            description = excluded.description
                     """);
-            statement.bind(repos, repo -> new Object[]{
+            statement.bind(repos, repo -> Bindings.of(
                     repo.id(),
                     repo.name(),
                     repo.owner().id(),
                     repo.description()
-            });
+            ));
 
             return statement
                     .execute()

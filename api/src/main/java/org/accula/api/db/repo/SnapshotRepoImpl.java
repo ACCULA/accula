@@ -169,13 +169,13 @@ public final class SnapshotRepoImpl implements SnapshotRepo, ConnectionProvidedR
                 VALUES ($collection)
                 ON CONFLICT (sha) DO NOTHING
                 """);
-        statement.bind(commits, commit -> new Object[]{
+        statement.bind(commits, commit -> Bindings.of(
                 commit.sha(),
                 commit.isMerge(),
                 commit.authorName(),
                 commit.authorEmail(),
                 commit.date()
-        });
+        ));
 
         return statement
                 .execute()
@@ -189,11 +189,11 @@ public final class SnapshotRepoImpl implements SnapshotRepo, ConnectionProvidedR
                 VALUES ($collection)
                 ON CONFLICT (sha, repo_id, branch) DO NOTHING
                 """);
-        statement.bind(snapshots, commitSnapshot -> new Object[]{
+        statement.bind(snapshots, commitSnapshot -> Bindings.of(
                 commitSnapshot.sha(),
                 commitSnapshot.repo().id(),
                 commitSnapshot.branch()
-        });
+        ));
 
         return statement
                 .execute()
