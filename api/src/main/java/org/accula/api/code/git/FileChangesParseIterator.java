@@ -118,6 +118,9 @@ final class FileChangesParseIterator implements Iterator<Object> {
 
                                 while (hasNext() && diffLinesRead < count) {
                                     final var l = lines.next();
+                                    if (isNoNewlineAtEndOfFile(l)) {
+                                        continue;
+                                    }
                                     if (!isThreeWayMergeHunk ? l.startsWith("+") : l.length() > 1 && l.charAt(1) == '+') {
                                         if (rangeStart == -1) {
                                             rangeStart = lineIdx;
@@ -169,6 +172,10 @@ final class FileChangesParseIterator implements Iterator<Object> {
 
     private static boolean isRename(final String line) {
         return "similarity index 100%".equals(line) || line.startsWith("rename from") || line.startsWith("rename to");
+    }
+
+    private static boolean isNoNewlineAtEndOfFile(final String line) {
+        return "\\ No newline at end of file".equals(line);
     }
 
     private enum LineType {
