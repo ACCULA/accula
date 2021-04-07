@@ -241,4 +241,39 @@ class FileChangesParseIteratorTest {
             LineSet.of(LineRange.of(5, 8), LineRange.of(11, 12), LineRange.of(14), LineRange.of(17), LineRange.of(22))), iter.next());
         assertFalse(iter.hasNext());
     }
+
+    @Test
+    void testCaseWithNoNewlinesAtEndOfFile() {
+        var diff = """
+            3c7c78070355f136a054bde726e86081cced4bf0 Task 3
+            diff --git a/README.md b/README.md
+            index 654721a..ddee675 100644
+            --- a/README.md
+            +++ b/README.md
+            @@ -64,4 +64,14 @@ $ git checkout -b part1
+               * https://www.e-olymp.com/ru/problems/5327 - скобочки со стеком
+               * https://www.e-olymp.com/ru/problems/6124 - стек
+            \s
+            -За каждое полностью рабочее решение дается 2 балла. \s
+            \\ No newline at end of file
+            +За каждое полностью рабочее решение дается 2 балла. \s
+            +
+            +## ДЗ 3.
+            +Задачи с e-olymp.com
+            +Дэдлайн - 22.10
+            +  * https://www.e-olymp.com/ru/problems/3738 - Простая сортировка
+            +  * https://www.e-olymp.com/ru/problems/1462 - Хитрая сортировка
+            +  * https://www.e-olymp.com/ru/problems/4741 - Сортировка пузырьком
+            +  * https://www.e-olymp.com/ru/problems/4827 - k-тая порядковая статистика
+            +  * https://www.e-olymp.com/ru/problems/4037 - Сортировка слиянием
+            +  * https://www.e-olymp.com/ru/problems/1457 - Станция "Сортировочная"
+            \\ No newline at end of file
+            """;
+        var iter = new FileChangesParseIterator(Iterators.nextResettable(diff.lines().iterator()));
+        assertTrue(iter.hasNext());
+        assertEquals("3c7c78070355f136a054bde726e86081cced4bf0 Task 3", iter.next());
+        assertTrue(iter.hasNext());
+        assertEquals(GitFileChanges.of(GitFile.of("ddee675", "README.md"), LineSet.inRange(67, 77)), iter.next());
+        assertFalse(iter.hasNext());
+    }
 }
