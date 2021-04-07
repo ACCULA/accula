@@ -20,6 +20,7 @@ import java.util.Objects;
 @SuppressWarnings({"PMD.ConfusingTernary", "PMD.UseObjectForClearerAPI", "PMD.ExcessiveParameterList", "SameParameterValue"})
 final class Converters {
     static final String NOTHING = "";
+    static final String EMPTY_CLAUSE = NOTHING;
 
     private Converters() {
     }

@@ -195,7 +195,7 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
     }
 
     @Override
-    public Mono<Boolean> repoIsNotPartOfProject(final Long projectId, final Long repoId) {
+    public Mono<Boolean> projectDoesNotContainRepo(final Long projectId, final Long repoId) {
         return withConnection(connection -> Mono
             .from(((PostgresqlStatement) connection
                 .createStatement("""

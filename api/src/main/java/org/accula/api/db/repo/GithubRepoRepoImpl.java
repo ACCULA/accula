@@ -55,7 +55,7 @@ public final class GithubRepoRepoImpl implements GithubRepoRepo, ConnectionProvi
     @Override
     public Mono<GithubRepo> findById(final Long id) {
         return withConnection(connection -> Mono
-                .from(selectStatement(connection, Converters.NOTHING, "WHERE repo.id = $1")
+                .from(selectStatement(connection, "WHERE repo.id = $1")
                         .bind("$1", id)
                         .execute())
                 .flatMap(result -> ConnectionProvidedRepo.convert(result, GithubRepoRepoImpl::convert)));
@@ -64,7 +64,7 @@ public final class GithubRepoRepoImpl implements GithubRepoRepo, ConnectionProvi
     @Override
     public Mono<GithubRepo> findByName(final String owner, final String name) {
         return withConnection(connection ->
-                selectStatement(connection, Converters.NOTHING, "WHERE usr.login = $1 AND repo.name = $2")
+                selectStatement(connection, "WHERE usr.login = $1 AND repo.name = $2")
                         .bind("$1", owner)
                         .bind("$2", name)
                         .execute()
@@ -72,7 +72,7 @@ public final class GithubRepoRepoImpl implements GithubRepoRepo, ConnectionProvi
                         .flatMap(result -> ConnectionProvidedRepo.convert(result, GithubRepoRepoImpl::convert)));
     }
 
-    static PostgresqlStatement selectStatement(final Connection connection, final String join, final String whereClause) {
+    static PostgresqlStatement selectStatement(final Connection connection, final String joinClause, final String whereClause) {
         @Language("SQL") final var sql = """
                 SELECT repo.id          AS repo_id,
                        repo.name        AS repo_name,
@@ -86,7 +86,7 @@ public final class GithubRepoRepoImpl implements GithubRepoRepo, ConnectionProvi
                    JOIN user_github usr
                        ON repo.owner_id = usr.id
                 """;
-        return (PostgresqlStatement) connection.createStatement("%s %s %s".formatted(sql, join, whereClause));
+        return (PostgresqlStatement) connection.createStatement("%s %s %s".formatted(sql, joinClause, whereClause));
     }
 
     static GithubRepo convert(final Row row) {
@@ -100,5 +100,9 @@ public final class GithubRepoRepoImpl implements GithubRepoRepo, ConnectionProvi
                 "repo_owner_avatar",
                 "repo_owner_is_org"
         );
+    }
+
+    private static PostgresqlStatement selectStatement(final Connection connection, final String whereClause) {
+        return selectStatement(connection, Converters.EMPTY_CLAUSE, whereClause);
     }
 }

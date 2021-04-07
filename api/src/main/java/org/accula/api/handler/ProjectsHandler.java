@@ -298,7 +298,7 @@ public final class ProjectsHandler {
         return havingAdminPermissionAtProject(request)
             .flatMap(projectId -> repoIdSupplier.get()
                 .flatMap(repoIdentity -> retrieveGithubRepoInfo(repoIdentity)
-                    .filterWhen(repo -> projectRepo.repoIsNotPartOfProject(projectId, repo.id()))
+                    .filterWhen(repo -> projectRepo.projectDoesNotContainRepo(projectId, repo.id()))
                     .switchIfEmpty(Mono.error(ProjectsHandlerException.alreadyExists(repoIdentity))))
                 .flatMap(repoRepo::upsert)
                 .flatMap(repo -> projectRepo.attachRepos(projectId, List.of(repo.id()))

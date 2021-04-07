@@ -566,7 +566,7 @@ class ProjectsRouterTest {
             .thenReturn(Flux.fromArray(OPEN_PULLS));
         when(projectRepo.updateState(anyLong(), Mockito.any(Project.State.class)))
             .thenReturn(Mono.empty());
-        when(projectRepo.repoIsNotPartOfProject(anyLong(), anyLong()))
+        when(projectRepo.projectDoesNotContainRepo(anyLong(), anyLong()))
             .thenReturn(Mono.just(TRUE));
 
         client.post().uri("/api/projects/{id}/addRepoByUrl", PROJECT_HIGHLOAD.id())
@@ -612,7 +612,7 @@ class ProjectsRouterTest {
             .thenReturn(Flux.fromArray(OPEN_PULLS));
         when(projectRepo.updateState(anyLong(), Mockito.any(Project.State.class)))
             .thenReturn(Mono.empty());
-        when(projectRepo.repoIsNotPartOfProject(anyLong(), anyLong()))
+        when(projectRepo.projectDoesNotContainRepo(anyLong(), anyLong()))
             .thenReturn(Mono.just(TRUE));
 
         client.post().uri("/api/projects/{id}/addRepoByInfo", PROJECT_HIGHLOAD.id())
@@ -644,7 +644,7 @@ class ProjectsRouterTest {
             .thenReturn(Flux.fromArray(OPEN_PULLS));
         when(projectRepo.updateState(anyLong(), Mockito.any(Project.State.class)))
             .thenReturn(Mono.empty());
-        when(projectRepo.repoIsNotPartOfProject(anyLong(), anyLong()))
+        when(projectRepo.projectDoesNotContainRepo(anyLong(), anyLong()))
             .thenReturn(Mono.just(FALSE));
 
         var repoIdentity = GithubRepo.Identity.of(GH_REPO_HIGHLOAD1.owner().login(), GH_REPO_HIGHLOAD1.name());
