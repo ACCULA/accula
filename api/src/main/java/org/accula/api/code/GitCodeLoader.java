@@ -20,6 +20,7 @@ import org.accula.api.converter.CodeToModelConverter;
 import org.accula.api.db.model.Commit;
 import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.Snapshot;
+import org.accula.api.util.Checking;
 import org.accula.api.util.Lambda;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -70,7 +71,7 @@ public final class GitCodeLoader implements CodeLoader {
                                         .map(snippet -> new FileEntity<>(
                                                 snapshot,
                                                 snippet.file().name(),
-                                                Objects.requireNonNull(filesContent.get(snippet), "File content MUST present"),
+                                                Checking.present(filesContent.get(snippet), "File content"),
                                                 LineSet.inRange(snippet.lines()))))))
                 .flatMapMany(Flux::fromStream);
     }
@@ -196,7 +197,7 @@ public final class GitCodeLoader implements CodeLoader {
                 .flatMap(fileChangesAndCommitSha -> {
                     final var fileChanges = fileChangesAndCommitSha.getKey();
                     final var commitSha = fileChangesAndCommitSha.getValue();
-                    final var fileContent = Objects.requireNonNull(filesContent.get(fileChanges), "File content MUST be present");
+                    final var fileContent = Checking.present(filesContent.get(fileChanges), "File content");
                     final var snapshot = snapshotMap.get(commitSha);
                     return convertFiles(snapshot, fileChanges, fileContent);
                 });

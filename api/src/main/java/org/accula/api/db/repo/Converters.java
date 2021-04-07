@@ -8,11 +8,11 @@ import org.accula.api.db.model.GithubUser;
 import org.accula.api.db.model.Pull;
 import org.accula.api.db.model.Snapshot;
 import org.accula.api.db.model.User;
+import org.accula.api.util.Checking;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * @author Anton Lamtev
@@ -369,7 +369,7 @@ final class Converters {
     }
 
     static <T> T value(final Row row, final String name, final Class<T> clazz) {
-        return Objects.requireNonNull(row.get(name, clazz));
+        return Checking.notNull(row.get(name, clazz), name);
     }
 
     @Nullable
@@ -385,11 +385,11 @@ final class Converters {
     }
 
     static Integer integer(final Row row, final String name) {
-        return Objects.requireNonNull(row.get(name, Integer.class));
+        return Checking.notNull(row.get(name, Integer.class), name);
     }
 
     static Long longInteger(final Row row, final String name) {
-        return Objects.requireNonNull(row.get(name, Long.class));
+        return Checking.notNull(row.get(name, Long.class), name);
     }
 
     static List<Long> ids(final Row row, final String name) {

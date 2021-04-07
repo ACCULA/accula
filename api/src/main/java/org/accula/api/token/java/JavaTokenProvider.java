@@ -11,6 +11,7 @@ import org.accula.api.token.TraverseUtils;
 import org.accula.api.token.psi.PsiUtils;
 import org.accula.api.token.psi.java.JavaPsiUtils;
 import org.accula.api.token.psi.java.PsiFileFactoryProvider;
+import org.accula.api.util.Checking;
 import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
 import reactor.pool.Pool;
@@ -44,8 +45,8 @@ public final class JavaTokenProvider<Ref> implements TokenProvider<Ref> {
     }
 
     private static <Ref> Flux<List<Token<Ref>>> tokensFromFile(final FileEntity<Ref> file, final PsiFileFactory psiFileFactory) {
-        final var filename = Objects.requireNonNull(file.name());
-        final var content = Objects.requireNonNull(file.content());
+        final var filename = Checking.notNull(file.name(), "FileEntity name");
+        final var content = Checking.notNull(file.content(), "FileEntity content");
         final var methods = JavaPsiUtils
                 .methods(psiFileFactory.createFileFromText(filename, JavaLanguage.INSTANCE, content), file.lines()::containsAny)
                 .stream()
@@ -55,7 +56,7 @@ public final class JavaTokenProvider<Ref> implements TokenProvider<Ref> {
     }
 
     private static <Ref> List<Token<Ref>> methodTokens(final PsiMethod method, final FileEntity<Ref> file) {
-        final var body = Objects.requireNonNull(method.getBody());
+        final var body = Checking.notNull(method.getBody(), "PsiMethod body");
         final var filename = method.getContainingFile().getName();
         return TraverseUtils
                 .dfs(body, TraverseUtils.stream(PsiElement::getChildren))
