@@ -29,11 +29,7 @@ public interface PullRepo {
 
     Flux<Pull> findPrevious(Long projectId, Integer number, Long authorId);
 
-    Flux<Pull> findUpdatedEarlierThan(Long projectId, Integer number);
-
     Flux<Pull> findByProjectId(Long projectId);
-
-    Flux<Integer> numbersByIds(Collection<Long> ids);
 
     default Publisher<Void> mapSnapshots(final PullSnapshots pullSnapshots) {
         return mapSnapshots(List.of(pullSnapshots));

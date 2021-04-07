@@ -15,7 +15,6 @@ import org.accula.api.db.repo.PullRepo;
 import org.accula.api.db.repo.SnapshotRepo;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.GroupedFlux;
 import reactor.core.publisher.Mono;
 
 import java.util.Map;
@@ -48,10 +47,10 @@ public final class CloneDetectionService {
         this.snapshotRepo = snapshotRepo;
     }
 
-    public Flux<Clone> detectClones(final Pull pull) {
+    public Flux<Clone> detectClones(final Long projectId, final Pull pull) {
         final var head = pull.head();
 
-        final var clones = cloneDetector(pull.projectId())
+        final var clones = cloneDetector(projectId)
                 .readClones(head)
                 .distinct()
                 .map(CodeToModelConverter::convert);
@@ -62,10 +61,10 @@ public final class CloneDetectionService {
                 .flatMapMany(cloneRepo::insert);
     }
 
-    public Flux<Clone> detectClones(final Pull pull, final Iterable<Snapshot> snapshots) {
+    public Flux<Clone> detectClones(final Long projectId, final Pull pull, final Iterable<Snapshot> snapshots) {
         final var head = pull.head();
 
-        final var clones = cloneDetector(pull.projectId())
+        final var clones = cloneDetector(projectId)
                 .findClones(head, loader.loadFiles(head.repo(), snapshots, FileFilter.SRC_JAVA))
                 .distinct()
                 .map(CodeToModelConverter::convert);
@@ -83,15 +82,7 @@ public final class CloneDetectionService {
                 .then();
     }
 
-    public Mono<Void> fillSuffixTree(final Long projectId) {
-        return pullRepo
-                .findByProjectId(projectId)
-                .groupBy(Pull::projectId)
-                .flatMap(this::fillSuffixTree)
-                .then();
-    }
-
-    private Mono<Void> fillSuffixTree(final GroupedFlux<Long, Pull> pullFlux) {
+    public Mono<Void> fillSuffixTree(final Long projectId, final Flux<Pull> pullFlux) {
         final var files = pullFlux
                 .flatMap(pull -> snapshotRepo
                         .findByPullId(pull.id())
@@ -100,8 +91,11 @@ public final class CloneDetectionService {
                 .flatMap(snapshotFlux -> snapshotFlux
                         .collectList()
                         .flatMapMany(snaps -> loader.loadFiles(snapshotFlux.key(), snaps, FileFilter.SRC_JAVA)));
-        final var projectId = pullFlux.key();
         return cloneDetector(projectId).fill(files);
+    }
+
+    private Mono<Void> fillSuffixTree(final Long projectId) {
+        return fillSuffixTree(projectId, pullRepo.findByProjectId(projectId));
     }
 
     private CloneDetector cloneDetector(final Long projectId) {

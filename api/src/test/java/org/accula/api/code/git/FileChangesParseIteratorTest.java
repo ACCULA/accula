@@ -9,6 +9,7 @@ import java.util.NoSuchElementException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -155,6 +156,89 @@ class FileChangesParseIteratorTest {
         assertEquals("93c573238ace9b217bdb2080e4a90cf3c4d23efb Merge branch 'master' of github.com:polis-mail-ru/2020-highload-dht into stage4", iter.next());
         assertTrue(iter.hasNext());
         assertEquals(GitFileChanges.of(GitFile.of("28044f2", "src/main/java/ru/mail/polis/service/ServiceFactory.java"), LineSet.of(LineRange.of(21))), iter.next());
+        assertFalse(iter.hasNext());
+    }
+
+    @Test
+    void testRenameWithSimilarity100() {
+        var diff = """
+            06a7e9f1f8c3391dcb68356617964ce76d695eb8 Эм, все как обычно, валимся перед дедлайном. попытка фикса n1.
+            diff --git a/src/main/java/ru/mail/polis/DAOImpl.java b/src/main/java/ru/mail/polis/valaubr/DAOImpl.java
+            similarity index 100%
+            rename from src/main/java/ru/mail/polis/DAOImpl.java
+            rename to src/main/java/ru/mail/polis/valaubr/DAOImpl.java
+            """;
+        var iter = new FileChangesParseIterator(Iterators.nextResettable(diff.lines().iterator()));
+        assertTrue(iter.hasNext());
+        assertEquals("06a7e9f1f8c3391dcb68356617964ce76d695eb8 Эм, все как обычно, валимся перед дедлайном. попытка фикса n1.", iter.next());
+        assertTrue(iter.hasNext());
+        assertSame(GitFileChanges.empty(), iter.next());
+        assertFalse(iter.hasNext());
+    }
+
+    @Test
+    void testEmptyDiff() {
+        var diff = """
+            16624d43ddc49c777ef8541406d677efbdc56c4a Merge branch 'master' of https://github.com/polis-mail-ru/2020-db-lsm into task3
+            
+            """;
+        var iter = new FileChangesParseIterator(Iterators.nextResettable(diff.lines().iterator()));
+        assertTrue(iter.hasNext());
+        assertEquals("16624d43ddc49c777ef8541406d677efbdc56c4a Merge branch 'master' of https://github.com/polis-mail-ru/2020-db-lsm into task3", iter.next());
+        assertTrue(iter.hasNext());
+        assertSame(GitFileChanges.empty(), iter.next());
+        assertFalse(iter.hasNext());
+    }
+
+    @Test
+    void testEndsAtFileId() {
+        var diff = """
+            diff --git a/logs/2019-11-23_18-07-47.413679/test_data.log b/logs/2019-11-23_18-07-47.413679/test_data.log
+            new file mode 100644
+            index 0000000..e69de29
+            diff --git a/src/main/java/ru/mail/polis/service/hljavacourse/AmmoGenerator.java b/src/main/java/ru/mail/polis/service/hljavacourse/AmmoGenerator.java
+            old mode 100755
+            new mode 100644
+            index 8965001..93a18fe
+            --- a/src/main/java/ru/mail/polis/service/hljavacourse/AmmoGenerator.java
+            +++ b/src/main/java/ru/mail/polis/service/hljavacourse/AmmoGenerator.java
+            @@ -2,20 +2,24 @@ package ru.mail.polis.service.hljavacourse;
+            \s
+             import org.jetbrains.annotations.NotNull;
+            \s
+            -import java.io.*;
+            -import java.nio.charset.StandardCharsets;
+            +import java.io.ByteArrayOutputStream;
+            +import java.io.IOException;
+            +import java.io.OutputStreamWriter;
+            +import java.io.Writer;
+             import java.util.concurrent.ThreadLocalRandom;
+            \s
+            +import static java.nio.charset.StandardCharsets.US_ASCII;
+            +
+             public class AmmoGenerator {
+            -    private static final int VALUE_LENGTH = 512;
+            +    public static final int VALUE_LENGTH = 256;
+            \s
+                 @NotNull
+            -    private static String randomKey(){
+            +    private static String randomKey() {
+                     return Long.toHexString(ThreadLocalRandom.current().nextLong());
+                 }
+            \s
+                 @NotNull
+            -    private static byte[] randomValue(){
+            +    private static byte[] randomValue() {
+                     final byte[] result = new byte[VALUE_LENGTH];
+                     ThreadLocalRandom.current().nextBytes(result);
+                     return result;
+            """;
+        var iter = new FileChangesParseIterator(Iterators.nextResettable(diff.lines().iterator()));
+        assertTrue(iter.hasNext());
+        assertSame(GitFileChanges.empty(), iter.next());
+        assertTrue(iter.hasNext());
+        assertEquals(GitFileChanges.of(GitFile.of("93a18fe", "src/main/java/ru/mail/polis/service/hljavacourse/AmmoGenerator.java"),
+            LineSet.of(LineRange.of(5, 8), LineRange.of(11, 12), LineRange.of(14), LineRange.of(17), LineRange.of(22))), iter.next());
         assertFalse(iter.hasNext());
     }
 }

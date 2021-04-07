@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 
 import java.util.Objects;
 
@@ -55,23 +56,24 @@ public final class GithubWebhookHandler {
 
     private Mono<Void> processPayload(final GithubApiHookPayload payload) {
         return (switch (payload.action()) {
-            case OPENED, SYNCHRONIZE -> updateProject(payload).doOnNext(this::detectClonesInBackground);
+            case OPENED, SYNCHRONIZE -> updateProject(payload)
+                .doOnNext(update -> detectClonesInBackground(update.getT1(), update.getT2()));
             case EDITED, CLOSED, REOPENED -> updateProject(payload);
         }).then();
     }
 
-    private Mono<PullSnapshots> updateProject(final GithubApiHookPayload payload) {
-        final var githubApiPull = payload.pull();
-
+    private Mono<Tuple2<Long, PullSnapshots>> updateProject(final GithubApiHookPayload payload) {
         return projectRepo
-                .idByRepoId(payload.repo().id())
-                .flatMap(projectId -> projectService.update(projectId, githubApiPull));
+            .idByRepoId(payload.repo().id())
+            .flatMap(projectId -> Mono
+                .just(projectId)
+                .zipWith(projectService.update(payload.pull())));
     }
 
-    private void detectClonesInBackground(final PullSnapshots update) {
+    private void detectClonesInBackground(final Long projectId, final PullSnapshots pullSnapshots) {
         cloneDetectionService
-                .detectClones(update.pull(), update.snapshots())
-                .subscribe();
+            .detectClones(projectId, pullSnapshots.pull(), pullSnapshots.snapshots())
+            .subscribe();
     }
 
     private static <E extends Throwable, T> Mono<T> ignoreNotSupportedAction(final E error) {

@@ -3,6 +3,7 @@ package org.accula.api.converter;
 import com.google.common.base.Preconditions;
 import org.accula.api.code.FileEntity;
 import org.accula.api.db.model.Clone;
+import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.GithubUser;
 import org.accula.api.db.model.Project;
 import org.accula.api.db.model.Pull;
@@ -13,12 +14,14 @@ import org.accula.api.handler.dto.GithubUserDto;
 import org.accula.api.handler.dto.ProjectConfDto;
 import org.accula.api.handler.dto.ProjectDto;
 import org.accula.api.handler.dto.PullDto;
+import org.accula.api.handler.dto.RepoShortDto;
 import org.accula.api.handler.dto.ShortPullDto;
 import org.accula.api.handler.dto.UserDto;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -51,14 +54,33 @@ public final class ModelToDtoConverter {
                 .repoOpenPullCount(project.openPullCount())
                 .creatorId(project.creator().id())
                 .adminIds(project.adminIds())
+                .secondaryRepos(convert(project.secondaryRepos()))
                 .build();
     }
 
     public static ProjectDto.State convert(final Project.State state) {
         return switch (state) {
-            case CREATING -> ProjectDto.State.CREATING;
-            case CREATED -> ProjectDto.State.CREATED;
+            case CONFIGURING -> ProjectDto.State.CREATING;
+            case CONFIGURED -> ProjectDto.State.CREATED;
         };
+    }
+
+    public static List<RepoShortDto> convert(final Collection<GithubRepo> repos) {
+        if (repos.isEmpty()) {
+            return List.of();
+        }
+        return repos
+            .stream()
+            .map(ModelToDtoConverter::convert)
+            .collect(Collectors.toList());
+    }
+
+    public static RepoShortDto convert(final GithubRepo repo) {
+        return RepoShortDto.builder()
+            .id(repo.id())
+            .owner(repo.owner().login())
+            .name(repo.name())
+            .build();
     }
 
     public static ProjectConfDto convert(final Project.Conf conf) {
@@ -80,7 +102,7 @@ public final class ModelToDtoConverter {
 
     public static PullDto convert(final Pull pull, final List<Pull> previousPulls) {
         return PullDto.builder()
-                .projectId(pull.projectId())
+                .projectId(Objects.requireNonNull(pull.primaryProjectId(), "Pull.primaryProjectId MUST NOT be null"))
                 .number(pull.number())
                 .url(pullUrl(pull))
                 .title(pull.title())
@@ -118,7 +140,7 @@ public final class ModelToDtoConverter {
 
     public static ShortPullDto convertShort(final Pull pull) {
         return ShortPullDto.builder()
-                .projectId(pull.projectId())
+                .projectId(Objects.requireNonNull(pull.primaryProjectId(), "Pull.primaryProjectId MUST NOT be null"))
                 .number(pull.number())
                 .url(pullUrl(pull))
                 .title(pull.title())

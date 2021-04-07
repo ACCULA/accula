@@ -38,11 +38,6 @@ public final class CloneRepoImpl implements CloneRepo, ConnectionProvidedRepo {
     }
 
     @Override
-    public Mono<Clone> findById(final Long id) {
-        return Mono.error(new UnsupportedOperationException());
-    }
-
-    @Override
     public Flux<Clone> findByPullNumber(final Long projectId, final Integer pullNumber) {
         return manyWithConnection(connection -> selectStatement(connection)
                 .bind("$1", projectId)
@@ -165,6 +160,8 @@ public final class CloneRepoImpl implements CloneRepo, ConnectionProvidedRepo {
                       ON target_repo.owner_id = target_repo_owner.id
                   JOIN pull target_pull
                       ON target_snap_to_pull.pull_id = target_pull.id
+                  JOIN project
+                      ON target_pull.base_snapshot_repo_id = project.github_repo_id
                   JOIN clone_snippet source_snippet
                       ON clone.source_id = source_snippet.id
                   JOIN snapshot_pull source_snap_to_pull
@@ -179,8 +176,7 @@ public final class CloneRepoImpl implements CloneRepo, ConnectionProvidedRepo {
                       ON source_repo.owner_id = source_repo_owner.id
                   JOIN pull source_pull
                       ON source_snap_to_pull.pull_id = source_pull.id
-                WHERE target_pull.project_id = $1 AND target_pull.number = $2
-                   OR source_pull.project_id = $1 AND source_pull.number = $2
+                WHERE project.id = $1 AND target_pull.number = $2
                 """;
         return (PostgresqlStatement) connection.createStatement(sql);
     }
@@ -196,7 +192,9 @@ public final class CloneRepoImpl implements CloneRepo, ConnectionProvidedRepo {
                                                          ON pull.id = target.pull_id
                                                     JOIN clone
                                                          ON target.id = clone.target_id
-                                           WHERE pull.project_id = $1
+                                                    JOIN project
+                                                         ON pull.base_snapshot_repo_id = project.github_repo_id
+                                           WHERE project.id = $1
                                              AND pull.number = $2)
                         """))
                 .bind("$1", projectId)

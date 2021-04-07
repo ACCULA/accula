@@ -146,7 +146,7 @@ public interface LineRange extends Comparable<LineRange>, IntIterable {
     @Value
     @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
     class Single implements LineRange {
-        public static final String CACHE_SIZE_PROPERTY_KEY = Cache.class.getName().replace("$", ".") + ".size";
+        public static final String CACHE_SIZE_PROPERTY_KEY = Cache.class.getCanonicalName() + ".size";
         int line;
 
         @Override

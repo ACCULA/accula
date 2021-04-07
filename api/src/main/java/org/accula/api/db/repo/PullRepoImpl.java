@@ -47,7 +47,6 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
                                       base_snapshot_sha,
                                       base_snapshot_repo_id,
                                       base_snapshot_branch,
-                                      project_id,
                                       author_github_id)
                     VALUES ($collection)
                     ON CONFLICT (id) DO UPDATE
@@ -70,7 +69,6 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
                     pull.base().sha(),
                     pull.base().repo().id(),
                     pull.base().branch(),
-                    pull.projectId(),
                     pull.author().id()
             });
 
@@ -119,44 +117,12 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
     }
 
     @Override
-    public Flux<Pull> findUpdatedEarlierThan(final Long projectId, final Integer number) {
-        return manyWithConnection(connection -> Mono
-                .from(selectUpdatedEarlierStatement(connection)
-                        .bind("$1", projectId)
-                        .bind("$2", number)
-                        .execute())
-                .flatMapMany(result -> ConnectionProvidedRepo.convertMany(result, PullRepoImpl::convert)));
-    }
-
-    @Override
     public Flux<Pull> findByProjectId(final Long projectId) {
         return manyWithConnection(connection -> Mono
                 .from(selectByProjectIdStatement(connection)
                         .bind("$1", projectId)
                         .execute())
                 .flatMapMany(result -> ConnectionProvidedRepo.convertMany(result, PullRepoImpl::convert)));
-    }
-
-    @Override
-    public Flux<Integer> numbersByIds(final Collection<Long> ids) {
-        if (ids.isEmpty()) {
-            return Flux.empty();
-        }
-
-        return manyWithConnection(connection -> {
-            final var statement = (PostgresqlStatement) connection.createStatement("""
-                    SELECT number
-                    FROM pull
-                        JOIN unnest($1) WITH ORDINALITY AS arr(id, ord)
-                            ON pull.id = arr.id
-                    ORDER BY arr.ord
-                    """);
-            statement.bind("$1", ids.toArray(new Long[0]));
-
-            return statement
-                    .execute()
-                    .flatMap(result -> ConnectionProvidedRepo.columnFlux(result, "number", Integer.class));
-        });
     }
 
     @Override
@@ -199,32 +165,22 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
 
     private static PostgresqlStatement selectByProjectIdStatement(final Connection connection) {
         return selectStatement(connection, EMPTY_CLAUSE, """
-                WHERE pull.project_id = $1
+                WHERE primary_project.id = $1
                 """, """
                 ORDER BY pull.open DESC, pull.updated_at DESC
                 """);
     }
 
     private static PostgresqlStatement selectByNumberStatement(final Connection connection) {
-        return selectStatement(connection, EMPTY_CLAUSE, "WHERE pull.project_id = $1 AND pull.number = $2", EMPTY_CLAUSE);
+        return selectStatement(connection, EMPTY_CLAUSE, "WHERE primary_project.id = $1 AND pull.number = $2", EMPTY_CLAUSE);
     }
 
     private static PostgresqlStatement selectPreviousByNumberAndAuthorIdStatement(final Connection connection) {
         return selectStatement(connection, EMPTY_CLAUSE, """
-                WHERE pull.project_id = $1 AND pull.number < $2 AND author.id = $3
+                WHERE primary_project.id = $1 AND pull.number < $2 AND author.id = $3
                 """, """
                 ORDER BY pull.number DESC
                 """);
-    }
-
-    private static PostgresqlStatement selectUpdatedEarlierStatement(final Connection connection) {
-        return selectStatement(connection, EMPTY_CLAUSE, """
-                WHERE pull.project_id = $1 AND
-                      pull.number != $2 AND
-                      pull.updated_at <= (SELECT updated_at
-                                          FROM pull
-                                          WHERE project_id = $1 AND number = $2)
-                """, EMPTY_CLAUSE);
     }
 
     private static PostgresqlStatement selectStatement(final Connection connection,
@@ -238,7 +194,7 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
                        pull.open                AS open,
                        pull.created_at          AS created_at,
                        pull.updated_at          AS updated_at,
-                       pull.project_id          AS project_id,
+                       primary_project.id       AS primary_project_id,
                        head_commit.sha          AS head_commit_sha,
                        head_commit.is_merge     AS head_commit_is_merge,
                        head_commit.author_name  AS head_commit_author_name,
@@ -297,6 +253,8 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
                        ON base_repo.owner_id = base_repo_owner.id
                    JOIN user_github author
                        ON pull.author_github_id = author.id
+                   LEFT JOIN project primary_project
+                       ON base_repo.id = primary_project.github_repo_id
                 """;
         return (PostgresqlStatement) connection
                 .createStatement(String.format("%s %s %s %s", sql, fromClauseExtension, whereClause, orderByClause));
@@ -345,6 +303,6 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
                 "author_name",
                 "author_avatar",
                 "author_is_org",
-                "project_id");
+                "primary_project_id");
     }
 }

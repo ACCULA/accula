@@ -80,8 +80,10 @@ public class WebSecurityConfig {
                         .pathMatchers(GET, "/api/projects/{id}/githubAdmins").authenticated()
                         .pathMatchers(GET, "/api/projects/{id}/headFiles").authenticated()
                         .pathMatchers(GET, "/api/projects/{id}/conf").authenticated()
+                        .pathMatchers(GET, "/api/projects/{id}/repoSuggestion").authenticated()
                         .pathMatchers(GET, "/api/projects/**").permitAll()
                         .pathMatchers("/api/projects/**").authenticated()
+                        .pathMatchers(GET, "/api/app/settingsUrl").authenticated()
                         .anyExchange().permitAll())
 
                 .addFilterAt(corsWebFilter, CORS)

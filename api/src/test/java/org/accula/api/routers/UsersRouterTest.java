@@ -1,12 +1,6 @@
-package org.accula.api.router;
+package org.accula.api.routers;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.PropertyAccessor;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.Value;
 import org.accula.api.converter.ModelToDtoConverter;
@@ -14,7 +8,6 @@ import org.accula.api.db.model.GithubUser;
 import org.accula.api.db.model.User;
 import org.accula.api.db.repo.UserRepo;
 import org.accula.api.handler.UsersHandler;
-import org.accula.api.handler.dto.UserDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;

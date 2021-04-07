@@ -1,4 +1,4 @@
-package org.accula.api.router;
+package org.accula.api.routers;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

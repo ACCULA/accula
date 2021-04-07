@@ -287,7 +287,6 @@ final class GitTest {
                             assertDoesNotThrow(() -> {
                                 final var commits = repo.log(HEAD_REF).get();
                                 assertEquals(10, commits.size());
-                                ;
                             }));
         });
     }

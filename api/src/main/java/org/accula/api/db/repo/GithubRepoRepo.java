@@ -18,4 +18,6 @@ public interface GithubRepoRepo {
     Flux<GithubRepo> upsert(Collection<GithubRepo> repos);
 
     Mono<GithubRepo> findById(Long id);
+
+    Mono<GithubRepo> findByName(String owner, String name);
 }

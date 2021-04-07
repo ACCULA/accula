@@ -14,6 +14,8 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -32,8 +34,8 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
         return withConnection(connection -> Mono
                 .from(connection
                         .createStatement("""
-                                SELECT NOT exists(SELECT 0 
-                                                  FROM project 
+                                SELECT NOT exists(SELECT 0
+                                                  FROM project
                                                   WHERE github_repo_id = $1) AS not_exists
                                 """)
                         .bind("$1", githubRepoId)
@@ -96,11 +98,13 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
 
     @Override
     public Mono<Project> findById(final Long id) {
-        return withConnection(connection -> Mono
-                .from(selectByIdStatement(connection)
-                        .bind("$1", id)
-                        .execute())
-                .flatMap(result -> ConnectionProvidedRepo.convert(result, this::convert)));
+        return transactional(connection -> selectByIdStatement(connection)
+            .bind("$1", id)
+            .execute()
+            .next()
+            .flatMap(result -> ConnectionProvidedRepo.convert(result, this::convert))
+            .flatMap(project -> secondaryRepos(connection, id)
+                .map(project::withSecondaryRepos)));
     }
 
     @Override
@@ -191,6 +195,45 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
     }
 
     @Override
+    public Mono<Boolean> projectDoesNotContainRepo(final Long projectId, final Long repoId) {
+        return withConnection(connection -> Mono
+            .from(((PostgresqlStatement) connection
+                .createStatement("""
+                    SELECT NOT exists(SELECT 1
+                                      FROM project
+                                      WHERE id = $1 AND github_repo_id = $2)
+                               AND
+                           NOT exists(SELECT 1
+                                      FROM project_repo
+                                      WHERE project_id = $1 AND repo_id = $2)
+                               AS not_exists
+                    """))
+                .bind("$1", projectId)
+                .bind("$2", repoId)
+                .execute())
+            .flatMap(result -> ConnectionProvidedRepo.column(result, "not_exists", Boolean.class)));
+    }
+
+    @Override
+    public Mono<Void> attachRepos(final Long projectId, final Collection<Long> repoIds) {
+        return withConnection(connection -> {
+            final var statement = BatchStatement.of(connection, """
+                INSERT INTO project_repo (project_id, repo_id)
+                VALUES ($collection)
+                ON CONFLICT (project_id, repo_id) DO NOTHING
+                """);
+            statement.bind(repoIds, repoId -> new Object[]{
+                projectId,
+                repoId
+            });
+            return statement
+                .execute()
+                .flatMap(PostgresqlResult::getRowsUpdated)
+                .then();
+        });
+    }
+
+    @Override
     public void addOnConfUpdate(final OnConfUpdate onConfUpdate) {
         onConfUpdates.add(onConfUpdate);
     }
@@ -242,10 +285,12 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
                               ON p.creator_id = project_creator.id
                          JOIN user_github project_creator_github_user
                               ON project_creator.github_id = project_creator_github_user.id
-                         LEFT JOIN (SELECT count(*) FILTER ( WHERE open ),
-                                           project_id
+                         LEFT JOIN (SELECT count(*) FILTER ( WHERE pull.open ),
+                                           pull_proj.id AS project_id
                                FROM pull
-                               GROUP BY project_id) pulls
+                                 JOIN project pull_proj
+                                   ON pull.base_snapshot_repo_id = pull_proj.github_repo_id
+                               GROUP BY pull_proj.id) pulls
                               ON p.id = pulls.project_id
                          LEFT JOIN (SELECT this.project_id,
                                            array_agg(this.admin_id) AS ids
@@ -254,6 +299,18 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
                                    ON p.id = admins.project_id
                 """;
         return (PostgresqlStatement) connection.createStatement(String.format("%s %s", sql, terminatingCondition));
+    }
+
+    private static Mono<List<GithubRepo>> secondaryRepos(final Connection connection, final Long projectId) {
+        return GithubRepoRepoImpl
+            .selectStatement(connection,
+                "JOIN project_repo ON repo.id = project_repo.repo_id",
+                "WHERE project_repo.project_id = $1"
+            )
+            .bind("$1", projectId)
+            .execute()
+            .flatMap(result -> ConnectionProvidedRepo.convertMany(result, GithubRepoRepoImpl::convert))
+            .collectList();
     }
 
     private Mono<Void> upsertAdmins(final Connection connection, final Long projectId, final Project.Conf conf) {
@@ -289,7 +346,7 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
 
     private Mono<Void> upsertConf(final Connection connection, final Long projectId, final Project.Conf conf) {
         return ((PostgresqlStatement) connection.createStatement("""
-                INSERT INTO project_conf (project_id, clone_min_token_count, file_min_similarity_index, excluded_files)             
+                INSERT INTO project_conf (project_id, clone_min_token_count, file_min_similarity_index, excluded_files)
                 VALUES ($1, $2, $3, $4)
                 ON CONFLICT (project_id) DO UPDATE
                       SET clone_min_token_count = $2,

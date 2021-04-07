@@ -437,7 +437,7 @@ public final class Git {
                 continue;
             }
             final var fileChanges = (GitFileChanges) next;
-            if (!fileChanges.file().isDeleted() && !fileChanges.changedLines().isEmpty()) {
+            if (!fileChanges.file().isDeleted() && !fileChanges.file().isDevNull() && !fileChanges.changedLines().isEmpty()) {
                 entries.put(fileChanges, Objects.requireNonNull(sha, "sha MUST not be null here"));
             }
         }

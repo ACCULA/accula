@@ -1,4 +1,4 @@
-package org.accula.api.router;
+package org.accula.api.routers;
 
 import lombok.RequiredArgsConstructor;
 import org.accula.api.handler.ProjectsHandler;
@@ -30,8 +30,11 @@ public final class ProjectsRouter {
                         .nest(path("/{id}"), b2 -> b2
                                 .GET("", projectsHandler::get)
                                 .DELETE("", projectsHandler::delete)
+                                .POST("/addRepoByUrl", projectsHandler::addRepoByUrl)
+                                .POST("/addRepoByInfo", projectsHandler::addRepoByInfo)
                                 .GET("/githubAdmins", projectsHandler::githubAdmins)
                                 .GET("/headFiles", projectsHandler::headFiles)
+                                .GET("/repoSuggestion", projectsHandler::repoSuggestion)
                                 .nest(path("/conf"), b3 -> b3
                                         .GET("", projectsHandler::getConf)
                                         .PUT("", accept(APPLICATION_JSON), projectsHandler::updateConf))))

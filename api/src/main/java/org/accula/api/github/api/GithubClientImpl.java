@@ -78,6 +78,30 @@ public final class GithubClientImpl implements GithubClient {
     }
 
     @Override
+    public Flux<GithubApiRepo> getAllRepos(final int perPage) {
+        final var page = new AtomicInteger(1);
+        return getAllRepos(perPage, page.getAndIncrement())
+            .expand(repos -> {
+                if (repos.length < perPage) {
+                    return Mono.empty();
+                }
+                return getAllRepos(perPage, page.getAndIncrement());
+            })
+            .flatMap(Flux::fromArray);
+    }
+
+    @Override
+    public Mono<GithubApiRepo[]> getAllRepos(final int perPage, final int page) {
+        return withAccessToken(accessToken -> githubApiWebClient
+            .get()
+            .uri("/user/repos?per_page={perPage}&page={page}&type=all", perPage, page)
+            .headers(h -> h.setBearerAuth(accessToken))
+            .retrieve()
+            .bodyToMono(GithubApiRepo[].class)
+            .onErrorMap(GithubClientException::new));
+    }
+
+    @Override
     public Mono<List<Long>> getRepoAdmins(final String owner, final String repo) {
         return withAccessToken(accessToken -> githubApiWebClient
                 .get()

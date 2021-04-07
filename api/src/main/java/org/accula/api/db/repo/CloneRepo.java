@@ -17,8 +17,6 @@ public interface CloneRepo {
 
     Flux<Clone> insert(Collection<Clone> clones);
 
-    Mono<Clone> findById(Long id);
-
     Flux<Clone> findByPullNumber(Long projectId, Integer pullNumber);
 
     Mono<Void> deleteByPullNumber(Long projectId, Integer pullNumber);

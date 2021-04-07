@@ -3,6 +3,7 @@ package org.accula.api.db.model;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
+import org.jetbrains.annotations.Nullable;
 
 import java.time.Instant;
 
@@ -23,5 +24,6 @@ public class Pull {
     Snapshot head;
     Snapshot base;
     GithubUser author;
-    Long projectId;
+    @Nullable
+    Long primaryProjectId;
 }

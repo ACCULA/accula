@@ -51,7 +51,7 @@ public final class GithubApiToModelConverter {
         return new GithubUser(id, login, name, avatar, false);
     }
 
-    public static Snapshot.PullInfo convert(final GithubApiPull pull) {
+    public static Snapshot.PullInfo convertInfo(final GithubApiPull pull) {
         return Snapshot.PullInfo.of(pull.id(), pull.number());
     }
 
@@ -59,12 +59,12 @@ public final class GithubApiToModelConverter {
         return Snapshot.builder()
                 .commit(Commit.shaOnly(snapshot.sha()))
                 .branch(snapshot.ref())
-                .pullInfo(convert(pull))
+                .pullInfo(convertInfo(pull))
                 .repo(convert(Objects.requireNonNull(snapshot.repo(), "GithubApiPull repo MUST NOT be null")))
                 .build();
     }
 
-    public static Pull convert(final GithubApiPull pull, final Long projectId) {
+    public static Pull convert(final GithubApiPull pull) {
         return Pull.builder()
                 .id(pull.id())
                 .number(pull.number())
@@ -75,7 +75,6 @@ public final class GithubApiToModelConverter {
                 .head(convert(pull.head(), pull))
                 .base(convert(pull.base(), pull))
                 .author(convert(pull.user()))
-                .projectId(projectId)
                 .build();
     }
 

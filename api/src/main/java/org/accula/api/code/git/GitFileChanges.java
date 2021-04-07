@@ -8,8 +8,14 @@ import org.accula.api.code.lines.LineSet;
  */
 @Value(staticConstructor = "of")
 public class GitFileChanges implements Identifiable {
+    private static final GitFileChanges EMPTY = GitFileChanges.of(GitFile.devNull(), LineSet.empty());
+
     GitFile file;
     LineSet changedLines;
+
+    public static GitFileChanges empty() {
+        return EMPTY;
+    }
 
     @Override
     public String id() {

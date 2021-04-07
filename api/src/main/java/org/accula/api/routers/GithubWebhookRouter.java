@@ -1,28 +1,26 @@
-package org.accula.api.router;
+package org.accula.api.routers;
 
 import lombok.RequiredArgsConstructor;
-import org.accula.api.handler.PullsHandler;
+import org.accula.api.handler.GithubWebhookHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.RouterFunctions;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
+import static org.springframework.web.reactive.function.server.RequestPredicates.POST;
+
 /**
  * @author Anton Lamtev
  */
 @Component
 @RequiredArgsConstructor
-public final class PullsRouter {
-    private final PullsHandler pullsHandler;
+public final class GithubWebhookRouter {
+    private final GithubWebhookHandler webhookHandler;
 
     @Bean
-    public RouterFunction<ServerResponse> pullsRoute() {
+    public RouterFunction<ServerResponse> webhookRoute() {
         return RouterFunctions
-                .route()
-                .path("/api/projects/{projectId}/pulls", builder -> builder
-                        .GET("", pullsHandler::getMany)
-                        .GET("/{pullNumber}", pullsHandler::get))
-                .build();
+                .route(POST("/api/webhook"), webhookHandler::webhook);
     }
 }

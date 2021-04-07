@@ -18,6 +18,9 @@ public final class Iterators {
 
     public interface NextResettableIterator<T> extends Iterator<T> {
         void resetNext(T next);
+
+        @Nullable
+        T lastReturnedNext();
     }
 
     @RequiredArgsConstructor
@@ -25,6 +28,8 @@ public final class Iterators {
         private final Iterator<T> iterator;
         @Nullable
         private T next;
+        @Nullable
+        private T lastReturnedNext;
 
         @Override
         public boolean hasNext() {
@@ -35,17 +40,23 @@ public final class Iterators {
         public T next() {
             if (next != null) {
                 try {
-                    return next;
+                    return lastReturnedNext = next;
                 } finally {
                     next = null;
                 }
             }
-            return iterator.next();
+            return lastReturnedNext = iterator.next();
         }
 
         @Override
         public void resetNext(final T next) {
             this.next = next;
+        }
+
+        @Override
+        @Nullable
+        public T lastReturnedNext() {
+            return lastReturnedNext;
         }
     }
 }
