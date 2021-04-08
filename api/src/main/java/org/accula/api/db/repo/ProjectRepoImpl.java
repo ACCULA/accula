@@ -222,10 +222,10 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
                 VALUES ($collection)
                 ON CONFLICT (project_id, repo_id) DO NOTHING
                 """);
-            statement.bind(repoIds, repoId -> new Object[]{
+            statement.bind(repoIds, repoId -> Bindings.of(
                 projectId,
                 repoId
-            });
+            ));
             return statement
                 .execute()
                 .flatMap(PostgresqlResult::getRowsUpdated)
@@ -331,10 +331,10 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
                     INSERT INTO project_admin (project_id, admin_id)
                     VALUES ($collection)
                     """);
-            insertAdminsBackStatement.bind(conf.adminIds(), adminId -> new Object[]{
+            insertAdminsBackStatement.bind(conf.adminIds(), adminId -> Bindings.of(
                     projectId,
                     adminId
-            });
+            ));
             insertNewAdmins = insertAdminsBackStatement
                     .execute()
                     .flatMap(PostgresqlResult::getRowsUpdated)

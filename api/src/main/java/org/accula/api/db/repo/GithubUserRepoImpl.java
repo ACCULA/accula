@@ -37,13 +37,13 @@ public final class GithubUserRepoImpl implements GithubUserRepo, ConnectionProvi
                            name = COALESCE(excluded.name, user_github.name),
                            avatar = excluded.avatar
                     """);
-            statement.bind(users, user -> new Object[]{
+            statement.bind(users, user -> Bindings.of(
                     user.id(),
                     user.login(),
                     user.name(),
                     user.avatar(),
                     user.isOrganization()
-            });
+            ));
 
             return statement
                     .execute()

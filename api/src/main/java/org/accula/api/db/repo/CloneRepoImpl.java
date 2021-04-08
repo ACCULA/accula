@@ -62,7 +62,7 @@ public final class CloneRepoImpl implements CloneRepo, ConnectionProvidedRepo {
                 VALUES ($collection)
                 RETURNING id
                 """);
-        snippetsStatement.bind(snippets, snippet -> new Object[]{
+        snippetsStatement.bind(snippets, snippet -> Bindings.of(
                 snippet.snapshot().sha(),
                 snippet.snapshot().repo().id(),
                 snippet.snapshot().branch(),
@@ -70,7 +70,7 @@ public final class CloneRepoImpl implements CloneRepo, ConnectionProvidedRepo {
                 snippet.file(),
                 snippet.fromLine(),
                 snippet.toLine()
-        });
+        ));
 
         return snippetsStatement
                 .execute()
@@ -91,10 +91,10 @@ public final class CloneRepoImpl implements CloneRepo, ConnectionProvidedRepo {
                 VALUES ($collection)
                 RETURNING id
                 """);
-        statement.bind(clones, clone -> new Object[]{
+        statement.bind(clones, clone -> Bindings.of(
                 clone.target().id(),
                 clone.source().id()
-        });
+        ));
         return statement
                 .execute()
                 .flatMap(result -> ConnectionProvidedRepo.columnFlux(result, "id", Long.class))

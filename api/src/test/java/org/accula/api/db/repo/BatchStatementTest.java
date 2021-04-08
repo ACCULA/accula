@@ -27,13 +27,13 @@ class BatchStatementTest {
 
     @Test
     void testBind() {
-        statement.bind(users, user -> new Object[]{
+        statement.bind(users, user -> Bindings.of(
                 user.id(),
                 user.login(),
                 user.name(),
                 user.avatar(),
-                user.isOrganization(),
-        });
+                user.isOrganization()
+        ));
 
         @Language("SQL")//
         String expectedSql = """
