@@ -20,7 +20,7 @@ import org.accula.api.handler.exception.ResponseConvertibleException;
 import org.accula.api.handler.util.PathVariableExtractor;
 import org.accula.api.handler.util.Responses;
 import org.accula.api.service.CloneDetectionService;
-import org.accula.api.util.Checking;
+import org.accula.api.util.Checks;
 import org.accula.api.util.Lambda;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
@@ -130,8 +130,8 @@ public final class ClonesHandler {
                 final var dto = ModelToDtoConverter.convert(
                         clone,
                         projectId,
-                        Checking.present(files.get(clone.target()), "Clone target file content"),
-                        Checking.present(files.get(clone.source()), "Clone source file content")
+                        Checks.notNull(files.get(clone.target()), "Clone target file content"),
+                        Checks.notNull(files.get(clone.source()), "Clone source file content")
                 );
                 sink.next(dto);
             }

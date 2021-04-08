@@ -4,7 +4,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Streams;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
-import org.accula.api.util.Checking;
+import org.accula.api.util.Checks;
 import org.accula.api.util.Iterators;
 import org.accula.api.util.Sync;
 import org.jetbrains.annotations.Nullable;
@@ -439,7 +439,7 @@ public final class Git {
             }
             final var fileChanges = (GitFileChanges) next;
             if (!fileChanges.file().isDeleted() && !fileChanges.file().isDevNull() && !fileChanges.changedLines().isEmpty()) {
-                entries.put(fileChanges, Checking.notNull(sha, "sha"));
+                entries.put(fileChanges, Checks.notNull(sha, "sha"));
             }
         }
         return entries;

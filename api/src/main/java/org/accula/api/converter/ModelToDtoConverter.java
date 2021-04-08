@@ -17,7 +17,7 @@ import org.accula.api.handler.dto.PullDto;
 import org.accula.api.handler.dto.RepoShortDto;
 import org.accula.api.handler.dto.ShortPullDto;
 import org.accula.api.handler.dto.UserDto;
-import org.accula.api.util.Checking;
+import org.accula.api.util.Checks;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -102,7 +102,7 @@ public final class ModelToDtoConverter {
 
     public static PullDto convert(final Pull pull, final List<Pull> previousPulls) {
         return PullDto.builder()
-                .projectId(Checking.notNull(pull.primaryProjectId(), "Pull primaryProjectId"))
+                .projectId(Checks.notNull(pull.primaryProjectId(), "Pull primaryProjectId"))
                 .number(pull.number())
                 .url(pullUrl(pull))
                 .title(pull.title())
@@ -140,7 +140,7 @@ public final class ModelToDtoConverter {
 
     public static ShortPullDto convertShort(final Pull pull) {
         return ShortPullDto.builder()
-                .projectId(Checking.notNull(pull.primaryProjectId(), "Pull primaryProjectId"))
+                .projectId(Checks.notNull(pull.primaryProjectId(), "Pull primaryProjectId"))
                 .number(pull.number())
                 .url(pullUrl(pull))
                 .title(pull.title())
@@ -166,8 +166,8 @@ public final class ModelToDtoConverter {
     private static CloneDto.FlatCodeSnippet convert(final Clone.Snippet snippet,
                                                     final FileEntity<Snapshot> file) {
         final var snapshot = snippet.snapshot();
-        final var pullInfo = Checking.notNull(snapshot.pullInfo(), "Snapshot pullInfo");
-        final var fileContent = Checking.notNull(file.content(), "FileEntity content").getBytes(UTF_8);
+        final var pullInfo = Checks.notNull(snapshot.pullInfo(), "Snapshot pullInfo");
+        final var fileContent = Checks.notNull(file.content(), "FileEntity content").getBytes(UTF_8);
 
         Preconditions.checkArgument(snapshot.equals(file.ref()));
         Preconditions.checkArgument(snippet.file().equals(file.name()));

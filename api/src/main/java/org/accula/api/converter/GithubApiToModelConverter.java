@@ -9,7 +9,7 @@ import org.accula.api.github.model.GithubApiPull;
 import org.accula.api.github.model.GithubApiRepo;
 import org.accula.api.github.model.GithubApiSnapshot;
 import org.accula.api.github.model.GithubApiUser;
-import org.accula.api.util.Checking;
+import org.accula.api.util.Checks;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Component;
 
@@ -60,7 +60,7 @@ public final class GithubApiToModelConverter {
                 .commit(Commit.shaOnly(snapshot.sha()))
                 .branch(snapshot.ref())
                 .pullInfo(convertInfo(pull))
-                .repo(convert(Checking.notNull(snapshot.repo(), "GithubApiPull repo")))
+                .repo(convert(Checks.notNull(snapshot.repo(), "GithubApiPull repo")))
                 .build();
     }
 

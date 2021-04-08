@@ -8,7 +8,7 @@ import org.accula.api.db.model.GithubUser;
 import org.accula.api.db.model.Pull;
 import org.accula.api.db.model.Snapshot;
 import org.accula.api.db.model.User;
-import org.accula.api.util.Checking;
+import org.accula.api.util.Checks;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.Instant;
@@ -369,7 +369,7 @@ final class Converters {
     }
 
     static <T> T value(final Row row, final String name, final Class<T> clazz) {
-        return Checking.notNull(row.get(name, clazz), name);
+        return Checks.notNull(row.get(name, clazz), name);
     }
 
     @Nullable
@@ -385,11 +385,11 @@ final class Converters {
     }
 
     static Integer integer(final Row row, final String name) {
-        return Checking.notNull(row.get(name, Integer.class), name);
+        return Checks.notNull(row.get(name, Integer.class), name);
     }
 
     static Long longInteger(final Row row, final String name) {
-        return Checking.notNull(row.get(name, Long.class), name);
+        return Checks.notNull(row.get(name, Long.class), name);
     }
 
     static List<Long> ids(final Row row, final String name) {

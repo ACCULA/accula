@@ -7,7 +7,7 @@ import io.r2dbc.spi.Row;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.accula.api.db.model.Clone;
-import org.accula.api.util.Checking;
+import org.accula.api.util.Checks;
 import org.accula.api.util.Lambda;
 import org.intellij.lang.annotations.Language;
 import org.springframework.stereotype.Component;
@@ -66,7 +66,7 @@ public final class CloneRepoImpl implements CloneRepo, ConnectionProvidedRepo {
                 snippet.snapshot().sha(),
                 snippet.snapshot().repo().id(),
                 snippet.snapshot().branch(),
-                Checking.notNull(snippet.snapshot().pullInfo(), "Snapshot pullInfo").id(),
+                Checks.notNull(snippet.snapshot().pullInfo(), "Snapshot pullInfo").id(),
                 snippet.file(),
                 snippet.fromLine(),
                 snippet.toLine()
