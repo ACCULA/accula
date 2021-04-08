@@ -9,11 +9,11 @@ import org.accula.api.github.model.GithubApiPull;
 import org.accula.api.github.model.GithubApiRepo;
 import org.accula.api.github.model.GithubApiSnapshot;
 import org.accula.api.github.model.GithubApiUser;
+import org.accula.api.util.Checks;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * @author Anton Lamtev
@@ -60,7 +60,7 @@ public final class GithubApiToModelConverter {
                 .commit(Commit.shaOnly(snapshot.sha()))
                 .branch(snapshot.ref())
                 .pullInfo(convertInfo(pull))
-                .repo(convert(Objects.requireNonNull(snapshot.repo(), "GithubApiPull repo MUST NOT be null")))
+                .repo(convert(Checks.notNull(snapshot.repo(), "GithubApiPull repo")))
                 .build();
     }
 

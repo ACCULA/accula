@@ -3,6 +3,7 @@ package org.accula.api.db.repo;
 import io.r2dbc.postgresql.api.PostgresqlResult;
 import io.r2dbc.postgresql.api.PostgresqlStatement;
 import io.r2dbc.spi.Connection;
+import io.r2dbc.spi.Row;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.accula.api.db.model.GithubUser;
@@ -11,7 +12,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Collection;
-import java.util.Objects;
 
 /**
  * @author Anton Lamtev
@@ -58,13 +58,7 @@ public final class GithubUserRepoImpl implements GithubUserRepo, ConnectionProvi
                 .from(selectStatement(connection)
                         .bind("$1", id)
                         .execute())
-                .flatMap(result -> ConnectionProvidedRepo.convert(result, row -> new GithubUser(
-                        Objects.requireNonNull(row.get("id", Long.class)),
-                        Objects.requireNonNull(row.get("login", String.class)),
-                        Objects.requireNonNull(row.get("name", String.class)),
-                        Objects.requireNonNull(row.get("avatar", String.class)),
-                        Objects.requireNonNull(row.get("is_org", Boolean.class))
-                ))));
+                .flatMap(result -> ConnectionProvidedRepo.convert(result, GithubUserRepoImpl::convert)));
     }
 
     private static PostgresqlStatement selectStatement(final Connection connection) {
@@ -74,5 +68,14 @@ public final class GithubUserRepoImpl implements GithubUserRepo, ConnectionProvi
                         FROM user_github
                         WHERE id = $1
                         """);
+    }
+
+    private static GithubUser convert(final Row row) {
+        return Converters.convertUser(row,
+            "id",
+            "login",
+            "name",
+            "avatar",
+            "is_org");
     }
 }

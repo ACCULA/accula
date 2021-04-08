@@ -3,8 +3,8 @@ package org.accula.api.token.psi;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementVisitor;
 import org.accula.api.code.lines.LineRange;
+import org.accula.api.util.Checks;
 
-import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
@@ -31,7 +31,7 @@ public final class PsiUtils {
 
     public static LineRange lineRange(final PsiElement element) {
         final var file = element.getContainingFile();
-        final var doc = Objects.requireNonNull(file.getViewProvider().getDocument(), "Document MUST NOT be null");
+        final var doc = Checks.notNull(file.getViewProvider().getDocument(), "Document");
         final var relativeRange = element.getTextRange();
         return LineRange.of(
                 doc.getLineNumber(relativeRange.getStartOffset()) + 1,
