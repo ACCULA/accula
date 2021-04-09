@@ -39,6 +39,8 @@ public interface ProjectRepo {
 
     Mono<Void> attachRepos(Long projectId, Collection<Long> repoIds);
 
+    Mono<User> findOwnerOfProjectContainingRepo(Long repoId);
+
     void addOnConfUpdate(OnConfUpdate onConfUpdate);
 
     @FunctionalInterface

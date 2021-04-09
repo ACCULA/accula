@@ -43,9 +43,7 @@ import static java.util.stream.Collectors.toMap;
  */
 @RequiredArgsConstructor
 public final class GitCodeLoader implements CodeLoader {
-    private static final String GITHUB_BASE_URL = "https://github.com/";
-    private static final String GIT_EXTENSION = ".git";
-
+    private final GitCredentialsProvider credentialsProvider;
     private final Git git;
 
     @Override
@@ -138,8 +136,8 @@ public final class GitCodeLoader implements CodeLoader {
     /// We name each common repo git folder like that: <owner-login>_<repo-name>
     private Mono<Repo> withCommonGitRepo(final GithubRepo repo) {
         final var repoGitDirectory = Path.of(repo.owner().login() + "_" + repo.name());
-        final var repoUrl = repoGitUrl(repo);
-        return withGitRepo(repoGitDirectory, repoUrl);
+        return withRepoGitUrl(repo)
+            .transform(Lambda.passingFirstArg(this::withGitRepo, repoGitDirectory));
     }
 
     private Mono<Repo> withCommonGitRepo(final Snapshot snapshot) {
@@ -148,15 +146,30 @@ public final class GitCodeLoader implements CodeLoader {
 
     private Mono<Repo> withProjectGitRepo(final GithubRepo projectRepo) {
         final var projectGitDirectory = Path.of(projectRepo.name());
-        final var projectRepoUrl = repoGitUrl(projectRepo);
-        return withGitRepo(projectGitDirectory, projectRepoUrl);
+        return withRepoGitUrl(projectRepo)
+            .transform(Lambda.passingFirstArg(this::withGitRepo, projectGitDirectory));
     }
 
-    private Mono<Repo> withGitRepo(final Path directory, final String url) {
+    private Mono<Repo> withGitRepo(final Path directory, final Mono<String> urlMono) {
         return Mono
-                .fromFuture(git.repo(directory))
-                .switchIfEmpty(Mono.fromFuture(git.clone(url, directory.toString())))
-                .flatMap(repo -> Mono.fromFuture(repo.fetch()));
+            .fromFuture(git.repo(directory))
+            .switchIfEmpty(urlMono.flatMap(url -> Mono.fromFuture(git.clone(url, directory.toString()))))
+            .flatMap(repo -> Mono.fromFuture(repo.fetch()));
+    }
+
+    private Mono<String> withRepoGitUrl(final GithubRepo repo) {
+        if (!repo.isPrivate()) {
+            return Mono.just(repoGitUrl(repo));
+        }
+        return credentialsProvider
+            .gitCredentials(repo.id())
+            .switchIfEmpty(Mono.error(new IllegalStateException("Git credentials MUST be present for private repos")))
+            .map(credentials -> "https://%s:%s@github.com/%s/%s.git"
+                .formatted(credentials.login(), credentials.accessToken(), repo.owner().login(), repo.name()));
+    }
+
+    private static String repoGitUrl(final GithubRepo repo) {
+        return "https://github.com/%s/%s.git".formatted(repo.owner().login(), repo.name());
     }
 
     private static Map<String, List<Snapshot>> snapshotMap(final Iterable<Snapshot> snapshots) {
@@ -318,9 +331,5 @@ public final class GitCodeLoader implements CodeLoader {
                 })
                 .filter(Objects::nonNull)
                 .collect(toList());
-    }
-
-    private static String repoGitUrl(final GithubRepo repo) {
-        return GITHUB_BASE_URL + repo.owner().login() + "/" + repo.name() + GIT_EXTENSION;
     }
 }

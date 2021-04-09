@@ -49,26 +49,28 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
                 .from(connection
                         .createStatement("""
                                 WITH upserted_gh_repo AS (
-                                      INSERT INTO repo_github (id, name, owner_id, description)
-                                      VALUES ($1, $2, $3, $4)
+                                      INSERT INTO repo_github (id, name, is_private, owner_id, description)
+                                      VALUES ($1, $2, $3, $4, $5)
                                       ON CONFLICT (id) DO UPDATE
                                           SET name = $2,
-                                              owner_id = $3,
-                                              description = $4
+                                              is_private = $3,
+                                              owner_id = $4,
+                                              description = $5
                                       RETURNING id
                                 )
                                 INSERT INTO project (github_repo_id, creator_id)
-                                SELECT id, $5
+                                SELECT id, $6
                                 FROM upserted_gh_repo
                                 ON CONFLICT (github_repo_id) DO UPDATE
-                                    SET creator_id = $5
+                                    SET creator_id = $6
                                 RETURNING id, state
                                 """)
                         .bind("$1", githubRepo.id())
                         .bind("$2", githubRepo.name())
-                        .bind("$3", githubRepo.owner().id())
-                        .bind("$4", githubRepo.description())
-                        .bind("$5", creator.id())
+                        .bind("$3", githubRepo.isPrivate())
+                        .bind("$4", githubRepo.owner().id())
+                        .bind("$5", githubRepo.description())
+                        .bind("$6", creator.id())
                         .execute())
                 .flatMap(result -> ConnectionProvidedRepo
                         .convert(result, row -> Project.builder()
@@ -234,6 +236,55 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
     }
 
     @Override
+    public Mono<User> findOwnerOfProjectContainingRepo(final Long repoId) {
+        return transactional(connection -> ((PostgresqlStatement) connection
+            .createStatement("""
+                SELECT u.id,
+                       u.github_access_token,
+                       ug.id                  AS github_id,
+                       ug.login               AS github_login,
+                       ug.name                AS github_name,
+                       ug.avatar              AS github_avatar,
+                       ug.is_org              AS github_org
+                FROM project
+                    JOIN user_ u
+                        ON project.creator_id = u.id
+                    JOIN user_github ug
+                        ON u.github_id = ug.id
+                WHERE github_repo_id = $1
+                """))
+            .bind("$1", repoId)
+            .execute()
+            .flatMap(result -> ConnectionProvidedRepo.convert(result, UserRepoImpl::convert))
+            .next()
+            .switchIfEmpty(((PostgresqlStatement) connection
+                .createStatement("""
+                    SELECT u.id,
+                           u.github_access_token,
+                           ug.id                  AS github_id,
+                           ug.login               AS github_login,
+                           ug.name                AS github_name,
+                           ug.avatar              AS github_avatar,
+                           ug.is_org              AS github_org
+                    FROM project_repo
+                        JOIN project
+                            ON project_repo.project_id = project.id
+                        JOIN user_ u
+                            ON project.creator_id = u.id
+                        JOIN user_github ug
+                            ON u.github_id = ug.id
+                    WHERE repo_id = $1
+                        AND u.github_access_token IS NOT NULL
+                    LIMIT 1
+                    """))
+                .bind("$1", repoId)
+                .execute()
+                .flatMap(result -> ConnectionProvidedRepo.convert(result, UserRepoImpl::convert))
+                .next())
+        );
+    }
+
+    @Override
     public void addOnConfUpdate(final OnConfUpdate onConfUpdate) {
         onConfUpdates.add(onConfUpdate);
     }
@@ -259,6 +310,7 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
                 SELECT p.id                                AS project_id,
                        p.state                             AS project_state,
                        project_repo.id                     AS project_repo_id,
+                       project_repo.is_private             AS project_repo_is_private,
                        project_repo.name                   AS project_repo_name,
                        project_repo.description            AS project_repo_description,
                        project_repo_owner.id               AS project_repo_owner_id,
@@ -369,6 +421,7 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
                 .githubRepo(Converters.convertRepo(row,
                         "project_repo_id",
                         "project_repo_name",
+                        "project_repo_is_private",
                         "project_repo_description",
                         "project_repo_owner_id",
                         "project_repo_owner_login",

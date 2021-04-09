@@ -28,14 +28,13 @@ CREATE TABLE IF NOT EXISTS refresh_token
 
 CREATE TABLE IF NOT EXISTS repo_github
 (
-    id             BIGINT PRIMARY KEY,
-    name           VARCHAR(256) NOT NULL,
-    owner_id       BIGINT       NOT NULL,
-    description    TEXT         NOT NULL,
-    forked_from_id BIGINT DEFAULT NULL,
+    id          BIGINT PRIMARY KEY,
+    name        VARCHAR(256) NOT NULL,
+    is_private  BOOLEAN      NOT NULL,
+    owner_id    BIGINT       NOT NULL,
+    description TEXT         NOT NULL,
 
-    FOREIGN KEY (owner_id) REFERENCES user_github (id),
-    FOREIGN KEY (forked_from_id) REFERENCES repo_github (id)
+    FOREIGN KEY (owner_id) REFERENCES user_github (id)
 );
 
 CREATE TYPE project_state_enum AS ENUM ('CONFIGURING', 'CONFIGURED');

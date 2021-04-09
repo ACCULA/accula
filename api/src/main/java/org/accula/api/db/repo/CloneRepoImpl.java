@@ -115,6 +115,7 @@ public final class CloneRepoImpl implements CloneRepo, ConnectionProvidedRepo {
                        target_pull.number          AS target_pull_number,
                        target_repo.id              AS target_repo_id,
                        target_repo.name            AS target_repo_name,
+                       target_repo.is_private      AS target_repo_is_private,
                        target_repo.description     AS target_repo_description,
                        target_repo_owner.id        AS target_repo_owner_id,
                        target_repo_owner.login     AS target_repo_owner_login,
@@ -135,6 +136,7 @@ public final class CloneRepoImpl implements CloneRepo, ConnectionProvidedRepo {
                        source_pull.number          AS source_pull_number,
                        source_repo.id              AS source_repo_id,
                        source_repo.name            AS source_repo_name,
+                       source_repo.is_private      AS source_repo_is_private,
                        source_repo.description     AS source_repo_description,
                        source_repo_owner.id        AS source_repo_owner_id,
                        source_repo_owner.login     AS source_repo_owner_login,
@@ -168,6 +170,7 @@ public final class CloneRepoImpl implements CloneRepo, ConnectionProvidedRepo {
                       ON source_snippet.commit_sha = source_snap_to_pull.snapshot_sha
                           AND source_snippet.repo_id = source_snap_to_pull.snapshot_repo_id
                           AND source_snippet.branch = source_snap_to_pull.snapshot_branch
+                          AND  source_snippet.pull_id = source_snap_to_pull.pull_id
                   JOIN commit source_commit
                       ON source_snippet.commit_sha = source_commit.sha
                   JOIN repo_github source_repo
@@ -235,6 +238,7 @@ public final class CloneRepoImpl implements CloneRepo, ConnectionProvidedRepo {
                 "target_pull_number",
                 "target_repo_id",
                 "target_repo_name",
+                "target_repo_is_private",
                 "target_repo_description",
                 "target_repo_owner_id",
                 "target_repo_owner_login",
@@ -255,6 +259,7 @@ public final class CloneRepoImpl implements CloneRepo, ConnectionProvidedRepo {
                 "source_pull_number",
                 "source_repo_id",
                 "source_repo_name",
+                "source_repo_is_private",
                 "source_repo_description",
                 "source_repo_owner_id",
                 "source_repo_owner_login",

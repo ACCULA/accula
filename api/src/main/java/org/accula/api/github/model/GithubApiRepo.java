@@ -13,6 +13,8 @@ public class GithubApiRepo {
     @JsonProperty("html_url")
     String htmlUrl;
     String name;
+    @JsonProperty("private")
+    Boolean isPrivate;
     @Nullable
     String description;
     GithubApiUser owner;

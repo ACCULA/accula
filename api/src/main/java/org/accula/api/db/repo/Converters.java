@@ -17,7 +17,12 @@ import java.util.List;
 /**
  * @author Anton Lamtev
  */
-@SuppressWarnings({"PMD.ConfusingTernary", "PMD.UseObjectForClearerAPI", "PMD.ExcessiveParameterList", "SameParameterValue"})
+@SuppressWarnings({
+    "PMD.ConfusingTernary",
+    "PMD.UseObjectForClearerAPI",
+    "PMD.ExcessiveParameterList",
+    "SameParameterValue",
+})
 final class Converters {
     static final String NOTHING = "";
     static final String EMPTY_CLAUSE = NOTHING;
@@ -36,13 +41,14 @@ final class Converters {
                 string(row, login),
                 nullable(row, name, String.class),
                 string(row, avatar),
-                value(row, organization, Boolean.class)
+                bool(row, organization)
         );
     }
 
     static GithubRepo convertRepo(final Row row,
                                   final String id,
                                   final String name,
+                                  final String isPrivate,
                                   final String description,
                                   final String ownerId,
                                   final String ownerLogin,
@@ -52,6 +58,7 @@ final class Converters {
         return new GithubRepo(
                 longInteger(row, id),
                 string(row, name),
+                bool(row, isPrivate),
                 string(row, description),
                 convertUser(row, ownerId, ownerLogin, ownerName, ownerAvatar, ownerOrganization)
         );
@@ -65,7 +72,7 @@ final class Converters {
                                 final String date) {
         return Commit.builder()
                 .sha(string(row, sha))
-                .isMerge(value(row, isMerge, Boolean.class))
+                .isMerge(bool(row, isMerge))
                 .authorName(string(row, authorName))
                 .authorEmail(string(row, authorEmail))
                 .date(value(row, date, Instant.class))
@@ -93,6 +100,7 @@ final class Converters {
                                     final String pullNumber,
                                     final String repoId,
                                     final String repoName,
+                                    final String repoIsPrivate,
                                     final String repoDescription,
                                     final String repoOwnerId,
                                     final String repoOwnerLogin,
@@ -111,6 +119,7 @@ final class Converters {
                 .repo(convertRepo(row,
                         repoId,
                         repoName,
+                        repoIsPrivate,
                         repoDescription,
                         repoOwnerId,
                         repoOwnerLogin,
@@ -148,6 +157,7 @@ final class Converters {
                               final String targetPullNumber,
                               final String targetRepoId,
                               final String targetRepoName,
+                              final String targetRepoIsPrivate,
                               final String targetRepoDescription,
                               final String targetRepoOwnerId,
                               final String targetRepoOwnerLogin,
@@ -168,6 +178,7 @@ final class Converters {
                               final String sourcePullNumber,
                               final String sourceRepoId,
                               final String sourceRepoName,
+                              final String sourceRepoIsPrivate,
                               final String sourceRepoDescription,
                               final String sourceRepoOwnerId,
                               final String sourceRepoOwnerLogin,
@@ -191,6 +202,7 @@ final class Converters {
                         targetPullNumber,
                         targetRepoId,
                         targetRepoName,
+                        targetRepoIsPrivate,
                         targetRepoDescription,
                         targetRepoOwnerId,
                         targetRepoOwnerLogin,
@@ -212,6 +224,7 @@ final class Converters {
                         sourcePullNumber,
                         sourceRepoId,
                         sourceRepoName,
+                        sourceRepoIsPrivate,
                         sourceRepoDescription,
                         sourceRepoOwnerId,
                         sourceRepoOwnerLogin,
@@ -236,6 +249,7 @@ final class Converters {
                                              final String pullNumber,
                                              final String repoId,
                                              final String repoName,
+                                             final String repoIsPrivate,
                                              final String repoDescription,
                                              final String repoOwnerId,
                                              final String repoOwnerLogin,
@@ -258,6 +272,7 @@ final class Converters {
                         pullNumber,
                         repoId,
                         repoName,
+                        repoIsPrivate,
                         repoDescription,
                         repoOwnerId,
                         repoOwnerLogin,
@@ -287,6 +302,7 @@ final class Converters {
                             final String headSnapPullNumber,
                             final String headRepoId,
                             final String headRepoName,
+                            final String headRepoIsPrivate,
                             final String headRepoDescription,
                             final String headRepoOwnerId,
                             final String headRepoOwnerLogin,
@@ -301,6 +317,7 @@ final class Converters {
                             final String baseSnapBranch,
                             final String baseRepoId,
                             final String baseRepoName,
+                            final String baseRepoIsPrivate,
                             final String baseRepoDescription,
                             final String baseRepoOwnerId,
                             final String baseRepoOwnerLogin,
@@ -317,7 +334,7 @@ final class Converters {
                 .id(longInteger(row, id))
                 .number(integer(row, number))
                 .title(string(row, title))
-                .isOpen(value(row, open, Boolean.class))
+                .isOpen(bool(row, open))
                 .createdAt(value(row, createdAt, Instant.class))
                 .updatedAt(value(row, updatedAt, Instant.class))
                 .head(convertSnapshot(row,
@@ -331,6 +348,7 @@ final class Converters {
                         headSnapPullNumber,
                         headRepoId,
                         headRepoName,
+                        headRepoIsPrivate,
                         headRepoDescription,
                         headRepoOwnerId,
                         headRepoOwnerLogin,
@@ -348,6 +366,7 @@ final class Converters {
                         NOTHING,
                         baseRepoId,
                         baseRepoName,
+                        baseRepoIsPrivate,
                         baseRepoDescription,
                         baseRepoOwnerId,
                         baseRepoOwnerLogin,
@@ -378,6 +397,10 @@ final class Converters {
             return null;
         }
         return row.get(name, clazz);
+    }
+
+    static Boolean bool(final Row row, final String name) {
+        return Checks.notNull(row.get(name, Boolean.class), name);
     }
 
     static Integer integer(final Row row, final String name, final Integer fallback) {

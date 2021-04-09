@@ -77,7 +77,7 @@ class ProjectsRouterTest {
     static final String REPO_URL_HIGHLOAD3 = "https://github.com/%s/%s".formatted(REPO_OWNER_HIGHLOAD, REPO_NAME_HIGHLOAD3);
 
     static final GithubUser GITHUB_USER = new GithubUser(1L, "accula", "name", "avatar", false);
-    static final GithubRepo REPO = new GithubRepo(1L, "accula", "description", GITHUB_USER);
+    static final GithubRepo REPO = new GithubRepo(1L, "accula", false, "description", GITHUB_USER);
     static final Pull PULL = Pull.builder()
             .id(1L)
             .number(2)
@@ -91,7 +91,7 @@ class ProjectsRouterTest {
             .primaryProjectId(1L)
             .build();
     static final GithubUser GITHUB_USER_HIGHLOAD = new GithubUser(1L, REPO_OWNER_HIGHLOAD, REPO_OWNER_HIGHLOAD, "avatar", false);
-    static final GithubRepo REPO_HIGHLOAD = new GithubRepo(1L, REPO_NAME_HIGHLOAD4, "description", GITHUB_USER_HIGHLOAD);
+    static final GithubRepo REPO_HIGHLOAD = new GithubRepo(1L, REPO_NAME_HIGHLOAD4, false, "description", GITHUB_USER_HIGHLOAD);
     static final List<Pull> PULLS = List.of(PULL, PULL, PULL);
     static final String EMPTY = "";
     static final User CURRENT_USER = new User(0L, "", GITHUB_USER);
@@ -101,10 +101,10 @@ class ProjectsRouterTest {
     static final User USER_3 = new User(2L, "", GH_USER_3);
     static final GithubApiUser GH_OWNER = new GithubApiUser(1L, REPO_OWNER, EMPTY, EMPTY, EMPTY, GithubApiUser.Type.USER);
     static final GithubApiUser GH_OWNER_HIGHLOAD = new GithubApiUser(1L, REPO_OWNER_HIGHLOAD, EMPTY, EMPTY, EMPTY, GithubApiUser.Type.USER);
-    static final GithubApiRepo GH_REPO = new GithubApiRepo(1L, REPO_URL, REPO_NAME, EMPTY, GH_OWNER);
-    static final GithubApiRepo GH_REPO_HIGHLOAD1 = new GithubApiRepo(2L, REPO_URL_HIGHLOAD1, REPO_NAME_HIGHLOAD1, EMPTY, GH_OWNER_HIGHLOAD);
-    static final GithubApiRepo GH_REPO_HIGHLOAD2 = new GithubApiRepo(3L, REPO_URL_HIGHLOAD2, REPO_NAME_HIGHLOAD2, EMPTY, GH_OWNER_HIGHLOAD);
-    static final GithubApiRepo GH_REPO_HIGHLOAD3 = new GithubApiRepo(4L, REPO_URL_HIGHLOAD3, REPO_NAME_HIGHLOAD3, EMPTY, GH_OWNER_HIGHLOAD);
+    static final GithubApiRepo GH_REPO = new GithubApiRepo(1L, REPO_URL, REPO_NAME, false, EMPTY, GH_OWNER);
+    static final GithubApiRepo GH_REPO_HIGHLOAD1 = new GithubApiRepo(2L, REPO_URL_HIGHLOAD1, REPO_NAME_HIGHLOAD1, false, EMPTY, GH_OWNER_HIGHLOAD);
+    static final GithubApiRepo GH_REPO_HIGHLOAD2 = new GithubApiRepo(3L, REPO_URL_HIGHLOAD2, REPO_NAME_HIGHLOAD2, false, EMPTY, GH_OWNER_HIGHLOAD);
+    static final GithubApiRepo GH_REPO_HIGHLOAD3 = new GithubApiRepo(4L, REPO_URL_HIGHLOAD3, REPO_NAME_HIGHLOAD3, false, EMPTY, GH_OWNER_HIGHLOAD);
     static final GithubApiSnapshot MARKER = new GithubApiSnapshot("", "", GH_OWNER, GH_REPO, "");
     static final GithubApiPull GH_PULL = new GithubApiPull(0L, "", MARKER, MARKER, GH_OWNER, 0, "", State.OPEN, Instant.now(), Instant.now(), Instant.now());
     static final GithubApiPull[] OPEN_PULLS = new GithubApiPull[]{GH_PULL, GH_PULL, GH_PULL};
