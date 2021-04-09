@@ -170,7 +170,7 @@ public final class CloneRepoImpl implements CloneRepo, ConnectionProvidedRepo {
                       ON source_snippet.commit_sha = source_snap_to_pull.snapshot_sha
                           AND source_snippet.repo_id = source_snap_to_pull.snapshot_repo_id
                           AND source_snippet.branch = source_snap_to_pull.snapshot_branch
-                          AND  source_snippet.pull_id = source_snap_to_pull.pull_id
+                          AND source_snippet.pull_id = source_snap_to_pull.pull_id
                   JOIN commit source_commit
                       ON source_snippet.commit_sha = source_commit.sha
                   JOIN repo_github source_repo
