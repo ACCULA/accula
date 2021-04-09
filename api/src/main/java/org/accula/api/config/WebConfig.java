@@ -3,6 +3,7 @@ package org.accula.api.config;
 import lombok.RequiredArgsConstructor;
 import org.accula.api.code.CodeLoader;
 import org.accula.api.code.GitCodeLoader;
+import org.accula.api.code.GitCredentialsProvider;
 import org.accula.api.code.git.Git;
 import org.accula.api.db.model.User;
 import org.accula.api.db.repo.CurrentUserRepo;
@@ -63,8 +64,8 @@ public class WebConfig implements WebFluxConfigurer {
     }
 
     @Bean
-    public CodeLoader codeLoader(final Git git) {
-        return new GitCodeLoader(git);
+    public CodeLoader codeLoader(final GitCredentialsProvider credentialsProvider, final Git git) {
+        return new GitCodeLoader(credentialsProvider, git);
     }
 
     @Bean

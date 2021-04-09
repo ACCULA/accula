@@ -31,16 +31,18 @@ public final class GithubRepoRepoImpl implements GithubRepoRepo, ConnectionProvi
 
         return manyWithConnection(connection -> {
             final var statement = BatchStatement.of(connection, """
-                    INSERT INTO repo_github (id, name, owner_id, description)
+                    INSERT INTO repo_github (id, name, is_private, owner_id, description)
                     VALUES ($collection)
                     ON CONFLICT (id) DO UPDATE
                        SET name = excluded.name,
+                           is_private = excluded.is_private,
                            owner_id = excluded.owner_id,
                            description = excluded.description
                     """);
             statement.bind(repos, repo -> Bindings.of(
                     repo.id(),
                     repo.name(),
+                    repo.isPrivate(),
                     repo.owner().id(),
                     repo.description()
             ));
@@ -76,6 +78,7 @@ public final class GithubRepoRepoImpl implements GithubRepoRepo, ConnectionProvi
         @Language("SQL") final var sql = """
                 SELECT repo.id          AS repo_id,
                        repo.name        AS repo_name,
+                       repo.is_private  AS repo_is_private,
                        repo.description AS repo_description,
                        usr.id           AS repo_owner_id,
                        usr.login        AS repo_owner_login,
@@ -93,6 +96,7 @@ public final class GithubRepoRepoImpl implements GithubRepoRepo, ConnectionProvi
         return Converters.convertRepo(row,
                 "repo_id",
                 "repo_name",
+                "repo_is_private",
                 "repo_description",
                 "repo_owner_id",
                 "repo_owner_login",

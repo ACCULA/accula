@@ -28,6 +28,7 @@ public final class GithubApiToModelConverter {
         return new GithubRepo(
                 apiRepo.id(),
                 apiRepo.name(),
+                apiRepo.isPrivate(),
                 orEmpty(apiRepo.description()),
                 convert(apiRepo.owner())
         );

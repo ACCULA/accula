@@ -75,7 +75,7 @@ public final class UserRepoImpl implements UserRepo, ConnectionProvidedRepo {
                                 """)
                         .bind("$1", id)
                         .execute())
-                .flatMap(result -> ConnectionProvidedRepo.convert(result, this::convert)));
+                .flatMap(result -> ConnectionProvidedRepo.convert(result, UserRepoImpl::convert)));
     }
 
     @Override
@@ -104,7 +104,7 @@ public final class UserRepoImpl implements UserRepo, ConnectionProvidedRepo {
 
             return statement
                     .execute()
-                    .flatMap(result -> ConnectionProvidedRepo.convertMany(result, this::convert));
+                    .flatMap(result -> ConnectionProvidedRepo.convertMany(result, UserRepoImpl::convert));
         });
     }
 
@@ -129,7 +129,7 @@ public final class UserRepoImpl implements UserRepo, ConnectionProvidedRepo {
         return statement;
     }
 
-    private User convert(final Row row) {
+    static User convert(final Row row) {
         return Converters.convertUser(row,
                 "id",
                 "github_access_token",

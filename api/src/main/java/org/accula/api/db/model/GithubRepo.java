@@ -12,6 +12,7 @@ public class GithubRepo {
     @EqualsAndHashCode.Include
     Long id;
     String name;
+    Boolean isPrivate;
     String description;
     GithubUser owner;
 
