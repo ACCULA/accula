@@ -14,8 +14,6 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import static java.util.stream.Collectors.toList;
-
 /**
  * @author Anton Lamtev
  */
@@ -45,7 +43,7 @@ public final class SuffixTreeCloneDetector<Token extends Comparable<Token>, Ref>
     public <R> List<R> transform(final Function<Stream<CloneClass<Ref>>, Stream<R>> transform) {
         return sync.read(() ->
                 transform.apply(cloneClasses())
-                        .collect(toList()));
+                        .toList());
     }
 
     //TODO: Отфильтровывать те классы, которые являются подклассами других, более больших классов,

@@ -5,7 +5,6 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent.SKIPPED
 plugins {
     java
     jacoco
-    pmd
 }
 
 allprojects {
@@ -14,7 +13,7 @@ allprojects {
 
 configure(subprojects.filterNot(project(":web")::equals)) {
     repositories {
-        jcenter()
+        mavenCentral()
         maven(url = "https://oss.sonatype.org/content/repositories/snapshots")
     }
 
@@ -28,7 +27,7 @@ configure(subprojects.filterNot(project(":web")::equals)) {
     dependencies {
         compileOnly("org.jetbrains:annotations:20.1.0")
 
-        val lombok = "org.projectlombok:lombok:1.18.16"
+        val lombok = "org.projectlombok:lombok:1.18.20"
         compileOnly(lombok)
         annotationProcessor(lombok)
         testCompileOnly(lombok)
@@ -36,7 +35,7 @@ configure(subprojects.filterNot(project(":web")::equals)) {
     }
 
     configure<JavaPluginConvention> {
-        sourceCompatibility = JavaVersion.VERSION_15
+        sourceCompatibility = JavaVersion.VERSION_16
     }
 
     tasks {
@@ -73,19 +72,21 @@ configure(subprojects.filterNot(project(":web")::equals)) {
 
     tasks.withType<JavaCompile> {
         options.compilerArgs.addAll(listOf(
-                "--enable-preview",
-                "-Xlint:preview",
                 "-Xlint:deprecation",
-                "-Xlint:unchecked"
+                "-Xlint:unchecked",
         ))
     }
     tasks.withType<Test> {
-        jvmArgs("--enable-preview")
+        jvmArgs(
+                "--add-opens", "java.base/java.util=ALL-UNNAMED",
+        )
 
         val testSingleLineRangeCacheSize: String by project
         systemProperty("org.accula.api.code.lines.LineRange.Single.Cache.size", testSingleLineRangeCacheSize)
     }
     tasks.withType<JavaExec> {
-        jvmArgs("--enable-preview")
+        jvmArgs(
+                "--add-opens", "java.base/java.util=ALL-UNNAMED",
+        )
     }
 }

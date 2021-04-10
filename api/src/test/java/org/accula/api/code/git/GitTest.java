@@ -15,7 +15,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.stream.IntStream;
 
-import static java.util.stream.Collectors.toList;
 import static org.accula.api.code.lines.LineRange.of;
 import static org.accula.api.code.lines.LineSet.inRange;
 import static org.accula.api.code.lines.LineSet.of;
@@ -107,7 +106,7 @@ final class GitTest {
                             .catFiles(diffEntries
                                     .stream()
                                     .flatMap(GitDiffEntry::objectIds)
-                                    .collect(toList())))
+                                    .toList()))
                     .get();
             assertTrue(filesContent.values().stream().anyMatch("""
                     @NonNullApi

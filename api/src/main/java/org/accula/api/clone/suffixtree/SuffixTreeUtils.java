@@ -11,7 +11,6 @@ import org.accula.api.token.TraverseUtils;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 
 /**
@@ -47,7 +46,7 @@ final class SuffixTreeUtils {
                             }
                             return terminal.getEdges().stream();
                         }))
-                .collect(toList());
+                .toList();
 
         final Object2IntMap<Edge> terminalMap = paths
                 .stream()

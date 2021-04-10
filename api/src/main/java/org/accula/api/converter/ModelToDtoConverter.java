@@ -24,7 +24,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -72,7 +71,7 @@ public final class ModelToDtoConverter {
         return repos
             .stream()
             .map(ModelToDtoConverter::convert)
-            .collect(Collectors.toList());
+            .toList();
     }
 
     public static RepoShortDto convert(final GithubRepo repo) {
@@ -135,7 +134,7 @@ public final class ModelToDtoConverter {
         return pulls
                 .stream()
                 .map(ModelToDtoConverter::convertShort)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public static ShortPullDto convertShort(final Pull pull) {

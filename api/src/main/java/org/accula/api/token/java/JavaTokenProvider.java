@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Objects;
 
 import static java.util.function.Predicate.not;
-import static java.util.stream.Collectors.toList;
 
 /**
  * @author Anton Lamtev
@@ -69,6 +68,6 @@ public final class JavaTokenProvider<Ref> implements TokenProvider<Ref> {
                     return Token.of(token, filename, method.getName(), lineRange, file.ref());
                 })
                 .filter(Objects::nonNull)
-                .collect(toList());
+                .toList();
     }
 }
