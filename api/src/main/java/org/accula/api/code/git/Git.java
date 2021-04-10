@@ -122,7 +122,7 @@ public final class Git {
                 return usingStdoutLines(process, lines -> lines
                         .map(Git::parseDiffEntry)
                         .filter(Objects::nonNull)
-                        .collect(Collectors.toList()))
+                        .toList())
                         .orElse(List.of());
             });
         }
@@ -156,7 +156,7 @@ public final class Git {
                 return usingStdoutLines(process, lines -> lines
                         .map(Git::parseShowEntry)
                         .filter(file -> file != null && !file.isDeleted())
-                        .collect(Collectors.toList()))
+                        .toList())
                         .orElse(List.of());
             });
         }
@@ -197,7 +197,7 @@ public final class Git {
                 return usingStdoutLines(process, lines -> lines
                         .map(Git::parseLsEntry)
                         .filter(Objects::nonNull)
-                        .collect(Collectors.toList()))
+                        .toList())
                         .orElse(List.of());
             });
         }
@@ -420,7 +420,7 @@ public final class Git {
         return Streams.stream(new FileChangesParseIterator(Iterators.nextResettable(lines)))
                 .filter(GitFileChanges.class::isInstance)
                 .map(GitFileChanges.class::cast)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private static Map<GitFileChanges, String> changesMap(final Iterator<String> lines) {

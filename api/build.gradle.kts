@@ -1,7 +1,6 @@
 plugins {
     id("org.springframework.boot") version "2.4.4"
     id("io.spring.dependency-management") version "1.0.11.RELEASE"
-    id("net.bytebuddy.byte-buddy-gradle-plugin") version "1.10.14"
 }
 
 repositories {
@@ -12,8 +11,6 @@ repositories {
 
 version = "1.0-SNAPSHOT"
 
-val byteBuddyPlugin: Configuration by configurations.creating
-
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-webflux")
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
@@ -23,8 +20,7 @@ dependencies {
     testImplementation("org.springframework.security:spring-security-test")
 
     implementation("io.projectreactor.addons:reactor-extra")
-    compileOnly("io.projectreactor:reactor-tools")
-    byteBuddyPlugin(group = "io.projectreactor", name = "reactor-tools", classifier = "original")
+    implementation("io.projectreactor:reactor-tools")
 
     testImplementation("io.projectreactor:reactor-test")
 
@@ -33,7 +29,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
     implementation("org.springframework.security:spring-security-oauth2-client")
 
-    implementation("com.auth0:java-jwt:3.12.1")
+    implementation("com.auth0:java-jwt:3.15.0")
 
     implementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
     implementation("io.r2dbc:r2dbc-postgresql")
@@ -51,14 +47,7 @@ dependencies {
 
     implementation("com.suhininalex:suffixtree:1.0.2")
     implementation("com.jetbrains.intellij.java:java-psi-impl:203.7148.57")
-    implementation("com.google.guava:guava:30.1-jre")
+    implementation("com.google.guava:guava:30.1.1-jre")
     implementation("it.unimi.dsi:fastutil:8.5.2")
     implementation("info.debatty:java-string-similarity:2.0.0")
-}
-
-byteBuddy {
-    transformation(closureOf<net.bytebuddy.build.gradle.Transformation> {
-        plugin = "reactor.tools.agent.ReactorDebugByteBuddyPlugin"
-        setClassPath(byteBuddyPlugin)
-    })
 }

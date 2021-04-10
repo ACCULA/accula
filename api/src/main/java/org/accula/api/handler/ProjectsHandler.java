@@ -317,7 +317,7 @@ public final class ProjectsHandler {
         return suggester
             .suggest(project.githubRepo().name(), reposUserHasAccessTo, RepoShortDto::name)
             .filter(repo -> !projectRepos.contains(repo.id()))
-            .collect(Collectors.toList());
+            .toList();
     }
 
     private void validate(final InputDto dto) {

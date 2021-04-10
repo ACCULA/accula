@@ -35,7 +35,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
 /**
@@ -269,13 +268,13 @@ public final class GitCodeLoader implements CodeLoader {
                 .map(diffEntries -> diffEntries
                         .stream()
                         .filter(entry -> entry.passes(filter))
-                        .collect(toList()))
+                        .toList())
                 .flatMapMany(diffEntries -> Mono
                         .fromFuture(repo
                                 .catFiles(diffEntries
                                         .stream()
                                         .flatMap(GitDiffEntry::objectIds)
-                                        .collect(toList())))
+                                        .toList()))
                         .transform(convertDiffEntries(diffEntries, base, head))
                         .flatMapMany(Flux::fromStream));
     }
@@ -330,6 +329,6 @@ public final class GitCodeLoader implements CodeLoader {
                     return Snippet.of(file, marker.lines());
                 })
                 .filter(Objects::nonNull)
-                .collect(toList());
+                .toList();
     }
 }

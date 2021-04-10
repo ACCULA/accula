@@ -6,7 +6,6 @@ import lombok.ToString;
 import lombok.Value;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @author Anton Lamtev
@@ -42,6 +41,6 @@ public class CloneClass<Ref> {
                             .start(SuffixTreeUtils.get(edge, from))
                             .build();
                 })
-                .collect(Collectors.toList());
+                .toList();
     }
 }

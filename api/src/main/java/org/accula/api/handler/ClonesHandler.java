@@ -31,7 +31,6 @@ import reactor.util.function.Tuple2;
 
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -107,7 +106,7 @@ public final class ClonesHandler {
                                         snippetFlux.key(),
                                         snippets.stream()
                                                 .map(s -> SnippetMarker.of(s.file(), LineRange.of(s.fromLine(), s.toLine())))
-                                                .collect(Collectors.toList())
+                                                .toList()
                                 )
                                 .zipWithIterable(snippets)
                         )
