@@ -17,13 +17,14 @@ import reactor.core.publisher.Mono;
 
 import java.util.Collection;
 
+import static org.accula.api.db.repo.Converters.EMPTY_CLAUSE;
+
 /**
  * @author Anton Lamtev
  */
 @Component
 @RequiredArgsConstructor
 public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
-    private static final String EMPTY_CLAUSE = "";
     @Getter
     private final ConnectionProvider connectionProvider;
 

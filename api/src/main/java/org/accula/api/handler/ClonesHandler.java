@@ -8,6 +8,7 @@ import org.accula.api.code.SnippetMarker;
 import org.accula.api.code.lines.LineRange;
 import org.accula.api.converter.ModelToDtoConverter;
 import org.accula.api.db.model.Clone;
+import org.accula.api.db.model.Pull;
 import org.accula.api.db.model.Snapshot;
 import org.accula.api.db.model.User;
 import org.accula.api.db.repo.CloneRepo;
@@ -27,6 +28,7 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.function.TupleUtils;
 import reactor.util.function.Tuple2;
 
 import java.util.List;
@@ -113,15 +115,22 @@ public final class ClonesHandler {
                 )
                 .collectMap(Tuple2::getT2, Tuple2::getT1);
 
+        final var pulls = cloneSnippets
+            .map(snippet -> snippet.snapshot().pullInfo().id())
+            .collectList()
+            .flatMapMany(pullRepo::findById)
+            .collectMap(Pull::id);
+
         final var responseClones = Mono
-                .zip(clones.collectList(), fileSnippets)
-                .flatMapMany(Lambda.passingTailArg(ClonesHandler::convert, projectId));
+                .zip(clones.collectList(), fileSnippets, pulls, Mono.just(projectId))
+                .flatMapMany(TupleUtils.function(ClonesHandler::convert));
 
         return Responses.ok(responseClones, CloneDto.class);
     }
 
     private static Flux<CloneDto> convert(final List<Clone> clones,
                                           final Map<Clone.Snippet, FileEntity<Snapshot>> files,
+                                          final Map<Long, Pull> pulls,
                                           final Long projectId) {
         Preconditions.checkArgument(clones.stream().flatMap(c -> Stream.of(c.target(), c.source())).distinct().count() == files.size());
         return Flux.push(sink -> {
@@ -130,7 +139,9 @@ public final class ClonesHandler {
                         clone,
                         projectId,
                         Checks.notNull(files.get(clone.target()), "Clone target file content"),
-                        Checks.notNull(files.get(clone.source()), "Clone source file content")
+                        Checks.notNull(files.get(clone.source()), "Clone source file content"),
+                        Checks.notNull(pulls.get(clone.target().snapshot().pullInfo().id()), "Clone target pull"),
+                        Checks.notNull(pulls.get(clone.source().snapshot().pullInfo().id()), "Clone source pull")
                 );
                 sink.next(dto);
             }
