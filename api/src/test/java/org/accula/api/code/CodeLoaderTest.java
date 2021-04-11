@@ -29,13 +29,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class CodeLoaderTest {
     public static final String README = "README.md";
     public static final String CLUSTER_JAVA = "src/main/java/ru/mail/polis/Cluster.java";
-    public static final GithubUser USER = new GithubUser(0L, "polis-mail-ru", "name", "ava", true);
-    public static final GithubRepo REPO = new GithubRepo(0L, "2019-highload-dht", false, "descr", USER);
+    public static final GithubUser USER = GithubUser.builder().id(0L).login("polis-mail-ru").name("name").avatar("ava").isOrganization(true).build();
+    public static final GithubRepo REPO = GithubRepo.builder().id(0L).name("2019-highload-dht").isPrivate(false).description("descr").owner(USER).build();
     public static final Snapshot COMMIT = Snapshot.builder()
             .commit(Commit.shaOnly("720cefb3f361895e9e23524c2b4025f9a949d5d2"))
             .branch("branch")
             .repo(REPO)
             .build();
+    static final GithubUser lamtev = GithubUser.builder().id(0L).login("lamtev").avatar("").isOrganization(false).build();
+    static final GithubUser vaddya = GithubUser.builder().id(0L).login("vaddya").avatar("").isOrganization(false).build();
 
     CodeLoader codeLoader;
 
@@ -54,10 +56,11 @@ class CodeLoaderTest {
 
     @Test
     void testGetMultipleFiles() {
+        var repo = GithubRepo.builder().id(1L).name("2017-highload-kv").isPrivate(false).description("descr").owner(lamtev).build();
         final var s1 = Snapshot
                 .builder()
                 .commit(Commit.shaOnly("ecb40217f36891809693e4d9d37a3e841ff740b9"))
-                .repo(new GithubRepo(0L, "2017-highload-kv", false, "", new GithubUser(0L, "lamtev", null, "", false)))
+                .repo(repo)
                 .pullInfo(Snapshot.PullInfo.of(10L, 7))
                 .build();
         final var s2 = s1.withCommit(Commit.shaOnly("5d66d3b0c3f07c07eb841b1620dcba2b0a970bc7"))
@@ -155,8 +158,8 @@ class CodeLoaderTest {
 
     @Test
     void testDiff() {
-        var headOwner = new GithubUser(1L, "vaddya", "owner", "ava", false);
-        var headRepo = new GithubRepo(1L, "2019-highload-dht", false, "descr", headOwner);
+        var headOwner = GithubUser.builder().id(1L).login("vaddya").name("owner").avatar("ava").isOrganization(false).build();
+        var headRepo = GithubRepo.builder().id(1L).name("2019-highload-dht").isPrivate(false).description("descr").owner(headOwner).build();
         var head = Snapshot.builder().commit(Commit.shaOnly("a1c28a1b500701819cf9919246f15f3f900bb609")).branch("branch").repo(headRepo).build();
         var base = Snapshot.builder().commit(Commit.shaOnly("d6357dccc16c7d5c001fd2a2203298c36fe96b63")).branch("branch").repo(REPO).build();
         StepVerifier.create(codeLoader.loadDiff(base, head, 0, FileFilter.SRC_JAVA))
@@ -167,16 +170,18 @@ class CodeLoaderTest {
 
     @Test
     void testRemoteDiff() {
-        final var projectRepo = new GithubRepo(1L, "2017-highload-kv", false, "descr", USER);
-        final var base = Snapshot
+        var projectRepo = GithubRepo.builder().id(1L).name("2017-highload-kv").isPrivate(false).description("descr").owner(USER).build();
+        var baseRepo = GithubRepo.builder().id(0L).name("2017-highload-kv").isPrivate(false).description("").owner(lamtev).build();
+        var base = Snapshot
                 .builder()
                 .commit(Commit.shaOnly("fe675f17ad4aab9a8c853b5f3b07b0bc64f06907"))
-                .repo(new GithubRepo(0L, "2017-highload-kv", false, "", new GithubUser(0L, "lamtev", null, "", false)))
+                .repo(baseRepo)
                 .build();
-        final var head = Snapshot
+        var headRepo = GithubRepo.builder().id(0L).name("2017-highload-kv").isPrivate(false).description("").owner(vaddya).build();
+        var head = Snapshot
                 .builder()
                 .commit(Commit.shaOnly("076c99d7bbb06b31c27a9c3164f152d5c18c5010"))
-                .repo(new GithubRepo(0L, "2017-highload-kv", false, "", new GithubUser(0L, "vaddya", null, "", false)))
+                .repo(headRepo)
                 .build();
 
         final var diffEntries = codeLoader.loadRemoteDiff(projectRepo, base, head, 1, FileFilter.SRC_JAVA).collectList().block();
@@ -191,7 +196,7 @@ class CodeLoaderTest {
 
     @Test
     void testLoadFilenames() {
-        final var projectRepo = new GithubRepo(1L, "2017-highload-kv", false, "descr", USER);
+        var projectRepo = GithubRepo.builder().id(1L).name("2017-highload-kv").isPrivate(false).description("descr").owner(USER).build();
         final var filenames = codeLoader.loadFilenames(projectRepo).collectList().block();
         assertNotNull(filenames);
         assertEquals(21, filenames.size());
@@ -200,8 +205,7 @@ class CodeLoaderTest {
 
     @Test
     void testLoadCommits() {
-        var headOwner = new GithubUser(1L, "vaddya", "owner", "ava", false);
-        var headRepo = new GithubRepo(1L, "2019-highload-dht", false, "descr", headOwner);
+        var headRepo = GithubRepo.builder().id(1L).name("2019-highload-dht").isPrivate(false).description("descr").owner(vaddya).build();
         var sinceRef = "b5e4943c3690a54c325f7a95db20893f75b0b41b";
         var untilRef = "50bcdd747aa571e0776bed65fe474784cd73377b";
         StepVerifier.create(codeLoader.loadCommits(headRepo, sinceRef, untilRef).collectList())
@@ -212,8 +216,7 @@ class CodeLoaderTest {
 
     @Test
     void testLoadAllCommits() {
-        var headOwner = new GithubUser(1L, "vaddya", "owner", "ava", false);
-        var headRepo = new GithubRepo(1L, "2019-highload-dht", false, "descr", headOwner);
+        var headRepo = GithubRepo.builder().id(1L).name("2019-highload-dht").isPrivate(false).description("descr").owner(vaddya).build();
         StepVerifier.create(codeLoader.loadAllCommits(headRepo).collectList())
                 .expectNextMatches(commits -> !commits.isEmpty())
                 .expectComplete()
@@ -222,8 +225,7 @@ class CodeLoaderTest {
 
     @Test
     void testLoadCommitsUntilRef() {
-        var headOwner = new GithubUser(1L, "vaddya", "owner", "ava", false);
-        var headRepo = new GithubRepo(1L, "2019-highload-dht", false, "descr", headOwner);
+        var headRepo = GithubRepo.builder().id(1L).name("2019-highload-dht").isPrivate(false).description("descr").owner(vaddya).build();
         StepVerifier.create(codeLoader.loadCommits(headRepo, "7a490a1e518df228c203c3690100bd2d0ab559c5").collectList())
                 .expectNextMatches(commits -> commits.size() == 145)
                 .expectComplete()

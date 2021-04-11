@@ -27,7 +27,10 @@ import java.util.List;
  * @author Anton Lamtev
  */
 @WebFluxTest
-@ContextConfiguration(classes = {PullsRouter.class, PullsHandler.class, ModelToDtoConverter.class})
+@ContextConfiguration(classes = {
+    PullsRouter.class,
+    PullsHandler.class,
+})
 class PullsRouterTest {
     static final Pull STUB_PULL = ProjectsRouterTest.PULL;
     @MockBean

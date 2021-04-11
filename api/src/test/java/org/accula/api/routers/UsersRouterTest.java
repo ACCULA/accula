@@ -24,9 +24,12 @@ import reactor.core.publisher.Mono;
  * @author Anton Lamtev
  */
 @WebFluxTest
-@ContextConfiguration(classes = {UsersRouter.class, UsersHandler.class, ModelToDtoConverter.class})
+@ContextConfiguration(classes = {
+    UsersRouter.class,
+    UsersHandler.class,
+})
 public class UsersRouterTest {
-    static final GithubUser GITHUB_USER = new GithubUser(1L, "login", "name", "ava", false);
+    static final GithubUser GITHUB_USER = GithubUser.builder().id(1L).login("login").name("name").avatar("ava").isOrganization(false).build();
     static final User STUB_USER = new User(1L, "token", GITHUB_USER);
     private static final ResponseUser RESPONSE_USER =
             new ResponseUser(STUB_USER.id(), GITHUB_USER.login(), GITHUB_USER.name());

@@ -62,7 +62,11 @@ import static org.mockito.Mockito.when;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 @WebFluxTest
-@ContextConfiguration(classes = {WebConfig.class, ProjectsHandler.class, ProjectsRouter.class})
+@ContextConfiguration(classes = {
+    WebConfig.class,
+    ProjectsHandler.class,
+    ProjectsRouter.class,
+})
 class ProjectsRouterTest {
     static final String REPO_URL = "https://github.com/accula/accula";
     static final String REPO_NAME = "accula";
@@ -76,8 +80,8 @@ class ProjectsRouterTest {
     static final String REPO_URL_HIGHLOAD2 = "https://github.com/%s/%s".formatted(REPO_OWNER_HIGHLOAD, REPO_NAME_HIGHLOAD2);
     static final String REPO_URL_HIGHLOAD3 = "https://github.com/%s/%s".formatted(REPO_OWNER_HIGHLOAD, REPO_NAME_HIGHLOAD3);
 
-    static final GithubUser GITHUB_USER = new GithubUser(1L, "accula", "name", "avatar", false);
-    static final GithubRepo REPO = new GithubRepo(1L, "accula", false, "description", GITHUB_USER);
+    static final GithubUser GITHUB_USER = GithubUser.builder().id(1L).login("accula").name("name").avatar("avatar").isOrganization(false).build();
+    static final GithubRepo REPO = GithubRepo.builder().id(1L).name("accula").isPrivate(false).description("description").owner(GITHUB_USER).build();
     static final Pull PULL = Pull.builder()
             .id(1L)
             .number(2)
@@ -90,14 +94,14 @@ class ProjectsRouterTest {
             .base(Snapshot.builder().repo(REPO).branch("branch2").build())
             .primaryProjectId(1L)
             .build();
-    static final GithubUser GITHUB_USER_HIGHLOAD = new GithubUser(1L, REPO_OWNER_HIGHLOAD, REPO_OWNER_HIGHLOAD, "avatar", false);
-    static final GithubRepo REPO_HIGHLOAD = new GithubRepo(1L, REPO_NAME_HIGHLOAD4, false, "description", GITHUB_USER_HIGHLOAD);
+    static final GithubUser GITHUB_USER_HIGHLOAD = GithubUser.builder().id(1L).login(REPO_OWNER_HIGHLOAD).name(REPO_OWNER_HIGHLOAD).avatar("avatar").isOrganization(false).build();
+    static final GithubRepo REPO_HIGHLOAD = GithubRepo.builder().id(1L).name(REPO_NAME_HIGHLOAD4).isPrivate(false).description("description").owner(GITHUB_USER_HIGHLOAD).build();
     static final List<Pull> PULLS = List.of(PULL, PULL, PULL);
     static final String EMPTY = "";
     static final User CURRENT_USER = new User(0L, "", GITHUB_USER);
-    static final GithubUser GH_USER_2 = new GithubUser(2L, "l", "n", "a", false);
+    static final GithubUser GH_USER_2 = GithubUser.builder().id(2L).login("l").name("n").avatar("a").isOrganization(false).build();
     static final User USER_2 = new User(1L, "", GH_USER_2);
-    static final GithubUser GH_USER_3 = new GithubUser(3L, "l", "n", "a", false);
+    static final GithubUser GH_USER_3 = GithubUser.builder().id(3L).login("l").name("n").avatar("a").isOrganization(false).build();
     static final User USER_3 = new User(2L, "", GH_USER_3);
     static final GithubApiUser GH_OWNER = new GithubApiUser(1L, REPO_OWNER, EMPTY, EMPTY, EMPTY, GithubApiUser.Type.USER);
     static final GithubApiUser GH_OWNER_HIGHLOAD = new GithubApiUser(1L, REPO_OWNER_HIGHLOAD, EMPTY, EMPTY, EMPTY, GithubApiUser.Type.USER);
