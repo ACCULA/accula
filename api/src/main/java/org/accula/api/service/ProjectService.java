@@ -80,6 +80,19 @@ public final class ProjectService {
                 .doOnError(e -> log.error("Failed to update project with pulls={}", githubApiPull, e));
     }
 
+    public Mono<Pull> simpleUpdate(final GithubApiPull githubApiPull) {
+        return Mono
+            .defer(() -> {
+                final var users = new HashSet<GithubUser>();
+                final var repos = new HashSet<GithubRepo>();
+                final var pull = processGithubApiPull(githubApiPull, users, repos);
+                return upsertUsersAndReposToDb(users, repos)
+                    .then(pullRepo.upsert(pull));
+            })
+            .doOnSuccess(pull -> log.info("Project has been updated successfully with {}", pull))
+            .doOnError(e -> log.error("Failed to update project with pull={}", githubApiPull, e));
+    }
+
     private static Pull processGithubApiPull(final GithubApiPull githubApiPull,
                                              final Set<GithubUser> users,
                                              final Set<GithubRepo> repos) {
@@ -94,6 +107,8 @@ public final class ProjectService {
         repos.add(base.repo());
 
         users.add(pull.author());
+
+        users.addAll(pull.assignees());
 
         return pull;
     }

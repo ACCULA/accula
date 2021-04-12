@@ -2,6 +2,9 @@ package org.accula.api.handler;
 
 import lombok.RequiredArgsConstructor;
 import org.accula.api.converter.ModelToDtoConverter;
+import org.accula.api.db.model.Pull;
+import org.accula.api.db.model.User;
+import org.accula.api.db.repo.CurrentUserRepo;
 import org.accula.api.db.repo.PullRepo;
 import org.accula.api.handler.exception.Http4xxException;
 import org.accula.api.handler.exception.ResponseConvertibleException;
@@ -11,6 +14,7 @@ import org.accula.api.util.Lambda;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
@@ -20,12 +24,11 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public final class PullsHandler {
     private final PullRepo pullRepo;
+    private final CurrentUserRepo currentUserRepo;
 
     //TODO: handle github errors
     public Mono<ServerResponse> getMany(final ServerRequest request) {
-        return Mono
-                .fromSupplier(() -> PathVariableExtractor.projectId(request))
-                .flatMapMany(pullRepo::findByProjectId)
+        return pulls(request)
                 .map(ModelToDtoConverter::convertShort)
                 .collectList()
                 .flatMap(Responses::ok)
@@ -50,5 +53,21 @@ public final class PullsHandler {
                 })
                 .onErrorMap(NumberFormatException.class, Lambda.expandingWithArg(Http4xxException::badRequest))
                 .onErrorResume(Http4xxException::onErrorResume);
+    }
+
+    private Flux<Pull> pulls(final ServerRequest request) {
+        return Flux.defer(() -> {
+            final var projectId = PathVariableExtractor.projectId(request);
+            if (request.queryParam("assignedToMe").isEmpty()) {
+                return pullRepo.findByProjectId(projectId);
+            }
+
+            return currentUserRepo
+                .get(User::githubUser)
+                .flatMapMany(currentUser -> pullRepo
+                    .findByProjectId(projectId)
+                    .filter(pull -> pull.assignees().contains(currentUser)))
+                .switchIfEmpty(pullRepo.findByProjectId(projectId));
+        });
     }
 }

@@ -58,7 +58,9 @@ public final class GithubWebhookHandler {
         return (switch (payload.action()) {
             case OPENED, SYNCHRONIZE -> updateProject(payload)
                 .doOnNext(update -> detectClonesInBackground(update.getT1(), update.getT2()));
-            case EDITED, CLOSED, REOPENED -> updateProject(payload);
+            case CLOSED, REOPENED,
+                 EDITED,
+                 ASSIGNED, UNASSIGNED -> projectService.simpleUpdate(payload.pull());
         }).then();
     }
 

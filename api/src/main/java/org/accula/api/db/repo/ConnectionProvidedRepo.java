@@ -3,7 +3,8 @@ package org.accula.api.db.repo;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.Result;
 import io.r2dbc.spi.Row;
-import org.accula.api.util.Lambda;
+import org.reactivestreams.Publisher;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -22,7 +23,7 @@ public interface ConnectionProvidedRepo {
                 connectionProvider().get(),
                 connectionUse,
                 Connection::close,
-                Lambda.firstArg(Connection::close),
+                this::handleError,
                 Connection::close
         );
     }
@@ -32,33 +33,29 @@ public interface ConnectionProvidedRepo {
                 connectionProvider().get(),
                 connectionUse,
                 Connection::close,
-                Lambda.firstArg(Connection::close),
+                this::handleError,
                 Connection::close
         );
     }
 
     default <T> Mono<T> transactional(final Function<? super Connection, ? extends Mono<T>> connectionUse) {
-        return withConnection(connection -> Mono
-                .usingWhen(
-                        Mono.fromDirect(connection.beginTransaction())
-                                .then(Mono.just(connection)),
-                        connectionUse,
-                        Connection::commitTransaction,
-                        Lambda.firstArg(Connection::rollbackTransaction),
-                        Connection::rollbackTransaction
-                ));
+        return Mono.usingWhen(
+            connectionProvider().get(),
+            connection -> Mono.fromDirect(connection.beginTransaction()).then(connectionUse.apply(connection)),
+            ConnectionProvidedRepo::commitAndClose,
+            this::handleTransactionError,
+            ConnectionProvidedRepo::rollbackAndClose
+        );
     }
 
     default <T> Flux<T> transactionalMany(final Function<? super Connection, ? extends Flux<T>> connectionUse) {
-        return manyWithConnection(connection -> Flux
-                .usingWhen(
-                        Mono.fromDirect(connection.beginTransaction())
-                                .then(Mono.just(connection)),
-                        connectionUse,
-                        Connection::commitTransaction,
-                        Lambda.firstArg(Connection::rollbackTransaction),
-                        Connection::rollbackTransaction
-                ));
+        return Flux.usingWhen(
+            connectionProvider().get(),
+            connection -> Mono.fromDirect(connection.beginTransaction()).thenMany(connectionUse.apply(connection)),
+            ConnectionProvidedRepo::commitAndClose,
+            this::handleTransactionError,
+            ConnectionProvidedRepo::commitAndClose
+        );
     }
 
     static <T> Mono<T> column(final Result result, final String name, final Class<T> clazz) {
@@ -83,6 +80,26 @@ public interface ConnectionProvidedRepo {
 
     static <T> Flux<T> convertMany(final Result result, final Function<Row, T> transform) {
         return Flux.from(result.map((row, metadata) -> transform.apply(row)));
+    }
+
+    private Publisher<Void> handleError(final Connection connection, final Throwable t) {
+        LoggerFactory.getLogger(getClass()).error("Error during request", t);
+        return connection.close();
+    }
+
+    private Publisher<Void> handleTransactionError(final Connection connection, final Throwable t) {
+        LoggerFactory.getLogger(getClass()).error("Error during transaction", t);
+        return rollbackAndClose(connection);
+    }
+
+    private static Publisher<Void> commitAndClose(final Connection connection) {
+        return Mono.fromDirect(connection.commitTransaction())
+            .thenEmpty(connection.close());
+    }
+
+    private static Publisher<Void> rollbackAndClose(final Connection connection) {
+        return Mono.fromDirect(connection.rollbackTransaction())
+            .thenEmpty(connection.close());
     }
 
     interface ConnectionProvider extends Supplier<Mono<Connection>> {

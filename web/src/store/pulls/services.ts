@@ -4,14 +4,18 @@ import { API_URL, DEBUG } from 'utils'
 import { IClone, IDiff, IPull, IShortPull, IToken } from 'types'
 import { pulls, clones } from 'stubs'
 
-export const getPulls = async (projectId: number): Promise<IShortPull[]> => {
+export const getPulls = async (
+  token: IToken,
+  projectId: number
+): Promise<IShortPull[]> => {
   if (DEBUG) {
     return Promise.resolve(pulls)
   }
   return axios
     .get(`${API_URL}/api/projects/${projectId}/pulls`, {
       headers: {
-        Accept: 'application/json'
+        Accept: 'application/json',
+        Authorization: `Bearer ${token.accessToken}`
       },
       withCredentials: true
     })

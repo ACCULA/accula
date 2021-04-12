@@ -29,6 +29,9 @@ public class GithubApiPull {
     @Nullable
     @JsonProperty("merged_at")
     Instant mergedAt;
+    @Nullable
+    GithubApiUser assignee;
+    GithubApiUser[] assignees;
 
     public boolean isValid() {
         return head.repo() != null && head.user() != null && !head.user().didDeleteAccount();

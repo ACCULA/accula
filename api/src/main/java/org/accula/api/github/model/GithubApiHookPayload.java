@@ -19,10 +19,12 @@ public class GithubApiHookPayload {
 
     public enum Action {
         OPENED,
-        SYNCHRONIZE,
-        EDITED,
         CLOSED,
         REOPENED,
+        SYNCHRONIZE,
+        EDITED,
+        ASSIGNED,
+        UNASSIGNED,
         ;
 
         @JsonValue
