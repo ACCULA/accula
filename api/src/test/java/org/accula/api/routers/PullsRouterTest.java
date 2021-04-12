@@ -2,6 +2,7 @@ package org.accula.api.routers;
 
 import org.accula.api.converter.ModelToDtoConverter;
 import org.accula.api.db.model.Pull;
+import org.accula.api.db.repo.CurrentUserRepo;
 import org.accula.api.db.repo.PullRepo;
 import org.accula.api.handler.PullsHandler;
 import org.accula.api.handler.dto.PullDto;
@@ -35,6 +36,8 @@ class PullsRouterTest {
     static final Pull STUB_PULL = ProjectsRouterTest.PULL;
     @MockBean
     PullRepo repository;
+    @MockBean
+    CurrentUserRepo currentUserRepo;
     @Autowired
     RouterFunction<ServerResponse> pullsRoute;
     WebTestClient client;
