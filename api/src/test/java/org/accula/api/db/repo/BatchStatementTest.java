@@ -19,10 +19,10 @@ class BatchStatementTest {
             ON CONFLICT DO NOTHING
             """);
     List<GithubUser> users = List.of(
-            new GithubUser(0L, "login0", "name 0", "avatar", false),
-            new GithubUser(1L, "login1", null, "avatar", false),
-            new GithubUser(2L, "login2", "Firstname D' Lastnamiano", "avatar", false),
-            new GithubUser(3L, "login3", "Just many ' ' ' ' ' ' single quotes", "avatar", false)
+            GithubUser.builder().id(0L).login("login0").name("name 0").avatar("avatar").isOrganization(false).build(),
+            GithubUser.builder().id(1L).login("login1").avatar("avatar").isOrganization(false).build(),
+            GithubUser.builder().id(2L).login("login2").name("Firstname D' Lastnamiano").avatar("avatar").isOrganization(false).build(),
+            GithubUser.builder().id(3L).login("login3").name("Just many ' ' ' ' ' ' single quotes").avatar("avatar").isOrganization(false).build()
     );
 
     @Test

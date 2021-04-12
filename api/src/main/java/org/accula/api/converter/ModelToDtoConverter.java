@@ -153,17 +153,20 @@ public final class ModelToDtoConverter {
     public static CloneDto convert(final Clone clone,
                                    final Long projectId,
                                    final FileEntity<Snapshot> targetFile,
-                                   final FileEntity<Snapshot> sourceFile) {
+                                   final FileEntity<Snapshot> sourceFile,
+                                   final Pull targetPull,
+                                   final Pull sourcePull) {
         return CloneDto.builder()
                 .id(clone.id())
                 .projectId(projectId)
-                .target(convert(clone.target(), targetFile))
-                .source(convert(clone.source(), sourceFile))
+                .target(convert(clone.target(), targetFile, targetPull))
+                .source(convert(clone.source(), sourceFile, sourcePull))
                 .build();
     }
 
     private static CloneDto.FlatCodeSnippet convert(final Clone.Snippet snippet,
-                                                    final FileEntity<Snapshot> file) {
+                                                    final FileEntity<Snapshot> file,
+                                                    final Pull pull) {
         final var snapshot = snippet.snapshot();
         final var pullInfo = Checks.notNull(snapshot.pullInfo(), "Snapshot pullInfo");
         final var fileContent = Checks.notNull(file.content(), "FileEntity content").getBytes(UTF_8);
@@ -180,11 +183,25 @@ public final class ModelToDtoConverter {
                 .fromLine(snippet.fromLine())
                 .toLine(snippet.toLine())
                 .content(Base64.getEncoder().encodeToString(fileContent))
+                .pullUrl(pullUrl(pull))
+                .commitUrl(pullCommitUrl(snippet, pull))
+                .fileUrl(fileUrl(snippet))
                 .build();
     }
 
     private static String pullUrl(final Pull pull) {
         final var repo = pull.base().repo();
         return String.format(GITHUB_PULL_URL_FORMAT, repo.owner().login(), repo.name(), pull.number().toString());
+    }
+
+    private static String pullCommitUrl(final Clone.Snippet snippet, final Pull pull) {
+        return pullUrl(pull) + "/commits/" + snippet.snapshot().sha();
+    }
+
+    private static String fileUrl(final Clone.Snippet snippet) {
+        final var snapshot = snippet.snapshot();
+        final var repo = snapshot.repo();
+        return "https://github.com/%s/%s/blob/%s/%s#L%d"
+            .formatted(repo.owner().login(), repo.name(), snapshot.sha(), snippet.file(), snippet.fromLine());
     }
 }

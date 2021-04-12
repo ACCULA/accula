@@ -36,13 +36,13 @@ final class Converters {
                                   final String name,
                                   final String avatar,
                                   final String organization) {
-        return new GithubUser(
-                longInteger(row, id),
-                string(row, login),
-                nullable(row, name, String.class),
-                string(row, avatar),
-                bool(row, organization)
-        );
+        return GithubUser.builder()
+            .id(longInteger(row, id))
+            .login(string(row, login))
+            .name(nullable(row, name, String.class))
+            .avatar(string(row, avatar))
+            .isOrganization(bool(row, organization))
+            .build();
     }
 
     static GithubRepo convertRepo(final Row row,
@@ -55,13 +55,13 @@ final class Converters {
                                   final String ownerName,
                                   final String ownerAvatar,
                                   final String ownerOrganization) {
-        return new GithubRepo(
-                longInteger(row, id),
-                string(row, name),
-                bool(row, isPrivate),
-                string(row, description),
-                convertUser(row, ownerId, ownerLogin, ownerName, ownerAvatar, ownerOrganization)
-        );
+        return GithubRepo.builder()
+            .id(longInteger(row, id))
+            .name(string(row, name))
+            .isPrivate(bool(row, isPrivate))
+            .description(string(row, description))
+            .owner(convertUser(row, ownerId, ownerLogin, ownerName, ownerAvatar, ownerOrganization))
+            .build();
     }
 
     static Commit convertCommit(final Row row,

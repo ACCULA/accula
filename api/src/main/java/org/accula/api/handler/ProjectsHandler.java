@@ -311,7 +311,7 @@ public final class ProjectsHandler {
 
     private List<RepoShortDto> suggestRepos(final Project project, final List<RepoShortDto> reposUserHasAccessTo) {
         final var projectRepos = Stream.of(List.of(project.githubRepo()), project.secondaryRepos())
-            .flatMap(List::stream)
+            .<GithubRepo>mapMulti(List::forEach)
             .map(GithubRepo::id)
             .collect(Collectors.toSet());
         return suggester

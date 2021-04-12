@@ -1,11 +1,13 @@
 package org.accula.api.db.model;
 
+import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 
 /**
  * @author Anton Lamtev
  */
+@Builder
 @Value
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class GithubRepo {

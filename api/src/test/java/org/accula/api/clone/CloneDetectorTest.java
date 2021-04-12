@@ -35,10 +35,10 @@ class CloneDetectorTest {
 
     @Test
     void test() {
-        var repoOwner1 = new GithubUser(2L, "owner1", "owner1", "ava1", false);
-        var repoOwner2 = new GithubUser(3L, "owner2", "owner2", "ava2", false);
-        var repo1 = new GithubRepo(2L, "repo1", false, "descr1", repoOwner1);
-        var repo2 = new GithubRepo(3L, "repo2", false, "descr2", repoOwner2);
+        var repoOwner1 = GithubUser.builder().id(2L).login("owner1").name("owner1").avatar("ava1").isOrganization(false).build();
+        var repoOwner2 = GithubUser.builder().id(3L).login("owner2").name("owner2").avatar("ava2").isOrganization(false).build();
+        var repo1 = GithubRepo.builder().id(2L).name("repo1").isPrivate(false).description("descr1").owner(repoOwner1).build();
+        var repo2 = GithubRepo.builder().id(3L).name("repo2").isPrivate(false).description("descr2").owner(repoOwner2).build();
         var commitSnapshot1 = Snapshot.builder()
                 .commit(Commit.builder()
                         .date(Instant.EPOCH.plus(20L, ChronoUnit.MINUTES))

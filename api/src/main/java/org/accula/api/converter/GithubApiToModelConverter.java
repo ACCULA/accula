@@ -25,23 +25,23 @@ public final class GithubApiToModelConverter {
     }
 
     public static GithubRepo convert(final GithubApiRepo apiRepo) {
-        return new GithubRepo(
-                apiRepo.id(),
-                apiRepo.name(),
-                apiRepo.isPrivate(),
-                orEmpty(apiRepo.description()),
-                convert(apiRepo.owner())
-        );
+        return GithubRepo.builder()
+            .id(apiRepo.id())
+            .name(apiRepo.name())
+            .isPrivate(apiRepo.isPrivate())
+            .description(orEmpty(apiRepo.description()))
+            .owner(convert(apiRepo.owner()))
+            .build();
     }
 
     public static GithubUser convert(final GithubApiUser apiUser) {
-        return new GithubUser(
-                apiUser.id(),
-                apiUser.login(),
-                apiUser.name(),
-                apiUser.avatarUrl(),
-                apiUser.type() == GithubApiUser.Type.ORGANIZATION
-        );
+        return GithubUser.builder()
+            .id(apiUser.id())
+            .login(apiUser.login())
+            .name(apiUser.name())
+            .avatar(apiUser.avatarUrl())
+            .isOrganization(apiUser.type() == GithubApiUser.Type.ORGANIZATION)
+            .build();
     }
 
     public static GithubUser convert(final Map<String, Object> attributes) {
@@ -49,7 +49,13 @@ public final class GithubApiToModelConverter {
         final var login = (String) attributes.get("login");
         final var name = (String) attributes.get("name");
         final var avatar = (String) attributes.get("avatar_url");
-        return new GithubUser(id, login, name, avatar, false);
+        return GithubUser.builder()
+            .id(id)
+            .login(login)
+            .name(name)
+            .avatar(avatar)
+            .isOrganization(false)
+            .build();
     }
 
     public static Snapshot.PullInfo convertInfo(final GithubApiPull pull) {

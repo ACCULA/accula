@@ -6,8 +6,6 @@ import lombok.Value;
 
 import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
 
-//TODO: Add some useful urls for better user experience:
-// urls to: source and target repos, pulls, commits ...
 /**
  * @author Anton Lamtev
  */
@@ -32,5 +30,8 @@ public class CloneDto {
         Integer fromLine;
         Integer toLine;
         String content;
+        String pullUrl;
+        String commitUrl;
+        String fileUrl;
     }
 }
