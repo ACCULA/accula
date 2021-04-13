@@ -92,7 +92,7 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
             return Flux.empty();
         }
 
-        return manyWithConnection(connection -> {
+        return transactionalMany(connection -> {
             final var statement = selectByIdStatement(connection);
             statement.bind("$1", ids.toArray(new Long[0]));
 
@@ -105,18 +105,18 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
 
     @Override
     public Mono<Pull> findByNumber(final Long projectId, final Integer number) {
-        return withConnection(connection -> Mono
+        return transactional(connection -> Mono
                 .from(selectByNumberStatement(connection)
                         .bind("$1", projectId)
                         .bind("$2", number)
                         .execute())
                 .flatMap(result -> ConnectionProvidedRepo.convert(result, PullRepoImpl::convert))
-                .flatMap(pull -> byFetchingPullAssignees(connection, pull)));
+                .flatMap(pull -> fetchAssignees(connection, pull)));
     }
 
     @Override
     public Flux<Pull> findPrevious(Long projectId, Integer number, Long authorId) {
-        return manyWithConnection(connection -> Mono
+        return transactionalMany(connection -> Mono
                 .from(selectPreviousByNumberAndAuthorIdStatement(connection)
                         .bind("$1", projectId)
                         .bind("$2", number)
@@ -128,7 +128,7 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
 
     @Override
     public Flux<Pull> findByProjectId(final Long projectId) {
-        return manyWithConnection(connection -> Mono
+        return transactionalMany(connection -> Mono
                 .from(selectByProjectIdStatement(connection)
                         .bind("$1", projectId)
                         .execute())
@@ -363,7 +363,7 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
                     .toList()));
     }
 
-    private static Mono<Pull> byFetchingPullAssignees(final Connection connection, final Pull pull) {
+    private static Mono<Pull> fetchAssignees(final Connection connection, final Pull pull) {
         return byFetchingAssignees(connection).apply(Flux.just(pull)).next();
     }
 
