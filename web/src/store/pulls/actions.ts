@@ -77,9 +77,8 @@ export const getPullsAction = (projectId: number, handleError?: (msg: string) =>
     return
   }
   try {
-    const { users } = getState()
     dispatch(setPulls(fetching))
-    const result = await getPulls(users.token, projectId)
+    const result = await getPulls(projectId)
     dispatch(setPulls(fetched(result)))
   } catch (e) {
     dispatch(setPulls(failed(e)))
