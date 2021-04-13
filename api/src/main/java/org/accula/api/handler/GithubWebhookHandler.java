@@ -25,9 +25,9 @@ import java.util.Objects;
 @Slf4j
 @RequiredArgsConstructor
 public final class GithubWebhookHandler {
-    private static final String GITHUB_EVENT = "X-GitHub-Event";
-    private static final String GITHUB_EVENT_PING = "ping";
-    private static final String GITHUB_EVENT_PULL = "pull_request";
+    public static final String GITHUB_EVENT = "X-GitHub-Event";
+    public static final String GITHUB_EVENT_PING = "ping";
+    public static final String GITHUB_EVENT_PULL = "pull_request";
 
     private final ProjectRepo projectRepo;
     private final ProjectService projectService;

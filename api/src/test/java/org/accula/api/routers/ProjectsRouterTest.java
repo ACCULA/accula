@@ -109,8 +109,8 @@ class ProjectsRouterTest {
     static final GithubApiRepo GH_REPO_HIGHLOAD1 = new GithubApiRepo(2L, REPO_URL_HIGHLOAD1, REPO_NAME_HIGHLOAD1, false, EMPTY, GH_OWNER_HIGHLOAD);
     static final GithubApiRepo GH_REPO_HIGHLOAD2 = new GithubApiRepo(3L, REPO_URL_HIGHLOAD2, REPO_NAME_HIGHLOAD2, false, EMPTY, GH_OWNER_HIGHLOAD);
     static final GithubApiRepo GH_REPO_HIGHLOAD3 = new GithubApiRepo(4L, REPO_URL_HIGHLOAD3, REPO_NAME_HIGHLOAD3, false, EMPTY, GH_OWNER_HIGHLOAD);
-    static final GithubApiSnapshot MARKER = new GithubApiSnapshot("", "", GH_OWNER, GH_REPO, "");
-    static final GithubApiPull GH_PULL = new GithubApiPull(0L, "", MARKER, MARKER, GH_OWNER, 0, "", State.OPEN, Instant.now(), Instant.now(), Instant.now(), null, new GithubApiUser[0]);
+    static final GithubApiSnapshot MARKER = GithubApiSnapshot.builder().label("").ref("").user(GH_OWNER).repo(GH_REPO).sha("").build();
+    static final GithubApiPull GH_PULL = GithubApiPull.builder().id(0L).htmlUrl("").head(MARKER).base(MARKER).user(GH_OWNER).number(0).title("").state(State.OPEN).createdAt(Instant.now()).updatedAt(Instant.now()).mergedAt(Instant.now()).assignee(null).assignees(new GithubApiUser[0]).build();
     static final GithubApiPull[] OPEN_PULLS = new GithubApiPull[]{GH_PULL, GH_PULL, GH_PULL};
     static final Project PROJECT = Project.builder().id(1L).state(Project.State.CONFIGURING).githubRepo(REPO).creator(CURRENT_USER).openPullCount(0).build();
     static final Project PROJECT_HIGHLOAD = Project.builder().id(2L).state(Project.State.CONFIGURING).githubRepo(REPO_HIGHLOAD).creator(CURRENT_USER).openPullCount(0).build();
