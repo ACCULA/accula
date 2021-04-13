@@ -66,7 +66,7 @@ public final class ProjectService {
                 .doOnError(e -> log.error("Failed to update project with pulls={}", githubApiPulls, e));
     }
 
-    public Mono<PullSnapshots> update(final GithubApiPull githubApiPull) {
+    public Mono<PullSnapshots> updateWithNewCommits(final GithubApiPull githubApiPull) {
         return Mono
                 .defer(() -> {
                     final var users = new HashSet<GithubUser>();
@@ -80,7 +80,7 @@ public final class ProjectService {
                 .doOnError(e -> log.error("Failed to update project with pulls={}", githubApiPull, e));
     }
 
-    public Mono<Pull> simpleUpdate(final GithubApiPull githubApiPull) {
+    public Mono<Pull> updatePullInfo(final GithubApiPull githubApiPull) {
         return Mono
             .defer(() -> {
                 final var users = new HashSet<GithubUser>();

@@ -60,7 +60,7 @@ public final class GithubWebhookHandler {
                 .doOnNext(update -> detectClonesInBackground(update.getT1(), update.getT2()));
             case CLOSED, REOPENED,
                  EDITED,
-                 ASSIGNED, UNASSIGNED -> projectService.simpleUpdate(payload.pull());
+                 ASSIGNED, UNASSIGNED -> projectService.updatePullInfo(payload.pull());
         }).then();
     }
 
@@ -69,7 +69,7 @@ public final class GithubWebhookHandler {
             .idByRepoId(payload.repo().id())
             .flatMap(projectId -> Mono
                 .just(projectId)
-                .zipWith(projectService.update(payload.pull())));
+                .zipWith(projectService.updateWithNewCommits(payload.pull())));
     }
 
     private void detectClonesInBackground(final Long projectId, final PullSnapshots pullSnapshots) {
