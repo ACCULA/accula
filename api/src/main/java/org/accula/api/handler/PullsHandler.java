@@ -66,8 +66,7 @@ public final class PullsHandler {
                 .get(User::githubUser)
                 .flatMapMany(currentUser -> pullRepo
                     .findByProjectId(projectId)
-                    .filter(pull -> pull.assignees().contains(currentUser)))
-                .switchIfEmpty(pullRepo.findByProjectId(projectId));
+                    .filter(pull -> pull.assignees().contains(currentUser)));
         });
     }
 }
