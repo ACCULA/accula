@@ -24,8 +24,8 @@ public class GithubApiHook {
     Boolean active;
     Config config;
 
-    public static GithubApiHook onPullUpdates(final String url, final String secret, final boolean isSSlEnabled) {
-        return new GithubApiHook(new Event[]{PULL_REQUEST}, true, new Config(url, secret, isSSlEnabled ? NO : YES));
+    public static GithubApiHook onPullUpdates(final String url, final String secret, final boolean isSslEnabled) {
+        return new GithubApiHook(new Event[]{PULL_REQUEST}, true, new Config(url, secret, isSslEnabled ? NO : YES));
     }
 
     public enum Event {
