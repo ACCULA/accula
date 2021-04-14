@@ -42,6 +42,7 @@ import static org.accula.api.handler.GithubWebhookHandler.GITHUB_SIGNATURE;
 import static org.accula.api.handler.GithubWebhookHandler.WebhookError.INVALID_SIGNATURE;
 import static org.accula.api.handler.GithubWebhookHandler.WebhookError.MISSING_EVENT;
 import static org.accula.api.handler.GithubWebhookHandler.WebhookError.MISSING_SIGNATURE;
+import static org.accula.api.handler.GithubWebhookHandler.WebhookError.NOT_SUPPORTED_EVENT;
 import static org.accula.api.handler.GithubWebhookHandler.WebhookError.SIGNATURE_VERIFICATION_FAILED;
 import static org.accula.api.routers.ProjectsRouterTest.GH_OWNER;
 import static org.accula.api.routers.ProjectsRouterTest.GH_OWNER_HIGHLOAD;
@@ -176,6 +177,17 @@ class GithubWebhookRouterTest {
             .exchange()
             .expectStatus().isBadRequest()
             .expectBody(ApiError.class).isEqualTo(ApiError.with(SIGNATURE_VERIFICATION_FAILED));
+    }
+
+    @Test
+    void testNotSupportedEvent() {
+        client.post().uri("/api/webhook")
+            .header(GITHUB_EVENT, "NOT_YET_SUPPORTED_EVENT")
+            .header(GITHUB_SIGNATURE, pingSignature)
+            .bodyValue(pingBody)
+            .exchange()
+            .expectStatus().isBadRequest()
+            .expectBody(ApiError.class).isEqualTo(ApiError.with(NOT_SUPPORTED_EVENT));
     }
 
     @Test

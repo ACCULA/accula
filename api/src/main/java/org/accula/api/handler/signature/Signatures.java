@@ -1,5 +1,6 @@
 package org.accula.api.handler.signature;
 
+import lombok.Generated;
 import lombok.SneakyThrows;
 import org.apache.commons.codec.binary.Hex;
 
@@ -21,11 +22,16 @@ public final class Signatures {
         return signature.equals(signHexHmacSha256(payload, secret));
     }
 
-    @SneakyThrows
     public static String signHexHmacSha256(final String payload, final String secret) {
-        final var hmacSha256 = Mac.getInstance(HMAC_SHA256);
-        final var keySpec = new SecretKeySpec(secret.getBytes(UTF_8), HMAC_SHA256);
-        hmacSha256.init(keySpec);
+        final var hmacSha256 = mac(secret, HMAC_SHA256);
         return Hex.encodeHexString(hmacSha256.doFinal(payload.getBytes(UTF_8)));
+    }
+
+    @SneakyThrows
+    private static Mac mac(final String secret, final String algorithm) {
+        final var mac = Mac.getInstance(algorithm);
+        final var keySpec = new SecretKeySpec(secret.getBytes(UTF_8), algorithm);
+        mac.init(keySpec);
+        return mac;
     }
 }
