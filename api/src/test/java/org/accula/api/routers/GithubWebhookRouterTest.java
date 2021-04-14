@@ -99,6 +99,8 @@ class GithubWebhookRouterTest {
         .pull(pull)
         .build();
     static final String assignedPayloadSignature = "sha256=" + Signatures.signHexHmacSha256(SerializationHelper.json(assignedPayload), signatureSecret);
+    static final GithubApiHookPayload unassignedPayload = assignedPayload.withAction(GithubApiHookPayload.Action.UNASSIGNED).withPull(null);
+    static final String unassignedPayloadSignature = "sha256=" + Signatures.signHexHmacSha256(SerializationHelper.json(unassignedPayload), signatureSecret);
     @Autowired
     RouterFunction<ServerResponse> webhookRoute;
     WebTestClient client;
@@ -190,6 +192,24 @@ class GithubWebhookRouterTest {
             .header(GITHUB_SIGNATURE, assignedPayloadSignature)
             .contentType(MediaType.APPLICATION_JSON)
             .bodyValue(SerializationHelper.json(assignedPayload))
+            .exchange()
+            .expectStatus().isOk();
+    }
+
+    @Test
+    void testUnassignedErrorDuringPayloadProcessing() {
+        when(githubUserRepo.upsert(anyCollection()))
+            .thenReturn(Flux.empty());
+        when(githubRepoRepo.upsert(anyCollection()))
+            .thenReturn(Flux.empty());
+        when(pullRepo.upsert(any(Pull.class)))
+            .thenReturn(Mono.just(GithubApiToModelConverter.convert(pull)));
+
+        client.post().uri("/api/webhook")
+            .header(GITHUB_EVENT, GITHUB_EVENT_PULL)
+            .header(GITHUB_SIGNATURE, unassignedPayloadSignature)
+            .contentType(MediaType.APPLICATION_JSON)
+            .bodyValue(SerializationHelper.json(unassignedPayload))
             .exchange()
             .expectStatus().isOk();
     }
