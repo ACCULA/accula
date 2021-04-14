@@ -256,7 +256,7 @@ public final class ProjectsHandler {
     }
 
     private Mono<ProjectDto> createWebhook(final ProjectDto project) {
-        final var hook = GithubApiHook.onPullUpdates(webhookProperties.url(), webhookProperties.secret());
+        final var hook = GithubApiHook.onPullUpdates(webhookProperties.url(), webhookProperties.secret(), webhookProperties.sslEnabled());
         return githubClient
                 .createHook(project.repoOwner(), project.repoName(), hook)
                 .thenReturn(project);

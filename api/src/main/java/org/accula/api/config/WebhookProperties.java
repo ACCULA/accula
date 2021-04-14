@@ -13,4 +13,5 @@ import org.springframework.boot.context.properties.ConstructorBinding;
 public class WebhookProperties {
     String url;
     String secret;
+    Boolean sslEnabled;
 }
