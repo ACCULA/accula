@@ -1,6 +1,5 @@
 package org.accula.api.handler.signature;
 
-import lombok.Generated;
 import lombok.SneakyThrows;
 import org.apache.commons.codec.binary.Hex;
 
