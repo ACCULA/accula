@@ -6,6 +6,7 @@ import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.Row;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.accula.api.db.model.GithubUser;
 import org.accula.api.db.model.Pull;
 import org.accula.api.db.model.PullSnapshots;
 import org.accula.api.util.Iterables;
@@ -15,7 +16,10 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.function.Function;
 
 import static org.accula.api.db.repo.Converters.EMPTY_CLAUSE;
 
@@ -34,7 +38,7 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
             return Flux.empty();
         }
 
-        return manyWithConnection(connection -> {
+        return transactionalMany(connection -> {
             final var statement = BatchStatement.of(connection, """
                     INSERT INTO pull (id,
                                       number,
@@ -76,6 +80,8 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
             return statement
                     .execute()
                     .flatMap(PostgresqlResult::getRowsUpdated)
+                    .then(deleteAssignees(connection, pulls))
+                    .then(insertAssignees(connection, pulls))
                     .thenMany(Flux.fromIterable(pulls));
         });
     }
@@ -86,44 +92,48 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
             return Flux.empty();
         }
 
-        return manyWithConnection(connection -> {
+        return transactionalMany(connection -> {
             final var statement = selectByIdStatement(connection);
             statement.bind("$1", ids.toArray(new Long[0]));
 
             return statement
                     .execute()
-                    .flatMap(result -> ConnectionProvidedRepo.convertMany(result, PullRepoImpl::convert));
+                    .flatMap(result -> ConnectionProvidedRepo.convertMany(result, PullRepoImpl::convert))
+                    .transform(byFetchingAssignees(connection));
         });
     }
 
     @Override
     public Mono<Pull> findByNumber(final Long projectId, final Integer number) {
-        return withConnection(connection -> Mono
+        return transactional(connection -> Mono
                 .from(selectByNumberStatement(connection)
                         .bind("$1", projectId)
                         .bind("$2", number)
                         .execute())
-                .flatMap(result -> ConnectionProvidedRepo.convert(result, PullRepoImpl::convert)));
+                .flatMap(result -> ConnectionProvidedRepo.convert(result, PullRepoImpl::convert))
+                .flatMap(pull -> fetchAssignees(connection, pull)));
     }
 
     @Override
     public Flux<Pull> findPrevious(Long projectId, Integer number, Long authorId) {
-        return manyWithConnection(connection -> Mono
+        return transactionalMany(connection -> Mono
                 .from(selectPreviousByNumberAndAuthorIdStatement(connection)
                         .bind("$1", projectId)
                         .bind("$2", number)
                         .bind("$3", authorId)
                         .execute())
-                .flatMapMany(result -> ConnectionProvidedRepo.convertMany(result, PullRepoImpl::convert)));
+                .flatMapMany(result -> ConnectionProvidedRepo.convertMany(result, PullRepoImpl::convert))
+                .transform(byFetchingAssignees(connection)));
     }
 
     @Override
     public Flux<Pull> findByProjectId(final Long projectId) {
-        return manyWithConnection(connection -> Mono
+        return transactionalMany(connection -> Mono
                 .from(selectByProjectIdStatement(connection)
                         .bind("$1", projectId)
                         .execute())
-                .flatMapMany(result -> ConnectionProvidedRepo.convertMany(result, PullRepoImpl::convert)));
+                .flatMapMany(result -> ConnectionProvidedRepo.convertMany(result, PullRepoImpl::convert))
+                .transform(byFetchingAssignees(connection)));
     }
 
     @Override
@@ -153,6 +163,49 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
                     .flatMap(PostgresqlResult::getRowsUpdated)
                     .then();
         });
+    }
+
+    private static Mono<Void> deleteAssignees(final Connection connection, final Collection<Pull> pulls) {
+        return ((PostgresqlStatement) connection.createStatement("""
+            DELETE
+            FROM pull_assignee
+            WHERE pull_id = ANY ($1)
+            """))
+            .bind("$1", pulls.stream().map(Pull::id).toArray(Long[]::new))
+            .execute()
+            .flatMap(PostgresqlResult::getRowsUpdated)
+            .then();
+    }
+
+    private static Mono<Void> insertAssignees(final Connection connection, final Collection<Pull> pulls) {
+        final var pullIdToAssigneeIdList = pulls
+            .stream()
+            .flatMap(pull -> pull
+                .assignees()
+                .stream()
+                .map(assignee -> new Object() {
+                    final Long pullId = pull.id();
+                    final Long assigneeId = assignee.id();
+                })
+            )
+            .toList();
+
+        if (pullIdToAssigneeIdList.isEmpty()) {
+            return Mono.empty();
+        }
+
+        final var statement = BatchStatement.of(connection, """
+            INSERT INTO pull_assignee (pull_id, assignee_id)
+            VALUES ($collection)
+            """);
+        statement.bind(pullIdToAssigneeIdList, pullIdToAssigneeId -> Bindings.of(
+            pullIdToAssigneeId.pullId,
+            pullIdToAssigneeId.assigneeId
+        ));
+        return statement
+            .execute()
+            .flatMap(PostgresqlResult::getRowsUpdated)
+            .then();
     }
 
     private static PostgresqlStatement selectByIdStatement(final Connection connection) {
@@ -261,6 +314,57 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
                 """;
         return (PostgresqlStatement) connection
                 .createStatement(String.format("%s %s %s %s", sql, fromClauseExtension, whereClause, orderByClause));
+    }
+
+    private static Function<Flux<Pull>, Flux<Pull>> byFetchingAssignees(final Connection connection) {
+        return pullFlux -> pullFlux
+            .collectList()
+            .flatMapMany(pulls -> ((PostgresqlStatement) connection
+                .createStatement("""
+                    SELECT pull_id,
+                           assignee_id,
+                           ug.login     AS assignee_login,
+                           ug.name      AS assignee_name,
+                           ug.avatar    AS assignee_avatar,
+                           ug.is_org    AS assignee_is_org
+                    FROM pull_assignee
+                        JOIN user_github ug
+                            ON ug.id = pull_assignee.assignee_id
+                    WHERE pull_id = ANY ($1)
+                    """))
+                .bind("$1", pulls.stream().map(Pull::id).toArray(Long[]::new))
+                .execute()
+                .flatMap(result ->
+                    ConnectionProvidedRepo.convertMany(result, row -> new Object() {
+                        final Long pullId = Converters.longInteger(row, "pull_id");
+                        final GithubUser assignee = Converters.convertUser(row,
+                            "assignee_id",
+                            "assignee_login",
+                            "assignee_name",
+                            "assignee_avatar",
+                            "assignee_is_org");
+                    })
+                )
+                .collectMultimap(it -> it.pullId, it -> it.assignee)
+                .flatMapIterable(assigneeMap -> pulls
+                    .stream()
+                    .map(pull -> {
+                        final var assignees = assigneeMap.get(pull.id());
+                        if (assignees == null || assignees.isEmpty()) {
+                            return pull;
+                        }
+                        if (assignees instanceof List<GithubUser> list) {
+                            return pull.withAssignees(list);
+                        }
+                        final var list = new ArrayList<GithubUser>(assignees.size());
+                        list.addAll(assignees);
+                        return pull.withAssignees(list);
+                    })
+                    .toList()));
+    }
+
+    private static Mono<Pull> fetchAssignees(final Connection connection, final Pull pull) {
+        return byFetchingAssignees(connection).apply(Flux.just(pull)).next();
     }
 
     private static Pull convert(final Row row) {

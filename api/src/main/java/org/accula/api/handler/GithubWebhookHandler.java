@@ -25,9 +25,9 @@ import java.util.Objects;
 @Slf4j
 @RequiredArgsConstructor
 public final class GithubWebhookHandler {
-    private static final String GITHUB_EVENT = "X-GitHub-Event";
-    private static final String GITHUB_EVENT_PING = "ping";
-    private static final String GITHUB_EVENT_PULL = "pull_request";
+    public static final String GITHUB_EVENT = "X-GitHub-Event";
+    public static final String GITHUB_EVENT_PING = "ping";
+    public static final String GITHUB_EVENT_PULL = "pull_request";
 
     private final ProjectRepo projectRepo;
     private final ProjectService projectService;
@@ -58,7 +58,9 @@ public final class GithubWebhookHandler {
         return (switch (payload.action()) {
             case OPENED, SYNCHRONIZE -> updateProject(payload)
                 .doOnNext(update -> detectClonesInBackground(update.getT1(), update.getT2()));
-            case EDITED, CLOSED, REOPENED -> updateProject(payload);
+            case CLOSED, REOPENED,
+                 EDITED,
+                 ASSIGNED, UNASSIGNED -> projectService.updatePullInfo(payload.pull());
         }).then();
     }
 
@@ -67,7 +69,7 @@ public final class GithubWebhookHandler {
             .idByRepoId(payload.repo().id())
             .flatMap(projectId -> Mono
                 .just(projectId)
-                .zipWith(projectService.update(payload.pull())));
+                .zipWith(projectService.updateWithNewCommits(payload.pull())));
     }
 
     private void detectClonesInBackground(final Long projectId, final PullSnapshots pullSnapshots) {

@@ -13,7 +13,9 @@ import org.accula.api.util.Checks;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  * @author Anton Lamtev
@@ -82,7 +84,18 @@ public final class GithubApiToModelConverter {
                 .head(convert(pull.head(), pull))
                 .base(convert(pull.base(), pull))
                 .author(convert(pull.user()))
+                .assignees(convertAssignees(pull))
                 .build();
+    }
+
+    private static List<GithubUser> convertAssignees(final GithubApiPull pull) {
+        return Stream.concat(
+                Stream.ofNullable(pull.assignee()),
+                Stream.of(pull.assignees())
+            )
+            .distinct()
+            .map(GithubApiToModelConverter::convert)
+            .toList();
     }
 
     private static String orEmpty(@Nullable final String s) {

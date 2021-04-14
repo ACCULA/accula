@@ -2,6 +2,7 @@ package org.accula.api.routers;
 
 import org.accula.api.converter.ModelToDtoConverter;
 import org.accula.api.db.model.Pull;
+import org.accula.api.db.repo.CurrentUserRepo;
 import org.accula.api.db.repo.PullRepo;
 import org.accula.api.handler.PullsHandler;
 import org.accula.api.handler.dto.PullDto;
@@ -22,6 +23,11 @@ import reactor.core.publisher.Mono;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Anton Lamtev
@@ -35,6 +41,8 @@ class PullsRouterTest {
     static final Pull STUB_PULL = ProjectsRouterTest.PULL;
     @MockBean
     PullRepo repository;
+    @MockBean
+    CurrentUserRepo currentUserRepo;
     @Autowired
     RouterFunction<ServerResponse> pullsRoute;
     WebTestClient client;
@@ -48,10 +56,10 @@ class PullsRouterTest {
 
     @Test
     void testGetOk() {
-        Mockito.when(repository.findByNumber(Mockito.anyLong(), Mockito.anyInt()))
+        when(repository.findByNumber(anyLong(), Mockito.anyInt()))
                 .thenReturn(Mono.just(STUB_PULL));
 
-        Mockito.when(repository.findPrevious(Mockito.anyLong(), Mockito.anyInt(), Mockito.anyLong()))
+        when(repository.findPrevious(anyLong(), Mockito.anyInt(), anyLong()))
                 .thenReturn(Flux.fromIterable(Collections.emptyList()));
 
         client.get().uri("/api/projects/{projectId}/pulls/{pullNumber}", 1L, STUB_PULL.number())
@@ -70,7 +78,7 @@ class PullsRouterTest {
 
     @Test
     void testGetNotFound() {
-        Mockito.when(repository.findByNumber(Mockito.anyLong(), Mockito.anyInt()))
+        when(repository.findByNumber(anyLong(), Mockito.anyInt()))
                 .thenReturn(Mono.empty());
 
         client.get().uri("/api/projects/{projectId}/pulls/{pullNumber}", 1L, STUB_PULL.number())
@@ -81,7 +89,7 @@ class PullsRouterTest {
 
     @Test
     void testGetManyOk() {
-        Mockito.when(repository.findByProjectId(Mockito.anyLong()))
+        when(repository.findByProjectId(anyLong()))
                 .thenReturn(Flux.just(STUB_PULL));
 
         client.get().uri("/api/projects/{projectId}/pulls", 1L)
@@ -92,7 +100,7 @@ class PullsRouterTest {
 
     @Test
     void testGetManyEmpty() {
-        Mockito.when(repository.findByProjectId(Mockito.anyLong()))
+        when(repository.findByProjectId(anyLong()))
                 .thenReturn(Flux.empty());
 
         client.get().uri("/api/projects/{projectId}/pulls", 1L)
@@ -106,5 +114,45 @@ class PullsRouterTest {
         client.get().uri("/api/projects/notANumber/pulls")
                 .exchange()
                 .expectStatus().isBadRequest();
+    }
+
+    @Test
+    void testGetManyAssignedToMeAuthorized() {
+        final var pull = STUB_PULL.withAssignees(List.of(UsersRouterTest.STUB_USER.githubUser()));
+        when(repository.findByProjectId(anyLong()))
+            .thenReturn(Flux.just(pull));
+        when(currentUserRepo.get(Mockito.any(Function.class)))
+            .thenReturn(Mono.just(UsersRouterTest.STUB_USER.githubUser()));
+
+        client.get().uri("/api/projects/{projectId}/pulls?assignedToMe", 1L)
+            .exchange()
+            .expectStatus().isOk()
+            .expectBody(ShortPullDto[].class).isEqualTo(ModelToDtoConverter.convertShort(List.of(pull)).toArray(new ShortPullDto[0]));
+    }
+
+    @Test
+    void testGetManyAssignedToMeAuthorizedNotMatches() {
+        when(repository.findByProjectId(anyLong()))
+            .thenReturn(Flux.just(STUB_PULL));
+        when(currentUserRepo.get(Mockito.any(Function.class)))
+            .thenReturn(Mono.just(UsersRouterTest.STUB_USER.githubUser()));
+
+        client.get().uri("/api/projects/{projectId}/pulls?assignedToMe", 1L)
+            .exchange()
+            .expectStatus().isOk()
+            .expectBody(ShortPullDto[].class).value(pulls -> assertEquals(0, pulls.length));
+    }
+
+    @Test
+    void testGetManyAssignedToMeNotAuthorized() {
+        when(repository.findByProjectId(anyLong()))
+            .thenReturn(Flux.just(STUB_PULL));
+        when(currentUserRepo.get(Mockito.any(Function.class)))
+            .thenReturn(Mono.empty());
+
+        client.get().uri("/api/projects/{projectId}/pulls?assignedToMe", 1L)
+            .exchange()
+            .expectStatus().isOk()
+            .expectBody(ShortPullDto[].class).value(pulls -> assertEquals(0, pulls.length));
     }
 }

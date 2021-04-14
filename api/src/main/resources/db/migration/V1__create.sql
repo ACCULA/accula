@@ -124,6 +124,16 @@ CREATE TABLE IF NOT EXISTS pull
     FOREIGN KEY (author_github_id) REFERENCES user_github (id)
 );
 
+CREATE TABLE IF NOT EXISTS pull_assignee
+(
+    pull_id     BIGINT NOT NULL,
+    assignee_id BIGINT NOT NULL,
+
+    FOREIGN KEY (pull_id) REFERENCES pull (id),
+    FOREIGN KEY (assignee_id) REFERENCES user_github (id),
+    CONSTRAINT pull_assignee_pk PRIMARY KEY (pull_id, assignee_id)
+);
+
 CREATE TABLE IF NOT EXISTS snapshot_pull
 (
     snapshot_sha     CHAR(40)     NOT NULL,
