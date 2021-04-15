@@ -59,8 +59,8 @@ public final class ModelToDtoConverter {
 
     public static ProjectDto.State convert(final Project.State state) {
         return switch (state) {
-            case CONFIGURING -> ProjectDto.State.CREATING;
-            case CONFIGURED -> ProjectDto.State.CREATED;
+            case CONFIGURING -> ProjectDto.State.CONFIGURING;
+            case CONFIGURED -> ProjectDto.State.CONFIGURED;
         };
     }
 
