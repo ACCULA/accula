@@ -3,6 +3,7 @@ import { IClone, IProject, IPull } from 'types'
 export const projects: IProject[] = [
   {
     id: 1,
+    state: 'CONFIGURED',
     repoUrl: 'https://github.com/polis-mail-ru/2019-highload-dht',
     creatorId: 1,
     repoOwner: 'polis-mail-ru',
@@ -10,10 +11,12 @@ export const projects: IProject[] = [
     repoDescription: 'Курсовой проект 2019 года курса "Highload системы"',
     repoOwnerAvatar: 'https://avatars2.githubusercontent.com/u/31819365?s=200&v=4',
     repoOpenPullCount: 10,
-    adminIds: [1]
+    adminIds: [1],
+    secondaryRepos: []
   },
   {
     id: 2,
+    state: 'CONFIGURED',
     repoUrl: 'https://github.com/ACCULA/accula',
     creatorId: 1,
     repoOwner: 'ACCULA',
@@ -21,10 +24,12 @@ export const projects: IProject[] = [
     repoDescription: 'Advanced Code Clones UniversaL Analyzer',
     repoOwnerAvatar: 'https://avatars0.githubusercontent.com/u/61988411?s=200&v=4',
     repoOpenPullCount: 0,
-    adminIds: [1]
+    adminIds: [1],
+    secondaryRepos: []
   },
   {
     id: 3,
+    state: 'CONFIGURED',
     repoUrl: 'https://github.com/polis-mail-ru/2020-db-lsm',
     creatorId: 1,
     repoOwner: 'polis-mail-ru',
@@ -32,7 +37,8 @@ export const projects: IProject[] = [
     repoDescription: 'NoSQL course project',
     repoOwnerAvatar: 'https://avatars2.githubusercontent.com/u/31819365?s=200&v=4',
     repoOpenPullCount: 19,
-    adminIds: [1]
+    adminIds: [1],
+    secondaryRepos: []
   }
 ]
 
@@ -171,52 +177,52 @@ Mono<Void> replaceRefreshToken(final Long userId,
 `
 
 export const clones: IClone[] = [
-  {
-    id: 1,
-    projectId: 1,
-    target: {
-      pullNumber: 6,
-      owner: 'vaddya',
-      repo: '2019-highload',
-      sha: 'somesha',
-      file: 'src/main/java/ru/mail/polis/Main.java',
-      fromLine: 2,
-      toLine: 2,
-      content: btoa(oldCode2)
-    },
-    source: {
-      pullNumber: 4,
-      owner: 'lamtev',
-      repo: '2019-highload',
-      sha: 'somesha',
-      file: 'src/main/java/ru/mail/polis/MyMain.java',
-      fromLine: 1,
-      toLine: 1,
-      content: btoa(newCode2)
-    }
-  },
-  {
-    id: 2,
-    projectId: 2,
-    target: {
-      pullNumber: 1,
-      owner: 'lamtev',
-      repo: '2019-highload',
-      sha: 'somesha',
-      file: 'src/main/java/ru/mail/polis/Database.java',
-      fromLine: 3,
-      toLine: 3,
-      content: btoa(oldCode2)
-    },
-    source: {
-      pullNumber: 4,
-      owner: 'vaddya',
-      repo: '2019-highload',
-      sha: 'somesha',
-      file: 'src/main/java/ru/mail/polis/Database.java',
-      fromLine: 4,
-      toLine: 4,
-      content: btoa(newCode2)
-    }
-  }
+  // {
+  //   id: 1,
+  //   projectId: 1,
+  //   target: {
+  //     pullNumber: 6,
+  //     owner: 'vaddya',
+  //     repo: '2019-highload',
+  //     sha: 'somesha',
+  //     file: 'src/main/java/ru/mail/polis/Main.java',
+  //     fromLine: 2,
+  //     toLine: 2,
+  //     content: btoa(oldCode2)
+  //   },
+  //   source: {
+  //     pullNumber: 4,
+  //     owner: 'lamtev',
+  //     repo: '2019-highload',
+  //     sha: 'somesha',
+  //     file: 'src/main/java/ru/mail/polis/MyMain.java',
+  //     fromLine: 1,
+  //     toLine: 1,
+  //     content: btoa(newCode2)
+  //   }
+  // },
+  // {
+  //   id: 2,
+  //   projectId: 2,
+  //   target: {
+  //     pullNumber: 1,
+  //     owner: 'lamtev',
+  //     repo: '2019-highload',
+  //     sha: 'somesha',
+  //     file: 'src/main/java/ru/mail/polis/Database.java',
+  //     fromLine: 3,
+  //     toLine: 3,
+  //     content: btoa(oldCode2)
+  //   },
+  //   source: {
+  //     pullNumber: 4,
+  //     owner: 'vaddya',
+  //     repo: '2019-highload',
+  //     sha: 'somesha',
+  //     file: 'src/main/java/ru/mail/polis/Database.java',
+  //     fromLine: 4,
+  //     toLine: 4,
+  //     content: btoa(newCode2)
+  //   }
+  // }
 ]

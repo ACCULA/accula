@@ -13,6 +13,7 @@ import { IPullClonesState } from 'store/pulls/types'
 import { DiffMethod } from 'react-diff-viewer'
 import CodeDiffList from 'components/CodeDiffList/CodeDiffList'
 import { useStyles } from './styles'
+import Link from "../../../components/Link";
 
 interface PullClonesTabProps extends PropsFromRedux {
   clones: IPullClonesState
@@ -28,6 +29,7 @@ const PullClonesTab = ({ project, pull, clones, refreshClones, isAdmin }: PullCl
     return (
       <>
         <span className={classes.cloneTitleText}> Code cloned from </span>
+        <Link to={clone.source.fileUrl}>
         <PullLabel
           className={classes.fromTitle}
           type="removed"
@@ -35,6 +37,7 @@ const PullClonesTab = ({ project, pull, clones, refreshClones, isAdmin }: PullCl
             clone.source.owner
           }/${clone.source.repo}:${clone.source.file}`}
         />
+        </Link>
         <span className={classes.cloneTitleText}>into</span>
         <PullLabel
           type="added"

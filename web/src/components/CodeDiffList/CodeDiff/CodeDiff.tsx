@@ -34,19 +34,20 @@ const CodeDiff = ({ title, language, defaultExpanded, ...props }: CodeDiffProps)
   }
 
   return (
+    <>{title}
     <Accordion classes={{ expanded: classes.panel, root: classes.root }} disabled defaultExpanded>
-      <AccordionSummary
-        className={classes.panelHeader}
-        // expandIcon={<ExpandMoreRoundedIcon />}
-        aria-controls="code-panel"
-        classes={{
-          content: classes.panelHeaderContent,
-          expandIcon: classes.expandIcon,
-          disabled: classes.disabledHeader
-        }}
-      >
-        {title}
-      </AccordionSummary>
+      {/*<AccordionSummary*/}
+      {/*  className={classes.panelHeader}*/}
+      {/*  // expandIcon={<ExpandMoreRoundedIcon />}*/}
+      {/*  aria-controls="code-panel"*/}
+      {/*  classes={{*/}
+      {/*    content: classes.panelHeaderContent,*/}
+      {/*    expandIcon: classes.expandIcon,*/}
+      {/*    disabled: classes.disabledHeader*/}
+      {/*  }}*/}
+      {/*>*/}
+      {/*  {title}*/}
+      {/*</AccordionSummary>*/}
       <AccordionDetails className={classes.panelData}>
         <ReactDiffViewer
           styles={props.styles || codeDiffStyles}
@@ -55,6 +56,7 @@ const CodeDiff = ({ title, language, defaultExpanded, ...props }: CodeDiffProps)
         />
       </AccordionDetails>
     </Accordion>
+    </>
   )
 }
 

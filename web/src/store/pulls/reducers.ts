@@ -4,6 +4,7 @@ import {
   PullsActionTypes, //
   PullsState,
   SET_CLONES,
+  SET_MY_PULLS,
   SET_COMPARES,
   SET_DIFFS,
   SET_PULL,
@@ -45,6 +46,7 @@ const decodeClones = (wrapper: Wrapper<IClone[]>): Wrapper<IClone[]> => ({
 
 const initialState: PullsState = {
   pulls: notFetching,
+  myPulls: notFetching,
   pull: notFetching,
   diffs: notFetching,
   compares: notFetching,
@@ -61,6 +63,12 @@ export function pullsReducer(
       return {
         ...state,
         pulls: action.payload
+      }
+    }
+    case SET_MY_PULLS: {
+      return {
+        ...state,
+        myPulls: action.payload
       }
     }
     case SET_PULL: {
