@@ -8,6 +8,7 @@ import lombok.Value;
 import java.util.Locale;
 
 import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
+import static org.accula.api.github.model.GithubApiHook.Config.Insecurity.NO;
 import static org.accula.api.github.model.GithubApiHook.Config.Insecurity.YES;
 import static org.accula.api.github.model.GithubApiHook.Event.PULL_REQUEST;
 
@@ -23,8 +24,8 @@ public class GithubApiHook {
     Boolean active;
     Config config;
 
-    public static GithubApiHook onPullUpdates(final String url, final String secret) {
-        return new GithubApiHook(new Event[]{PULL_REQUEST}, true, new Config(url, secret, YES));
+    public static GithubApiHook onPullUpdates(final String url, final String secret, final boolean isSslEnabled) {
+        return new GithubApiHook(new Event[]{PULL_REQUEST}, true, new Config(url, secret, isSslEnabled ? NO : YES));
     }
 
     public enum Event {

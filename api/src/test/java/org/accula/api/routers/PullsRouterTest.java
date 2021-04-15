@@ -23,9 +23,9 @@ import reactor.core.publisher.Mono;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 
@@ -121,7 +121,7 @@ class PullsRouterTest {
         final var pull = STUB_PULL.withAssignees(List.of(UsersRouterTest.STUB_USER.githubUser()));
         when(repository.findByProjectId(anyLong()))
             .thenReturn(Flux.just(pull));
-        when(currentUserRepo.get(Mockito.any(Function.class)))
+        when(currentUserRepo.get(any()))
             .thenReturn(Mono.just(UsersRouterTest.STUB_USER.githubUser()));
 
         client.get().uri("/api/projects/{projectId}/pulls?assignedToMe", 1L)
@@ -134,7 +134,7 @@ class PullsRouterTest {
     void testGetManyAssignedToMeAuthorizedNotMatches() {
         when(repository.findByProjectId(anyLong()))
             .thenReturn(Flux.just(STUB_PULL));
-        when(currentUserRepo.get(Mockito.any(Function.class)))
+        when(currentUserRepo.get(any()))
             .thenReturn(Mono.just(UsersRouterTest.STUB_USER.githubUser()));
 
         client.get().uri("/api/projects/{projectId}/pulls?assignedToMe", 1L)
@@ -147,7 +147,7 @@ class PullsRouterTest {
     void testGetManyAssignedToMeNotAuthorized() {
         when(repository.findByProjectId(anyLong()))
             .thenReturn(Flux.just(STUB_PULL));
-        when(currentUserRepo.get(Mockito.any(Function.class)))
+        when(currentUserRepo.get(any()))
             .thenReturn(Mono.empty());
 
         client.get().uri("/api/projects/{projectId}/pulls?assignedToMe", 1L)

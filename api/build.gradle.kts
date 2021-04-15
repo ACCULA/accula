@@ -50,4 +50,5 @@ dependencies {
     implementation("com.google.guava:guava:30.1.1-jre")
     implementation("it.unimi.dsi:fastutil:8.5.2")
     implementation("info.debatty:java-string-similarity:2.0.0")
+    implementation("commons-codec:commons-codec:1.15")
 }
