@@ -36,7 +36,7 @@ public class Project {
     @With
     @Value
     public static class Conf {
-        public static final String KEEP_EXCLUDED_FILES_SYNCED_WITH_GIT = "Keep list synced with project primary git repo";
+        public static final String KEEP_EXCLUDED_FILES_SYNCED = "Keep list synced with project primary git repo";
         public static final Conf DEFAULT = builder()
                 .adminIds(List.of())
                 .cloneMinTokenCount(15)
@@ -50,7 +50,7 @@ public class Project {
         List<String> excludedFiles;
 
         public boolean keepsExcludedFilesSyncedWithGit() {
-            return excludedFiles.contains(KEEP_EXCLUDED_FILES_SYNCED_WITH_GIT);
+            return excludedFiles.contains(KEEP_EXCLUDED_FILES_SYNCED);
         }
     }
 }

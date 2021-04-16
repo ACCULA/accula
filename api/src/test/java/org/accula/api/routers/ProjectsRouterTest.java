@@ -461,7 +461,7 @@ class ProjectsRouterTest {
 
     @Test
     void testHeadFiles() {
-        final var expectedFiles = new String[]{Project.Conf.KEEP_EXCLUDED_FILES_SYNCED_WITH_GIT, "file1", "file2", "file3"};
+        final var expectedFiles = new String[]{Project.Conf.KEEP_EXCLUDED_FILES_SYNCED, "file1", "file2", "file3"};
         when(currentUser.get(Mockito.any()))
                 .thenReturn(Mono.just(0L));
         when(projectRepo.hasAdmin(anyLong(), anyLong()))

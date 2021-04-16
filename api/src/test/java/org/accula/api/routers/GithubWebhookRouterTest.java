@@ -255,11 +255,11 @@ class GithubWebhookRouterTest {
 
     @Test
     void testPushKeepFilesSyncedEnabled() {
-        final var files = List.of(Project.Conf.KEEP_EXCLUDED_FILES_SYNCED_WITH_GIT, "f1", "f2");
+        final var files = List.of(Project.Conf.KEEP_EXCLUDED_FILES_SYNCED, "f1", "f2");
         when(projectRepo.idByRepoId(any()))
             .thenReturn(Mono.just(1L));
         when(projectRepo.confById(any()))
-            .thenReturn(Mono.just(Project.Conf.DEFAULT.withExcludedFiles(List.of(Project.Conf.KEEP_EXCLUDED_FILES_SYNCED_WITH_GIT))));
+            .thenReturn(Mono.just(Project.Conf.DEFAULT.withExcludedFiles(List.of(Project.Conf.KEEP_EXCLUDED_FILES_SYNCED))));
         when(codeLoader.loadFilenames(any()))
             .thenReturn(Flux.fromIterable(files));
         when(projectRepo.upsertConf(any(), any()))
