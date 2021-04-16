@@ -99,7 +99,7 @@ public final class ProjectService {
             .loadFilenames(repo)
             .sort()
             .collectList()
-            .doOnNext(files -> files.add(0, Project.Conf.KEEP_FILE_LIST_SYNCED_WITH_GIT));
+            .doOnNext(files -> files.add(0, Project.Conf.KEEP_EXCLUDED_FILES_SYNCED_WITH_GIT));
     }
 
     private static Pull processGithubApiPull(final GithubApiPull githubApiPull,
