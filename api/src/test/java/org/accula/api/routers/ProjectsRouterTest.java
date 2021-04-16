@@ -55,7 +55,6 @@ import java.util.List;
 
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
@@ -462,20 +461,20 @@ class ProjectsRouterTest {
 
     @Test
     void testHeadFiles() {
-        final var expectedFiles = new String[]{"file1", "file2", "file3"};
+        final var expectedFiles = new String[]{Project.Conf.KEEP_EXCLUDED_FILES_SYNCED, "file1", "file2", "file3"};
         when(currentUser.get(Mockito.any()))
                 .thenReturn(Mono.just(0L));
         when(projectRepo.hasAdmin(anyLong(), anyLong()))
                 .thenReturn(Mono.just(TRUE));
         when(projectRepo.findById(anyLong()))
                 .thenReturn(Mono.just(PROJECT));
-        when(codeLoader.loadFilenames(Mockito.any()))
-                .thenReturn(Flux.fromArray(expectedFiles));
+        when(projectService.headFiles(Mockito.any()))
+                .thenReturn(Mono.just(List.of(expectedFiles)));
 
         client.get().uri("/api/projects/{id}/headFiles", PROJECT.id())
                 .exchange()
                 .expectStatus().isOk()
-                .expectBody(String[].class).value(actualFiles -> assertArrayEquals(expectedFiles, actualFiles));
+                .expectBody(String[].class).isEqualTo(expectedFiles);
     }
 
     @Test

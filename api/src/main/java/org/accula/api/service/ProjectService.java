@@ -9,6 +9,7 @@ import org.accula.api.code.git.GitRefs;
 import org.accula.api.converter.GithubApiToModelConverter;
 import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.GithubUser;
+import org.accula.api.db.model.Project;
 import org.accula.api.db.model.Pull;
 import org.accula.api.db.model.PullSnapshots;
 import org.accula.api.db.model.Snapshot;
@@ -91,6 +92,14 @@ public final class ProjectService {
             })
             .doOnSuccess(pull -> log.info("Project has been updated successfully with {}", pull))
             .doOnError(e -> log.error("Failed to update project with pull={}", githubApiPull, e));
+    }
+
+    public Mono<List<String>> headFiles(final GithubRepo repo) {
+        return codeLoader
+            .loadFilenames(repo)
+            .sort()
+            .collectList()
+            .doOnNext(files -> files.add(0, Project.Conf.KEEP_EXCLUDED_FILES_SYNCED));
     }
 
     private static Pull processGithubApiPull(final GithubApiPull githubApiPull,

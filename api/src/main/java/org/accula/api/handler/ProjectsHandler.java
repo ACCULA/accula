@@ -2,7 +2,6 @@ package org.accula.api.handler;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.accula.api.code.CodeLoader;
 import org.accula.api.config.WebhookProperties;
 import org.accula.api.converter.DtoToModelConverter;
 import org.accula.api.converter.GithubApiToModelConverter;
@@ -72,7 +71,6 @@ public final class ProjectsHandler {
     private final GithubUserRepo githubUserRepo;
     private final UserRepo userRepo;
     private final ProjectService projectService;
-    private final CodeLoader codeLoader;
     private final CloneDetectionService cloneDetectionService;
 
     public Mono<ServerResponse> getTop(final ServerRequest request) {
@@ -137,8 +135,7 @@ public final class ProjectsHandler {
                 .flatMap(projectRepo::findById)
                 .switchIfEmpty(Mono.error(Http4xxException.notFound()))
                 .map(Project::githubRepo)
-                .flatMapMany(codeLoader::loadFilenames)
-                .collectList()
+                .flatMap(projectService::headFiles)
                 .flatMap(Responses::ok)
                 .onErrorResume(ResponseConvertibleException::onErrorResume);
     }
@@ -256,7 +253,15 @@ public final class ProjectsHandler {
     }
 
     private Mono<ProjectDto> createWebhook(final ProjectDto project) {
-        final var hook = GithubApiHook.onPullUpdates(webhookProperties.url(), webhookProperties.secret(), webhookProperties.sslEnabled());
+        final var hook = GithubApiHook.builder()
+            .events(new GithubApiHook.Event[]{GithubApiHook.Event.PULL_REQUEST, GithubApiHook.Event.PUSH})
+            .active(true)
+            .config(GithubApiHook.Config.builder()
+                .callbackUrl(webhookProperties.url())
+                .secret(webhookProperties.secret())
+                .insecure(webhookProperties.sslEnabled() ? GithubApiHook.Config.Insecurity.NO : GithubApiHook.Config.Insecurity.YES)
+                .build())
+            .build();
         return githubClient
                 .createHook(project.repoOwner(), project.repoName(), hook)
                 .thenReturn(project);
