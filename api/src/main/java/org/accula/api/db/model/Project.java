@@ -36,6 +36,7 @@ public class Project {
     @With
     @Value
     public static class Conf {
+        public static final String KEEP_FILE_LIST_SYNCED_WITH_GIT = "Keep list synced with project primary git repo";
         public static final Conf DEFAULT = builder()
                 .adminIds(List.of())
                 .cloneMinTokenCount(15)
@@ -47,5 +48,9 @@ public class Project {
         Integer cloneMinTokenCount;
         Integer fileMinSimilarityIndex;
         List<String> excludedFiles;
+
+        public boolean keepsExcludedFilesSyncedWithGit() {
+            return excludedFiles.contains(KEEP_FILE_LIST_SYNCED_WITH_GIT);
+        }
     }
 }

@@ -21,7 +21,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 @With
 @Builder
 @Value
-public class GithubApiHookPayload {
+public class GithubApiPullHookPayload {
     Action action;
     @JsonProperty("repository")
     GithubApiRepo repo;

@@ -3,15 +3,17 @@ package org.accula.api.handler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.accula.api.config.WebhookProperties;
+import org.accula.api.converter.GithubApiToModelConverter;
+import org.accula.api.db.model.Project;
+import org.accula.api.db.model.PullSnapshots;
 import org.accula.api.db.repo.ProjectRepo;
-import org.accula.api.github.model.GithubApiHookPayload;
+import org.accula.api.github.model.GithubApiPullHookPayload;
+import org.accula.api.github.model.GithubApiPushHookPayload;
 import org.accula.api.handler.dto.ApiError;
 import org.accula.api.handler.signature.Signatures;
 import org.accula.api.handler.util.Responses;
 import org.accula.api.service.CloneDetectionService;
 import org.accula.api.service.ProjectService;
-import org.accula.api.db.model.PullSnapshots;
-import org.accula.api.util.Lambda;
 import org.accula.api.util.Strings;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
@@ -36,6 +38,7 @@ public final class GithubWebhookHandler {
     public static final String GITHUB_EVENT = "X-GitHub-Event";
     public static final String GITHUB_EVENT_PING = "ping";
     public static final String GITHUB_EVENT_PULL = "pull_request";
+    public static final String GITHUB_EVENT_PUSH = "push";
     public static final String GITHUB_SIGNATURE = "X-Hub-Signature-256";
 
     private final ProjectRepo projectRepo;
@@ -67,6 +70,7 @@ public final class GithubWebhookHandler {
                 return switch (event) {
                     case GITHUB_EVENT_PING -> Responses.ok();
                     case GITHUB_EVENT_PULL -> processPull(request);
+                    case GITHUB_EVENT_PUSH -> processPush(request);
                     default -> badRequest(NOT_SUPPORTED_EVENT);
                 };
             });
@@ -74,17 +78,31 @@ public final class GithubWebhookHandler {
 
     private Mono<ServerResponse> processPull(final ServerRequest request) {
         return request
-                .bodyToMono(GithubApiHookPayload.class)
+                .bodyToMono(GithubApiPullHookPayload.class)
                 .onErrorResume(GithubWebhookHandler::ignoreNotSupportedAction)
-                .flatMap(this::processPayload)
+                .flatMap(this::processPullPayload)
                 .onErrorResume(e -> {
                     log.error("Error during payload processing: ", e);
                     return Mono.empty();
                 })
-                .flatMap(Lambda.expandingWithArg(Responses::ok));
+                .then(Responses.ok());
     }
 
-    private Mono<Void> processPayload(final GithubApiHookPayload payload) {
+    private Mono<ServerResponse> processPush(final ServerRequest request) {
+        return request
+            .bodyToMono(GithubApiPushHookPayload.class)
+            .flatMap(payload -> projectRepo
+                .idByRepoId(payload.repo().id())
+                .flatMap(projectId -> projectRepo.confById(projectId)
+                    .filter(Project.Conf::keepsExcludedFilesSyncedWithGit)
+                    .flatMap(conf -> projectService
+                        .headFiles(GithubApiToModelConverter.convert(payload.repo()))
+                        .map(conf::withExcludedFiles))
+                    .flatMap(conf -> projectRepo.upsertConf(projectId, conf))))
+            .then(Responses.ok());
+    }
+
+    private Mono<Void> processPullPayload(final GithubApiPullHookPayload payload) {
         return (switch (payload.action()) {
             case OPENED, SYNCHRONIZE -> updateProject(payload)
                 .doOnNext(update -> detectClonesInBackground(update.getT1(), update.getT2()));
@@ -94,7 +112,7 @@ public final class GithubWebhookHandler {
         }).then();
     }
 
-    private Mono<Tuple2<Long, PullSnapshots>> updateProject(final GithubApiHookPayload payload) {
+    private Mono<Tuple2<Long, PullSnapshots>> updateProject(final GithubApiPullHookPayload payload) {
         return projectRepo
             .idByRepoId(payload.repo().id())
             .flatMap(projectId -> Mono
