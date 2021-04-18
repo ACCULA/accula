@@ -3,30 +3,37 @@ import { requireToken } from 'store/users/actions'
 import { failed, fetched, fetching, notFetching, Wrapper } from 'store/wrapper'
 import { IPull, IShortPull } from 'types'
 import {
+  CLEAR_COMPARES,
+  ClearCompares,
   IPullClonesState,
   IPullComparesState,
   IPullDiffsState,
+  RESET_PULLS_INFO,
+  ResetPullsInfo,
   SET_CLONES,
+  SET_COMPARE_WITH,
   SET_COMPARES,
   SET_DIFFS,
+  SET_MY_PULLS,
   SET_PULL,
   SET_PULLS,
-  RESET_PULLS_INFO,
-  SET_COMPARE_WITH,
-  CLEAR_COMPARES,
-  SetCompareWith,
   SetClones,
   SetCompares,
+  SetCompareWith,
   SetDiffs,
+  SetMyPulls,
   SetPull,
-  SetPulls,
-  ResetPullsInfo,
-  ClearCompares
+  SetPulls
 } from './types'
 import { getClones, getCompares, getDiffs, getPull, getPulls, refreshClones } from './services'
 
 const setPulls = (payload: Wrapper<IShortPull[]>): SetPulls => ({
   type: SET_PULLS,
+  payload
+})
+
+const setMyPulls = (payload: Wrapper<IShortPull[]>): SetMyPulls => ({
+  type: SET_MY_PULLS,
   payload
 })
 
@@ -67,7 +74,7 @@ export const getPullsAction = (projectId: number, handleError?: (msg: string) =>
   dispatch: AppDispatch, //
   getState: AppStateSupplier
 ) => {
-  const { pulls } = getState()
+  const { pulls, users } = getState()
   if (
     pulls.pulls.isFetching ||
     (pulls.pulls.value &&
@@ -78,10 +85,35 @@ export const getPullsAction = (projectId: number, handleError?: (msg: string) =>
   }
   try {
     dispatch(setPulls(fetching))
-    const result = await getPulls(projectId)
+    const result = await getPulls(users.token, projectId, false)
     dispatch(setPulls(fetched(result)))
   } catch (e) {
     dispatch(setPulls(failed(e)))
+    if (handleError) {
+      handleError(e.message)
+    }
+  }
+}
+
+export const getMyPullsAction = (projectId: number, handleError?: (msg: string) => void) => async (
+  dispatch: AppDispatch, //
+  getState: AppStateSupplier
+) => {
+  const { pulls, users } = getState()
+  if (
+    pulls.myPulls.isFetching ||
+    (pulls.myPulls.value &&
+      pulls.myPulls.value.length !== 0 &&
+      pulls.myPulls.value[0].projectId === projectId)
+  ) {
+    return
+  }
+  try {
+    dispatch(setMyPulls(fetching))
+    const result = await getPulls(users.token, projectId, true)
+    dispatch(setMyPulls(fetched(result)))
+  } catch (e) {
+    dispatch(setMyPulls(failed(e)))
     if (handleError) {
       handleError(e.message)
     }

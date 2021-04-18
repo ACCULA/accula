@@ -71,8 +71,15 @@ export interface IRouteInfo {
   sidebar?: boolean
 }
 
+export interface IShortProject {
+  id: number
+  owner: string
+  name: string
+}
+
 export interface IProject {
   id: number
+  state: string
   repoUrl: string
   creatorId: number
   repoOwner: string
@@ -81,6 +88,7 @@ export interface IProject {
   repoOwnerAvatar: string
   repoOpenPullCount: number
   adminIds: number[]
+  secondaryRepos: IShortProject[]
 }
 
 export interface IProjectConf {
@@ -155,6 +163,9 @@ export interface ICodeSnippet {
   fromLine: number
   toLine: number
   content: string
+  pullUrl: string
+  commitUrl: string
+  fileUrl: string
 }
 
 export interface IClone {

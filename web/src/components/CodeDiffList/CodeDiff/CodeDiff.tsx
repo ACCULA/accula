@@ -1,6 +1,5 @@
 import React from 'react'
-import { Accordion, AccordionDetails, AccordionSummary } from '@material-ui/core'
-// import ExpandMoreRoundedIcon from '@material-ui/icons/ExpandMoreRounded'
+import { Accordion, AccordionDetails, Card, CardContent } from '@material-ui/core'
 import Prism from 'prismjs'
 import ReactDiffViewer, { ReactDiffViewerProps } from '../ReactDiffViewer'
 import 'prismjs/components/prism-java'
@@ -34,27 +33,22 @@ const CodeDiff = ({ title, language, defaultExpanded, ...props }: CodeDiffProps)
   }
 
   return (
-    <Accordion classes={{ expanded: classes.panel, root: classes.root }} disabled defaultExpanded>
-      <AccordionSummary
-        className={classes.panelHeader}
-        // expandIcon={<ExpandMoreRoundedIcon />}
-        aria-controls="code-panel"
-        classes={{
-          content: classes.panelHeaderContent,
-          expandIcon: classes.expandIcon,
-          disabled: classes.disabledHeader
-        }}
-      >
-        {title}
-      </AccordionSummary>
-      <AccordionDetails className={classes.panelData}>
-        <ReactDiffViewer
-          styles={props.styles || codeDiffStyles}
-          renderContent={props.renderContent || highlight}
-          {...props}
-        />
-      </AccordionDetails>
-    </Accordion>
+    <>
+      <Accordion classes={{ expanded: classes.panel, root: classes.root }} disabled defaultExpanded>
+        <Card className={classes.panelHeader}>
+          <CardContent className={classes.panelHeaderContent}>
+            {title}
+          </CardContent>
+        </Card>
+        <AccordionDetails className={classes.panelData}>
+          <ReactDiffViewer
+            styles={props.styles || codeDiffStyles}
+            renderContent={props.renderContent || highlight}
+            {...props}
+          />
+        </AccordionDetails>
+      </Accordion>
+    </>
   )
 }
 

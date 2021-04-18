@@ -14,7 +14,8 @@ export const useStyles = makeStyles((theme: Theme) => ({
   cloneTitleText: {
     flexShrink: 0,
     fontSize: 14,
-    whiteSpace: 'nowrap'
+    whiteSpace: 'nowrap',
+    lineHeight: 1.7
   },
   intoTitle: {
     margin: '0 4px'

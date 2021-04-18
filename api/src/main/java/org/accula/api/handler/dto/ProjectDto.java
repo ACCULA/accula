@@ -28,7 +28,7 @@ public class ProjectDto {
     List<RepoShortDto> secondaryRepos;
 
     public enum State {
-        CREATING,
-        CREATED,
+        CONFIGURING,
+        CONFIGURED,
     }
 }

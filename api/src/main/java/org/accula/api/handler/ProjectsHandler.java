@@ -309,8 +309,10 @@ public final class ProjectsHandler {
                 .flatMap(repo -> projectRepo.attachRepos(projectId, List.of(repo.id()))
                     .thenReturn(repo))
                 .doOnEach(ReactorOperators.onNextWithContext((repo, context) ->
-                    fetchPullsAndFillSuffixTreeInBackground(projectId, repo, context))))
-            .flatMap(Lambda.expandingWithArg(Responses::ok))
+                    fetchPullsAndFillSuffixTreeInBackground(projectId, repo, context)))
+                .then(projectRepo.findById(projectId)))
+            .map(ModelToDtoConverter::convert)
+            .flatMap(Responses::ok)
             .onErrorResume(ResponseConvertibleException::onErrorResume);
     }
 

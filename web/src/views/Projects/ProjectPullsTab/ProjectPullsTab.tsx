@@ -13,6 +13,10 @@ interface ProjectPullsTabProps {
 const ProjectPullsTab = ({ project, pulls }: ProjectPullsTabProps) => {
   const classes = useStyles()
 
+  if (project.state === 'CONFIGURING') {
+    return <EmptyContent className={classes.emptyContent} Icon={PrLogo} info="Project is syncing with GitHub" />
+  }
+
   if (!pulls) {
     return <></>
   }

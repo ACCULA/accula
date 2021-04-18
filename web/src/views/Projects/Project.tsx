@@ -4,7 +4,7 @@ import { useHistory, useParams } from 'react-router-dom'
 import { bindActionCreators } from 'redux'
 import { AppDispatch, AppState } from 'store'
 import { getProjectAction, resetProjectInfo } from 'store/projects/actions'
-import { getPullsAction, resetPullsInfo } from 'store/pulls/actions'
+import { getPullsAction, getMyPullsAction, resetPullsInfo } from 'store/pulls/actions'
 import { historyPush, isProjectAdmin } from 'utils'
 import { PageTitle } from 'components/PageTitle'
 import BreadCrumbs from 'components/BreadCrumbs'
@@ -19,7 +19,7 @@ import ProjectSettingsTab from './ProjectSettingsTab'
 
 interface ProjectProps extends PropsFromRedux {}
 
-const tabValues: string[] = ['pulls', 'settings']
+const tabValues: string[] = ['pulls', 'assigned', 'settings']
 
 const validateTab = (tab: string) => tabValues.includes(tab) || tab === undefined
 
@@ -27,8 +27,10 @@ const Project = ({
   project,
   user,
   pulls,
+  myPulls,
   getProject,
   getPulls,
+  getMyPulls,
   resetPulls,
   resetProject
 }: ProjectProps) => {
@@ -41,6 +43,7 @@ const Project = ({
     if (!Number.isNaN(projectId) && validateTab(tab)) {
       getProject(projectId, getNotifier('error', snackbarContext))
       getPulls(projectId, getNotifier('error', snackbarContext))
+      getMyPulls(projectId, getNotifier('error', snackbarContext))
     }
     return () => {
       resetProject()
@@ -70,6 +73,19 @@ const Project = ({
     }
   ]
 
+  if (user.value && user.value.id) {
+    tabs.push({
+      id: 'assigned',
+      text: 'Assigned to me',
+      Icon: PrLogo,
+      badgeValue: myPulls ? (
+        myPulls.filter(pull => pull.open).length
+      ) : (
+        <CircularProgress size={12} color="inherit" />
+      )
+    })
+  }
+
   const isAdmin = isProjectAdmin(user.value, project)
   if (isAdmin) {
     tabs.push({ id: 'settings', text: 'Settings', Icon: SettingsIcon })
@@ -85,6 +101,9 @@ const Project = ({
       {(tab === 'pulls' || tab === undefined) && (
         <ProjectPullsTab project={project} pulls={pulls} />
       )}
+      {(tab === 'assigned' || tab === undefined) && (
+        <ProjectPullsTab project={project} pulls={myPulls} />
+      )}
       {isAdmin && tab === 'settings' && <ProjectSettingsTab user={user.value} project={project} />}
     </>
   )
@@ -93,6 +112,7 @@ const Project = ({
 const mapStateToProps = (state: AppState) => ({
   project: state.projects.project.value,
   pulls: state.pulls.pulls.value,
+  myPulls: state.pulls.myPulls.value,
   user: state.users.user
 })
 
@@ -100,7 +120,8 @@ const mapDispatchToProps = (dispatch: AppDispatch) => ({
   getProject: bindActionCreators(getProjectAction, dispatch),
   resetPulls: bindActionCreators(resetPullsInfo, dispatch),
   resetProject: bindActionCreators(resetProjectInfo, dispatch),
-  getPulls: bindActionCreators(getPullsAction, dispatch)
+  getPulls: bindActionCreators(getPullsAction, dispatch),
+  getMyPulls: bindActionCreators(getMyPullsAction, dispatch)
 })
 
 const connector = connect(mapStateToProps, mapDispatchToProps)
