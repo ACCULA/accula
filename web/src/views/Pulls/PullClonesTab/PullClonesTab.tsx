@@ -33,7 +33,8 @@ const PullClonesTab = ({ project, pull, clones, refreshClones, isAdmin }: PullCl
           type="removed"
           snippet={clone.source}
         />
-       <br/><span className={classes.cloneTitleText}>into</span>
+        <br />
+        <span className={classes.cloneTitleText}>into</span>
         <CloneLabel
           type="added"
           className={classes.intoTitle}
