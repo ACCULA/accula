@@ -19,7 +19,7 @@ import ProjectSettingsTab from './ProjectSettingsTab'
 
 interface ProjectProps extends PropsFromRedux {}
 
-const tabValues: string[] = ['pulls', 'my-pulls', 'settings']
+const tabValues: string[] = ['pulls', 'assigned', 'settings']
 
 const validateTab = (tab: string) => tabValues.includes(tab) || tab === undefined
 
@@ -75,7 +75,7 @@ const Project = ({
 
   if (user.value && user.value.id) {
     tabs.push({
-      id: 'my-pulls',
+      id: 'assigned',
       text: 'Assigned to me',
       Icon: PrLogo,
       badgeValue: myPulls ? (
@@ -101,7 +101,7 @@ const Project = ({
       {(tab === 'pulls' || tab === undefined) && (
         <ProjectPullsTab project={project} pulls={pulls} />
       )}
-      {(tab === 'my-pulls' || tab === undefined) && (
+      {(tab === 'assigned' || tab === undefined) && (
         <ProjectPullsTab project={project} pulls={myPulls} />
       )}
       {isAdmin && tab === 'settings' && <ProjectSettingsTab user={user.value} project={project} />}

@@ -2,8 +2,8 @@ import React from 'react'
 import { IClone, IProject, IPull } from 'types'
 import { Button } from '@material-ui/core'
 import { LibraryAddCheckRounded, RefreshRounded } from '@material-ui/icons'
+import CloneLabel from "components/CloneLabel";
 import EmptyContent from 'components/EmptyContent'
-import PullLabel from 'components/PullLabel'
 import { AppDispatch } from 'store'
 import LoadingWrapper from 'components/LoadingWrapper'
 import { connect, ConnectedProps } from 'react-redux'
@@ -13,7 +13,6 @@ import { IPullClonesState } from 'store/pulls/types'
 import { DiffMethod } from 'react-diff-viewer'
 import CodeDiffList from 'components/CodeDiffList/CodeDiffList'
 import { useStyles } from './styles'
-import Link from "../../../components/Link";
 
 interface PullClonesTabProps extends PropsFromRedux {
   clones: IPullClonesState
@@ -29,22 +28,16 @@ const PullClonesTab = ({ project, pull, clones, refreshClones, isAdmin }: PullCl
     return (
       <>
         <span className={classes.cloneTitleText}> Code cloned from </span>
-        <Link to={clone.source.fileUrl}>
-        <PullLabel
+        <CloneLabel
           className={classes.fromTitle}
           type="removed"
-          text={`${clone.source.sha.substr(0, 7)}:#${clone.source.pullNumber}@${
-            clone.source.owner
-          }/${clone.source.repo}:${clone.source.file}`}
+          snippet={clone.source}
         />
-        </Link>
-        <span className={classes.cloneTitleText}>into</span>
-        <PullLabel
+       <br/><span className={classes.cloneTitleText}>into</span>
+        <CloneLabel
           type="added"
           className={classes.intoTitle}
-          text={`${clone.target.sha.substr(0, 7)}:#${clone.target.pullNumber}@${
-              clone.target.owner
-          }/${clone.target.repo}:${clone.target.file}`}
+          snippet={clone.target}
         />
       </>
     )

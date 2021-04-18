@@ -1,13 +1,9 @@
 import axios from 'axios'
 
-import { API_URL, DEBUG } from 'utils'
+import { API_URL } from 'utils'
 import { IProject, IProjectConf, IToken, IUser } from 'types'
-import { projects } from 'stubs'
 
 export const getProjects = async (): Promise<IProject[]> => {
-  if (DEBUG) {
-    return Promise.resolve(projects)
-  }
   return axios
     .get(`${API_URL}/api/projects?count=100`, {
       headers: {
@@ -19,9 +15,6 @@ export const getProjects = async (): Promise<IProject[]> => {
 }
 
 export const getProject = async (id: number): Promise<IProject> => {
-  if (DEBUG) {
-    return Promise.resolve(projects.find(p => p.id === id))
-  }
   return axios
     .get(`${API_URL}/api/projects/${id}`, {
       headers: {
@@ -33,14 +26,6 @@ export const getProject = async (id: number): Promise<IProject> => {
 }
 
 export const getProjectConf = async (id: number, token: IToken): Promise<IProjectConf> => {
-  if (DEBUG) {
-    return Promise.resolve({
-      admins: [],
-      cloneMinTokenCount: 0,
-      fileMinSimilarityIndex: 0,
-      excludedFiles: []
-    })
-  }
   return axios
     .get(`${API_URL}/api/projects/${id}/conf`, {
       headers: {
@@ -57,9 +42,6 @@ export const putProjectConf = async (
   token: IToken,
   conf: IProjectConf
 ): Promise<void> => {
-  if (DEBUG) {
-    return Promise.resolve()
-  }
   return axios //
     .put(`${API_URL}/api/projects/${id}/conf`, conf, {
       headers: {
@@ -71,9 +53,6 @@ export const putProjectConf = async (
 }
 
 export const getRepoAdmins = async (id: number, token: IToken): Promise<IUser[]> => {
-  if (DEBUG) {
-    return Promise.resolve([])
-  }
   return axios
     .get(`${API_URL}/api/projects/${id}/githubAdmins`, {
       headers: {
@@ -86,9 +65,6 @@ export const getRepoAdmins = async (id: number, token: IToken): Promise<IUser[]>
 }
 
 export const getBaseFiles = async (id: number, token: IToken): Promise<string[]> => {
-  if (DEBUG) {
-    return Promise.resolve([])
-  }
   return axios
     .get(`${API_URL}/api/projects/${id}/headFiles`, {
       headers: {
@@ -101,9 +77,6 @@ export const getBaseFiles = async (id: number, token: IToken): Promise<string[]>
 }
 
 export const postProject = async (url: string, token: IToken): Promise<IProject | string> => {
-  if (DEBUG) {
-    return Promise.resolve(projects[0])
-  }
   return axios
     .post(
       `${API_URL}/api/projects`,
@@ -123,9 +96,6 @@ export const postProject = async (url: string, token: IToken): Promise<IProject 
 }
 
 export const deleteProject = async (id: number, token: IToken): Promise<void> => {
-  if (DEBUG) {
-    return Promise.resolve()
-  }
   return axios //
     .delete(`${API_URL}/api/projects/${id}`, {
       headers: {

@@ -13,13 +13,16 @@ export const useStyles = makeStyles((theme: Theme) => ({
     color: theme.palette.type === 'light' ? 'rgba(0, 0, 0, 0.5)' : '#fff'
   },
   panelHeader: {
-    // paddingLeft: 0,
-    // flexDirection: 'row-reverse',
-    borderBottom: theme.palette.type === 'light' ? '1px solid #e1e4e8' : 'none'
+    borderBottom: theme.palette.type === 'light' ? '1px solid #e1e4e8' : 'none',
+    backgroundColor: theme.palette.type === 'light' ? '#fbfbfb !important' : '#2c313a !important',
+    color: theme.palette.type === 'light' ? 'rgba(0, 0, 0, 0.5)' : '#fff',
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0
   },
   panelHeaderContent: {
     overflow: 'hidden',
-    flexWrap: 'wrap'
+    flexWrap: 'wrap',
+    paddingBottom: '16px !important'
   },
   disabledHeader: {
     opacity: '1 !important'

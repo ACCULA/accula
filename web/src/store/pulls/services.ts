@@ -1,13 +1,9 @@
 import axios from 'axios'
 
-import { API_URL, DEBUG } from 'utils'
+import { API_URL } from 'utils'
 import { IClone, IDiff, IPull, IShortPull, IToken } from 'types'
-import { pulls, clones } from 'stubs'
 
 export const getPulls = async (token: IToken, projectId: number, assignedToMe): Promise<IShortPull[]> => {
-  if (DEBUG) {
-    return Promise.resolve(pulls)
-  }
   return axios
     .get(`${API_URL}/api/projects/${projectId}/pulls`, {
       headers: {
@@ -23,9 +19,6 @@ export const getPulls = async (token: IToken, projectId: number, assignedToMe): 
 }
 
 export const getPull = async (projectId: number, pullId: number): Promise<IPull> => {
-  if (DEBUG) {
-    return Promise.resolve(pulls.find(p => p.number === pullId))
-  }
   return axios
     .get(`${API_URL}/api/projects/${projectId}/pulls/${pullId}`, {
       headers: {
@@ -37,9 +30,6 @@ export const getPull = async (projectId: number, pullId: number): Promise<IPull>
 }
 
 export const getDiffs = async (projectId: number, pullId: number): Promise<IDiff[]> => {
-  if (DEBUG) {
-    return Promise.resolve([])
-  }
   return axios
     .get(`${API_URL}/api/projects/${projectId}/pulls/${pullId}/diff`, {
       headers: {
@@ -55,9 +45,6 @@ export const getCompares = async (
   target: number,
   source: number
 ): Promise<IDiff[]> => {
-  if (DEBUG) {
-    return Promise.resolve([])
-  }
   return axios
     .get(`${API_URL}/api/projects/${projectId}/pulls/${source}/compare?with=${target}`, {
       headers: {
@@ -73,9 +60,6 @@ export const getClones = async (
   projectId: number,
   pullId: number
 ): Promise<IClone[]> => {
-  if (DEBUG) {
-    return Promise.resolve(clones)
-  }
   return axios
     .get(`${API_URL}/api/projects/${projectId}/pulls/${pullId}/clones`, {
       headers: {
@@ -91,9 +75,6 @@ export const refreshClones = async (
   projectId: number,
   pullId: number
 ): Promise<IClone[]> => {
-  if (DEBUG) {
-    return Promise.resolve([])
-  }
   return axios //
     .post(`${API_URL}/api/projects/${projectId}/pulls/${pullId}/clones/refresh`, null, {
       headers: {
