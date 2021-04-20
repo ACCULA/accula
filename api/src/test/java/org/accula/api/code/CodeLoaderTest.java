@@ -1,6 +1,6 @@
 package org.accula.api.code;
 
-import org.accula.api.code.git.Git;
+import org.accula.api.code.git.GitBlockingImpl;
 import org.accula.api.code.lines.LineRange;
 import org.accula.api.code.lines.LineSet;
 import org.accula.api.db.model.Commit;
@@ -43,7 +43,7 @@ class CodeLoaderTest {
 
     @BeforeEach
     void beforeAll(@TempDir final Path tempDir) {
-        codeLoader = new GitCodeLoader(null, new Git(tempDir, Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())));
+        codeLoader = new GitCodeLoader(null, new GitBlockingImpl(tempDir, Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())));
     }
 
     @Test

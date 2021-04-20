@@ -5,6 +5,7 @@ import org.accula.api.code.CodeLoader;
 import org.accula.api.code.GitCodeLoader;
 import org.accula.api.code.GitCredentialsProvider;
 import org.accula.api.code.git.Git;
+import org.accula.api.code.git.GitBlockingImpl;
 import org.accula.api.db.model.User;
 import org.accula.api.db.repo.CurrentUserRepo;
 import org.accula.api.github.api.GithubClient;
@@ -60,7 +61,7 @@ public class WebConfig implements WebFluxConfigurer {
                 60L, TimeUnit.SECONDS,
                 new ArrayBlockingQueue<>(availableProcessors * 50_000)
         );
-        return new Git(reposPath, executor);
+        return new GitBlockingImpl(reposPath, executor);
     }
 
     @Bean

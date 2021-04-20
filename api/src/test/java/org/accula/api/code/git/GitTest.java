@@ -35,11 +35,11 @@ final class GitTest {
     static final String HEAD_REF = "69f552851f0f6093816c3064b6e00438e0ff3b19";
     static final String REMOTE_URL = "https://github.com/lamtev/poker.git";
     static final String REMOTE_NAME = "newRemote";
-    Git git;
+    GitBlockingImpl git;
 
     @BeforeEach
     void setUp(@TempDir final Path dir) {
-        git = new Git(dir, Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 3));
+        git = new GitBlockingImpl(dir, Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 3));
     }
 
     @Test
