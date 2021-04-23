@@ -63,7 +63,7 @@ const AddRepoToProjectDialog = ({ open, onClose, addRepoToProject }: AddRepoToPr
 
   return (
     <Dialog fullWidth className={classes.root} open={isDialogOpen} onClose={handleClose}>
-      <DialogTitle>Add new project</DialogTitle>
+      <DialogTitle>Add new repo to project</DialogTitle>
       <Formik
         validateOnChange={false}
         validateOnBlur={false}
