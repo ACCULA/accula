@@ -26,7 +26,8 @@ import {
   getRepoAdmins,
   putProjectConf,
   deleteProject,
-  postProject
+  postProject,
+  postAddRepoToProject,
 } from './services'
 
 const setProjects = (payload): SetProjects => ({
@@ -196,14 +197,16 @@ const messageFromError = (error: string): string => {
   switch (error) {
     case 'NO_PERMISSION':
       return 'Only the admin of the repository can create a project for it!'
-    case 'WRONG_URL':
-      return 'URL to the repository is wrong!'
     case 'ALREADY_EXISTS':
       return 'Project for this repository is already exists!'
     case 'INVALID_URL':
       return 'URL to the repository is invalid!'
+    case 'UNABLE_RETRIEVE_GITHUB_REPO':
+      return 'Unable to retrieve specified github repo'
+    case 'BAD_FORMAT':
+      return 'Request body JSON object has bad format'
     default:
-      return 'Unknown error has occurred'
+      return `Unknown error has occurred: ${error}`
   }
 }
 
@@ -225,6 +228,31 @@ export const createProjectAction = (
       }
     } else {
       dispatch(setProjects(fetched([...projects.projects.value, result])))
+      if (handleSuccess) {
+        handleSuccess()
+      }
+    }
+  }
+}
+
+export const addRepoToProjectAction = (
+    url: string,
+    handleSuccess?: () => void,
+    handleError?: (msg: string) => void
+) => async (
+    dispatch: AppDispatch, //
+    getState: AppStateSupplier
+) => {
+  await requireToken(dispatch, getState)
+  const { users, projects } = getState()
+  if (users.token.accessToken) {
+    const result = await postAddRepoToProject(projects.project.value.id, url, users.token)
+    if (typeof result === 'string') {
+      if (handleError) {
+        handleError(messageFromError(result))
+      }
+    } else {
+      dispatch(setProject(fetched(result)))
       if (handleSuccess) {
         handleSuccess()
       }
