@@ -555,6 +555,8 @@ class ProjectsRouterTest {
             .thenReturn(Mono.just(TRUE));
         when(projectRepo.findById(anyLong()))
             .thenReturn(Mono.just(PROJECT_HIGHLOAD));
+        when(githubUserRepo.upsert(REPO_HIGHLOAD.owner()))
+            .thenReturn(Mono.just(REPO_HIGHLOAD.owner()));
         when(repoRepo.upsert(REPO_HIGHLOAD))
             .thenReturn(Mono.just(REPO_HIGHLOAD));
         when(repoRepo.findByName(Mockito.anyString(), Mockito.anyString()))
@@ -601,6 +603,8 @@ class ProjectsRouterTest {
             .thenReturn(Mono.just(TRUE));
         when(projectRepo.findById(anyLong()))
             .thenReturn(Mono.just(PROJECT_HIGHLOAD));
+        when(githubUserRepo.upsert(REPO_HIGHLOAD.owner()))
+            .thenReturn(Mono.just(REPO_HIGHLOAD.owner()));
         when(repoRepo.upsert(REPO_HIGHLOAD))
             .thenReturn(Mono.just(REPO_HIGHLOAD));
         when(repoRepo.findByName(Mockito.anyString(), Mockito.anyString()))

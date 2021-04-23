@@ -305,7 +305,8 @@ public final class ProjectsHandler {
                 .flatMap(repoIdentity -> retrieveGithubRepoInfo(repoIdentity)
                     .filterWhen(repo -> projectRepo.projectDoesNotContainRepo(projectId, repo.id()))
                     .switchIfEmpty(Mono.error(ProjectsHandlerException.alreadyExists(repoIdentity))))
-                .flatMap(repoRepo::upsert)
+                .flatMap(repo -> githubUserRepo.upsert(repo.owner())
+                    .then(repoRepo.upsert(repo)))
                 .flatMap(repo -> projectRepo.attachRepos(projectId, List.of(repo.id()))
                     .thenReturn(repo))
                 .doOnEach(ReactorOperators.onNextWithContext((repo, context) ->
