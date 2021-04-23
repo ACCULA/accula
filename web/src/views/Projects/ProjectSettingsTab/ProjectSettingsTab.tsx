@@ -308,7 +308,7 @@ const ProjectSettingsTab = ({
                     </>
                 ) : (
                     <div>
-                      <BreadCrumbs breadcrumbs={[{ text: 'Project previous years repos' }]} />
+                      <BreadCrumbs breadcrumbs={[{ text: 'Previous years repos' }]} />
                       <Table<IShortProject>
                           headCells={[
                             { id: 'id', numeric: true, disablePadding: false, label: 'Repo' },
