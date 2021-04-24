@@ -6,10 +6,12 @@ import org.accula.api.code.FileEntity;
 import org.accula.api.code.SnippetMarker;
 import org.accula.api.code.lines.LineRange;
 import org.accula.api.code.lines.LineSet;
+import org.accula.api.converter.ModelToDtoConverter;
 import org.accula.api.db.model.Clone;
 import org.accula.api.db.model.Commit;
 import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.GithubUser;
+import org.accula.api.db.model.Plagiarist;
 import org.accula.api.db.model.Pull;
 import org.accula.api.db.model.Snapshot;
 import org.accula.api.db.repo.CloneRepo;
@@ -18,6 +20,7 @@ import org.accula.api.db.repo.ProjectRepo;
 import org.accula.api.db.repo.PullRepo;
 import org.accula.api.handler.ClonesHandler;
 import org.accula.api.handler.dto.CloneDto;
+import org.accula.api.handler.dto.PlagiaristDto;
 import org.accula.api.service.CloneDetectionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -140,6 +143,10 @@ class ClonesRouterTest {
         new FileEntity<>(snap1, target.file(), "", LineSet.inRange(target.fromLine(), target.toLine())),
         new FileEntity<>(snap2, source.file(), "", LineSet.inRange(source.fromLine(), source.toLine()))
     );
+    static final Plagiarist plagiarist = Plagiarist.builder()
+        .user(usr1)
+        .cloneCount(100)
+        .build();
 
     @BeforeEach
     void setUp() {
@@ -164,5 +171,21 @@ class ClonesRouterTest {
             .exchange()
             .expectStatus().isOk()
             .expectBody(CloneDto[].class).value(clones -> assertEquals(1, clones.length));
+    }
+
+    @Test
+    void testGetTopPlagiarists() {
+        when(cloneRepo.topPlagiarists(anyLong()))
+            .thenReturn(Flux.just(plagiarist));
+        client.get().uri("/api/projects/{projectId}/topPlagiarists", 1L)
+            .exchange()
+            .expectStatus().isOk()
+            .expectBody(PlagiaristDto[].class).value(plagiarists -> {
+                assertEquals(1, plagiarists.length);
+                assertEquals(PlagiaristDto.builder()
+                    .user(ModelToDtoConverter.convert(plagiarist.user()))
+                    .cloneCount(plagiarist.cloneCount())
+                    .build(), plagiarists[0]);
+        });
     }
 }

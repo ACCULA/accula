@@ -70,7 +70,7 @@ public final class GithubUserRepoImpl implements GithubUserRepo, ConnectionProvi
                         """);
     }
 
-    private static GithubUser convert(final Row row) {
+    static GithubUser convert(final Row row) {
         return Converters.convertUser(row,
             "id",
             "login",

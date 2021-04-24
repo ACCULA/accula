@@ -1,6 +1,7 @@
 package org.accula.api.db.repo;
 
 import org.accula.api.db.model.Clone;
+import org.accula.api.db.model.Plagiarist;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -20,4 +21,6 @@ public interface CloneRepo {
     Flux<Clone> findByPullNumber(Long projectId, Integer pullNumber);
 
     Mono<Void> deleteByPullNumber(Long projectId, Integer pullNumber);
+
+    Flux<Plagiarist> topPlagiarists(Long projectId);
 }
