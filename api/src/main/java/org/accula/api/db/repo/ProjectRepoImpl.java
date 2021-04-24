@@ -357,7 +357,8 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
         return GithubRepoRepoImpl
             .selectStatement(connection,
                 "JOIN project_repo ON repo.id = project_repo.repo_id",
-                "WHERE project_repo.project_id = $1"
+                "WHERE project_repo.project_id = $1",
+                "ORDER BY repo_owner_login, repo_name DESC"
             )
             .bind("$1", projectId)
             .execute()

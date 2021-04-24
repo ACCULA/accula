@@ -14,6 +14,8 @@ import reactor.core.publisher.Mono;
 
 import java.util.Collection;
 
+import static org.accula.api.db.repo.Converters.EMPTY_CLAUSE;
+
 /**
  * @author Anton Lamtev
  */
@@ -74,7 +76,10 @@ public final class GithubRepoRepoImpl implements GithubRepoRepo, ConnectionProvi
                         .flatMap(result -> ConnectionProvidedRepo.convert(result, GithubRepoRepoImpl::convert)));
     }
 
-    static PostgresqlStatement selectStatement(final Connection connection, final String joinClause, final String whereClause) {
+    static PostgresqlStatement selectStatement(final Connection connection,
+                                               final String joinClause,
+                                               final String whereClause,
+                                               final String orderByClause) {
         @Language("SQL") final var sql = """
                 SELECT repo.id          AS repo_id,
                        repo.name        AS repo_name,
@@ -89,7 +94,7 @@ public final class GithubRepoRepoImpl implements GithubRepoRepo, ConnectionProvi
                    JOIN user_github usr
                        ON repo.owner_id = usr.id
                 """;
-        return (PostgresqlStatement) connection.createStatement("%s %s %s".formatted(sql, joinClause, whereClause));
+        return (PostgresqlStatement) connection.createStatement("%s %s %s %s".formatted(sql, joinClause, whereClause, orderByClause));
     }
 
     static GithubRepo convert(final Row row) {
@@ -107,6 +112,6 @@ public final class GithubRepoRepoImpl implements GithubRepoRepo, ConnectionProvi
     }
 
     private static PostgresqlStatement selectStatement(final Connection connection, final String whereClause) {
-        return selectStatement(connection, Converters.EMPTY_CLAUSE, whereClause);
+        return selectStatement(connection, EMPTY_CLAUSE, whereClause, EMPTY_CLAUSE);
     }
 }
