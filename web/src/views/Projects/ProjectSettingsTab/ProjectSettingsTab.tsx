@@ -7,10 +7,14 @@ import {
   Card,
   CardContent,
   Typography,
-  IconButton
+  IconButton,
+  TableRow,
+  TableCell
 } from '@material-ui/core'
+import Table from 'components/Table'
+
 import DeleteRoundedIcon from '@material-ui/icons/DeleteRounded'
-import { IProject, IUser } from 'types'
+import { IProject, IShortProject, IUser } from 'types'
 import Autocomplete from '@material-ui/lab/Autocomplete'
 import { Field, Form, Formik } from 'formik'
 import * as Yup from 'yup'
@@ -24,10 +28,14 @@ import {
   getRepoAdminsAction,
   updateProjectConfAction
 } from 'store/projects/actions'
+import Button from '@material-ui/core/Button'
 import { useSnackbar } from 'notistack'
 import { getNotifier } from 'App'
 import { useStyles } from './styles'
 import DeleteProjectDialog from '../DeleteProjectDialog'
+import AddRepoToProjectDialog from '../AddRepoToProjectDialog'
+import BreadCrumbs from '../../../components/BreadCrumbs'
+import { AddBoxOutlined } from '@material-ui/icons'
 
 const minFileMinSimilarityIndex = 0
 const minCloneTokenCount = 0
@@ -66,6 +74,7 @@ const ProjectSettingsTab = ({
   const [excludedFilesOptions, setExcludedFilesOptions] = useState(null)
   const [fetching, setFetching] = useState(false)
   const [isDeleteProjectDialogOpen, setDeleteProjectDialogOpen] = useState(false)
+  const [isAddRepoToProjectDialogOpen, setAddRepoToProjectDialogOpen] = useState(false)
 
   useEffect(() => {
     getProjectConf(project.id, getNotifier('error', snackbarContext))
@@ -283,6 +292,61 @@ const ProjectSettingsTab = ({
                 <Typography className={classes.description} variant="body2" component="p">
                   Minimum similarity percent to consider file as renamed
                 </Typography>
+                {project.secondaryRepos.length === 0 ? (
+                    <>
+                      <Button
+                          className={classes.addRepoToProjectBtn}
+                          variant="contained"
+                          color="secondary"
+                          onClick={() => setAddRepoToProjectDialogOpen(true)}
+                      >
+                        Add repo to project
+                      </Button>
+                      <Typography className={classes.description} variant="body2" component="p">
+                        No previous years repos
+                      </Typography>
+                    </>
+                ) : (
+                    <div>
+                      <BreadCrumbs breadcrumbs={[{ text: 'Previous years repos' }]} />
+                      <Table<IShortProject>
+                          headCells={[]}
+                          count={project.secondaryRepos.length}
+                          toolBarTitle=""
+                          toolBarButtons={[
+                            {
+                              toolTip: 'Add repo to project',
+                              iconButton: <AddBoxOutlined />,
+                              onClick: () => setAddRepoToProjectDialogOpen(true)
+                            }
+                          ]}
+                      >
+                        {() => (
+                            <>
+                              {project.secondaryRepos.map(repo => (
+                                  <TableRow
+                                      key={repo.id}
+                                  >
+                                    <TableCell align="left">
+                                      <div className={classes.repoInfo}>
+                                        <div className={classes.repoFullName}>
+                                          <span
+                                              className={classes.cellText}
+                                          >{`${repo.owner}/${repo.name}`}</span>
+                                        </div>
+                                      </div>
+                                    </TableCell>
+                                  </TableRow>
+                              ))}
+                            </>
+                        )}
+                      </Table>
+                    </div>
+                )}
+                <AddRepoToProjectDialog
+                    open={isAddRepoToProjectDialogOpen}
+                    onClose={() => setAddRepoToProjectDialogOpen(false)}
+                />
                 <div className={classes.saveButtonContainer}>
                   <LoadingButton
                     text="Save"

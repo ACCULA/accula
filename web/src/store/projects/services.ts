@@ -105,3 +105,22 @@ export const deleteProject = async (id: number, token: IToken): Promise<void> =>
       withCredentials: true
     })
 }
+
+export const postAddRepoToProject = async (id: number, url: string, token: IToken): Promise<IProject | string> => {
+    return axios
+        .post(
+            `${API_URL}/api/projects/${id}/addRepoByUrl`,
+            {
+                url: url
+            },
+            {
+                headers: {
+                    Accept: 'application/json',
+                    Authorization: `Bearer ${token.accessToken}`
+                },
+                withCredentials: true
+            }
+        )
+        .then(resp => resp.data as IProject)
+        .catch(rej => rej.response.data?.code || 'UNKNOWN_ERROR')
+}

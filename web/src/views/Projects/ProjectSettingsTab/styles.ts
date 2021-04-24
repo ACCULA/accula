@@ -34,6 +34,26 @@ export const useStyles = makeStyles((theme: Theme) => ({
     color: theme.palette.type === 'light' ? 'rgba(0, 0, 0, 0.5)' : '#fff',
     fontSize: '0.9rem'
   },
+  addRepoToProjectBtn: {
+    boxShadow: 'none',
+    '&:hover': {
+      boxShadow: 'none'
+    }
+  },
+  repoInfo: {
+    display: 'flex',
+    alignContent: 'center'
+  },
+  repoFullName: {
+    marginLeft: '10px',
+    display: 'flex',
+    justifyContent: 'center',
+    flexDirection: 'column'
+  },
+  cellText: {
+    fontSize: '18px',
+    fontWeight: 500
+  },
   saveButtonContainer: {
     display: 'flex',
     flexDirection: 'row-reverse'
