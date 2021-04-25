@@ -7,6 +7,7 @@ import io.r2dbc.spi.Row;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.accula.api.db.model.Clone;
+import org.accula.api.db.model.Plagiarist;
 import org.accula.api.util.Checks;
 import org.accula.api.util.Lambda;
 import org.intellij.lang.annotations.Language;
@@ -17,6 +18,8 @@ import reactor.core.publisher.Mono;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Stream;
+
+import static org.accula.api.db.repo.ConnectionProvidedRepo.convertMany;
 
 /**
  * @author Anton Lamtev
@@ -43,13 +46,51 @@ public final class CloneRepoImpl implements CloneRepo, ConnectionProvidedRepo {
                 .bind("$1", projectId)
                 .bind("$2", pullNumber)
                 .execute()
-                .flatMap(result -> ConnectionProvidedRepo.convertMany(result, CloneRepoImpl::convert)));
+                .flatMap(result -> convertMany(result, CloneRepoImpl::convert)));
     }
 
     @Override
     public Mono<Void> deleteByPullNumber(final Long projectId, final Integer pullNumber) {
         return transactional(connection -> deleteClonesByPullNumber(connection, projectId, pullNumber)
                 .then(deleteNoLongerReferencedCloneSnippets(connection)));
+    }
+
+    @Override
+    public Flux<Plagiarist> topPlagiarists(final Long projectId) {
+        return manyWithConnection(connection -> ((PostgresqlStatement) connection.createStatement("""
+            SELECT count(clone.id)    AS clone_count,
+                   user_github.id     AS id,
+                   user_github.login  AS login,
+                   user_github.name   AS name,
+                   user_github.avatar AS avatar,
+                   user_github.is_org AS is_org
+            FROM user_github
+                     JOIN repo_github
+                          ON user_github.id = repo_github.owner_id
+                     JOIN clone_snippet target
+                          ON repo_github.id = target.repo_id
+                     JOIN clone
+                          ON target.id = clone.target_id
+                     JOIN snapshot_pull target_snap_to_pull
+                          ON target.commit_sha = target_snap_to_pull.snapshot_sha
+                              AND target.repo_id = target_snap_to_pull.snapshot_repo_id
+                              AND target.branch = target_snap_to_pull.snapshot_branch
+                              AND target.pull_id = target_snap_to_pull.pull_id
+                     JOIN pull target_pull
+                          ON target_snap_to_pull.pull_id = target_pull.id
+                     JOIN project
+                          ON target_pull.base_snapshot_repo_id = project.github_repo_id
+            WHERE project.id = $1
+            GROUP BY user_github.id,
+                     user_github.login,
+                     user_github.name,
+                     user_github.avatar,
+                     user_github.is_org
+            ORDER BY clone_count DESC
+            """))
+            .bind("$1", projectId)
+            .execute()
+            .flatMap(result -> convertMany(result, CloneRepoImpl::convertPlagiarist)));
     }
 
     private static Mono<List<Clone>> insertSnippets(final Connection connection, final Collection<Clone> clones) {
@@ -270,5 +311,12 @@ public final class CloneRepoImpl implements CloneRepo, ConnectionProvidedRepo {
                 "source_from_line",
                 "source_to_line"
         );
+    }
+
+    private static Plagiarist convertPlagiarist(final Row row) {
+        return Plagiarist.builder()
+            .user(GithubUserRepoImpl.convert(row))
+            .cloneCount(Converters.integer(row, "clone_count"))
+            .build();
     }
 }

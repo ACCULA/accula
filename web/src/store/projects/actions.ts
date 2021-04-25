@@ -5,6 +5,7 @@ import { IProjectConf } from 'types'
 import {
   SET_BASE_FILES,
   SET_PROJECT,
+  SET_TOP_PLAGIARISTS,
   SET_PROJECT_CONF,
   SET_PROJECTS,
   SET_REPO_ADMINS,
@@ -12,6 +13,7 @@ import {
   RESET_PROJECTS,
   SetBaseFiles,
   SetProject,
+  SetTopPlagiarists,
   SetProjectConf,
   SetProjects,
   SetRepoAdmins,
@@ -21,6 +23,7 @@ import {
 import {
   getBaseFiles,
   getProject,
+  getTopPlagiarists,
   getProjectConf,
   getProjects,
   getRepoAdmins,
@@ -37,6 +40,11 @@ const setProjects = (payload): SetProjects => ({
 
 const setProject = (payload): SetProject => ({
   type: SET_PROJECT,
+  payload
+})
+
+const setTopPlagiarists = (payload): SetTopPlagiarists => ({
+  type: SET_TOP_PLAGIARISTS,
   payload
 })
 
@@ -104,6 +112,31 @@ export const getProjectAction = (id: number, handleError?: (msg: string) => void
     dispatch(setProject(fetched(project)))
   } catch (e) {
     dispatch(setProject(failed(e)))
+    if (handleError) {
+      handleError(e.message)
+    }
+  }
+}
+
+export const getTopPlagiaristsAction = (projectId: number, handleError?: (msg: string) => void) => async (
+    dispatch: AppDispatch, //
+    getState: AppStateSupplier
+) => {
+  const { projects } = getState()
+  if (
+      projects.topPlagiarists.isFetching ||
+      (projects.topPlagiarists.value &&
+          projects.topPlagiarists.value.length !== 0 &&
+          projects.topPlagiarists.projectId === projectId)
+  ) {
+    return
+  }
+  try {
+    dispatch(setTopPlagiarists(fetching))
+    const result = await getTopPlagiarists(projectId)
+    dispatch(setTopPlagiarists(fetched(result)))
+  } catch (e) {
+    dispatch(setTopPlagiarists(failed(e)))
     if (handleError) {
       handleError(e.message)
     }

@@ -19,10 +19,12 @@ public final class ClonesRouter {
     @Bean
     public RouterFunction<ServerResponse> clonesRoute() {
         return RouterFunctions
-                .route()
-                .path("/api/projects/{projectId}/pulls/{pullNumber}/clones", b -> b
-                        .GET("", clonesHandler::getPullClones)
-                        .POST("/refresh", clonesHandler::refreshClones))
-                .build();
+            .route()
+            .path("/api/projects/{projectId}", b -> b
+                .GET("/topPlagiarists", clonesHandler::topPlagiarists)
+                .path("/pulls/{pullNumber}/clones", b1 -> b1
+                    .GET("", clonesHandler::getPullClones)
+                    .POST("/refresh", clonesHandler::refreshClones)))
+            .build();
     }
 }

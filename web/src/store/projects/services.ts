@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 import { API_URL } from 'utils'
-import { IProject, IProjectConf, IToken, IUser } from 'types'
+import { IPlagiarist, IProject, IProjectConf, IToken, IUser } from 'types'
 
 export const getProjects = async (): Promise<IProject[]> => {
   return axios
@@ -23,6 +23,17 @@ export const getProject = async (id: number): Promise<IProject> => {
       withCredentials: true
     })
     .then(resp => resp.data as IProject)
+}
+
+export const getTopPlagiarists = async (projectId: number): Promise<IPlagiarist[]> => {
+    return axios
+      .get(`${API_URL}/api/projects/${projectId}/topPlagiarists`, {
+        headers: {
+            Accept: 'application/json'
+        },
+        withCredentials: true
+      })
+      .then(resp => resp.data as IPlagiarist[])
 }
 
 export const getProjectConf = async (id: number, token: IToken): Promise<IProjectConf> => {

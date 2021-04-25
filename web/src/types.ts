@@ -91,6 +91,15 @@ export interface IProject {
   secondaryRepos: IShortProject[]
 }
 
+export interface IPlagiarist {
+  user: {
+    url: string
+    login: string
+    avatar: string
+  },
+  cloneCount: number,
+}
+
 export interface IProjectConf {
   admins: number[]
   cloneMinTokenCount: number
