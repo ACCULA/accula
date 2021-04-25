@@ -28,7 +28,7 @@ const ProjectTopPlagiaristsTab = ({ topPlagiarists }: ProjectTopPlagiaristsTabPr
         <Table<IPlagiarist>
             headCells={[
                 { id: 'user', numeric: true, disablePadding: false, label: '#' },
-                { id: 'user', numeric: false, disablePadding: false, label: 'Plagiarist' },
+                { id: 'user', numeric: false, disablePadding: false, label: 'Student' },
                 { id: 'cloneCount', numeric: true, disablePadding: false, label: 'Clone count' },
             ]}
             count={topPlagiarists.length}
