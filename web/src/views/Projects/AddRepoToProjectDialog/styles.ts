@@ -6,9 +6,5 @@ export const useStyles = makeStyles(() => ({
   },
   content: {
     overflow: 'hidden'
-  },
-  formInput: {
-    padding: '15px 20px',
-    marginBottom: '15px'
   }
 }))
