@@ -3,7 +3,8 @@ import { IPlagiarist, IProject } from 'types'
 import EmptyContent from 'components/EmptyContent'
 import { useStyles } from './styles'
 import { TrendingUp } from "@material-ui/icons";
-import { Avatar, TableCell, TableRow } from "@material-ui/core";
+import TableRow from 'components/Table/TableRow'
+import { Avatar, TableCell } from "@material-ui/core";
 import Table from "../../../components/Table";
 
 interface ProjectTopPlagiaristsTabProps {
@@ -46,6 +47,7 @@ const ProjectTopPlagiaristsTab = ({ topPlagiarists }: ProjectTopPlagiaristsTabPr
                       <TableCell align="left">
                           <div className={classes.authorInfo}>
                               <Avatar
+                                  onClick={() => window.open(plagiarist.user.url, '_blank')}
                                   className={classes.authorAvatar}
                                   src={plagiarist.user.avatar}
                                   alt={plagiarist.user.login}
