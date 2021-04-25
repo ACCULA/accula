@@ -58,13 +58,13 @@ const PullClonesTab = ({ project, pull, clones, refreshClones, isAdmin }: PullCl
             getLeftOffset={(clone: IClone) => clone.source.fromLine}
             getRightOffset={(clone: IClone) => clone.target.fromLine}
             compareMethod={DiffMethod.WORDS_WITH_SPACE}
-            toolbarButtons={[
+            toolbarButtons={isAdmin ? [
               {
                 tip: 'Refresh clones',
                 onClick: () => refreshClones(project.id, pull.number),
                 Icon: RefreshRounded
               }
-            ]}
+            ] : []}
           />
         ) : (
           <EmptyContent Icon={LibraryAddCheckRounded} info="No clones">
