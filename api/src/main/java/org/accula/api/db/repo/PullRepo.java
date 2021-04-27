@@ -31,6 +31,8 @@ public interface PullRepo {
 
     Flux<Pull> findByProjectId(Long projectId);
 
+    Flux<Pull> findByProjectIdIncludingSecondaryRepos(Long projectId);
+
     default Publisher<Void> mapSnapshots(final PullSnapshots pullSnapshots) {
         return mapSnapshots(List.of(pullSnapshots));
     }

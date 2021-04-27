@@ -21,6 +21,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 
+import static org.accula.api.db.repo.ConnectionProvidedRepo.convertMany;
 import static org.accula.api.db.repo.Converters.EMPTY_CLAUSE;
 
 /**
@@ -98,7 +99,7 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
 
             return statement
                     .execute()
-                    .flatMap(result -> ConnectionProvidedRepo.convertMany(result, PullRepoImpl::convert))
+                    .flatMap(result -> convertMany(result, PullRepoImpl::convert))
                     .transform(byFetchingAssignees(connection));
         });
     }
@@ -116,24 +117,29 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
 
     @Override
     public Flux<Pull> findPrevious(Long projectId, Integer number, Long authorId) {
-        return transactionalMany(connection -> Mono
-                .from(selectPreviousByNumberAndAuthorIdStatement(connection)
-                        .bind("$1", projectId)
-                        .bind("$2", number)
-                        .bind("$3", authorId)
-                        .execute())
-                .flatMapMany(result -> ConnectionProvidedRepo.convertMany(result, PullRepoImpl::convert))
-                .transform(byFetchingAssignees(connection)));
+        return transactionalMany(connection -> selectPreviousByNumberAndAuthorIdStatement(connection)
+            .bind("$1", projectId)
+            .bind("$2", number)
+            .bind("$3", authorId)
+            .execute()
+            .flatMap(result -> convertMany(result, PullRepoImpl::convert)));
     }
 
     @Override
     public Flux<Pull> findByProjectId(final Long projectId) {
-        return transactionalMany(connection -> Mono
-                .from(selectByProjectIdStatement(connection)
-                        .bind("$1", projectId)
-                        .execute())
-                .flatMapMany(result -> ConnectionProvidedRepo.convertMany(result, PullRepoImpl::convert))
-                .transform(byFetchingAssignees(connection)));
+        return transactionalMany(connection -> selectByProjectIdStatement(connection)
+            .bind("$1", projectId)
+            .execute()
+            .flatMap(result -> convertMany(result, PullRepoImpl::convert))
+            .transform(byFetchingAssignees(connection)));
+    }
+
+    @Override
+    public Flux<Pull> findByProjectIdIncludingSecondaryRepos(final Long projectId) {
+        return manyWithConnection(connection -> selectByProjectIdIncludingSecondaryRepos(connection)
+            .bind("$1", projectId)
+            .execute())
+            .flatMap(result -> convertMany(result, PullRepoImpl::convert));
     }
 
     @Override
@@ -223,6 +229,15 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
                 """, """
                 ORDER BY pull.open DESC, pull.updated_at DESC
                 """);
+    }
+
+    private static PostgresqlStatement selectByProjectIdIncludingSecondaryRepos(final Connection connection) {
+        return selectStatement(connection, EMPTY_CLAUSE, """
+            WHERE base_repo.id IN (SELECT project_repo.repo_id
+                                   FROM project_repo
+                                   WHERE project_repo.project_id = $1)
+                OR primary_project.id = $1
+            """, EMPTY_CLAUSE);
     }
 
     private static PostgresqlStatement selectByNumberStatement(final Connection connection) {
@@ -335,7 +350,7 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
                 .bind("$1", pulls.stream().map(Pull::id).toArray(Long[]::new))
                 .execute()
                 .flatMap(result ->
-                    ConnectionProvidedRepo.convertMany(result, row -> new Object() {
+                    convertMany(result, row -> new Object() {
                         final Long pullId = Converters.longInteger(row, "pull_id");
                         final GithubUser assignee = Converters.convertUser(row,
                             "assignee_id",
