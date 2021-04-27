@@ -95,7 +95,7 @@ public final class CloneDetectionService {
     }
 
     private Mono<Void> fillSuffixTree(final Long projectId) {
-        return fillSuffixTree(projectId, pullRepo.findByProjectId(projectId));
+        return fillSuffixTree(projectId, pullRepo.findByProjectIdIncludingSecondaryRepos(projectId));
     }
 
     private CloneDetector cloneDetector(final Long projectId) {
