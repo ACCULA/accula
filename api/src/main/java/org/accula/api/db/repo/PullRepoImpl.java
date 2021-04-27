@@ -117,7 +117,7 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
 
     @Override
     public Flux<Pull> findPrevious(Long projectId, Integer number, Long authorId) {
-        return transactionalMany(connection -> selectPreviousByNumberAndAuthorIdStatement(connection)
+        return manyWithConnection(connection -> selectPreviousByNumberAndAuthorIdStatement(connection)
             .bind("$1", projectId)
             .bind("$2", number)
             .bind("$3", authorId)
