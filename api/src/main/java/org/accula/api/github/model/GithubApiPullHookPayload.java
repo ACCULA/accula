@@ -36,6 +36,15 @@ public class GithubApiPullHookPayload {
         EDITED,
         ASSIGNED,
         UNASSIGNED,
+        REVIEW_REQUESTED,
+        REVIEW_REQUEST_REMOVED,
+        READY_FOR_REVIEW,
+        CONVERTED_TO_DRAFT,
+        LABELED,
+        UNLABELED,
+        AUTO_MERGE_ENABLED,
+        LOCKED,
+        UNLOCKED
         ;
 
         @JsonValue

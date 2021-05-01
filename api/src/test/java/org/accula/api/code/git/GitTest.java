@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -287,6 +288,32 @@ final class GitTest {
                                 final var commits = repo.log(HEAD_REF).get();
                                 assertEquals(10, commits.size());
                             }));
+        });
+    }
+
+    @Test
+    void testLogSingle() {
+        assertDoesNotThrow(() -> {
+            final var repo = git.clone(REPO_URL, REPO_DIR).get();
+            assertNotNull(repo);
+
+            IntStream.range(0, Runtime.getRuntime().availableProcessors() * 5)
+                .parallel()
+                .forEach(it ->
+                    assertDoesNotThrow(() -> {
+                        final var commits = repo.logSingle(HEAD_REF).get();
+                        assertEquals(HEAD_REF, commits.sha());
+                    }));
+        });
+    }
+
+    @Test
+    void testLogSingleFail() {
+        assertThrows(ExecutionException.class, () -> {
+            final var repo = git.clone(REPO_URL, REPO_DIR).get();
+            assertNotNull(repo);
+            final var commits = repo.logSingle("NOT_EXISTENT_REF").get();
+            assertEquals(HEAD_REF, commits.sha());
         });
     }
 

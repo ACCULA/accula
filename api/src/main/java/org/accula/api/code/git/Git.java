@@ -256,6 +256,16 @@ public final class Git {
             });
         }
 
+        public CompletableFuture<GitCommit> logSingle(final String ref) {
+            return readingAsync(() ->
+                usingStdoutLines(git("log", "-1", "--date=rfc", ref), lines ->
+                    commits(lines.iterator())
+                        .stream()
+                        .findFirst()
+                        .orElseThrow())
+                    .orElseThrow());
+        }
+
         public CompletableFuture<List<GitCommit>> revListAllPretty() {
             return readingAsync(() -> {
                 final var log = git("rev-list", "--pretty", "--all", "--date=rfc");

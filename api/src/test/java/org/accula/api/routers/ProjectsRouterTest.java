@@ -119,6 +119,13 @@ class ProjectsRouterTest {
     static final String ERROR_FORMAT = "{\"code\":\"%s\"}";
     static final GithubClientException GH_EXCEPTION = newGithubException();
 
+    @Autowired
+    RouterFunction<ServerResponse> projectsRoute;
+
+    WebTestClient client;
+
+    @MockBean
+    CodeLoader codeLoader;
     @MockBean
     ProjectService projectService;
     @MockBean
@@ -133,11 +140,7 @@ class ProjectsRouterTest {
     PullRepo pullRepo;
     @MockBean
     GithubClient githubClient;
-    @Autowired
-    RouterFunction<ServerResponse> projectsRoute;
-    WebTestClient client;
-    @MockBean
-    CodeLoader codeLoader;
+
     @MockBean
     CloneDetectionService cloneDetectionService;
     @MockBean

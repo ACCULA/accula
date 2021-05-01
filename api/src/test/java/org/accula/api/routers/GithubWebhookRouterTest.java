@@ -1,10 +1,12 @@
 package org.accula.api.routers;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.accula.api.code.CodeLoader;
 import org.accula.api.config.WebConfig;
 import org.accula.api.converter.GithubApiToModelConverter;
 import org.accula.api.db.model.Project;
 import org.accula.api.db.model.Pull;
+import org.accula.api.db.model.PullSnapshots;
 import org.accula.api.db.repo.CurrentUserRepo;
 import org.accula.api.db.repo.GithubRepoRepo;
 import org.accula.api.db.repo.GithubUserRepo;
@@ -28,6 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.http.codec.json.Jackson2JsonEncoder;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.server.RouterFunction;
@@ -38,6 +41,9 @@ import reactor.core.publisher.Mono;
 import java.time.Instant;
 import java.util.List;
 
+import static org.accula.api.github.model.GithubApiPullHookPayload.Action.CONVERTED_TO_DRAFT;
+import static org.accula.api.github.model.GithubApiPullHookPayload.Action.SYNCHRONIZE;
+import static org.accula.api.github.model.GithubApiPullHookPayload.Action.UNASSIGNED;
 import static org.accula.api.handler.GithubWebhookHandler.GITHUB_EVENT;
 import static org.accula.api.handler.GithubWebhookHandler.GITHUB_EVENT_PING;
 import static org.accula.api.handler.GithubWebhookHandler.GITHUB_EVENT_PULL;
@@ -48,12 +54,14 @@ import static org.accula.api.handler.GithubWebhookHandler.WebhookError.MISSING_E
 import static org.accula.api.handler.GithubWebhookHandler.WebhookError.MISSING_SIGNATURE;
 import static org.accula.api.handler.GithubWebhookHandler.WebhookError.NOT_SUPPORTED_EVENT;
 import static org.accula.api.handler.GithubWebhookHandler.WebhookError.SIGNATURE_VERIFICATION_FAILED;
+import static org.accula.api.handler.GithubWebhookHandler.WebhookError.UNABLE_TO_DESERIALIZE_PAYLOAD;
 import static org.accula.api.routers.ProjectsRouterTest.GH_OWNER;
 import static org.accula.api.routers.ProjectsRouterTest.GH_OWNER_HIGHLOAD;
 import static org.accula.api.routers.ProjectsRouterTest.GH_REPO_HIGHLOAD1;
 import static org.accula.api.routers.ProjectsRouterTest.GH_REPO_HIGHLOAD2;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.anyIterable;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 
 /**
@@ -64,9 +72,9 @@ import static org.mockito.Mockito.when;
     WebConfig.class,
     GithubWebhookRouter.class,
     GithubWebhookHandler.class,
-    ProjectService.class,
 })
-class GithubWebhookRouterTest {
+public class GithubWebhookRouterTest {
+    static final String API_WEBHOOK_ENDPOINT = "/api/webhook";
     static final GithubApiSnapshot base = GithubApiSnapshot.builder()
         .label("master")
         .ref("master")
@@ -95,16 +103,22 @@ class GithubWebhookRouterTest {
         .assignee(GH_OWNER)
         .assignees(new GithubApiUser[]{GH_REPO_HIGHLOAD2.owner(), GH_OWNER_HIGHLOAD})
         .build();
-    static final String signatureSecret = "accula";
-    static final String pingBody = "some ping body";
-    static final String pingSignature = "sha256=" + Signatures.signHexHmacSha256(pingBody, signatureSecret);
-    static final GithubApiPullHookPayload assignedPayload = GithubApiPullHookPayload.builder()
+    public static final GithubApiPullHookPayload pullOpenedPayload = GithubApiPullHookPayload.builder()
+        .action(GithubApiPullHookPayload.Action.OPENED)
+        .repo(GH_REPO_HIGHLOAD1)
+        .pull(pull)
+        .build();
+    public static final GithubApiPullHookPayload pullSynchronizePayload = pullOpenedPayload.withAction(SYNCHRONIZE);
+    public static final GithubApiPullHookPayload assignedPayload = GithubApiPullHookPayload.builder()
         .action(GithubApiPullHookPayload.Action.ASSIGNED)
         .repo(GH_REPO_HIGHLOAD1)
         .pull(pull)
         .build();
+    static final String signatureSecret = "accula";
+    static final String pingBody = "some ping body";
+    static final String pingSignature = "sha256=" + Signatures.signHexHmacSha256(pingBody, signatureSecret);
     static final String assignedPayloadSignature = "sha256=" + Signatures.signHexHmacSha256(SerializationHelper.json(assignedPayload), signatureSecret);
-    static final GithubApiPullHookPayload unassignedPayload = assignedPayload.withAction(GithubApiPullHookPayload.Action.UNASSIGNED).withPull(null);
+    static final GithubApiPullHookPayload unassignedPayload = assignedPayload.withAction(UNASSIGNED).withPull(null);
     static final String unassignedPayloadSignature = "sha256=" + Signatures.signHexHmacSha256(SerializationHelper.json(unassignedPayload), signatureSecret);
     static final GithubApiPushHookPayload pushPayload = GithubApiPushHookPayload.builder()
         .ref("master")
@@ -112,7 +126,13 @@ class GithubWebhookRouterTest {
         .after("sha2")
         .repo(GH_REPO_HIGHLOAD2)
         .build();
+    public static final GithubApiPullHookPayload pullConvertedToDraftPayload = assignedPayload.withAction(CONVERTED_TO_DRAFT);
     static final String pushPayloadSignature = "sha256=" + Signatures.signHexHmacSha256(SerializationHelper.json(pushPayload), signatureSecret);
+    static final String openedPayloadSignature = "sha256=" + Signatures.signHexHmacSha256(SerializationHelper.json(pullOpenedPayload), signatureSecret);
+    static final String synchronizePayloadSignature = "sha256=" + Signatures.signHexHmacSha256(SerializationHelper.json(pullSynchronizePayload), signatureSecret);
+    static final String convertedToDraftPayloadSignature = "sha256=" + Signatures.signHexHmacSha256(SerializationHelper.json(pullConvertedToDraftPayload), signatureSecret);
+    @Autowired
+    ObjectMapper objectMapper;
     @Autowired
     RouterFunction<ServerResponse> webhookRoute;
     WebTestClient client;
@@ -128,7 +148,7 @@ class GithubWebhookRouterTest {
     PullRepo pullRepo;
     @MockBean
     CodeLoader codeLoader;
-    @Autowired
+    @MockBean
     ProjectService projectService;
     @MockBean
     CloneDetectionService cloneDetectionService;
@@ -139,12 +159,14 @@ class GithubWebhookRouterTest {
     public void setUp() {
         client = WebTestClient
             .bindToRouterFunction(webhookRoute)
+            .configureClient()
+            .codecs(c -> c.defaultCodecs().jackson2JsonEncoder(new Jackson2JsonEncoder(objectMapper, MediaType.APPLICATION_JSON)))
             .build();
     }
 
     @Test
     void testPing() {
-        client.post().uri("/api/webhook")
+        client.post().uri(API_WEBHOOK_ENDPOINT)
             .header(GITHUB_EVENT, GITHUB_EVENT_PING)
             .header(GITHUB_SIGNATURE, pingSignature)
             .bodyValue(pingBody)
@@ -154,7 +176,7 @@ class GithubWebhookRouterTest {
 
     @Test
     void testMissingEvent() {
-        client.post().uri("/api/webhook")
+        client.post().uri(API_WEBHOOK_ENDPOINT)
             .exchange()
             .expectStatus().isBadRequest()
             .expectBody(ApiError.class).isEqualTo(ApiError.with(MISSING_EVENT));
@@ -162,7 +184,7 @@ class GithubWebhookRouterTest {
 
     @Test
     void testMissingSignature() {
-        client.post().uri("/api/webhook")
+        client.post().uri(API_WEBHOOK_ENDPOINT)
             .header(GITHUB_EVENT, GITHUB_EVENT_PING)
             .exchange()
             .expectStatus().isBadRequest()
@@ -171,7 +193,7 @@ class GithubWebhookRouterTest {
 
     @Test
     void testInvalidSignature() {
-        client.post().uri("/api/webhook")
+        client.post().uri(API_WEBHOOK_ENDPOINT)
             .header(GITHUB_EVENT, GITHUB_EVENT_PING)
             .header(GITHUB_SIGNATURE, "signature")
             .exchange()
@@ -181,7 +203,7 @@ class GithubWebhookRouterTest {
 
     @Test
     void testSignatureVerificationFailed() {
-        client.post().uri("/api/webhook")
+        client.post().uri(API_WEBHOOK_ENDPOINT)
             .header(GITHUB_EVENT, GITHUB_EVENT_PING)
             .header(GITHUB_SIGNATURE, pingSignature)
             .bodyValue(pingBody + "salt")
@@ -192,7 +214,7 @@ class GithubWebhookRouterTest {
 
     @Test
     void testNotSupportedEvent() {
-        client.post().uri("/api/webhook")
+        client.post().uri(API_WEBHOOK_ENDPOINT)
             .header(GITHUB_EVENT, "NOT_YET_SUPPORTED_EVENT")
             .header(GITHUB_SIGNATURE, pingSignature)
             .bodyValue(pingBody)
@@ -203,38 +225,30 @@ class GithubWebhookRouterTest {
 
     @Test
     void testAssigned() {
-        when(githubUserRepo.upsert(anyCollection()))
-            .thenReturn(Flux.empty());
-        when(githubRepoRepo.upsert(anyCollection()))
-            .thenReturn(Flux.empty());
-        when(pullRepo.upsert(any(Pull.class)))
-            .thenReturn(Mono.just(GithubApiToModelConverter.convert(pull)));
+        when(projectService.updatePullInfo(any(GithubApiPull.class)))
+            .thenReturn(Mono.just(GithubApiToModelConverter.convert(assignedPayload.pull())));
 
-        client.post().uri("/api/webhook")
+        client.post().uri(API_WEBHOOK_ENDPOINT)
             .header(GITHUB_EVENT, GITHUB_EVENT_PULL)
             .header(GITHUB_SIGNATURE, assignedPayloadSignature)
             .contentType(MediaType.APPLICATION_JSON)
-            .bodyValue(SerializationHelper.json(assignedPayload))
+            .bodyValue(assignedPayload)
             .exchange()
             .expectStatus().isOk();
     }
 
     @Test
     void testUnassignedErrorDuringPayloadProcessing() {
-        when(githubUserRepo.upsert(anyCollection()))
-            .thenReturn(Flux.empty());
-        when(githubRepoRepo.upsert(anyCollection()))
-            .thenReturn(Flux.empty());
-        when(pullRepo.upsert(any(Pull.class)))
-            .thenReturn(Mono.just(GithubApiToModelConverter.convert(pull)));
+        when(projectService.updatePullInfo(any(GithubApiPull.class)))
+            .thenReturn(Mono.error(new IllegalStateException()));
 
-        client.post().uri("/api/webhook")
+        client.post().uri(API_WEBHOOK_ENDPOINT)
             .header(GITHUB_EVENT, GITHUB_EVENT_PULL)
             .header(GITHUB_SIGNATURE, unassignedPayloadSignature)
             .contentType(MediaType.APPLICATION_JSON)
-            .bodyValue(SerializationHelper.json(unassignedPayload))
+            .bodyValue(unassignedPayload)
             .exchange()
-            .expectStatus().isOk();
+            .expectStatus().is5xxServerError();
     }
 
     @Test
@@ -244,11 +258,11 @@ class GithubWebhookRouterTest {
         when(projectRepo.confById(any()))
             .thenReturn(Mono.just(Project.Conf.DEFAULT.withExcludedFiles(List.of("f1", "f2"))));
 
-        client.post().uri("/api/webhook")
+        client.post().uri(API_WEBHOOK_ENDPOINT)
             .header(GITHUB_EVENT, GITHUB_EVENT_PUSH)
             .header(GITHUB_SIGNATURE, pushPayloadSignature)
             .contentType(MediaType.APPLICATION_JSON)
-            .bodyValue(SerializationHelper.json(pushPayload))
+            .bodyValue(pushPayload)
             .exchange()
             .expectStatus().isOk();
     }
@@ -260,17 +274,85 @@ class GithubWebhookRouterTest {
             .thenReturn(Mono.just(1L));
         when(projectRepo.confById(any()))
             .thenReturn(Mono.just(Project.Conf.DEFAULT.withExcludedFiles(List.of(Project.Conf.KEEP_EXCLUDED_FILES_SYNCED))));
-        when(codeLoader.loadFilenames(any()))
-            .thenReturn(Flux.fromIterable(files));
+        when(projectService.headFiles(any()))
+            .thenReturn(Mono.just(files));
         when(projectRepo.upsertConf(any(), any()))
             .thenReturn(Mono.empty());
 
-        client.post().uri("/api/webhook")
+        client.post().uri(API_WEBHOOK_ENDPOINT)
             .header(GITHUB_EVENT, GITHUB_EVENT_PUSH)
             .header(GITHUB_SIGNATURE, pushPayloadSignature)
             .contentType(MediaType.APPLICATION_JSON)
-            .bodyValue(SerializationHelper.json(pushPayload))
+            .bodyValue(pushPayload)
             .exchange()
             .expectStatus().isOk();
+    }
+
+    @Test
+    void testPullOpenedOk() {
+        final var pull = GithubApiToModelConverter.convert(GithubWebhookRouterTest.pullOpenedPayload.pull());
+
+        when(projectRepo.idByRepoId(anyLong()))
+            .thenReturn(Mono.just(1L));
+        when(projectService.init(any(GithubApiPull.class)))
+            .thenReturn(Mono.just(PullSnapshots.of(pull, List.of(pull.head()))));
+        when(cloneDetectionService.detectClones(anyLong(), any(Pull.class), anyIterable()))
+            .thenReturn(Flux.empty());
+
+        client.post().uri(API_WEBHOOK_ENDPOINT)
+            .header(GITHUB_EVENT, GITHUB_EVENT_PULL)
+            .header(GITHUB_SIGNATURE, openedPayloadSignature)
+            .contentType(MediaType.APPLICATION_JSON)
+            .bodyValue(pullOpenedPayload)
+            .exchange()
+            .expectStatus().isOk();
+    }
+
+    @Test
+    void testPullSynchronizeOk() {
+        final var pull = GithubApiToModelConverter.convert(GithubWebhookRouterTest.pullSynchronizePayload.pull());
+
+        when(projectRepo.idByRepoId(anyLong()))
+            .thenReturn(Mono.just(1L));
+        when(projectService.updateWithNewCommits(any(GithubApiPull.class)))
+            .thenReturn(Mono.just(PullSnapshots.of(pull, List.of(pull.head(), pull.base()))));
+        when(cloneDetectionService.detectClones(anyLong(), any(Pull.class), anyIterable()))
+            .thenReturn(Flux.empty());
+
+        client.post().uri(API_WEBHOOK_ENDPOINT)
+            .header(GITHUB_EVENT, GITHUB_EVENT_PULL)
+            .header(GITHUB_SIGNATURE, synchronizePayloadSignature)
+            .contentType(MediaType.APPLICATION_JSON)
+            .bodyValue(pullSynchronizePayload)
+            .exchange()
+            .expectStatus().isOk();
+    }
+
+    @Test
+    void testNotSupportedPullEventAction() {
+        client.post().uri(API_WEBHOOK_ENDPOINT)
+            .header(GITHUB_EVENT, GITHUB_EVENT_PULL)
+            .header(GITHUB_SIGNATURE, convertedToDraftPayloadSignature)
+            .contentType(MediaType.APPLICATION_JSON)
+            .bodyValue(pullConvertedToDraftPayload)
+            .exchange()
+            .expectStatus().isOk();
+    }
+
+    @Test
+    void testUnableToDeserializePayload() {
+        final var payloadJson = """
+            {
+              "action": "hello_world"
+            }
+            """;
+        client.post().uri(API_WEBHOOK_ENDPOINT)
+            .header(GITHUB_EVENT, GITHUB_EVENT_PULL)
+            .header(GITHUB_SIGNATURE,  "sha256=" + Signatures.signHexHmacSha256(payloadJson, signatureSecret))
+            .contentType(MediaType.APPLICATION_JSON)
+            .bodyValue(payloadJson)
+            .exchange()
+            .expectStatus().isBadRequest()
+            .expectBody(ApiError.class).isEqualTo(ApiError.with(UNABLE_TO_DESERIALIZE_PAYLOAD));
     }
 }
