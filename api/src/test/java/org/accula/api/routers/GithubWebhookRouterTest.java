@@ -41,6 +41,9 @@ import reactor.core.publisher.Mono;
 import java.time.Instant;
 import java.util.List;
 
+import static org.accula.api.github.model.GithubApiPullHookPayload.Action.CONVERTED_TO_DRAFT;
+import static org.accula.api.github.model.GithubApiPullHookPayload.Action.SYNCHRONIZE;
+import static org.accula.api.github.model.GithubApiPullHookPayload.Action.UNASSIGNED;
 import static org.accula.api.handler.GithubWebhookHandler.GITHUB_EVENT;
 import static org.accula.api.handler.GithubWebhookHandler.GITHUB_EVENT_PING;
 import static org.accula.api.handler.GithubWebhookHandler.GITHUB_EVENT_PULL;
@@ -51,6 +54,7 @@ import static org.accula.api.handler.GithubWebhookHandler.WebhookError.MISSING_E
 import static org.accula.api.handler.GithubWebhookHandler.WebhookError.MISSING_SIGNATURE;
 import static org.accula.api.handler.GithubWebhookHandler.WebhookError.NOT_SUPPORTED_EVENT;
 import static org.accula.api.handler.GithubWebhookHandler.WebhookError.SIGNATURE_VERIFICATION_FAILED;
+import static org.accula.api.handler.GithubWebhookHandler.WebhookError.UNABLE_TO_DESERIALIZE_PAYLOAD;
 import static org.accula.api.routers.ProjectsRouterTest.GH_OWNER;
 import static org.accula.api.routers.ProjectsRouterTest.GH_OWNER_HIGHLOAD;
 import static org.accula.api.routers.ProjectsRouterTest.GH_REPO_HIGHLOAD1;
@@ -104,7 +108,7 @@ public class GithubWebhookRouterTest {
         .repo(GH_REPO_HIGHLOAD1)
         .pull(pull)
         .build();
-    public static final GithubApiPullHookPayload pullSynchronizePayload = pullOpenedPayload.withAction(GithubApiPullHookPayload.Action.SYNCHRONIZE);
+    public static final GithubApiPullHookPayload pullSynchronizePayload = pullOpenedPayload.withAction(SYNCHRONIZE);
     public static final GithubApiPullHookPayload assignedPayload = GithubApiPullHookPayload.builder()
         .action(GithubApiPullHookPayload.Action.ASSIGNED)
         .repo(GH_REPO_HIGHLOAD1)
@@ -114,7 +118,7 @@ public class GithubWebhookRouterTest {
     static final String pingBody = "some ping body";
     static final String pingSignature = "sha256=" + Signatures.signHexHmacSha256(pingBody, signatureSecret);
     static final String assignedPayloadSignature = "sha256=" + Signatures.signHexHmacSha256(SerializationHelper.json(assignedPayload), signatureSecret);
-    static final GithubApiPullHookPayload unassignedPayload = assignedPayload.withAction(GithubApiPullHookPayload.Action.UNASSIGNED).withPull(null);
+    static final GithubApiPullHookPayload unassignedPayload = assignedPayload.withAction(UNASSIGNED).withPull(null);
     static final String unassignedPayloadSignature = "sha256=" + Signatures.signHexHmacSha256(SerializationHelper.json(unassignedPayload), signatureSecret);
     static final GithubApiPushHookPayload pushPayload = GithubApiPushHookPayload.builder()
         .ref("master")
@@ -122,9 +126,11 @@ public class GithubWebhookRouterTest {
         .after("sha2")
         .repo(GH_REPO_HIGHLOAD2)
         .build();
+    public static final GithubApiPullHookPayload pullConvertedToDraftPayload = assignedPayload.withAction(CONVERTED_TO_DRAFT);
     static final String pushPayloadSignature = "sha256=" + Signatures.signHexHmacSha256(SerializationHelper.json(pushPayload), signatureSecret);
     static final String openedPayloadSignature = "sha256=" + Signatures.signHexHmacSha256(SerializationHelper.json(pullOpenedPayload), signatureSecret);
     static final String synchronizePayloadSignature = "sha256=" + Signatures.signHexHmacSha256(SerializationHelper.json(pullSynchronizePayload), signatureSecret);
+    static final String convertedToDraftPayloadSignature = "sha256=" + Signatures.signHexHmacSha256(SerializationHelper.json(pullConvertedToDraftPayload), signatureSecret);
     @Autowired
     ObjectMapper objectMapper;
     @Autowired
@@ -320,5 +326,33 @@ public class GithubWebhookRouterTest {
             .bodyValue(pullSynchronizePayload)
             .exchange()
             .expectStatus().isOk();
+    }
+
+    @Test
+    void testNotSupportedPullEventAction() {
+        client.post().uri(API_WEBHOOK_ENDPOINT)
+            .header(GITHUB_EVENT, GITHUB_EVENT_PULL)
+            .header(GITHUB_SIGNATURE, convertedToDraftPayloadSignature)
+            .contentType(MediaType.APPLICATION_JSON)
+            .bodyValue(pullConvertedToDraftPayload)
+            .exchange()
+            .expectStatus().isOk();
+    }
+
+    @Test
+    void testUnableToDeserializePayload() {
+        final var payloadJson = """
+            {
+              "action": "hello_world"
+            }
+            """;
+        client.post().uri(API_WEBHOOK_ENDPOINT)
+            .header(GITHUB_EVENT, GITHUB_EVENT_PULL)
+            .header(GITHUB_SIGNATURE,  "sha256=" + Signatures.signHexHmacSha256(payloadJson, signatureSecret))
+            .contentType(MediaType.APPLICATION_JSON)
+            .bodyValue(payloadJson)
+            .exchange()
+            .expectStatus().isBadRequest()
+            .expectBody(ApiError.class).isEqualTo(ApiError.with(UNABLE_TO_DESERIALIZE_PAYLOAD));
     }
 }
