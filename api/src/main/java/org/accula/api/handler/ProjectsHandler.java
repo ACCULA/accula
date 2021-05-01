@@ -245,10 +245,16 @@ public final class ProjectsHandler {
     }
 
     private <T> Mono<T> configuringProject(final Long projectId, final Mono<T> mono) {
+        final var makeProjectConfigured = projectRepo.updateState(projectId, Project.State.CONFIGURED);
         return Mono.usingWhen(
             projectRepo.updateState(projectId, Project.State.CONFIGURING).then(mono),
             Mono::just,
-            __ -> projectRepo.updateState(projectId, Project.State.CONFIGURED)
+            __ -> makeProjectConfigured,
+            (__, e) -> {
+                log.error("Error during project configuring", e);
+                return makeProjectConfigured;
+            },
+            __ -> makeProjectConfigured
         );
     }
 
