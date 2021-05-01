@@ -4,6 +4,7 @@ import org.accula.api.db.model.Commit;
 import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.Snapshot;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 
@@ -53,6 +54,11 @@ public interface CodeLoader {
      * Loads commits of specified repo in a given ref interval (sinceRefExclusive, untilRefInclusive]
      */
     Flux<Commit> loadCommits(GithubRepo repo, String sinceRefExclusive, String untilRefInclusive);
+
+    /**
+     * Loads commit by specified ref for the repo
+     */
+    Mono<Commit> loadCommit(GithubRepo repo, String ref);
 
     /**
      * Loads commits of specified repo from the star to the given ref.

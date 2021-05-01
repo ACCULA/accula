@@ -103,4 +103,10 @@ public final class Responses {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(body);
     }
+
+    public static Mono<ServerResponse> serverError() {
+        return ServerResponse
+            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .build();
+    }
 }

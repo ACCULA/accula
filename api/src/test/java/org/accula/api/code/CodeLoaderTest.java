@@ -231,4 +231,13 @@ class CodeLoaderTest {
                 .expectComplete()
                 .verify();
     }
+
+    @Test
+    void testLoadCommit() {
+        var headRepo = GithubRepo.builder().id(1L).name("2019-highload-dht").isPrivate(false).description("descr").owner(vaddya).build();
+        StepVerifier.create(codeLoader.loadCommit(headRepo, "7a490a1e518df228c203c3690100bd2d0ab559c5"))
+            .expectNextMatches(commit -> commit.sha().equals("7a490a1e518df228c203c3690100bd2d0ab559c5"))
+            .expectComplete()
+            .verify();
+    }
 }

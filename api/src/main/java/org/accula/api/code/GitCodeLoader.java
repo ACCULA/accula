@@ -125,6 +125,13 @@ public final class GitCodeLoader implements CodeLoader {
     }
 
     @Override
+    public Mono<Commit> loadCommit(final GithubRepo repo, final String ref) {
+        return withCommonGitRepo(repo)
+            .flatMap(gitRepo -> Mono.fromFuture(gitRepo.logSingle(ref)))
+            .map(CodeToModelConverter::convert);
+    }
+
+    @Override
     public Flux<Commit> loadCommits(final GithubRepo repo, final String ref) {
         return withCommonGitRepo(repo)
                 .flatMap(gitRepo -> Mono.fromFuture(gitRepo.log(ref)))

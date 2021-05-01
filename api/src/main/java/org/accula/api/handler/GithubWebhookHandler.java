@@ -1,5 +1,6 @@
 package org.accula.api.handler;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.accula.api.config.WebhookProperties;
@@ -10,6 +11,7 @@ import org.accula.api.db.repo.ProjectRepo;
 import org.accula.api.github.model.GithubApiPullHookPayload;
 import org.accula.api.github.model.GithubApiPushHookPayload;
 import org.accula.api.handler.dto.ApiError;
+import org.accula.api.handler.exception.ResponseConvertibleException;
 import org.accula.api.handler.signature.Signatures;
 import org.accula.api.handler.util.Responses;
 import org.accula.api.service.CloneDetectionService;
@@ -21,11 +23,15 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 
+import java.util.function.Function;
+
+import static org.accula.api.github.model.GithubApiPullHookPayload.Action.OPENED;
 import static org.accula.api.handler.GithubWebhookHandler.WebhookError.INVALID_SIGNATURE;
 import static org.accula.api.handler.GithubWebhookHandler.WebhookError.MISSING_EVENT;
 import static org.accula.api.handler.GithubWebhookHandler.WebhookError.MISSING_SIGNATURE;
 import static org.accula.api.handler.GithubWebhookHandler.WebhookError.NOT_SUPPORTED_EVENT;
 import static org.accula.api.handler.GithubWebhookHandler.WebhookError.SIGNATURE_VERIFICATION_FAILED;
+import static org.accula.api.handler.GithubWebhookHandler.WebhookError.UNABLE_TO_DESERIALIZE_PAYLOAD;
 
 /**
  * @author Anton Lamtev
@@ -45,6 +51,7 @@ public final class GithubWebhookHandler {
     private final ProjectService projectService;
     private final CloneDetectionService cloneDetectionService;
     private final WebhookProperties webhookProperties;
+    private final ObjectMapper objectMapper;
 
     public Mono<ServerResponse> webhook(final ServerRequest request) {
         final var headers = request.headers();
@@ -69,28 +76,26 @@ public final class GithubWebhookHandler {
                 }
                 return switch (event) {
                     case GITHUB_EVENT_PING -> Responses.ok();
-                    case GITHUB_EVENT_PULL -> processPull(request);
-                    case GITHUB_EVENT_PUSH -> processPush(request);
+                    case GITHUB_EVENT_PULL -> processPull(payload);
+                    case GITHUB_EVENT_PUSH -> processPush(payload);
                     default -> badRequest(NOT_SUPPORTED_EVENT);
                 };
+            })
+            .onErrorResume(ResponseConvertibleException::onErrorResume)
+            .onErrorResume(e -> {
+                log.error("Error during payload processing: ", e);
+                return Responses.serverError();
             });
     }
 
-    private Mono<ServerResponse> processPull(final ServerRequest request) {
-        return request
-                .bodyToMono(GithubApiPullHookPayload.class)
-                .onErrorResume(GithubWebhookHandler::ignoreNotSupportedAction)
-                .flatMap(this::processPullPayload)
-                .onErrorResume(e -> {
-                    log.error("Error during payload processing: ", e);
-                    return Mono.empty();
-                })
-                .then(Responses.ok());
+    private Mono<ServerResponse> processPull(final String payload) {
+        return payloadToMono(payload, GithubApiPullHookPayload.class)
+            .flatMap(this::processPullPayload)
+            .then(Responses.ok());
     }
 
-    private Mono<ServerResponse> processPush(final ServerRequest request) {
-        return request
-            .bodyToMono(GithubApiPushHookPayload.class)
+    private Mono<ServerResponse> processPush(final String requestBody) {
+        return payloadToMono(requestBody, GithubApiPushHookPayload.class)
             .flatMap(payload -> projectRepo
                 .idByRepoId(payload.repo().id())
                 .flatMap(projectId -> projectRepo.confById(projectId)
@@ -109,6 +114,7 @@ public final class GithubWebhookHandler {
             case CLOSED, REOPENED,
                  EDITED,
                  ASSIGNED, UNASSIGNED -> projectService.updatePullInfo(payload.pull());
+            default -> ignoreNotSupportedAction(payload.action());
         }).then();
     }
 
@@ -117,7 +123,9 @@ public final class GithubWebhookHandler {
             .idByRepoId(payload.repo().id())
             .flatMap(projectId -> Mono
                 .just(projectId)
-                .zipWith(projectService.updateWithNewCommits(payload.pull())));
+                .zipWith(payload.action() == OPENED
+                    ? projectService.init(payload.pull())
+                    : projectService.updateWithNewCommits(payload.pull())));
     }
 
     private void detectClonesInBackground(final Long projectId, final PullSnapshots pullSnapshots) {
@@ -126,7 +134,17 @@ public final class GithubWebhookHandler {
             .subscribe();
     }
 
-    private static <E extends Throwable, T> Mono<T> ignoreNotSupportedAction(final E error) {
+    private <T> Mono<T> payloadToMono(final String payload, final Class<T> clazz) {
+        return Mono
+            .fromCallable(() -> objectMapper.readValue(payload, clazz))
+            .onErrorMap(e -> {
+                log.error("Unable to deserialize {} to instance of class={}", payload, clazz, e);
+                return new WebhookProcessingException(UNABLE_TO_DESERIALIZE_PAYLOAD);
+            });
+    }
+
+    private static <T> Mono<T> ignoreNotSupportedAction(final GithubApiPullHookPayload.Action action) {
+        log.info("Received pull_request webhook with not yet supported action={}", action.value());
         return Mono.empty();
     }
 
@@ -140,5 +158,26 @@ public final class GithubWebhookHandler {
         INVALID_SIGNATURE,
         SIGNATURE_VERIFICATION_FAILED,
         NOT_SUPPORTED_EVENT,
+        UNABLE_TO_DESERIALIZE_PAYLOAD,
+    }
+
+    private static final class WebhookProcessingException extends ResponseConvertibleException {
+        WebhookProcessingException(final WebhookError error) {
+            super(error, null);
+        }
+
+        @SuppressWarnings("SwitchStatementWithTooFewBranches")
+        @Override
+        public Function<Object, Mono<ServerResponse>> responseFunctionForCode(final ApiError.Code code) {
+            return switch ((WebhookError) code) {
+                case UNABLE_TO_DESERIALIZE_PAYLOAD -> Responses::badRequest;
+                default -> throw new UnsupportedOperationException();
+            };
+        }
+
+        @Override
+        public boolean needsResponseBody() {
+            return true;
+        }
     }
 }

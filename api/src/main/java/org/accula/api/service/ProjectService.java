@@ -5,7 +5,6 @@ import com.google.common.collect.Streams;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.accula.api.code.CodeLoader;
-import org.accula.api.code.git.GitRefs;
 import org.accula.api.converter.GithubApiToModelConverter;
 import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.GithubUser;
@@ -67,6 +66,20 @@ public final class ProjectService {
                 .doOnError(e -> log.error("Failed to update project with pulls={}", githubApiPulls, e));
     }
 
+    public Mono<PullSnapshots> init(final GithubApiPull githubApiPull) {
+        return Mono
+            .defer(() -> {
+                final var users = new HashSet<GithubUser>();
+                final var repos = new HashSet<GithubRepo>();
+                final var pull = processGithubApiPull(githubApiPull, users, repos);
+
+                return upsertUsersAndReposToDb(users, repos)
+                    .then(insertPullInfoToDb(pull));
+            })
+            .doOnSuccess(pull -> log.info("Project has been updated successfully with {}", pull))
+            .doOnError(e -> log.error("Failed to update project with pulls={}", githubApiPull, e));
+    }
+
     public Mono<PullSnapshots> updateWithNewCommits(final GithubApiPull githubApiPull) {
         return Mono
                 .defer(() -> {
@@ -95,11 +108,12 @@ public final class ProjectService {
     }
 
     public Mono<List<String>> headFiles(final GithubRepo repo) {
-        return codeLoader
-            .loadFilenames(repo)
-            .sort()
-            .collectList()
-            .doOnNext(files -> files.add(0, Project.Conf.KEEP_EXCLUDED_FILES_SYNCED));
+        return Mono
+            .just(Project.Conf.KEEP_EXCLUDED_FILES_SYNCED)
+            .concatWith(codeLoader
+                .loadFilenames(repo)
+                .sort())
+            .collectList();
     }
 
     private static Pull processGithubApiPull(final GithubApiPull githubApiPull,
@@ -154,6 +168,29 @@ public final class ProjectService {
                 .thenReturn(pulls);
     }
 
+    private Mono<PullSnapshots> insertPullInfoToDb(final Pull pull) {
+        final var completeHeadSnapshots = pullHeadSnapshots(Set.of(pull))
+            .filter(not(List::isEmpty))
+            .map(l -> l.get(0));
+        final var completeBaseSnapshots = completeSnapshotsWithCommits(List.of(pull.base()));
+        return completeHeadSnapshots
+            .zipWith(completeBaseSnapshots)
+            .flatMap(headAndBaseSnapshots -> {
+                final var headSnapshots = headAndBaseSnapshots.getT1();
+                final var baseSnapshots = headAndBaseSnapshots.getT2();
+                final var snapshots = Stream.concat(
+                    baseSnapshots.stream(),
+                    Streams.stream(headSnapshots.snapshots())
+                ).collect(Collectors.toSet());
+
+                return snapshotRepo.insert(snapshots)
+                    .thenMany(pullRepo.upsert(pull))
+                    .thenMany(pullRepo.mapSnapshots(headSnapshots))
+                    .then(Mono.just(headSnapshots));
+            })
+            .switchIfEmpty(Mono.error(() -> new IllegalStateException("Unable to insert pull info to DB: " + pull)));
+    }
+
     private Mono<PullSnapshots> updatePullInfoInDb(final Pull pull) {
         final var newHeadSnapshots = newHeadCommitsSnapshots(pull);
         final var baseSnapshots = baseCommitSnapshot(pull.base());
@@ -195,9 +232,9 @@ public final class ProjectService {
     }
 
     private Flux<Snapshot> completeSnapshotWithCommits(final Snapshot snapshot) {
-        return codeLoader
-                .loadCommits(snapshot.repo(), snapshot.sha())
-                .map(snapshot::withCommit);
+        return Flux.defer(() -> codeLoader
+            .loadCommits(snapshot.repo(), snapshot.sha())
+            .map(snapshot::withCommit));
     }
 
     private Mono<List<Snapshot>> newHeadCommitsSnapshots(final Pull pull) {
@@ -212,8 +249,7 @@ public final class ProjectService {
     }
 
     private Mono<Snapshot> baseCommitSnapshot(final Snapshot base) {
-        return codeLoader.loadCommits(base.repo(), GitRefs.inclusive(base.sha()), base.sha())
-                .map(base::withCommit)
-                .next();
+        return codeLoader.loadCommit(base.repo(), base.sha())
+            .map(base::withCommit);
     }
 }
