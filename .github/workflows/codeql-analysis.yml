@@ -63,6 +63,9 @@ jobs:
     #    uses a compiled language
 
     - run: ./gradlew assemble -x web:assemble
+      env:
+        GPR_USERNAME: ${{ secrets.GPR_USERNAME }}
+        GPR_TOKEN: ${{ secrets.GPR_TOKEN }}
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1

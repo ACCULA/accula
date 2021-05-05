@@ -14,14 +14,13 @@ allprojects {
 configure(subprojects.filterNot(project(":web")::equals)) {
     repositories {
         mavenCentral()
-        maven(url = "https://oss.sonatype.org/content/repositories/snapshots")
     }
 
     apply(plugin = "java")
     apply(plugin = "jacoco")
 
     jacoco {
-        toolVersion = "0.8.7-SNAPSHOT"
+        toolVersion = "0.8.7"
     }
 
     dependencies {

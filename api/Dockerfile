@@ -1,4 +1,7 @@
 FROM gradle:jdk16 AS build
+ARG GPR_USERNAME
+ARG GPR_TOKEN
+ENV GPR_USERNAME=$GPR_USERNAME GPR_TOKEN=$GPR_TOKEN
 WORKDIR /app
 COPY . /app
 RUN gradle bootJar --no-daemon
