@@ -12,6 +12,9 @@ services:
     build:
       context: ./
       dockerfile: ./api/Dockerfile
+      args:
+        - GPR_USERNAME=
+        - GPR_TOKEN=
     expose:
       - 8080
     ports:
