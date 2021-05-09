@@ -139,8 +139,8 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
                         .createStatement("""
                                 WITH deleted_repo AS (
                                     DELETE FROM project
-                                        WHERE id = $1 AND creator_id = $2
-                                        RETURNING github_repo_id
+                                    WHERE id = $1 AND creator_id = $2
+                                    RETURNING github_repo_id
                                 )
                                 DELETE
                                 FROM repo_github
