@@ -94,6 +94,12 @@ public final class CloneDetectionService {
         return cloneDetector(projectId).fill(files);
     }
 
+    public void dropSuffixTree(final Long projectId) {
+        cloneDetectorConfigs.remove(projectId);
+        cloneDetectors.remove(projectId);
+        log.info("Dropped suffix tree for project with id={}", projectId);
+    }
+
     private Mono<Void> fillSuffixTree(final Long projectId) {
         return fillSuffixTree(projectId, pullRepo.findByProjectIdIncludingSecondaryRepos(projectId));
     }

@@ -137,8 +137,18 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
         return withConnection(connection -> Mono
                 .from(((PostgresqlStatement) connection
                         .createStatement("""
-                                DELETE FROM project
-                                WHERE id = $1 AND creator_id = $2
+                                WITH deleted_repo AS (
+                                    DELETE FROM project
+                                        WHERE id = $1 AND creator_id = $2
+                                        RETURNING github_repo_id
+                                )
+                                DELETE
+                                FROM repo_github
+                                WHERE id = (SELECT github_repo_id
+                                            FROM deleted_repo)
+                                  AND NOT exists(SELECT 0
+                                                 FROM project_repo
+                                                 WHERE repo_id = repo_github.id)
                                 """))
                         .bind("$1", id)
                         .bind("$2", creatorId)

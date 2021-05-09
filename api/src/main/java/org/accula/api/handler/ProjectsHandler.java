@@ -106,11 +106,17 @@ public final class ProjectsHandler {
     }
 
     public Mono<ServerResponse> delete(final ServerRequest request) {
-        return withProjectId(request)
-                .zipWith(currentUserRepo.get(User::id))
-                .flatMap(TupleUtils.function(projectRepo::delete))
-                .flatMap(Lambda.expandingWithArg(Responses::accepted))
-                .onErrorResume(ResponseConvertibleException::onErrorResume);
+        return havingAdminPermissionAtProject(request)
+            .flatMap(projectId -> currentUserRepo
+                .get(User::id)
+                .flatMap(userId -> projectRepo.delete(projectId, userId))
+                .doOnNext(deletedSuccessfully -> {
+                    if (deletedSuccessfully) {
+                        cloneDetectionService.dropSuffixTree(projectId);
+                    }
+                }))
+            .flatMap(__ -> Responses.accepted())
+            .onErrorResume(ResponseConvertibleException::onErrorResume);
     }
 
     public Mono<ServerResponse> githubAdmins(final ServerRequest request) {
