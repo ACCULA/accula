@@ -3,7 +3,7 @@ import { bindActionCreators } from 'redux'
 import { connect, ConnectedProps } from 'react-redux'
 import { useHistory, useParams } from 'react-router-dom'
 import { AppDispatch, AppState } from 'store'
-import { getClonesAction, getDiffsAction, getPullAction } from 'store/pulls/actions'
+import { getClonesAction, getPullAction } from 'store/pulls/actions'
 import { getProjectAction } from 'store/projects/actions'
 import { historyPush, isProjectAdmin } from 'utils'
 import { PageTitle } from 'components/PageTitle'
@@ -22,7 +22,11 @@ import PullChangesTab from './PullChangesTab'
 import PullCompareTab from './PullCompareTab'
 import PullClonesTab from './PullClonesTab/PullClonesTab'
 
-const tabValues: string[] = ['changes', 'compare', 'clones']
+const clonesTabId = 'clones'
+const compareTabId = 'compare'
+const changesTabId = 'changes'
+
+const tabValues: string[] = [clonesTabId, compareTabId, changesTabId]
 
 const validateTab = (tab: string) => tabValues.includes(tab) || tab === undefined
 
@@ -36,7 +40,6 @@ const Pull = ({
   clones,
   getProject,
   getPull,
-  getDiffs,
   getClones
 }: PullsProps) => {
   const history = useHistory()
@@ -48,7 +51,6 @@ const Pull = ({
     if (!Number.isNaN(projectId) && !Number.isNaN(pullId) && validateTab(tab)) {
       getProject(projectId)
       getPull(projectId, pullId)
-      getDiffs(projectId, pullId)
       getClones(projectId, pullId)
     }
     // eslint-disable-next-line
@@ -76,27 +78,29 @@ const Pull = ({
       Icon: VisibilityRounded
     },
     {
-      id: 'changes',
-      text: 'Changes',
-      Icon: CodeRounded,
-      badgeValue:
-        diffs && diffs.value ? diffs.value.length : <CircularProgress size={12} color="inherit" />
+      id: clonesTabId,
+      text: 'Clones',
+      Icon: FileCopyRounded,
+      badgeValue: clones.value ? (
+          clones.value.length
+      ) : (
+          <CircularProgress size={12} color="inherit" />
+      )
     },
     {
-      id: 'compare',
+      id: compareTabId,
       text: 'Compare',
       Icon: CompareArrowsRounded
     },
     {
-      id: 'clones',
-      text: 'Clones',
-      Icon: FileCopyRounded,
-      badgeValue: clones.value ? (
-        clones.value.length
-      ) : (
-        <CircularProgress size={12} color="inherit" />
-      )
-    }
+      id: changesTabId,
+      text: 'Changes',
+      Icon: CodeRounded,
+      badgeValue: (
+          diffs && diffs.value ? diffs.value.length
+              : diffs && diffs.isFetching ? <CircularProgress size={12} color="inherit" /> : null
+      ),
+    },
   ]
 
   return (
@@ -113,9 +117,7 @@ const Pull = ({
       />
       <Tabs tabs={tabs} onChange={handleChangeTab} activeId={tab} />
       {tab === undefined && <PullOverviewTab project={project} pull={pull} />}
-      {tab === 'changes' && <PullChangesTab diffs={diffs} />}
-      {tab === 'compare' && <PullCompareTab project={project} pull={pull} />}
-      {tab === 'clones' && (
+      {tab === clonesTabId && (
         <PullClonesTab
           project={project}
           pull={pull}
@@ -123,6 +125,8 @@ const Pull = ({
           isAdmin={isProjectAdmin(user.value, project)}
         />
       )}
+      {tab === compareTabId && <PullCompareTab project={project} pull={pull} />}
+      {tab === changesTabId && <PullChangesTab/>}
     </div>
   )
 }
@@ -154,7 +158,6 @@ const mapStateToProps = (state: AppState) => ({
 const mapDispatchToProps = (dispatch: AppDispatch) => ({
   getProject: bindActionCreators(getProjectAction, dispatch),
   getPull: bindActionCreators(getPullAction, dispatch),
-  getDiffs: bindActionCreators(getDiffsAction, dispatch),
   getClones: bindActionCreators(getClonesAction, dispatch)
 })
 
