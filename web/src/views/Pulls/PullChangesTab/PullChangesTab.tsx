@@ -15,8 +15,7 @@ interface PullChangesTabProps extends PropsFromRedux {}
 const PullChangesTab = ({ pull, diffs, getDiffs }: PullChangesTabProps) => {
   useEffect(() => {
       getDiffs(pull.projectId, pull.number)
-      // eslint-disable-next-line
-  }, [])
+  }, [pull, getDiffs])
 
   return (
     <div>
