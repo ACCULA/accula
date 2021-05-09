@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS project_repo
     project_id BIGINT NOT NULL,
     repo_id    BIGINT NOT NULL,
 
-    FOREIGN KEY (project_id) REFERENCES project (id),
+    FOREIGN KEY (project_id) REFERENCES project (id) ON DELETE CASCADE,
     FOREIGN KEY (repo_id) REFERENCES repo_github (id),
     CONSTRAINT project_repo_pk PRIMARY KEY (project_id, repo_id)
 );
@@ -96,7 +96,7 @@ CREATE TABLE IF NOT EXISTS snapshot
     branch  VARCHAR(256) NOT NULL,
 
     FOREIGN KEY (sha) REFERENCES commit (sha),
-    FOREIGN KEY (repo_id) REFERENCES repo_github (id),
+    FOREIGN KEY (repo_id) REFERENCES repo_github (id) ON DELETE CASCADE,
     CONSTRAINT snapshot_pk PRIMARY KEY (sha, repo_id, branch)
 );
 
@@ -120,7 +120,7 @@ CREATE TABLE IF NOT EXISTS pull
     author_github_id      BIGINT                   NOT NULL,
 
     FOREIGN KEY (head_snapshot_sha, head_snapshot_repo_id, head_snapshot_branch) REFERENCES snapshot (sha, repo_id, branch),
-    FOREIGN KEY (base_snapshot_sha, base_snapshot_repo_id, base_snapshot_branch) REFERENCES snapshot (sha, repo_id, branch),
+    FOREIGN KEY (base_snapshot_sha, base_snapshot_repo_id, base_snapshot_branch) REFERENCES snapshot (sha, repo_id, branch) ON DELETE CASCADE,
     FOREIGN KEY (author_github_id) REFERENCES user_github (id)
 );
 
@@ -129,7 +129,7 @@ CREATE TABLE IF NOT EXISTS pull_assignee
     pull_id     BIGINT NOT NULL,
     assignee_id BIGINT NOT NULL,
 
-    FOREIGN KEY (pull_id) REFERENCES pull (id),
+    FOREIGN KEY (pull_id) REFERENCES pull (id) ON DELETE CASCADE,
     FOREIGN KEY (assignee_id) REFERENCES user_github (id),
     CONSTRAINT pull_assignee_pk PRIMARY KEY (pull_id, assignee_id)
 );
@@ -141,7 +141,7 @@ CREATE TABLE IF NOT EXISTS snapshot_pull
     snapshot_branch  VARCHAR(256) NOT NULL,
     pull_id          BIGINT       NOT NULL,
 
-    FOREIGN KEY (snapshot_sha, snapshot_repo_id, snapshot_branch) REFERENCES snapshot (sha, repo_id, branch),
+    FOREIGN KEY (snapshot_sha, snapshot_repo_id, snapshot_branch) REFERENCES snapshot (sha, repo_id, branch) ON DELETE CASCADE,
     FOREIGN KEY (pull_id) REFERENCES pull (id) ON DELETE CASCADE,
     CONSTRAINT snapshot_pull_pk PRIMARY KEY (snapshot_sha, snapshot_repo_id, snapshot_branch, pull_id)
 );
@@ -159,7 +159,7 @@ CREATE TABLE IF NOT EXISTS clone_snippet
     to_line    INT          NOT NULL,
 
     FOREIGN KEY (commit_sha, repo_id, branch, pull_id) REFERENCES
-        snapshot_pull (snapshot_sha, snapshot_repo_id, snapshot_branch, pull_id)
+        snapshot_pull (snapshot_sha, snapshot_repo_id, snapshot_branch, pull_id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS clone

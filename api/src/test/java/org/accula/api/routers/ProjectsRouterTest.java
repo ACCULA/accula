@@ -339,6 +339,9 @@ class ProjectsRouterTest {
         when(currentUser.get(Mockito.any()))
                 .thenReturn(Mono.just(0L));
 
+        when(projectRepo.hasAdmin(anyLong(), anyLong()))
+            .thenReturn(Mono.just(TRUE));
+
         when(projectRepo.delete(anyLong(), anyLong()))
                 .thenReturn(Mono.just(TRUE));
 
