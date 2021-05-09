@@ -1,17 +1,22 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { LayersClearRounded } from '@material-ui/icons'
 import EmptyContent from 'components/EmptyContent'
 import LoadingWrapper from 'components/LoadingWrapper/LoadingWrapper'
-import { IPullDiffsState } from 'store/pulls/types'
 import CodeDiffList from 'components/CodeDiffList/CodeDiffList'
 import { IDiff } from 'types'
 import { getPullTitle } from '../Pull'
+import { AppDispatch, AppState } from "../../../store";
+import { bindActionCreators } from "redux";
+import { getDiffsAction } from "../../../store/pulls/actions";
+import { connect, ConnectedProps } from "react-redux";
 
-interface PullChangesTabProps {
-  diffs: IPullDiffsState
-}
+interface PullChangesTabProps extends PropsFromRedux {}
 
-const PullChangesTab = ({ diffs }: PullChangesTabProps) => {
+const PullChangesTab = ({ pull, diffs, getDiffs }: PullChangesTabProps) => {
+  useEffect(() => {
+      getDiffs(pull.projectId, pull.number)
+  }, [pull, getDiffs])
+
   return (
     <div>
       <LoadingWrapper deps={[diffs]}>
@@ -37,4 +42,17 @@ const PullChangesTab = ({ diffs }: PullChangesTabProps) => {
   )
 }
 
-export default PullChangesTab
+const mapStateToProps = (state: AppState) => ({
+    pull: state.pulls.pull.value,
+    diffs: state.pulls.diffs,
+})
+
+const mapDispatchToProps = (dispatch: AppDispatch) => ({
+    getDiffs: bindActionCreators(getDiffsAction, dispatch),
+})
+
+const connector = connect(mapStateToProps, mapDispatchToProps)
+
+type PropsFromRedux = ConnectedProps<typeof connector>
+
+export default connector(PullChangesTab)
