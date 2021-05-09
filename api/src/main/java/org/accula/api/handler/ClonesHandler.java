@@ -135,7 +135,9 @@ public final class ClonesHandler {
                 .zip(clones.collectList(), fileSnippets, pulls, Mono.just(projectId))
                 .flatMapMany(TupleUtils.function(ClonesHandler::convert));
 
-        return Responses.ok(responseClones, CloneDto.class);
+        return responseClones
+            .collectList()
+            .flatMap(Responses::ok);
     }
 
     private static Flux<CloneDto> convert(final List<Clone> clones,
