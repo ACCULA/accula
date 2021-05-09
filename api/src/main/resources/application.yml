@@ -26,6 +26,10 @@ server:
     whitelabel:
       enabled: false
   port: ${PORT}
+  compression:
+    enabled: true
+    min-response-size: 1KB
+    mime-types: application/json
 
 #management:
 #  endpoints:
