@@ -296,7 +296,7 @@ public class GithubWebhookRouterTest {
             .thenReturn(Mono.just(1L));
         when(projectService.init(any(GithubApiPull.class)))
             .thenReturn(Mono.just(PullSnapshots.of(pull, List.of(pull.head()))));
-        when(cloneDetectionService.detectClones(anyLong(), any(Pull.class), anyIterable()))
+        when(cloneDetectionService.detectClonesInNewFilesAndSaveToDb(anyLong(), any(Pull.class), anyIterable()))
             .thenReturn(Flux.empty());
 
         client.post().uri(API_WEBHOOK_ENDPOINT)
@@ -316,7 +316,7 @@ public class GithubWebhookRouterTest {
             .thenReturn(Mono.just(1L));
         when(projectService.updateWithNewCommits(any(GithubApiPull.class)))
             .thenReturn(Mono.just(PullSnapshots.of(pull, List.of(pull.head(), pull.base()))));
-        when(cloneDetectionService.detectClones(anyLong(), any(Pull.class), anyIterable()))
+        when(cloneDetectionService.detectClonesInNewFilesAndSaveToDb(anyLong(), any(Pull.class), anyIterable()))
             .thenReturn(Flux.empty());
 
         client.post().uri(API_WEBHOOK_ENDPOINT)

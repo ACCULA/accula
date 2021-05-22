@@ -130,7 +130,7 @@ public final class GithubWebhookHandler {
 
     private void detectClonesInBackground(final Long projectId, final PullSnapshots pullSnapshots) {
         cloneDetectionService
-            .detectClones(projectId, pullSnapshots.pull(), pullSnapshots.snapshots())
+            .detectClonesInNewFilesAndSaveToDb(projectId, pullSnapshots.pull(), pullSnapshots.snapshots())
             .subscribe();
     }
 
