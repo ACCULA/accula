@@ -17,7 +17,7 @@ import java.util.function.Supplier;
 public interface CloneDetector {
     Flux<CodeClone> readClones(Snapshot pullSnapshot);
 
-    Flux<CodeClone> findClones(Snapshot pullSnapshot, Flux<FileEntity<Snapshot>> files);
+    Flux<CodeClone> findClones(Snapshot pullSnapshot, Flux<FileEntity<Snapshot>> files, Iterable<Snapshot> snapshots);
 
     Mono<Void> fill(Flux<FileEntity<Snapshot>> files);
 

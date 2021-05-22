@@ -1,5 +1,6 @@
 package org.accula.api.clone;
 
+import com.google.common.collect.Sets;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.accula.api.clone.suffixtree.Clone;
@@ -11,11 +12,12 @@ import org.accula.api.token.Token;
 import org.accula.api.token.TokenProvider;
 import org.accula.api.token.TokenProvider.Language;
 import org.accula.api.util.Comparators;
-import org.accula.api.util.Lambda;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.Set;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -32,14 +34,21 @@ public final class CloneDetectorImpl implements CloneDetector {
 
     @Override
     public Flux<CodeClone> readClones(final Snapshot pullSnapshot) {
-        return configProvider.get()
-                .flatMapMany(Lambda.passingFirstArg(this::readClonesFromSuffixTree, pullSnapshot));
+        final Predicate<Clone<Snapshot>> cloneMatcher = clone -> pullSnapshot.pullInfo().equals(clone.ref().pullInfo());
+        return configProvider
+            .get()
+            .flatMapMany(config -> readClonesFromSuffixTree(pullSnapshot, config, cloneMatcher));
     }
 
     @Override
-    public Flux<CodeClone> findClones(final Snapshot pullSnapshot, final Flux<FileEntity<Snapshot>> files) {
+    public Flux<CodeClone> findClones(final Snapshot pullSnapshot,
+                                      final Flux<FileEntity<Snapshot>> files,
+                                      final Iterable<Snapshot> snapshots) {
+        final var snapshotSet = snapshots instanceof Set<Snapshot> s ? s : Sets.newHashSet(snapshots);
+        final Predicate<Clone<Snapshot>> cloneMatcher = clone -> snapshotSet.contains(clone.ref());
         return addFilesToSuffixTree(files)
-                .thenMany(readClones(pullSnapshot));
+            .then(configProvider.get())
+            .flatMapMany(config -> readClonesFromSuffixTree(pullSnapshot, config, cloneMatcher));
     }
 
     @Override
@@ -56,7 +65,9 @@ public final class CloneDetectorImpl implements CloneDetector {
 
     //TODO:
     // Clearer api: here snapshot is something that references to concrete pull request, not commit
-    private Flux<CodeClone> readClonesFromSuffixTree(final Snapshot snapshot, final Config config) {
+    private Flux<CodeClone> readClonesFromSuffixTree(final Snapshot snapshot,
+                                                     final Config config,
+                                                     final Predicate<Clone<Snapshot>> cloneMatcher) {
         final Supplier<List<CodeClone>> cloneClassesSupplier = () ->
                 suffixTreeCloneDetector.transform(cloneClasses -> cloneClasses
                         .filter(cloneClass -> cloneClassMatchesRules(cloneClass, config) &&
@@ -77,7 +88,7 @@ public final class CloneDetectorImpl implements CloneDetector {
 
                             return clones
                                     .stream()
-                                    .filter(clone -> snapshot.pullInfo().equals(clone.ref().pullInfo()))
+                                    .filter(cloneMatcher)
                                     .map(clone -> convert(source, clone));
                         }));
 

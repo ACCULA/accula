@@ -67,12 +67,14 @@ public final class ClonesHandler {
                     final var projectId = PathVariableExtractor.projectId(request);
                     final var pullNumber = PathVariableExtractor.pullNumber(request);
 
-                    final var clones = havingAdminPermissionAtProject(projectId, cloneRepo
+                    final var clones = havingAdminPermissionAtProject(
+                        projectId,
+                        cloneRepo
                             .deleteByPullNumber(projectId, pullNumber)
-                            .thenMany(pullRepo
-                                    .findByNumber(projectId, pullNumber)
-                                    .flatMapMany(pull -> cloneDetectionService.detectClones(projectId, pull))))
-                            .cache();
+                            .then(pullRepo.findByNumber(projectId, pullNumber))
+                            .flatMapMany(cloneDetectionService::readClonesAndSaveToDb)
+                        )
+                        .cache();
                     return toResponse(clones, projectId)
                             .switchIfEmpty(Responses.forbidden());
                 })

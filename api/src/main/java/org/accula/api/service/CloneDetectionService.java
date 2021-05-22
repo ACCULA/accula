@@ -13,6 +13,7 @@ import org.accula.api.db.repo.CloneRepo;
 import org.accula.api.db.repo.ProjectRepo;
 import org.accula.api.db.repo.PullRepo;
 import org.accula.api.db.repo.SnapshotRepo;
+import org.accula.api.util.Checks;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -47,10 +48,10 @@ public final class CloneDetectionService {
         this.snapshotRepo = snapshotRepo;
     }
 
-    public Flux<Clone> detectClones(final Long projectId, final Pull pull) {
+    public Flux<Clone> readClonesAndSaveToDb(final Pull pull) {
         final var head = pull.head();
 
-        final var clones = cloneDetector(projectId)
+        final var clones = cloneDetector(Checks.notNull(pull.primaryProjectId(), "Pull primaryProjectId"))
                 .readClones(head)
                 .distinct()
                 .map(CodeToModelConverter::convert);
@@ -61,11 +62,11 @@ public final class CloneDetectionService {
                 .flatMapMany(cloneRepo::insert);
     }
 
-    public Flux<Clone> detectClones(final Long projectId, final Pull pull, final Iterable<Snapshot> snapshots) {
+    public Flux<Clone> detectClonesInNewFilesAndSaveToDb(final Long projectId, final Pull pull, final Iterable<Snapshot> snapshots) {
         final var head = pull.head();
 
         final var clones = cloneDetector(projectId)
-                .findClones(head, loader.loadFiles(head.repo(), snapshots, FileFilter.SRC_JAVA))
+                .findClones(head, loader.loadFiles(head.repo(), snapshots, FileFilter.SRC_JAVA), snapshots)
                 .distinct()
                 .map(CodeToModelConverter::convert);
 
