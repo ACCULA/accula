@@ -44,7 +44,7 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public final class ClonesHandler {
     private static final Comparator<Clone> DESCENDING_BY_LINE_COUNT = Comparator
-        .<Clone, Integer>comparing(clone -> Math.max(clone.target().lineCount(), clone.source().lineCount()))
+        .comparing((Clone clone) -> Math.max(clone.target().lineCount(), clone.source().lineCount()))
         .reversed();
     private final PullRepo pullRepo;
     private final CloneRepo cloneRepo;
