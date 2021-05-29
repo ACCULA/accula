@@ -1,17 +1,18 @@
 package org.accula.api.clone.suffixtree;
 
-import com.google.common.collect.Streams;
 import com.suhininalex.suffixtree.Edge;
 import com.suhininalex.suffixtree.Node;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.accula.api.token.Token;
 import org.accula.api.token.TraverseUtils;
+import org.accula.api.util.Lambda;
 
+import java.util.Collection;
+import java.util.IdentityHashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
-
-import static java.util.stream.Collectors.toSet;
 
 /**
  * @author Anton Lamtev
@@ -35,34 +36,26 @@ final class SuffixTreeUtils {
     }
 
     static Object2IntMap<Edge> terminalMap(final Node root) {
-        final var paths = root
-                .getEdges()
-                .stream()
-                .flatMap(edge -> TraverseUtils
-                        .dfs(edge, e -> {
-                            final var terminal = e.getTerminal();
-                            if (terminal == null) {
-                                return Stream.empty();
-                            }
-                            return terminal.getEdges().stream();
-                        }))
-                .toList();
-
-        final Object2IntMap<Edge> terminalMap = paths
-                .stream()
-                .collect(Object2IntOpenHashMap::new, (map, path) -> {
+        return root
+            .getEdges()
+            .stream()
+            .flatMap(edge -> TraverseUtils
+                .dfs(edge, e -> {
+                    final var terminal = e.getTerminal();
+                    if (terminal == null) {
+                        return Stream.empty();
+                    }
+                    return terminal.getEdges().stream();
+                }))
+            .filter(path -> path.getTerminal() == null)
+            .collect(
+                Object2IntOpenHashMap::new,
+                (map, path) -> {
                     final var offset = map.getOrDefault(path.getParent().getParentEdge(), 0);
                     map.put(path, offset + length(path));
-                }, Object2IntMap::putAll);
-
-        final var ends = paths
-                .stream()
-                .filter(path -> path.getTerminal() == null)
-                .collect(toSet());
-
-        terminalMap.object2IntEntrySet().removeIf(entry -> !ends.contains(entry.getKey()));
-
-        return terminalMap;
+                },
+                Lambda.illegalState()
+            );
     }
 
     @SuppressWarnings("unchecked")
@@ -78,20 +71,22 @@ final class SuffixTreeUtils {
                 .filter(Objects::nonNull);
     }
 
-    //TODO: убедиться в корректности. На данный момент известно,
-    // что при таком критерии часть классов клонов может быть отсечена (хотя вроде по-хорошему не должна была)
-    @SuppressWarnings("UnstableApiUsage")
     static boolean isCloneNode(final Node node) {
-        final var allEdgesAreTerminal = node
-                .getEdges()
-                .stream()
-                .allMatch(SuffixTreeUtils::isTerminalEdge);
-        return allEdgesAreTerminal && Streams.findLast(SuffixTreeUtils.parentEdges(node))
-                .filter(edge -> edge.getBegin() == 0)
-                .isPresent();
+        return node
+            .getEdges()
+            .stream()
+            .map(Edge::getTerminal)
+            .allMatch(Objects::isNull);
     }
 
-    static boolean isTerminalEdge(final Edge edge) {
-        return edge.getBegin() == edge.getEnd() && edge.getBegin() == edge.getSequence().size() - 1;
+    static <Ref> Map<Node, CloneClass<Ref>> superclassesByClassNode(final Collection<CloneClass<Ref>> cloneClasses) {
+         return cloneClasses
+            .stream()
+            .filter(cloneClass -> cloneClass.node().getSuffixLink() != null)
+            .collect(
+                () -> new IdentityHashMap<>(cloneClasses.size()),
+                (map, cloneClass) -> map.put(cloneClass.node().getSuffixLink(), cloneClass),
+                Lambda.illegalState()
+            );
     }
 }

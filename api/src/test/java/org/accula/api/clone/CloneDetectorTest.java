@@ -71,7 +71,7 @@ class CloneDetectorTest {
         StepVerifier.create(cloneDetector.readClones(commitSnapshot2)
                 .collectList())
                 .expectNextMatches(clones -> {
-                    if (clones.size() != 3) {
+                    if (clones.size() != 5) {
                         System.err.println("Actual size = " + clones.size());
                         return false;
                     }

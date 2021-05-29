@@ -7,6 +7,7 @@ import org.accula.api.clone.suffixtree.Clone;
 import org.accula.api.clone.suffixtree.CloneClass;
 import org.accula.api.clone.suffixtree.SuffixTreeCloneDetector;
 import org.accula.api.code.FileEntity;
+import org.accula.api.code.FileFilter;
 import org.accula.api.db.model.Snapshot;
 import org.accula.api.token.Token;
 import org.accula.api.token.TokenProvider;
@@ -15,10 +16,8 @@ import org.accula.api.util.Comparators;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 /**
@@ -27,6 +26,7 @@ import java.util.stream.Stream;
 @Slf4j
 @RequiredArgsConstructor
 public final class CloneDetectorImpl implements CloneDetector {
+    private static final int CHEAP_CHECK_CLONE_COUNT_THRESHOLD = 10;
     //FIXME: avoid blocking
     private final SuffixTreeCloneDetector<Token<Snapshot>, Snapshot> suffixTreeCloneDetector = new SuffixTreeCloneDetector<>();
     private final TokenProvider<Snapshot> tokenProvider = TokenProvider.of(Language.JAVA);
@@ -37,7 +37,7 @@ public final class CloneDetectorImpl implements CloneDetector {
         final Predicate<Clone<Snapshot>> cloneMatcher = clone -> pullSnapshot.pullInfo().equals(clone.ref().pullInfo());
         return configProvider
             .get()
-            .flatMapMany(config -> readClonesFromSuffixTree(pullSnapshot, config, cloneMatcher));
+            .flatMapMany(config -> readClonesFromSuffixTreeForPull(pullSnapshot, config, cloneMatcher));
     }
 
     @Override
@@ -48,7 +48,7 @@ public final class CloneDetectorImpl implements CloneDetector {
         final Predicate<Clone<Snapshot>> cloneMatcher = clone -> snapshotSet.contains(clone.ref());
         return addFilesToSuffixTree(files)
             .then(configProvider.get())
-            .flatMapMany(config -> readClonesFromSuffixTree(pullSnapshot, config, cloneMatcher));
+            .flatMapMany(config -> readClonesFromSuffixTreeForPull(pullSnapshot, config, cloneMatcher));
     }
 
     @Override
@@ -63,38 +63,32 @@ public final class CloneDetectorImpl implements CloneDetector {
                 .then();
     }
 
-    //TODO:
-    // Clearer api: here snapshot is something that references to concrete pull request, not commit
-    private Flux<CodeClone> readClonesFromSuffixTree(final Snapshot snapshot,
-                                                     final Config config,
-                                                     final Predicate<Clone<Snapshot>> cloneMatcher) {
-        final Supplier<List<CodeClone>> cloneClassesSupplier = () ->
-                suffixTreeCloneDetector.transform(cloneClasses -> cloneClasses
-                        .filter(cloneClass -> cloneClassMatchesRules(cloneClass, config) &&
-                                              cloneClassContainsClonesFromThisPrAndOtherRepo(cloneClass, snapshot))
-                        .flatMap(cloneClass -> {
-                            final var clones = cloneClass.clones();
-                            final var source = clones
-                                    .stream()
-                                    .reduce(Comparators.minBy(
-                                            clone -> clone.ref().commit().date(),
-                                            clone -> clone.ref().pullInfo().number()
-                                    ))
-                                    .orElseThrow(IllegalStateException::new);
+    private Flux<CodeClone> readClonesFromSuffixTreeForPull(final Snapshot pullSnapshot,
+                                                            final Config config,
+                                                            final Predicate<Clone<Snapshot>> cloneMatcher) {
+        return Flux.fromStream(() -> suffixTreeCloneDetector
+            .cloneClasses(cloneClass -> isGoodCloneClassForPullCheapCheck(cloneClass, pullSnapshot, config.cloneMinTokenCount()),
+                          cloneClass -> isGoodCloneClassForPullExpensiveCheck(cloneClass, pullSnapshot, config.filter()))
+            .stream()
+            .flatMap(cloneClass -> {
+                final var clones = cloneClass.clones();
+                final var source = clones
+                    .stream()
+                    .reduce(Comparators.minBy(
+                        clone -> clone.ref().commit().date(),
+                        clone -> clone.ref().pullInfo().number()
+                    ))
+                    .orElseThrow(IllegalStateException::new);
 
-                            if (source.ref().repo().equals(snapshot.repo())) {
-                                return Stream.empty();
-                            }
+                if (source.ref().repo().equals(pullSnapshot.repo())) {
+                    return Stream.empty();
+                }
 
-                            return clones
-                                    .stream()
-                                    .filter(cloneMatcher)
-                                    .map(clone -> convert(source, clone));
-                        }));
-
-        return Mono
-                .fromSupplier(cloneClassesSupplier)
-                .flatMapMany(Flux::fromIterable);
+                return clones
+                    .stream()
+                    .filter(cloneMatcher)
+                    .map(clone -> convert(source, clone));
+            }));
     }
 
     private static CodeClone convert(final Clone<Snapshot> source, final Clone<Snapshot> target) {
@@ -113,26 +107,64 @@ public final class CloneDetectorImpl implements CloneDetector {
                 .build();
     }
 
-    private static boolean cloneClassMatchesRules(final CloneClass<Snapshot> cloneClass, final Config rules) {
-        return cloneClass.length() >= rules.cloneMinTokenCount()
-               && cloneClass
-                       .clones()
-                       .stream()
-                       .allMatch(clone -> rules.filter().test(clone.start().filename()));
+    /**
+     * We accept clone class if its token count is larger than or equal to specified {@code cloneMinTokenCount}.
+     * And for clone classes with a small clone count (<= {@code CHEAP_CHECK_CLONE_COUNT_THRESHOLD})
+     * we do an additional checks:
+     * <p>
+     * 1. If at least one clone is linked to the {@code pullSnapshot}, we assume clone class is ok;
+     * <p>
+     * 2. If all clones have same author then the clone class is considered to be not ok.
+     */
+    private static boolean isGoodCloneClassForPullCheapCheck(final CloneClass<Snapshot> cloneClass,
+                                                             final Snapshot pullSnapshot,
+                                                             final int cloneMinTokenCount) {
+        if (cloneClass.length() < cloneMinTokenCount) {
+            return false;
+        }
+        final var clones = cloneClass.clones();
+        final var cloneCount = clones.size();
+        if (cloneCount <= CHEAP_CHECK_CLONE_COUNT_THRESHOLD) {
+            for (int i = 0; i < cloneCount; ++i) {
+                final var current = clones.get(i).ref();
+                if (current.pullInfo().id().equals(pullSnapshot.pullInfo().id())) {
+                    return true;
+                }
+                if (i < 1) {
+                    continue;
+                }
+                final var previous = clones.get(i - 1).ref();
+                if (!current.repo().owner().equals(previous.repo().owner())) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        return true;
     }
 
-    private static boolean cloneClassContainsClonesFromThisPrAndOtherRepo(final CloneClass<Snapshot> cloneClass,
-                                                                          final Snapshot thisPullSnapshot) {
+    /**
+     * We accept clone class if all its clones filenames match {@code fileFilter} and both
+     * at least one clone pull matches specified one (via {@code pullSnapshot}) and
+     * at least one clone repo is differ than repo of the specified {@code pullSnapshot}
+     */
+    private static boolean isGoodCloneClassForPullExpensiveCheck(final CloneClass<Snapshot> cloneClass,
+                                                                 final Snapshot pullSnapshot,
+                                                                 final FileFilter fileFilter) {
         final var clones = cloneClass.clones();
+        final var cloneCount = clones.size();
         var containsCloneFromThisPull = false;
         var containsCloneFromOtherRepo = false;
-        final var cloneCount = clones.size();
         for (int i = 0; i < cloneCount; ++i) {
             final var clone = clones.get(i);
-            if (clone.ref().pullInfo().id().equals(thisPullSnapshot.pullInfo().id())) {
+            if (!fileFilter.test(clone.start().filename())) {
+                return false;
+            }
+            final var cloneSnapshot = clone.ref();
+            if (cloneSnapshot.pullInfo().id().equals(pullSnapshot.pullInfo().id())) {
                 containsCloneFromThisPull = true;
             }
-            if (!clone.ref().repo().equals(thisPullSnapshot.repo())) {
+            if (!cloneSnapshot.repo().equals(pullSnapshot.repo())) {
                 containsCloneFromOtherRepo = true;
             }
             if (containsCloneFromThisPull && containsCloneFromOtherRepo) {
