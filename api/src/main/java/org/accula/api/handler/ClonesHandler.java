@@ -31,6 +31,7 @@ import reactor.core.publisher.Mono;
 import reactor.function.TupleUtils;
 import reactor.util.function.Tuple2;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -42,6 +43,9 @@ import java.util.stream.Stream;
 @Component
 @RequiredArgsConstructor
 public final class ClonesHandler {
+    private static final Comparator<Clone> DESCENDING_BY_LINE_COUNT = Comparator
+        .<Clone, Integer>comparing(clone -> Math.max(clone.target().lineCount(), clone.source().lineCount()))
+        .reversed();
     private final PullRepo pullRepo;
     private final CloneRepo cloneRepo;
     private final CurrentUserRepo currentUserRepo;
@@ -134,7 +138,7 @@ public final class ClonesHandler {
             .collectMap(Pull::id);
 
         final var responseClones = Mono
-                .zip(clones.collectList(), fileSnippets, pulls, Mono.just(projectId))
+                .zip(clones.collectSortedList(DESCENDING_BY_LINE_COUNT), fileSnippets, pulls, Mono.just(projectId))
                 .flatMapMany(TupleUtils.function(ClonesHandler::convert));
 
         return responseClones

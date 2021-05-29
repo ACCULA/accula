@@ -20,6 +20,10 @@ public class CloneClass<Ref> {
     @Getter(lazy = true)
     List<Clone<Ref>> clones = traverseClones();
 
+    public int cloneCount() {
+        return clones().size();
+    }
+
     private int computeLength() {
         return SuffixTreeUtils.parentEdges(node)
                 .mapToInt(SuffixTreeUtils::length)

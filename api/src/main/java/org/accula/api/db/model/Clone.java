@@ -32,5 +32,9 @@ public class Clone {
         String file;
         Integer fromLine;
         Integer toLine;
+
+        public int lineCount() {
+            return toLine - fromLine + 1;
+        }
     }
 }

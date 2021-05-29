@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
-import java.util.function.Function;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Anton Lamtev
@@ -34,8 +34,8 @@ public class SuffixTreeCloneDetectorTest {
     public static final String F2 = """
             public class Cell {
                 public Cell(@Another ByteBuffer k, final Value v) {
-                    Objects.requireNonNull(key);
-                    Objects.requireNonNull(value);
+                    Objects.requireNonNull(k);
+                    Objects.requireNonNull(v);
                     this.k = k;
                     this.v = v;
                 }
@@ -111,11 +111,8 @@ public class SuffixTreeCloneDetectorTest {
                 .collectList())
                 .expectNextMatches(methods -> {
                     methods.forEach(method -> detector.addTokens(method));
-                    final var cloneClasses = detector.transform(Function.identity());
-                    return cloneClasses
-                                   .stream()
-                                   .mapToInt(cc -> cc.clones().size())
-                                   .sum() == 6;
+                    assertEquals(5, detector.cloneClasses(cloneClass -> true).size());
+                    return true;
                 })
                 .verifyComplete();
     }
@@ -129,11 +126,8 @@ public class SuffixTreeCloneDetectorTest {
                 .collectList())
                 .expectNextMatches(methods -> {
                     methods.forEach(method -> detector.addTokens(method));
-                    final var cloneClasses = detector.transform(Function.identity());
-                    return cloneClasses
-                                   .stream()
-                                   .mapToInt(cc -> cc.clones().size())
-                                   .sum() == 10;
+                    final var cloneClasses = detector.cloneClasses(it -> true);
+                    return cloneClasses.size() == 1 && cloneClasses.get(0).cloneCount() == 2;
                 })
                 .verifyComplete();
     }
