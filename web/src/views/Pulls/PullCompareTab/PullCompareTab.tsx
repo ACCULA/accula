@@ -50,8 +50,7 @@ const PullCompareTab = ({
         compareWith ? `?with=${compareWith}` : ''
       }`
     )
-    // eslint-disable-next-line
-  }, [])
+  }, [compareWith])
 
   useEffect(() => {
     getPulls(project.id)
