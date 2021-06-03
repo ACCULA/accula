@@ -11,8 +11,8 @@ repositories {
         url = uri("https://maven.pkg.github.com/accula/suffix-tree")
 
         credentials {
-            username = project.findProperty("gpr.user") as String? ?: System.getenv("GPR_USERNAME")
-            password = project.findProperty("gpr.key") as String? ?: System.getenv("GPR_TOKEN")
+            username = gprCredentialWith(propertyNamed = "gpr.user", orEnvVarNamed = "GPR_USERNAME")
+            password = gprCredentialWith(propertyNamed = "gpr.key", orEnvVarNamed = "GPR_TOKEN")
         }
     }
 }
@@ -60,3 +60,7 @@ dependencies {
     implementation("info.debatty:java-string-similarity:2.0.0")
     implementation("commons-codec:commons-codec:1.15")
 }
+
+fun gprCredentialWith(propertyNamed: String, orEnvVarNamed: String) = project.findProperty(propertyNamed) as String?
+    ?: System.getenv(orEnvVarNamed)
+    ?: throw IllegalStateException("Either project property '$propertyNamed' or environment variable '$orEnvVarNamed' MUST be present for successful GPR authentication")
