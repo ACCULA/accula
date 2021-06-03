@@ -1,5 +1,6 @@
 import { notFetching, Wrapper } from 'store/wrapper'
 import { IClone, IDiff } from 'types'
+import { decode } from 'js-base64'
 import {
   PullsActionTypes, //
   PullsState,
@@ -20,9 +21,9 @@ const decodeDiff = (wrapper: Wrapper<IDiff[]>): Wrapper<IDiff[]> => ({
     wrapper.value &&
     wrapper.value.map(diff => ({
       baseFilename: diff.baseFilename,
-      baseContent: diff.baseContent ? atob(diff.baseContent) : '',
+      baseContent: diff.baseContent ? decode(diff.baseContent) : '',
       headFilename: diff.headFilename,
-      headContent: diff.headContent ? atob(diff.headContent) : ''
+      headContent: diff.headContent ? decode(diff.headContent) : ''
     }))
 })
 
@@ -35,11 +36,11 @@ const decodeClones = (wrapper: Wrapper<IClone[]>): Wrapper<IClone[]> => ({
       projectId: diff.projectId,
       target: {
         ...diff.target,
-        content: atob(diff.target.content)
+        content: decode(diff.target.content)
       },
       source: {
         ...diff.source,
-        content: atob(diff.source.content)
+        content: decode(diff.source.content)
       }
     }))
 })
