@@ -76,16 +76,7 @@ configure(subprojects.filterNot(project(":web")::equals)) {
         ))
     }
     tasks.withType<Test> {
-        jvmArgs(
-                "--add-opens", "java.base/java.util=ALL-UNNAMED",
-        )
-
         val testSingleLineRangeCacheSize: String by project
         systemProperty("org.accula.api.code.lines.LineRange.Single.Cache.size", testSingleLineRangeCacheSize)
-    }
-    tasks.withType<JavaExec> {
-        jvmArgs(
-                "--add-opens", "java.base/java.util=ALL-UNNAMED",
-        )
     }
 }

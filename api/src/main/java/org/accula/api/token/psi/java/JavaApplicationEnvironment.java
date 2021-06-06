@@ -49,7 +49,7 @@ final class JavaApplicationEnvironment extends JavaCoreApplicationEnvironment {
             }
             registerApplicationExtensionPoint(DynamicBundle.LanguageBundleEP.EP_NAME, DynamicBundle.LanguageBundleEP.class);
             registerApplicationExtensionPoint(FileContextProvider.EP_NAME, FileContextProvider.class);
-            registerApplicationExtensionPoint(PsiElementFinder.EP_NAME, PsiElementFinder.class);
+            registerExtensionPoint(Extensions.getRootArea(), PsiElementFinder.EP, PsiElementFinder.class);
             registerApplicationExtensionPoint(MetaDataContributor.EP_NAME, MetaDataContributor.class);
             registerApplicationExtensionPoint(PsiAugmentProvider.EP_NAME, PsiAugmentProvider.class);
             registerApplicationExtensionPoint(JavaMainMethodProvider.EP_NAME, JavaMainMethodProvider.class);
