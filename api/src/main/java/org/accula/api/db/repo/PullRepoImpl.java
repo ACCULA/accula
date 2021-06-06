@@ -93,26 +93,24 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
             return Flux.empty();
         }
 
-        return transactionalMany(connection -> {
+        return manyWithConnection(connection -> {
             final var statement = selectByIdStatement(connection);
             statement.bind("$1", ids.toArray(new Long[0]));
 
             return statement
                     .execute()
-                    .flatMap(result -> convertMany(result, PullRepoImpl::convert))
-                    .transform(byFetchingAssignees(connection));
+                    .flatMap(result -> convertMany(result, PullRepoImpl::convert));
         });
     }
 
     @Override
     public Mono<Pull> findByNumber(final Long projectId, final Integer number) {
-        return transactional(connection -> Mono
+        return withConnection(connection -> Mono
                 .from(selectByNumberStatement(connection)
                         .bind("$1", projectId)
                         .bind("$2", number)
                         .execute())
-                .flatMap(result -> ConnectionProvidedRepo.convert(result, PullRepoImpl::convert))
-                .flatMap(pull -> fetchAssignees(connection, pull)));
+                .flatMap(result -> ConnectionProvidedRepo.convert(result, PullRepoImpl::convert)));
     }
 
     @Override
@@ -127,6 +125,14 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
 
     @Override
     public Flux<Pull> findByProjectId(final Long projectId) {
+        return manyWithConnection(connection -> selectByProjectIdStatement(connection)
+            .bind("$1", projectId)
+            .execute()
+            .flatMap(result -> convertMany(result, PullRepoImpl::convert)));
+    }
+
+    @Override
+    public Flux<Pull> findByProjectIdIncludingAssignees(final Long projectId) {
         return transactionalMany(connection -> selectByProjectIdStatement(connection)
             .bind("$1", projectId)
             .execute()
@@ -376,10 +382,6 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
                         return pull.withAssignees(list);
                     })
                     .toList()));
-    }
-
-    private static Mono<Pull> fetchAssignees(final Connection connection, final Pull pull) {
-        return byFetchingAssignees(connection).apply(Flux.just(pull)).next();
     }
 
     private static Pull convert(final Row row) {

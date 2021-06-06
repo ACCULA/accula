@@ -119,7 +119,7 @@ class PullsRouterTest {
     @Test
     void testGetManyAssignedToMeAuthorized() {
         final var pull = STUB_PULL.withAssignees(List.of(UsersRouterTest.STUB_USER.githubUser()));
-        when(repository.findByProjectId(anyLong()))
+        when(repository.findByProjectIdIncludingAssignees(anyLong()))
             .thenReturn(Flux.just(pull));
         when(currentUserRepo.get(any()))
             .thenReturn(Mono.just(UsersRouterTest.STUB_USER.githubUser()));
@@ -132,7 +132,7 @@ class PullsRouterTest {
 
     @Test
     void testGetManyAssignedToMeAuthorizedNotMatches() {
-        when(repository.findByProjectId(anyLong()))
+        when(repository.findByProjectIdIncludingAssignees(anyLong()))
             .thenReturn(Flux.just(STUB_PULL));
         when(currentUserRepo.get(any()))
             .thenReturn(Mono.just(UsersRouterTest.STUB_USER.githubUser()));
@@ -145,7 +145,7 @@ class PullsRouterTest {
 
     @Test
     void testGetManyAssignedToMeNotAuthorized() {
-        when(repository.findByProjectId(anyLong()))
+        when(repository.findByProjectIdIncludingAssignees(anyLong()))
             .thenReturn(Flux.just(STUB_PULL));
         when(currentUserRepo.get(any()))
             .thenReturn(Mono.empty());

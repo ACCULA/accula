@@ -99,7 +99,7 @@ public final class ClonesHandler {
         return currentUserRepo
                 .get(User::id)
                 .filterWhen(currentUserId -> projectRepo.hasAdmin(projectId, currentUserId))
-                .switchIfEmpty(Mono.error(Http4xxException.forbidden()))
+                .switchIfEmpty(Mono.error(Http4xxException::forbidden))
                 .flatMapMany(currentUserId -> action);
     }
 

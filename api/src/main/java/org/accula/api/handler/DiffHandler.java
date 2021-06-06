@@ -72,7 +72,7 @@ public final class DiffHandler {
         final var head = pullMono.map(Pull::head);
         final var minSimilarityIndex = projectRepo
                 .confById(projectId)
-                .switchIfEmpty(Mono.error(Http4xxException.notFound()))
+                .switchIfEmpty(Mono.error(Http4xxException::notFound))
                 .map(Project.Conf::fileMinSimilarityIndex);
 
         final var diff = Mono
@@ -85,11 +85,11 @@ public final class DiffHandler {
     private Mono<ServerResponse> diffBetweenPulls(final Long projectId, final Integer basePullNumber, final Integer headPullNumber) {
         final var basePullSnapshot = pullRepo
                 .findByNumber(projectId, basePullNumber)
-                .switchIfEmpty(Mono.error(Http4xxException.notFound()))
+                .switchIfEmpty(Mono.error(Http4xxException::notFound))
                 .map(Pull::head);
         final var headPull = pullRepo
                 .findByNumber(projectId, headPullNumber)
-                .switchIfEmpty(Mono.error(Http4xxException.notFound()))
+                .switchIfEmpty(Mono.error(Http4xxException::notFound))
                 .cache();
         final var headPullSnapshot = headPull
                 .map(Pull::head);
@@ -97,7 +97,7 @@ public final class DiffHandler {
                 .map(pull -> pull.base().repo());
         final var minSimilarityIndex = projectRepo
                 .confById(projectId)
-                .switchIfEmpty(Mono.error(Http4xxException.notFound()))
+                .switchIfEmpty(Mono.error(Http4xxException::notFound))
                 .map(Project.Conf::fileMinSimilarityIndex);
 
         final var diff = Mono

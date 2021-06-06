@@ -36,10 +36,10 @@ public final class GithubClientImpl implements GithubClient {
     public GithubClientImpl(final AccessTokenProvider accessTokenProvider, final LoginProvider loginProvider, final WebClient webClient) {
         this.accessTokenProvider = () -> accessTokenProvider
                 .accessToken()
-                .switchIfEmpty(Mono.error(new IllegalStateException("Access token MUST be present")));
+                .switchIfEmpty(Mono.error(() -> new IllegalStateException("Access token MUST be present")));
         this.loginProvider = () -> loginProvider
                 .login()
-                .switchIfEmpty(Mono.error(new IllegalStateException("Login MUST be present")));
+                .switchIfEmpty(Mono.error(() -> new IllegalStateException("Login MUST be present")));
         this.githubApiWebClient = webClient
                 .mutate()
                 .baseUrl("https://api.github.com")

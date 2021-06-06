@@ -22,7 +22,7 @@ public final class GitCredentialsProviderImpl implements GitCredentialsProvider 
         return currentUserRepo
             .get()
             .switchIfEmpty(projectRepo.findOwnerOfProjectContainingRepo(repoId))
-            .switchIfEmpty(Mono.error(new IllegalStateException("No git credentials for repo with id = " + repoId)))
+            .switchIfEmpty(Mono.error(() -> new IllegalStateException("No git credentials for repo with id = " + repoId)))
             .map(user -> GitCredentials.of(user.githubUser().login(), user.githubAccessToken()));
     }
 }
