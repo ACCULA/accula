@@ -44,7 +44,7 @@ public final class PullsHandler {
 
                     return pullRepo
                             .findByNumber(projectId, pullNumber)
-                            .switchIfEmpty(Mono.error(Http4xxException.notFound()))
+                            .switchIfEmpty(Mono.error(Http4xxException::notFound))
                             .flatMap(pull -> pullRepo
                                     .findPrevious(projectId, pullNumber, pull.author().id())
                                     .collectList()
@@ -65,7 +65,7 @@ public final class PullsHandler {
             return currentUserRepo
                 .get(User::githubUser)
                 .flatMapMany(currentUser -> pullRepo
-                    .findByProjectId(projectId)
+                    .findByProjectIdIncludingAssignees(projectId)
                     .filter(pull -> pull.assignees().contains(currentUser)));
         });
     }

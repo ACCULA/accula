@@ -30,7 +30,7 @@ public final class UsersHandler {
                 .map(Long::valueOf)
                 .onErrorMap(NumberFormatException.class, Lambda.expandingWithArg(Http4xxException::badRequest))
                 .flatMap(userRepo::findById)
-                .switchIfEmpty(Mono.error(Http4xxException.notFound()))
+                .switchIfEmpty(Mono.error(Http4xxException::notFound))
                 .map(ModelToDtoConverter::convert)
                 .flatMap(Responses::ok)
                 .onErrorResume(ResponseConvertibleException::onErrorResume);

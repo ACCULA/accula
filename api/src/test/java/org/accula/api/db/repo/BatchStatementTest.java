@@ -57,6 +57,7 @@ class BatchStatementTest {
     }
 
     @SneakyThrows
+    @SuppressWarnings("unchecked")
     String sql(BatchStatement s) {
         var f = s.getClass().getDeclaredField("boundValuesProducer");
         f.setAccessible(true);

@@ -87,7 +87,7 @@ public final class ProjectsHandler {
     public Mono<ServerResponse> get(final ServerRequest request) {
         return withProjectId(request)
                 .flatMap(projectRepo::findById)
-                .switchIfEmpty(Mono.error(Http4xxException.notFound()))
+                .switchIfEmpty(Mono.error(Http4xxException::notFound))
                 .map(ModelToDtoConverter::convert)
                 .flatMap(Responses::ok)
                 .onErrorResume(ResponseConvertibleException::onErrorResume);
@@ -122,7 +122,7 @@ public final class ProjectsHandler {
     public Mono<ServerResponse> githubAdmins(final ServerRequest request) {
         final var adminsMono = havingAdminPermissionAtProject(request)
                 .flatMap(projectRepo::findById)
-                .switchIfEmpty(Mono.error(Http4xxException.notFound()))
+                .switchIfEmpty(Mono.error(Http4xxException::notFound))
                 .flatMap(this::githubRepoAdmins)
                 .flatMapMany(userRepo::findByGithubIds)
                 .map(ModelToDtoConverter::convert)
@@ -139,7 +139,7 @@ public final class ProjectsHandler {
     public Mono<ServerResponse> headFiles(final ServerRequest request) {
         return havingAdminPermissionAtProject(request)
                 .flatMap(projectRepo::findById)
-                .switchIfEmpty(Mono.error(Http4xxException.notFound()))
+                .switchIfEmpty(Mono.error(Http4xxException::notFound))
                 .map(Project::githubRepo)
                 .flatMap(projectService::headFiles)
                 .flatMap(Responses::ok)
@@ -149,7 +149,7 @@ public final class ProjectsHandler {
     public Mono<ServerResponse> getConf(final ServerRequest request) {
         final var confMono = havingAdminPermissionAtProject(request)
                 .flatMap(projectRepo::confById)
-                .switchIfEmpty(Mono.error(Http4xxException.notFound()))
+                .switchIfEmpty(Mono.error(Http4xxException::notFound))
                 .map(ModelToDtoConverter::convert);
         return confMono
                 .flatMap(Responses::ok)
@@ -289,7 +289,7 @@ public final class ProjectsHandler {
     private Mono<Long> havingAdminPermissionAtProject(final ServerRequest request) {
         return withProjectId(request)
             .filterWhen(this::isCurrentUserAdmin)
-            .switchIfEmpty(Mono.error(Http4xxException.forbidden()));
+            .switchIfEmpty(Mono.error(Http4xxException::forbidden));
     }
 
     private Mono<Boolean> isCurrentUserAdmin(final Long projectId) {
