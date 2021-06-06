@@ -15,6 +15,7 @@ import org.accula.api.token.TokenProvider.Language;
 import org.accula.api.util.Comparators;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.Set;
 import java.util.function.Predicate;
@@ -88,7 +89,8 @@ public final class CloneDetectorImpl implements CloneDetector {
                     .stream()
                     .filter(cloneMatcher)
                     .map(clone -> convert(source, clone));
-            }));
+            }))
+            .subscribeOn(Schedulers.parallel());
     }
 
     private static CodeClone convert(final Clone<Snapshot> source, final Clone<Snapshot> target) {
