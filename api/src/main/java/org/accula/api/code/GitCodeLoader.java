@@ -169,7 +169,7 @@ public final class GitCodeLoader implements CodeLoader {
         }
         return credentialsProvider
             .gitCredentials(repo.id())
-            .switchIfEmpty(Mono.error(new IllegalStateException("Git credentials MUST be present for private repos")))
+            .switchIfEmpty(Mono.error(() -> new IllegalStateException("Git credentials MUST be present for private repos")))
             .map(credentials -> "https://%s:%s@github.com/%s/%s.git"
                 .formatted(credentials.login(), credentials.accessToken(), repo.owner().login(), repo.name()));
     }
