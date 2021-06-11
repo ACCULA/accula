@@ -81,6 +81,9 @@ public final class CloneDetectorImpl implements CloneDetector {
                     ))
                     .orElseThrow(IllegalStateException::new);
 
+                if (source.ref().sha().equals(pullSnapshot.sha())) {
+                    return Stream.empty();
+                }
                 if (source.ref().repo().equals(pullSnapshot.repo())) {
                     return Stream.empty();
                 }
