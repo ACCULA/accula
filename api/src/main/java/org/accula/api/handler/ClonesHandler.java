@@ -97,7 +97,8 @@ public final class ClonesHandler {
 
     public Mono<ServerResponse> topSources(final ServerRequest request) {
         return Mono
-            .defer(() -> cloneRepo.topSources(PathVariableExtractor.projectId(request))
+            .defer(() -> cloneRepo
+                .topSources(PathVariableExtractor.projectId(request))
                 .map(ModelToDtoConverter::convert)
                 .collectList()
                 .flatMap(Responses::ok))
