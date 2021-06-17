@@ -191,6 +191,7 @@ class ClonesRouterTest {
                 assertEquals(CloneStatisticsDto.builder()
                     .user(ModelToDtoConverter.convert(cloneStatistics.user()))
                     .cloneCount(cloneStatistics.cloneCount())
+                    .lineCount(cloneStatistics.lineCount())
                     .build(), plagiarists[0]);
         });
     }
