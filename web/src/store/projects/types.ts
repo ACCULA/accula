@@ -1,9 +1,10 @@
-import { IProject, IProjectConf, IProjectRef, IUser, IPlagiarist } from 'types'
+import { IProject, IProjectConf, IProjectRef, IUser, ICloneStatistics } from 'types'
 import { Wrapper } from 'store/wrapper'
 
 export const SET_PROJECTS = 'SET_PROJECTS'
 export const SET_PROJECT = 'SET_PROJECT'
 export const SET_TOP_PLAGIARISTS = 'SET_TOP_PLAGIARISTS'
+export const SET_TOP_CLONE_SOURCES = 'SET_TOP_CLONE_SOURCES'
 export const SET_PROJECT_CONF = 'SET_PROJECT_CONF'
 export const SET_REPO_ADMINS = 'SET_REPO_ADMINS'
 export const RESET_PROJECT_INFO = 'RESET_PROJECT_INFO'
@@ -14,7 +15,8 @@ export const CREATE_PROJECT = 'CREATE_PROJECT'
 export interface ProjectsState {
   projects: Wrapper<IProject[]>
   project: Wrapper<IProject>
-  topPlagiarists: Wrapper<IPlagiarist[]> & IProjectRef
+  topPlagiarists: Wrapper<ICloneStatistics[]> & IProjectRef
+  topCloneSources: Wrapper<ICloneStatistics[]> & IProjectRef
   projectConf: Wrapper<IProjectConf> & IProjectRef
   repoAdmins: Wrapper<IUser[]> & IProjectRef
   baseFiles: Wrapper<string[]> & IProjectRef
@@ -32,7 +34,12 @@ export interface SetProject {
 
 export interface SetTopPlagiarists {
   type: typeof SET_TOP_PLAGIARISTS
-  payload: Wrapper<IPlagiarist[]>
+  payload: Wrapper<ICloneStatistics[]>
+}
+
+export interface SetTopCloneSources {
+  type: typeof SET_TOP_CLONE_SOURCES
+  payload: Wrapper<ICloneStatistics[]>
 }
 
 export interface SetProjectConf {
@@ -67,6 +74,7 @@ export type ProjectsActionTypes =
   | SetProjects //
   | SetProject
   | SetTopPlagiarists
+  | SetTopCloneSources
   | SetProjectConf
   | SetRepoAdmins
   | ResetProjectInfo

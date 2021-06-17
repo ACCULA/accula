@@ -12,7 +12,8 @@ import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
 @JsonAutoDetect(fieldVisibility = ANY)
 @Builder
 @Value
-public class PlagiaristDto {
+public class CloneStatisticsDto {
     GithubUserDto user;
     Integer cloneCount;
+    Integer lineCount;
 }

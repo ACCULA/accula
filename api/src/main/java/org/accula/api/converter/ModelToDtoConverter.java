@@ -3,16 +3,16 @@ package org.accula.api.converter;
 import com.google.common.base.Preconditions;
 import org.accula.api.code.FileEntity;
 import org.accula.api.db.model.Clone;
+import org.accula.api.db.model.CloneStatistics;
 import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.GithubUser;
-import org.accula.api.db.model.Plagiarist;
 import org.accula.api.db.model.Project;
 import org.accula.api.db.model.Pull;
 import org.accula.api.db.model.Snapshot;
 import org.accula.api.db.model.User;
 import org.accula.api.handler.dto.CloneDto;
+import org.accula.api.handler.dto.CloneStatisticsDto;
 import org.accula.api.handler.dto.GithubUserDto;
-import org.accula.api.handler.dto.PlagiaristDto;
 import org.accula.api.handler.dto.ProjectConfDto;
 import org.accula.api.handler.dto.ProjectDto;
 import org.accula.api.handler.dto.PullDto;
@@ -166,10 +166,11 @@ public final class ModelToDtoConverter {
                 .build();
     }
 
-    public static PlagiaristDto convert(final Plagiarist plagiarist) {
-        return PlagiaristDto.builder()
-            .user(convert(plagiarist.user()))
-            .cloneCount(plagiarist.cloneCount())
+    public static CloneStatisticsDto convert(final CloneStatistics cloneStatistics) {
+        return CloneStatisticsDto.builder()
+            .user(convert(cloneStatistics.user()))
+            .cloneCount(cloneStatistics.cloneCount())
+            .lineCount(cloneStatistics.lineCount())
             .build();
     }
 

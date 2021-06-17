@@ -8,10 +8,10 @@ import org.accula.api.code.lines.LineRange;
 import org.accula.api.code.lines.LineSet;
 import org.accula.api.converter.ModelToDtoConverter;
 import org.accula.api.db.model.Clone;
+import org.accula.api.db.model.CloneStatistics;
 import org.accula.api.db.model.Commit;
 import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.GithubUser;
-import org.accula.api.db.model.Plagiarist;
 import org.accula.api.db.model.Pull;
 import org.accula.api.db.model.Snapshot;
 import org.accula.api.db.repo.CloneRepo;
@@ -20,7 +20,7 @@ import org.accula.api.db.repo.ProjectRepo;
 import org.accula.api.db.repo.PullRepo;
 import org.accula.api.handler.ClonesHandler;
 import org.accula.api.handler.dto.CloneDto;
-import org.accula.api.handler.dto.PlagiaristDto;
+import org.accula.api.handler.dto.CloneStatisticsDto;
 import org.accula.api.service.CloneDetectionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -143,9 +143,15 @@ class ClonesRouterTest {
         new FileEntity<>(snap1, target.file(), "", LineSet.inRange(target.fromLine(), target.toLine())),
         new FileEntity<>(snap2, source.file(), "", LineSet.inRange(source.fromLine(), source.toLine()))
     );
-    static final Plagiarist plagiarist = Plagiarist.builder()
+    static final CloneStatistics cloneStatistics = CloneStatistics.builder()
         .user(usr1)
         .cloneCount(100)
+        .lineCount(12345)
+        .build();
+    static final CloneStatistics cloneStatistics2 = CloneStatistics.builder()
+        .user(usr2)
+        .cloneCount(10)
+        .lineCount(48)
         .build();
 
     @BeforeEach
@@ -176,16 +182,38 @@ class ClonesRouterTest {
     @Test
     void testGetTopPlagiarists() {
         when(cloneRepo.topPlagiarists(anyLong()))
-            .thenReturn(Flux.just(plagiarist));
+            .thenReturn(Flux.just(cloneStatistics));
         client.get().uri("/api/projects/{projectId}/topPlagiarists", 1L)
             .exchange()
             .expectStatus().isOk()
-            .expectBody(PlagiaristDto[].class).value(plagiarists -> {
+            .expectBody(CloneStatisticsDto[].class).value(plagiarists -> {
                 assertEquals(1, plagiarists.length);
-                assertEquals(PlagiaristDto.builder()
-                    .user(ModelToDtoConverter.convert(plagiarist.user()))
-                    .cloneCount(plagiarist.cloneCount())
+                assertEquals(CloneStatisticsDto.builder()
+                    .user(ModelToDtoConverter.convert(cloneStatistics.user()))
+                    .cloneCount(cloneStatistics.cloneCount())
                     .build(), plagiarists[0]);
+        });
+    }
+
+    @Test
+    void testGetTopSources() {
+        when(cloneRepo.topSources(anyLong()))
+            .thenReturn(Flux.just(cloneStatistics, cloneStatistics2));
+        client.get().uri("/api/projects/{projectId}/topCloneSources", 1L)
+            .exchange()
+            .expectStatus().isOk()
+            .expectBody(CloneStatisticsDto[].class).value(plagiarists -> {
+            assertEquals(2, plagiarists.length);
+            assertEquals(CloneStatisticsDto.builder()
+                .user(ModelToDtoConverter.convert(cloneStatistics.user()))
+                .cloneCount(cloneStatistics.cloneCount())
+                .lineCount(cloneStatistics.lineCount())
+                .build(), plagiarists[0]);
+            assertEquals(CloneStatisticsDto.builder()
+                .user(ModelToDtoConverter.convert(cloneStatistics2.user()))
+                .cloneCount(cloneStatistics2.cloneCount())
+                .lineCount(cloneStatistics2.lineCount())
+                .build(), plagiarists[1]);
         });
     }
 }

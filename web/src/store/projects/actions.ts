@@ -6,6 +6,7 @@ import {
   SET_BASE_FILES,
   SET_PROJECT,
   SET_TOP_PLAGIARISTS,
+  SET_TOP_CLONE_SOURCES,
   SET_PROJECT_CONF,
   SET_PROJECTS,
   SET_REPO_ADMINS,
@@ -14,11 +15,12 @@ import {
   SetBaseFiles,
   SetProject,
   SetTopPlagiarists,
+  SetTopCloneSources,
   SetProjectConf,
   SetProjects,
   SetRepoAdmins,
   ResetProjectInfo,
-  ResetProjects
+  ResetProjects,
 } from './types'
 import {
   getBaseFiles,
@@ -30,7 +32,7 @@ import {
   putProjectConf,
   deleteProject,
   postProject,
-  postAddRepoToProject,
+  postAddRepoToProject, getTopCloneSources,
 } from './services'
 
 const setProjects = (payload): SetProjects => ({
@@ -45,6 +47,11 @@ const setProject = (payload): SetProject => ({
 
 const setTopPlagiarists = (payload): SetTopPlagiarists => ({
   type: SET_TOP_PLAGIARISTS,
+  payload
+})
+
+const setTopCloneSources = (payload): SetTopCloneSources => ({
+  type: SET_TOP_CLONE_SOURCES,
   payload
 })
 
@@ -137,6 +144,31 @@ export const getTopPlagiaristsAction = (projectId: number, handleError?: (msg: s
     dispatch(setTopPlagiarists(fetched(result)))
   } catch (e) {
     dispatch(setTopPlagiarists(failed(e)))
+    if (handleError) {
+      handleError(e.message)
+    }
+  }
+}
+
+export const getTopCloneSourcesAction = (projectId: number, handleError?: (msg: string) => void) => async (
+    dispatch: AppDispatch, //
+    getState: AppStateSupplier
+) => {
+  const { projects } = getState()
+  if (
+      projects.topCloneSources.isFetching ||
+      (projects.topCloneSources.value &&
+          projects.topCloneSources.value.length !== 0 &&
+          projects.topCloneSources.projectId === projectId)
+  ) {
+    return
+  }
+  try {
+    dispatch(setTopCloneSources(fetching))
+    const result = await getTopCloneSources(projectId)
+    dispatch(setTopCloneSources(fetched(result)))
+  } catch (e) {
+    dispatch(setTopCloneSources(failed(e)))
     if (handleError) {
       handleError(e.message)
     }

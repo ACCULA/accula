@@ -7,7 +7,7 @@ import io.r2dbc.spi.Row;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.accula.api.db.model.Clone;
-import org.accula.api.db.model.Plagiarist;
+import org.accula.api.db.model.CloneStatistics;
 import org.accula.api.util.Checks;
 import org.accula.api.util.Lambda;
 import org.intellij.lang.annotations.Language;
@@ -56,14 +56,15 @@ public final class CloneRepoImpl implements CloneRepo, ConnectionProvidedRepo {
     }
 
     @Override
-    public Flux<Plagiarist> topPlagiarists(final Long projectId) {
+    public Flux<CloneStatistics> topPlagiarists(final Long projectId) {
         return manyWithConnection(connection -> ((PostgresqlStatement) connection.createStatement("""
-            SELECT count(clone.id)    AS clone_count,
-                   user_github.id     AS id,
-                   user_github.login  AS login,
-                   user_github.name   AS name,
-                   user_github.avatar AS avatar,
-                   user_github.is_org AS is_org
+            SELECT count(clone.id)                            AS clone_count,
+                   sum(target.to_line - target.from_line + 1) AS line_count,
+                   user_github.id                             AS id,
+                   user_github.login                          AS login,
+                   user_github.name                           AS name,
+                   user_github.avatar                         AS avatar,
+                   user_github.is_org                         AS is_org
             FROM user_github
                      JOIN repo_github
                           ON user_github.id = repo_github.owner_id
@@ -86,11 +87,52 @@ public final class CloneRepoImpl implements CloneRepo, ConnectionProvidedRepo {
                      user_github.name,
                      user_github.avatar,
                      user_github.is_org
-            ORDER BY clone_count DESC
+            ORDER BY clone_count DESC,
+                     line_count DESC
             """))
             .bind("$1", projectId)
             .execute()
-            .flatMap(result -> convertMany(result, CloneRepoImpl::convertPlagiarist)));
+            .flatMap(result -> convertMany(result, CloneRepoImpl::convertStatistics)));
+    }
+
+    @Override
+    public Flux<CloneStatistics> topSources(final Long projectId) {
+        return manyWithConnection(connection -> ((PostgresqlStatement) connection.createStatement("""
+            SELECT count(clone.id)                            AS clone_count,
+                   sum(source.to_line - source.from_line + 1) AS line_count,
+                   user_github.id                             AS id,
+                   user_github.login                          AS login,
+                   user_github.name                           AS name,
+                   user_github.avatar                         AS avatar,
+                   user_github.is_org                         AS is_org
+            FROM user_github
+                     JOIN repo_github
+                          ON user_github.id = repo_github.owner_id
+                     JOIN clone_snippet source
+                          ON repo_github.id = source.repo_id
+                     JOIN clone
+                          ON source.id = clone.source_id
+                     JOIN snapshot_pull source_snap_to_pull
+                          ON source.commit_sha = source_snap_to_pull.snapshot_sha
+                              AND source.repo_id = source_snap_to_pull.snapshot_repo_id
+                              AND source.branch = source_snap_to_pull.snapshot_branch
+                              AND source.pull_id = source_snap_to_pull.pull_id
+                     JOIN pull source_pull
+                          ON source_snap_to_pull.pull_id = source_pull.id
+                     JOIN project
+                          ON source_pull.base_snapshot_repo_id = project.github_repo_id
+            WHERE project.id = $1
+            GROUP BY user_github.id,
+                     user_github.login,
+                     user_github.name,
+                     user_github.avatar,
+                     user_github.is_org
+            ORDER BY clone_count DESC,
+                     line_count DESC
+            """))
+            .bind("$1", projectId)
+            .execute()
+            .flatMap(result -> convertMany(result, CloneRepoImpl::convertStatistics)));
     }
 
     private static Mono<List<Clone>> insertSnippets(final Connection connection, final Collection<Clone> clones) {
@@ -313,10 +355,11 @@ public final class CloneRepoImpl implements CloneRepo, ConnectionProvidedRepo {
         );
     }
 
-    private static Plagiarist convertPlagiarist(final Row row) {
-        return Plagiarist.builder()
+    private static CloneStatistics convertStatistics(final Row row) {
+        return CloneStatistics.builder()
             .user(GithubUserRepoImpl.convert(row))
             .cloneCount(Converters.integer(row, "clone_count"))
+            .lineCount(Converters.integer(row, "line_count"))
             .build();
     }
 }

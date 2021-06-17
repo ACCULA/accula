@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 import { API_URL } from 'utils'
-import { IPlagiarist, IProject, IProjectConf, IToken, IUser } from 'types'
+import { ICloneStatistics, IProject, IProjectConf, IToken, IUser } from 'types'
 
 export const getProjects = async (): Promise<IProject[]> => {
   return axios
@@ -25,7 +25,7 @@ export const getProject = async (id: number): Promise<IProject> => {
     .then(resp => resp.data as IProject)
 }
 
-export const getTopPlagiarists = async (projectId: number): Promise<IPlagiarist[]> => {
+export const getTopPlagiarists = async (projectId: number): Promise<ICloneStatistics[]> => {
     return axios
       .get(`${API_URL}/api/projects/${projectId}/topPlagiarists`, {
         headers: {
@@ -33,7 +33,18 @@ export const getTopPlagiarists = async (projectId: number): Promise<IPlagiarist[
         },
         withCredentials: true
       })
-      .then(resp => resp.data as IPlagiarist[])
+      .then(resp => resp.data as ICloneStatistics[])
+}
+
+export const getTopCloneSources = async (projectId: number): Promise<ICloneStatistics[]> => {
+    return axios
+        .get(`${API_URL}/api/projects/${projectId}/topCloneSources`, {
+            headers: {
+                Accept: 'application/json'
+            },
+            withCredentials: true
+        })
+        .then(resp => resp.data as ICloneStatistics[])
 }
 
 export const getProjectConf = async (id: number, token: IToken): Promise<IProjectConf> => {

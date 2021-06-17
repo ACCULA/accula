@@ -5,6 +5,7 @@ import {
   SET_BASE_FILES,
   SET_PROJECT,
   SET_TOP_PLAGIARISTS,
+  SET_TOP_CLONE_SOURCES,
   SET_PROJECT_CONF,
   SET_PROJECTS,
   SET_REPO_ADMINS,
@@ -16,6 +17,7 @@ const initialState: ProjectsState = {
   projects: notFetching,
   project: notFetching,
   topPlagiarists: notFetching,
+  topCloneSources: notFetching,
   projectConf: notFetching,
   repoAdmins: notFetching,
   baseFiles: notFetching
@@ -42,6 +44,12 @@ export function projectsReducer(
       return {
         ...state,
         topPlagiarists: action.payload
+      }
+    }
+    case SET_TOP_CLONE_SOURCES: {
+      return {
+        ...state,
+        topCloneSources: action.payload
       }
     }
     case SET_PROJECT_CONF: {
