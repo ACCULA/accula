@@ -28,9 +28,9 @@ const ProjectCloneStatisticsTable = ({ cloneStatisticsItems }: ProjectCloneStati
         >
           {() => (
               <>
-                {cloneStatisticsItems.map((plagiarist, index) => (
+                {cloneStatisticsItems.map((cloneStatisticsItem, index) => (
                     <TableRow
-                        key={plagiarist.user.login}
+                        key={cloneStatisticsItem.user.login}
                     >
                       <TableCell align="right">
                         <span className={classes.dataText}>{index + 1}</span>
@@ -38,19 +38,19 @@ const ProjectCloneStatisticsTable = ({ cloneStatisticsItems }: ProjectCloneStati
                       <TableCell align="left">
                         <div className={classes.authorInfo}>
                           <Avatar
-                              onClick={() => window.open(plagiarist.user.url, '_blank')}
+                              onClick={() => window.open(cloneStatisticsItem.user.url, '_blank')}
                               className={classes.authorAvatar}
-                              src={plagiarist.user.avatar}
-                              alt={plagiarist.user.login}
+                              src={cloneStatisticsItem.user.avatar}
+                              alt={cloneStatisticsItem.user.login}
                           />
-                          <span className={classes.dataText}>{plagiarist.user.login}</span>
+                          <span className={classes.dataText}>{cloneStatisticsItem.user.login}</span>
                         </div>
                       </TableCell>
                       <TableCell align="right">
-                        <span className={classes.dataText}>{plagiarist.cloneCount}</span>
+                        <span className={classes.dataText}>{cloneStatisticsItem.cloneCount}</span>
                       </TableCell>
                       <TableCell align="right">
-                        <span className={classes.dataText}>{plagiarist.lineCount}</span>
+                        <span className={classes.dataText}>{cloneStatisticsItem.lineCount}</span>
                       </TableCell>
                     </TableRow>
                 ))}
