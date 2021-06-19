@@ -14,11 +14,11 @@ import { getNotifier } from 'App'
 import { CircularProgress } from '@material-ui/core'
 import { ReactComponent as PrLogo } from 'images/pull_request.svg'
 import SettingsIcon from '@material-ui/icons/Settings'
+import { Star, TrendingUp } from '@material-ui/icons'
 import ProjectPullsTab from './ProjectPullsTab/ProjectPullsTab'
 import ProjectSettingsTab from './ProjectSettingsTab'
-import { Star, TrendingUp } from "@material-ui/icons";
-import ProjectTopCloneSourcesTab from "./ProjectTopCloneSourcesTab";
-import ProjectTopPlagiaristsTab from "./ProjectTopPlagiaristsTab";
+import ProjectTopCloneSourcesTab from './ProjectTopCloneSourcesTab'
+import ProjectTopPlagiaristsTab from './ProjectTopPlagiaristsTab'
 
 interface ProjectProps extends PropsFromRedux {}
 
@@ -92,13 +92,13 @@ const Project = ({
   tabs.push({
     id: tabValues[2],
     text: 'Top plagiarists',
-    Icon: TrendingUp,
+    Icon: TrendingUp
   })
 
   tabs.push({
     id: tabValues[3],
     text: 'Top clone sources',
-    Icon: Star,
+    Icon: Star
   })
 
   const isAdmin = isProjectAdmin(user.value, project)
@@ -120,10 +120,10 @@ const Project = ({
         <ProjectPullsTab project={project} pulls={myPulls} />
       )}
       {(tab === 'topPlagiarists' || tab === undefined) && (
-          <ProjectTopPlagiaristsTab project={project} />
+        <ProjectTopPlagiaristsTab project={project} />
       )}
       {(tab === 'topCloneSources' || tab === undefined) && (
-          <ProjectTopCloneSourcesTab project={project} />
+        <ProjectTopCloneSourcesTab project={project} />
       )}
       {isAdmin && tab === 'settings' && <ProjectSettingsTab user={user.value} project={project} />}
     </>
@@ -142,7 +142,7 @@ const mapDispatchToProps = (dispatch: AppDispatch) => ({
   resetPulls: bindActionCreators(resetPullsInfo, dispatch),
   resetProject: bindActionCreators(resetProjectInfo, dispatch),
   getPulls: bindActionCreators(getPullsAction, dispatch),
-  getMyPulls: bindActionCreators(getMyPullsAction, dispatch),
+  getMyPulls: bindActionCreators(getMyPullsAction, dispatch)
 })
 
 const connector = connect(mapStateToProps, mapDispatchToProps)

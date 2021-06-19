@@ -20,19 +20,20 @@ import {
   SetProjects,
   SetRepoAdmins,
   ResetProjectInfo,
-  ResetProjects,
+  ResetProjects
 } from './types'
 import {
   getBaseFiles,
   getProject,
   getTopPlagiarists,
+  getTopCloneSources,
   getProjectConf,
   getProjects,
   getRepoAdmins,
   putProjectConf,
   deleteProject,
   postProject,
-  postAddRepoToProject, getTopCloneSources,
+  postAddRepoToProject
 } from './services'
 
 const setProjects = (payload): SetProjects => ({
@@ -125,16 +126,19 @@ export const getProjectAction = (id: number, handleError?: (msg: string) => void
   }
 }
 
-export const getTopPlagiaristsAction = (projectId: number, handleError?: (msg: string) => void) => async (
-    dispatch: AppDispatch, //
-    getState: AppStateSupplier
+export const getTopPlagiaristsAction = (
+  projectId: number,
+  handleError?: (msg: string) => void
+) => async (
+  dispatch: AppDispatch, //
+  getState: AppStateSupplier
 ) => {
   const { projects } = getState()
   if (
-      projects.topPlagiarists.isFetching ||
-      (projects.topPlagiarists.value &&
-          projects.topPlagiarists.value.length !== 0 &&
-          projects.topPlagiarists.projectId === projectId)
+    projects.topPlagiarists.isFetching ||
+    (projects.topPlagiarists.value &&
+      projects.topPlagiarists.value.length !== 0 &&
+      projects.topPlagiarists.projectId === projectId)
   ) {
     return
   }
@@ -150,16 +154,19 @@ export const getTopPlagiaristsAction = (projectId: number, handleError?: (msg: s
   }
 }
 
-export const getTopCloneSourcesAction = (projectId: number, handleError?: (msg: string) => void) => async (
-    dispatch: AppDispatch, //
-    getState: AppStateSupplier
+export const getTopCloneSourcesAction = (
+  projectId: number,
+  handleError?: (msg: string) => void
+) => async (
+  dispatch: AppDispatch, //
+  getState: AppStateSupplier
 ) => {
   const { projects } = getState()
   if (
-      projects.topCloneSources.isFetching ||
-      (projects.topCloneSources.value &&
-          projects.topCloneSources.value.length !== 0 &&
-          projects.topCloneSources.projectId === projectId)
+    projects.topCloneSources.isFetching ||
+    (projects.topCloneSources.value &&
+      projects.topCloneSources.value.length !== 0 &&
+      projects.topCloneSources.projectId === projectId)
   ) {
     return
   }
@@ -301,12 +308,12 @@ export const createProjectAction = (
 }
 
 export const addRepoToProjectAction = (
-    url: string,
-    handleSuccess?: () => void,
-    handleError?: (msg: string) => void
+  url: string,
+  handleSuccess?: () => void,
+  handleError?: (msg: string) => void
 ) => async (
-    dispatch: AppDispatch, //
-    getState: AppStateSupplier
+  dispatch: AppDispatch, //
+  getState: AppStateSupplier
 ) => {
   await requireToken(dispatch, getState)
   const { users, projects } = getState()

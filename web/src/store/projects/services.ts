@@ -26,25 +26,25 @@ export const getProject = async (id: number): Promise<IProject> => {
 }
 
 export const getTopPlagiarists = async (projectId: number): Promise<ICloneStatistics[]> => {
-    return axios
-      .get(`${API_URL}/api/projects/${projectId}/topPlagiarists`, {
-        headers: {
-            Accept: 'application/json'
-        },
-        withCredentials: true
-      })
-      .then(resp => resp.data as ICloneStatistics[])
+  return axios
+    .get(`${API_URL}/api/projects/${projectId}/topPlagiarists`, {
+      headers: {
+        Accept: 'application/json'
+      },
+      withCredentials: true
+    })
+    .then(resp => resp.data as ICloneStatistics[])
 }
 
 export const getTopCloneSources = async (projectId: number): Promise<ICloneStatistics[]> => {
-    return axios
-        .get(`${API_URL}/api/projects/${projectId}/topCloneSources`, {
-            headers: {
-                Accept: 'application/json'
-            },
-            withCredentials: true
-        })
-        .then(resp => resp.data as ICloneStatistics[])
+  return axios
+    .get(`${API_URL}/api/projects/${projectId}/topCloneSources`, {
+      headers: {
+        Accept: 'application/json'
+      },
+      withCredentials: true
+    })
+    .then(resp => resp.data as ICloneStatistics[])
 }
 
 export const getProjectConf = async (id: number, token: IToken): Promise<IProjectConf> => {
@@ -128,21 +128,25 @@ export const deleteProject = async (id: number, token: IToken): Promise<void> =>
     })
 }
 
-export const postAddRepoToProject = async (id: number, url: string, token: IToken): Promise<IProject | string> => {
-    return axios
-        .post(
-            `${API_URL}/api/projects/${id}/addRepoByUrl`,
-            {
-                url: url
-            },
-            {
-                headers: {
-                    Accept: 'application/json',
-                    Authorization: `Bearer ${token.accessToken}`
-                },
-                withCredentials: true
-            }
-        )
-        .then(resp => resp.data as IProject)
-        .catch(rej => rej.response.data?.code || 'UNKNOWN_ERROR')
+export const postAddRepoToProject = async (
+  id: number,
+  url: string,
+  token: IToken
+): Promise<IProject | string> => {
+  return axios
+    .post(
+      `${API_URL}/api/projects/${id}/addRepoByUrl`,
+      {
+        url
+      },
+      {
+        headers: {
+          Accept: 'application/json',
+          Authorization: `Bearer ${token.accessToken}`
+        },
+        withCredentials: true
+      }
+    )
+    .then(resp => resp.data as IProject)
+    .catch(rej => rej.response.data?.code || 'UNKNOWN_ERROR')
 }
