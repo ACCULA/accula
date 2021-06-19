@@ -33,7 +33,7 @@ configure(subprojects.filterNot(project(":web")::equals)) {
         testAnnotationProcessor(lombok)
     }
 
-    configure<JavaPluginConvention> {
+    configure<JavaPluginExtension> {
         sourceCompatibility = JavaVersion.VERSION_16
     }
 
@@ -49,12 +49,9 @@ configure(subprojects.filterNot(project(":web")::equals)) {
                 sourceDirectories.from(files(sourceSets["main"].allSource.srcDirs))
                 classDirectories.from(files(sourceSets["main"].output))
 
-                csv.isEnabled = false
-
-                listOf(xml, html).forEach { report ->
-                    report.isEnabled = true
-                    report.destination = file("$buildDir/reports/jacoco/coverage.${report.name}")
-                }
+                csv.required.set(false)
+                xml.required.set(true)
+                html.required.set(true)
             }
         }
 
@@ -65,18 +62,19 @@ configure(subprojects.filterNot(project(":web")::equals)) {
                 events(PASSED, SKIPPED, FAILED)
             }
 
+            val testSingleLineRangeCacheSize: String by project
+            systemProperty("org.accula.api.code.lines.LineRange.Single.Cache.size", testSingleLineRangeCacheSize)
+
             finalizedBy(jacocoTestReport)
         }
-    }
 
-    tasks.withType<JavaCompile> {
-        options.compilerArgs.addAll(listOf(
-                "-Xlint:deprecation",
-                "-Xlint:unchecked",
-        ))
-    }
-    tasks.withType<Test> {
-        val testSingleLineRangeCacheSize: String by project
-        systemProperty("org.accula.api.code.lines.LineRange.Single.Cache.size", testSingleLineRangeCacheSize)
+        withType<JavaCompile> {
+            options.compilerArgs.addAll(
+                listOf(
+                    "-Xlint:deprecation",
+                    "-Xlint:unchecked",
+                )
+            )
+        }
     }
 }
