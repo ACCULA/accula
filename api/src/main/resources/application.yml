@@ -3,6 +3,10 @@ spring:
     include:
       - secrets
 
+  sql:
+    init:
+      mode: never
+
   flyway:
     url: jdbc:postgresql://${DB_HOST}/${DB_NAME}
     user: ${DB_USER}
