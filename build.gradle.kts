@@ -33,8 +33,10 @@ configure(subprojects.filterNot(project(":web")::equals)) {
         testAnnotationProcessor(lombok)
     }
 
-    configure<JavaPluginExtension> {
-        sourceCompatibility = JavaVersion.VERSION_16
+    java {
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(16))
+        }
     }
 
     tasks {
@@ -68,7 +70,7 @@ configure(subprojects.filterNot(project(":web")::equals)) {
             finalizedBy(jacocoTestReport)
         }
 
-        withType<JavaCompile> {
+        compileJava {
             options.compilerArgs.addAll(
                 listOf(
                     "-Xlint:deprecation",
