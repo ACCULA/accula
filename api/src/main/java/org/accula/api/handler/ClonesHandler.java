@@ -95,6 +95,16 @@ public final class ClonesHandler {
             .onErrorResume(NumberFormatException.class, Lambda.expandingWithArg(Responses::badRequest));
     }
 
+    public Mono<ServerResponse> topSources(final ServerRequest request) {
+        return Mono
+            .defer(() -> cloneRepo
+                .topSources(PathVariableExtractor.projectId(request))
+                .map(ModelToDtoConverter::convert)
+                .collectList()
+                .flatMap(Responses::ok))
+            .onErrorResume(NumberFormatException.class, Lambda.expandingWithArg(Responses::badRequest));
+    }
+
     private <T> Flux<T> havingAdminPermissionAtProject(final Long projectId, final Flux<T> action) {
         return currentUserRepo
                 .get(User::id)

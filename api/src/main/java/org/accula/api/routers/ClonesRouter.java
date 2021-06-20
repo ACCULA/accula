@@ -22,6 +22,7 @@ public final class ClonesRouter {
             .route()
             .path("/api/projects/{projectId}", b -> b
                 .GET("/topPlagiarists", clonesHandler::topPlagiarists)
+                .GET("/topCloneSources", clonesHandler::topSources)
                 .path("/pulls/{pullNumber}/clones", b1 -> b1
                     .GET("", clonesHandler::getPullClones)
                     .POST("/refresh", clonesHandler::refreshClones)))

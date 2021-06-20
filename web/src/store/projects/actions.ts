@@ -6,6 +6,7 @@ import {
   SET_BASE_FILES,
   SET_PROJECT,
   SET_TOP_PLAGIARISTS,
+  SET_TOP_CLONE_SOURCES,
   SET_PROJECT_CONF,
   SET_PROJECTS,
   SET_REPO_ADMINS,
@@ -14,6 +15,7 @@ import {
   SetBaseFiles,
   SetProject,
   SetTopPlagiarists,
+  SetTopCloneSources,
   SetProjectConf,
   SetProjects,
   SetRepoAdmins,
@@ -24,13 +26,14 @@ import {
   getBaseFiles,
   getProject,
   getTopPlagiarists,
+  getTopCloneSources,
   getProjectConf,
   getProjects,
   getRepoAdmins,
   putProjectConf,
   deleteProject,
   postProject,
-  postAddRepoToProject,
+  postAddRepoToProject
 } from './services'
 
 const setProjects = (payload): SetProjects => ({
@@ -45,6 +48,11 @@ const setProject = (payload): SetProject => ({
 
 const setTopPlagiarists = (payload): SetTopPlagiarists => ({
   type: SET_TOP_PLAGIARISTS,
+  payload
+})
+
+const setTopCloneSources = (payload): SetTopCloneSources => ({
+  type: SET_TOP_CLONE_SOURCES,
   payload
 })
 
@@ -118,16 +126,19 @@ export const getProjectAction = (id: number, handleError?: (msg: string) => void
   }
 }
 
-export const getTopPlagiaristsAction = (projectId: number, handleError?: (msg: string) => void) => async (
-    dispatch: AppDispatch, //
-    getState: AppStateSupplier
+export const getTopPlagiaristsAction = (
+  projectId: number,
+  handleError?: (msg: string) => void
+) => async (
+  dispatch: AppDispatch, //
+  getState: AppStateSupplier
 ) => {
   const { projects } = getState()
   if (
-      projects.topPlagiarists.isFetching ||
-      (projects.topPlagiarists.value &&
-          projects.topPlagiarists.value.length !== 0 &&
-          projects.topPlagiarists.projectId === projectId)
+    projects.topPlagiarists.isFetching ||
+    (projects.topPlagiarists.value &&
+      projects.topPlagiarists.value.length !== 0 &&
+      projects.topPlagiarists.projectId === projectId)
   ) {
     return
   }
@@ -137,6 +148,34 @@ export const getTopPlagiaristsAction = (projectId: number, handleError?: (msg: s
     dispatch(setTopPlagiarists(fetched(result)))
   } catch (e) {
     dispatch(setTopPlagiarists(failed(e)))
+    if (handleError) {
+      handleError(e.message)
+    }
+  }
+}
+
+export const getTopCloneSourcesAction = (
+  projectId: number,
+  handleError?: (msg: string) => void
+) => async (
+  dispatch: AppDispatch, //
+  getState: AppStateSupplier
+) => {
+  const { projects } = getState()
+  if (
+    projects.topCloneSources.isFetching ||
+    (projects.topCloneSources.value &&
+      projects.topCloneSources.value.length !== 0 &&
+      projects.topCloneSources.projectId === projectId)
+  ) {
+    return
+  }
+  try {
+    dispatch(setTopCloneSources(fetching))
+    const result = await getTopCloneSources(projectId)
+    dispatch(setTopCloneSources(fetched(result)))
+  } catch (e) {
+    dispatch(setTopCloneSources(failed(e)))
     if (handleError) {
       handleError(e.message)
     }
@@ -269,12 +308,12 @@ export const createProjectAction = (
 }
 
 export const addRepoToProjectAction = (
-    url: string,
-    handleSuccess?: () => void,
-    handleError?: (msg: string) => void
+  url: string,
+  handleSuccess?: () => void,
+  handleError?: (msg: string) => void
 ) => async (
-    dispatch: AppDispatch, //
-    getState: AppStateSupplier
+  dispatch: AppDispatch, //
+  getState: AppStateSupplier
 ) => {
   await requireToken(dispatch, getState)
   const { users, projects } = getState()

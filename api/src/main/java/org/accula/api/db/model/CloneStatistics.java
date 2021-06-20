@@ -8,7 +8,8 @@ import lombok.Value;
  */
 @Builder
 @Value
-public class Plagiarist {
+public class CloneStatistics {
     GithubUser user;
     Integer cloneCount;
+    Integer lineCount;
 }

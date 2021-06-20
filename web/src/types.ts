@@ -91,13 +91,14 @@ export interface IProject {
   secondaryRepos: IShortProject[]
 }
 
-export interface IPlagiarist {
+export interface ICloneStatistics {
   user: {
     url: string
     login: string
     avatar: string
   },
   cloneCount: number,
+  lineCount: number,
 }
 
 export interface IProjectConf {
