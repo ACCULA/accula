@@ -1,5 +1,6 @@
 package org.accula.api.handler;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.accula.api.config.WebhookProperties;
@@ -20,11 +21,9 @@ import org.accula.api.github.model.GithubApiHook;
 import org.accula.api.github.model.GithubApiPull.State;
 import org.accula.api.handler.dto.AddRepoDto;
 import org.accula.api.handler.dto.CreateProjectDto;
-import org.accula.api.handler.dto.InputDto;
 import org.accula.api.handler.dto.ProjectConfDto;
 import org.accula.api.handler.dto.ProjectDto;
 import org.accula.api.handler.dto.RepoShortDto;
-import org.accula.api.handler.dto.validation.Errors;
 import org.accula.api.handler.dto.validation.InputDtoValidator;
 import org.accula.api.handler.exception.Http4xxException;
 import org.accula.api.handler.exception.ProjectsHandlerException;
@@ -46,7 +45,6 @@ import reactor.function.TupleUtils;
 import reactor.util.context.ContextView;
 
 import java.util.List;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -60,10 +58,12 @@ import static java.util.function.Predicate.isEqual;
 @Component
 @Slf4j
 @RequiredArgsConstructor
-public final class ProjectsHandler {
+public final class ProjectsHandler implements Handler {
     private final Suggester suggester = new Suggester();
+    @Getter
     private final InputDtoValidator validator;
     private final WebhookProperties webhookProperties;
+    @Getter
     private final CurrentUserRepo currentUserRepo;
     private final GithubClient githubClient;
     private final ProjectRepo projectRepo;
@@ -94,8 +94,8 @@ public final class ProjectsHandler {
     }
 
     public Mono<ServerResponse> create(final ServerRequest request) {
-        return request
-                .bodyToMono(CreateProjectDto.class)
+        return checkAdminRole()
+                .then(request.bodyToMono(CreateProjectDto.class))
                 .doOnNext(this::validate)
                 .map(RepoIdentityExtractor::repoIdentity)
                 .flatMap(this::retrieveGithubRepoInfo)
@@ -338,20 +338,5 @@ public final class ProjectsHandler {
             .suggest(project.githubRepo().name(), reposUserHasAccessTo, RepoShortDto::name)
             .filter(repo -> !projectRepos.contains(repo.id()))
             .toList();
-    }
-
-    private void validate(final InputDto dto) {
-        validate(dto, ProjectsHandlerException::badFormat, "Bad format: ");
-    }
-
-    private void validate(final InputDto object,
-                          final Function<String, ResponseConvertibleException> exceptionFactory,
-                          final String... exceptionMessagePrefix) {
-        final var errors = new Errors(object, object.getClass().getSimpleName());
-        validator.validate(object, errors);
-        if (errors.hasErrors()) {
-            final var prefix = exceptionMessagePrefix.length == 1 ? exceptionMessagePrefix[0] : "";
-            throw exceptionFactory.apply(prefix + errors.joinedDescription());
-        }
     }
 }

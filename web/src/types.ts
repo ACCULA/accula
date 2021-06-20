@@ -4,11 +4,25 @@ export interface IToken {
   accessToken: string
 }
 
+export type UserRole = 'USER' | 'ADMIN' | 'ROOT'
+
 export interface IUser {
   id: number
   login: string
   name: string
   avatar: string
+  role: UserRole
+}
+
+export const hasAtLeastAdminRole = (user: IUser) => {
+  if (user === undefined) {
+    return false
+  }
+  if (!user) {
+    return false
+  }
+  const { role } = user
+  return role === 'ADMIN' || role === 'ROOT'
 }
 
 export interface IDiffColors {
@@ -60,6 +74,12 @@ export interface ISettings {
   splitCodeView: SplitCodeView
 }
 
+export interface IAppSettings {
+  users?: IUser[]
+  roots?: number[]
+  admins: number[]
+}
+
 export interface IRouteInfo {
   path: string
   name: string
@@ -96,9 +116,9 @@ export interface ICloneStatistics {
     url: string
     login: string
     avatar: string
-  },
-  cloneCount: number,
-  lineCount: number,
+  }
+  cloneCount: number
+  lineCount: number
 }
 
 export interface IProjectConf {

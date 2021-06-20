@@ -3,8 +3,11 @@ package org.accula.api.auth.oauth2;
 import lombok.RequiredArgsConstructor;
 import org.accula.api.auth.jwt.JwtAccessTokenResponseProducer;
 import org.accula.api.auth.jwt.crypto.Jwt;
+import org.accula.api.config.RoleProperties;
 import org.accula.api.converter.GithubApiToModelConverter;
+import org.accula.api.db.model.GithubUser;
 import org.accula.api.db.model.RefreshToken;
+import org.accula.api.db.model.User;
 import org.accula.api.db.repo.RefreshTokenRepo;
 import org.accula.api.db.repo.UserRepo;
 import org.springframework.security.core.Authentication;
@@ -40,6 +43,7 @@ public final class OAuth2LoginSuccessHandler implements ServerAuthenticationSucc
     private final ReactiveOAuth2AuthorizedClientService authorizedClientService;
     private final UserRepo userRepo;
     private final RefreshTokenRepo refreshTokenRepo;
+    private final RoleProperties roles;
 
     @Override
     public Mono<Void> onAuthenticationSuccess(final WebFilterExchange exchange, final Authentication authentication) {
@@ -53,7 +57,7 @@ public final class OAuth2LoginSuccessHandler implements ServerAuthenticationSucc
             return authorizedClientService
                     .loadAuthorizedClient(authenticationToken.getAuthorizedClientRegistrationId(), authenticationToken.getName())
                     .map(authorizedClient -> authorizedClient.getAccessToken().getTokenValue())
-                    .flatMap(githubAccessToken -> userRepo.upsert(githubUser, githubAccessToken))
+                    .flatMap(githubAccessToken -> upsertUser(githubUser, githubAccessToken))
                     .flatMap(user -> {
                         final var userId = user.id();
                         final var refreshJwtDetails = jwt.generate(userId.toString(), refreshExpiresIn);
@@ -71,5 +75,18 @@ public final class OAuth2LoginSuccessHandler implements ServerAuthenticationSucc
                         return responseProducer.formSuccessRedirect(exchange.getExchange(), userId, refreshToken);
                     });
         });
+    }
+
+    private Mono<User> upsertUser(final GithubUser githubUser, final String githubAccessToken) {
+        final var githubUserId = githubUser.id();
+        final User.Role role;
+        if (roles.root().contains(githubUserId)) {
+            role = User.Role.ROOT;
+        } else if (roles.admin().contains(githubUserId)) {
+            role = User.Role.ADMIN;
+        } else {
+            role = User.Role.USER;
+        }
+        return userRepo.upsert(User.noIdentity(githubAccessToken, githubUser, role));
     }
 }

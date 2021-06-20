@@ -77,3 +77,8 @@ accula:
   code:
     lines:
       cache: 500
+
+  role:
+    root: ${ROLE_ROOT}
+    admin: ${ROLE_ADMIN}
+

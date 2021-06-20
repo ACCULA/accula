@@ -255,7 +255,8 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
                        ug.login               AS github_login,
                        ug.name                AS github_name,
                        ug.avatar              AS github_avatar,
-                       ug.is_org              AS github_org
+                       ug.is_org              AS github_org,
+                       u.role
                 FROM project
                     JOIN user_ u
                         ON project.creator_id = u.id
@@ -275,7 +276,8 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
                            ug.login               AS github_login,
                            ug.name                AS github_name,
                            ug.avatar              AS github_avatar,
-                           ug.is_org              AS github_org
+                           ug.is_org              AS github_org,
+                           u.role
                     FROM project_repo
                         JOIN project
                             ON project_repo.project_id = project.id
@@ -335,6 +337,7 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
                        project_creator_github_user.name    AS project_creator_github_user_name,
                        project_creator_github_user.avatar  AS project_creator_github_user_avatar,
                        project_creator_github_user.is_org  AS project_creator_github_user_is_org,
+                       project_creator.role                AS project_creator_role,
                        pulls.count                         AS project_open_pull_count,
                        admins.ids                          AS project_admins
 
@@ -446,7 +449,8 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
                         "project_creator_github_user_login",
                         "project_creator_github_user_name",
                         "project_creator_github_user_avatar",
-                        "project_creator_github_user_is_org"))
+                        "project_creator_github_user_is_org",
+                        "project_creator_role"))
                 .openPullCount(Converters.integer(row, "project_open_pull_count", 0))
                 .adminIds(Converters.ids(row, "project_admins"))
                 .build();

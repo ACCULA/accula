@@ -7,6 +7,7 @@ import io.r2dbc.postgresql.PostgresqlConnectionFactory;
 import io.r2dbc.postgresql.codec.EnumCodec;
 import lombok.RequiredArgsConstructor;
 import org.accula.api.db.model.Project;
+import org.accula.api.db.model.User;
 import org.accula.api.db.repo.ConnectionProvidedRepo;
 import org.accula.api.db.repo.type.Enums;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -38,6 +39,7 @@ public class DbConfig extends AbstractR2dbcConfiguration {
                 .database(dbProperties.database())
                 .codecRegistrar(EnumCodec.builder()
                         .withEnum(Enums.PROJECT_STATE, Project.State.class)
+                        .withEnum(Enums.USER_ROLE, User.Role.class)
                         .build())
                 .build());
 

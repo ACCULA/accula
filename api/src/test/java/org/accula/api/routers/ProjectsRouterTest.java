@@ -31,8 +31,8 @@ import org.accula.api.handler.dto.ProjectConfDto;
 import org.accula.api.handler.dto.ProjectDto;
 import org.accula.api.handler.dto.RepoShortDto;
 import org.accula.api.handler.dto.UserDto;
+import org.accula.api.handler.exception.HandlerException;
 import org.accula.api.handler.exception.ProjectsHandlerException;
-import org.accula.api.handler.exception.ResponseConvertibleException;
 import org.accula.api.service.CloneDetectionService;
 import org.accula.api.service.ProjectService;
 import org.hamcrest.Matchers;
@@ -55,6 +55,7 @@ import java.util.List;
 
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
+import static org.accula.api.util.ApiErrors.toApiError;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
@@ -97,11 +98,14 @@ class ProjectsRouterTest {
     static final GithubRepo REPO_HIGHLOAD = GithubRepo.builder().id(1L).name(REPO_NAME_HIGHLOAD4).isPrivate(false).description("description").owner(GITHUB_USER_HIGHLOAD).build();
     static final List<Pull> PULLS = List.of(PULL, PULL, PULL);
     static final String EMPTY = "";
-    static final User CURRENT_USER = new User(0L, "", GITHUB_USER);
+    static final User CURRENT_USER = new User(0L, "", GITHUB_USER, User.Role.ROOT);
+    static final User CURRENT_USER_ADMIN = new User(0L, "", GITHUB_USER, User.Role.ADMIN);
     static final GithubUser GH_USER_2 = GithubUser.builder().id(2L).login("l").name("n").avatar("a").isOrganization(false).build();
-    static final User USER_2 = new User(1L, "", GH_USER_2);
+    static final GithubUser GH_USER_4 = GithubUser.builder().id(4L).login("l").name("n").avatar("a").isOrganization(false).build();
+    static final User USER_2 = new User(1L, "", GH_USER_2, User.Role.USER);
     static final GithubUser GH_USER_3 = GithubUser.builder().id(3L).login("l").name("n").avatar("a").isOrganization(false).build();
-    static final User USER_3 = new User(2L, "", GH_USER_3);
+    static final User USER_3 = new User(2L, "", GH_USER_3, User.Role.USER);
+    static final User USER_4 = new User(4L, "", GH_USER_4, User.Role.USER);
     static final GithubApiUser GH_OWNER = new GithubApiUser(1L, REPO_OWNER, EMPTY, EMPTY, EMPTY, GithubApiUser.Type.USER);
     static final GithubApiUser GH_OWNER_HIGHLOAD = new GithubApiUser(1L, REPO_OWNER_HIGHLOAD, EMPTY, EMPTY, EMPTY, GithubApiUser.Type.USER);
     static final GithubApiRepo GH_REPO = new GithubApiRepo(1L, REPO_URL, REPO_NAME, false, EMPTY, GH_OWNER);
@@ -205,7 +209,23 @@ class ProjectsRouterTest {
     }
 
     @Test
+    void testCreateProjectInsufficientRole() {
+        when(currentUser.get())
+            .thenReturn(Mono.just(USER_2));
+
+        client.post().uri("/api/projects")
+            .contentType(APPLICATION_JSON)
+            .bodyValue(REQUEST_BODY)
+            .exchange()
+            .expectStatus().isForbidden()
+            .expectBody(ApiError.class).isEqualTo(toApiError(HandlerException.atLeastRoleRequired(User.Role.ADMIN)));
+    }
+
+    @Test
     void testCreateProjectFailureInvalidUrl() {
+        when(currentUser.get())
+            .thenReturn(Mono.just(CURRENT_USER));
+
         client.post().uri("/api/projects")
                 .contentType(APPLICATION_JSON)
                 .bodyValue(REQUEST_BODY_INVALID_URL)
@@ -217,7 +237,7 @@ class ProjectsRouterTest {
     @Test
     void testCreateProjectFailureWrongUrl() {
         when(currentUser.get())
-                .thenReturn(Mono.just(CURRENT_USER));
+                .thenReturn(Mono.just(CURRENT_USER_ADMIN));
 
         // simulate github client error that is usually caused by wrong url
         when(githubClient.hasAdminPermission(Mockito.anyString(), Mockito.anyString()))
@@ -694,12 +714,5 @@ class ProjectsRouterTest {
         final var ctor = GithubClientException.class.getDeclaredConstructor(Throwable.class);
         ctor.setAccessible(true);
         return ctor.newInstance(new RuntimeException());
-    }
-
-    @SneakyThrows
-    private ApiError toApiError(ResponseConvertibleException e) {
-        final var toApiError = ResponseConvertibleException.class.getDeclaredMethod("toApiError");
-        toApiError.setAccessible(true);
-        return (ApiError) toApiError.invoke(e);
     }
 }

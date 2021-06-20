@@ -26,6 +26,7 @@ import java.util.List;
 final class Converters {
     static final String NOTHING = "";
     static final String EMPTY_CLAUSE = NOTHING;
+    static final char IDENT = ' ';
 
     private Converters() {
     }
@@ -136,11 +137,13 @@ final class Converters {
                             final String githubLogin,
                             final String githubName,
                             final String githubAvatar,
-                            final String githubOrganization) {
+                            final String githubOrganization,
+                            final String role) {
         return new User(
                 longInteger(row, id),
                 string(row, accessToken),
-                convertUser(row, githubId, githubLogin, githubName, githubAvatar, githubOrganization)
+                convertUser(row, githubId, githubLogin, githubName, githubAvatar, githubOrganization),
+                value(row, role, User.Role.class)
         );
     }
 

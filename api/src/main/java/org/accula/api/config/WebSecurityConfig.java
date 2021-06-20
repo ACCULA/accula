@@ -45,11 +45,15 @@ import static org.springframework.security.web.server.util.matcher.ServerWebExch
  * @author Vadim Dyachkov
  */
 @EnableWebFluxSecurity
-@EnableConfigurationProperties(JwtProperties.class)
+@EnableConfigurationProperties({
+    JwtProperties.class,
+    RoleProperties.class,
+})
 @RequiredArgsConstructor
 public class WebSecurityConfig {
     private final ReactiveClientRegistrationRepository clientRegistrations;
     private final JwtProperties jwtProperties;
+    private final RoleProperties roleProperties;
     @Value("${accula.cluster.webUrl}")
     private String webUrl;
 
@@ -83,7 +87,7 @@ public class WebSecurityConfig {
                         .pathMatchers(GET, "/api/projects/{id}/repoSuggestion").authenticated()
                         .pathMatchers(GET, "/api/projects/**").permitAll()
                         .pathMatchers("/api/projects/**").authenticated()
-                        .pathMatchers(GET, "/api/app/settingsUrl").authenticated()
+                        .pathMatchers("/api/app/**").authenticated()
                         .anyExchange().permitAll())
 
                 .addFilterAt(corsWebFilter, CORS)
@@ -140,7 +144,8 @@ public class WebSecurityConfig {
                 jwtProperties.expiresIn().refresh(),
                 authorizedClientService,
                 users,
-                refreshTokens
+                refreshTokens,
+                roleProperties
         );
     }
 

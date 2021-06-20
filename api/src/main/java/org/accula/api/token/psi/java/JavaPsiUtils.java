@@ -3,7 +3,6 @@ package org.accula.api.token.psi.java;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.impl.java.stubs.JavaAnnotationElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -20,7 +19,8 @@ import java.util.function.Predicate;
  */
 public final class JavaPsiUtils {
     private static final TokenSet OPTIONAL_TOKENS = TokenSet.create(
-            new JavaAnnotationElementType(),
+            JavaElementType.ANNOTATION,
+            JavaElementType.ANNOTATION_PARAMETER_LIST,
             JavaTokenType.FINAL_KEYWORD,
             JavaTokenType.C_STYLE_COMMENT,
             JavaTokenType.END_OF_LINE_COMMENT,
