@@ -26,13 +26,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import static org.accula.api.db.model.User.Role.*;
-import static org.accula.api.routers.ProjectsRouterTest.CURRENT_USER;
-import static org.accula.api.routers.ProjectsRouterTest.CURRENT_USER_ADMIN;
-import static org.accula.api.routers.ProjectsRouterTest.USER_2;
-import static org.accula.api.routers.ProjectsRouterTest.USER_3;
-import static org.accula.api.routers.ProjectsRouterTest.USER_4;
+import static org.accula.api.db.model.User.Role.ADMIN;
+import static org.accula.api.db.model.User.Role.ROOT;
 import static org.accula.api.util.ApiErrors.toApiError;
+import static org.accula.api.util.TestData.admin;
+import static org.accula.api.util.TestData.lamtev;
+import static org.accula.api.util.TestData.user;
+import static org.accula.api.util.TestData.user1;
+import static org.accula.api.util.TestData.user2;
+import static org.accula.api.util.TestData.vaddya;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -89,9 +91,9 @@ class AppRouterTest {
     @Test
     void testGetSettings() {
         when(currentUser.get())
-            .thenReturn(Mono.just(CURRENT_USER));
+            .thenReturn(Mono.just(lamtev));
         when(userRepo.findAll())
-            .thenReturn(Flux.just(USER_2, CURRENT_USER_ADMIN, USER_3, USER_4, CURRENT_USER));
+            .thenReturn(Flux.just(user, vaddya, admin, user1, user2, lamtev));
 
         client
             .get()
@@ -99,41 +101,41 @@ class AppRouterTest {
             .exchange()
             .expectStatus().isOk()
             .expectBody(AppSettingsDto.class).value(settings -> {
-                assertEquals(Stream.of(USER_2, USER_3, USER_4).map(ModelToDtoConverter::convert).toList(), settings.users());
-                assertEquals(List.of(CURRENT_USER_ADMIN.id()), settings.admins());
-                assertEquals(List.of(CURRENT_USER.id()), settings.roots());
+                assertEquals(Stream.of(user, admin, user1, user2).map(ModelToDtoConverter::convertWithRole).toList(), settings.users());
+                assertEquals(List.of(admin.id()), settings.admins());
+                assertEquals(List.of(lamtev.id(), vaddya.id()), settings.roots());
             });
     }
 
     @Test
     void testUpdateSettings() {
         when(currentUser.get())
-            .thenReturn(Mono.just(CURRENT_USER));
+            .thenReturn(Mono.just(lamtev));
 
         when(userRepo.findAll())
-            .thenReturn(Flux.just(USER_2, CURRENT_USER_ADMIN, USER_3, USER_4, CURRENT_USER));
+            .thenReturn(Flux.just(user, vaddya, admin, user1, user2, lamtev));
 
         when(userRepo.setAdminRole(anyCollection()))
-            .thenReturn(Mono.just(List.of(USER_2, CURRENT_USER_ADMIN, USER_3.withRole(ADMIN), USER_4, CURRENT_USER)));
+            .thenReturn(Mono.just(List.of(user, vaddya, admin, user1.withRole(ADMIN), user2, lamtev)));
 
         client
             .put()
             .uri("/api/app/settings")
             .contentType(APPLICATION_JSON)
-            .bodyValue(new AppSettingsDto(null, null, Stream.of(USER_3).map(User::id).toList()))
+            .bodyValue(new AppSettingsDto(null, null, Stream.of(user1).map(User::id).toList()))
             .exchange()
             .expectStatus().isCreated()
             .expectBody(AppSettingsDto.class).value(settings -> {
-                assertEquals(Stream.of(USER_2, USER_3.withRole(ADMIN), USER_4).map(ModelToDtoConverter::convert).toList(), settings.users());
-                assertEquals(List.of(CURRENT_USER_ADMIN.id(), USER_3.id()), settings.admins());
-                assertEquals(List.of(CURRENT_USER.id()), settings.roots());
+                assertEquals(Stream.of(user, admin, user1.withRole(ADMIN), user2).map(ModelToDtoConverter::convertWithRole).toList(), settings.users());
+                assertEquals(List.of(admin.id(), user1.id()), settings.admins());
+                assertEquals(List.of(lamtev.id(), vaddya.id()), settings.roots());
             });
     }
 
     @Test
     void testUpdateSettingsNoRootRole() {
         when(currentUser.get())
-            .thenReturn(Mono.just(CURRENT_USER_ADMIN));
+            .thenReturn(Mono.just(admin));
 
         client
             .put()
