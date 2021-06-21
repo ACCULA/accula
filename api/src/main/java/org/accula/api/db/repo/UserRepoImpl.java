@@ -99,6 +99,10 @@ public final class UserRepoImpl implements UserRepo, ConnectionProvidedRepo {
             return transactional(connection -> findAll(connection)
                 .collectList()
                 .flatMap(allUsers -> {
+                    if (allUsers.isEmpty()) {
+                        return Mono.empty();
+                    }
+
                     final var newAdmins = allUsers
                         .stream()
                         .map(user -> {
