@@ -63,7 +63,7 @@ public final class AppHandler implements Handler {
         final var users = allUsers
             .stream()
             .filter(user -> !roots.contains(user.id()))
-            .map(ModelToDtoConverter::convert)
+            .map(ModelToDtoConverter::convertWithRole)
             .toList();
         return new AppSettingsDto(users, roots, admins);
     }

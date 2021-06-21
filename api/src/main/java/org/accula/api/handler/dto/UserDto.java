@@ -17,6 +17,7 @@ public class UserDto {
     @Nullable
     String name;
     String avatar;
+    @Nullable
     Role role;
 
     public enum Role {

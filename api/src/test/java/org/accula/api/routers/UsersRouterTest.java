@@ -1,16 +1,13 @@
 package org.accula.api.routers;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.SneakyThrows;
-import lombok.Value;
 import org.accula.api.converter.ModelToDtoConverter;
-import org.accula.api.db.model.GithubUser;
-import org.accula.api.db.model.User;
+import org.accula.api.db.repo.CurrentUserRepo;
 import org.accula.api.db.repo.UserRepo;
 import org.accula.api.handler.UsersHandler;
+import org.accula.api.handler.dto.UserDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -19,6 +16,11 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
+
+import static org.accula.api.util.TestData.lamtev;
+import static org.accula.api.util.TestData.polis;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Anton Lamtev
@@ -29,13 +31,14 @@ import reactor.core.publisher.Mono;
     UsersHandler.class,
 })
 public class UsersRouterTest {
-    static final GithubUser GITHUB_USER = GithubUser.builder().id(1L).login("login").name("name").avatar("ava").isOrganization(false).build();
-    static final User STUB_USER = new User(1L, "token", GITHUB_USER, User.Role.USER);
-    private static final ResponseUser RESPONSE_USER =
-            new ResponseUser(STUB_USER.id(), GITHUB_USER.login(), GITHUB_USER.name());
+    private static final UserDto RESPONSE_USER_WITH_ROLE = ModelToDtoConverter.convertWithRole(polis);
+    private static final UserDto RESPONSE_USER = ModelToDtoConverter.convert(polis);
 
     @MockBean
-    private UserRepo repository;
+    private UserRepo userRepo;
+    @MockBean
+    private CurrentUserRepo currentUserRepo;
+
     @Autowired
     private RouterFunction<ServerResponse> usersRoute;
     private WebTestClient client;
@@ -50,13 +53,43 @@ public class UsersRouterTest {
     @SneakyThrows
     @Test
     public void testGetUserByIdOk() {
-        Mockito.when(repository.findById(Mockito.anyLong()))
-                .thenReturn(Mono.just(STUB_USER));
+        when(userRepo.findById(anyLong()))
+            .thenReturn(Mono.just(polis));
+        when(currentUserRepo.get())
+            .thenReturn(Mono.empty());
 
-        client.get().uri("/api/users/{id}", RESPONSE_USER.id)
+        client.get().uri("/api/users/{id}", RESPONSE_USER.id())
                 .exchange()
                 .expectStatus().isOk()
-                .expectBody(ResponseUser.class).isEqualTo(RESPONSE_USER);
+                .expectBody(UserDto.class).isEqualTo(RESPONSE_USER);
+    }
+
+    @SneakyThrows
+    @Test
+    public void testGetUserByIdOkWithRoleAsRoot() {
+        when(userRepo.findById(anyLong()))
+            .thenReturn(Mono.just(polis));
+        when(currentUserRepo.get())
+            .thenReturn(Mono.just(lamtev));
+
+        client.get().uri("/api/users/{id}", RESPONSE_USER_WITH_ROLE.id())
+            .exchange()
+            .expectStatus().isOk()
+            .expectBody(UserDto.class).isEqualTo(RESPONSE_USER_WITH_ROLE);
+    }
+
+    @SneakyThrows
+    @Test
+    public void testGetUserByIdOkWithRoleAsCurrentUser() {
+        when(userRepo.findById(anyLong()))
+            .thenReturn(Mono.just(polis));
+        when(currentUserRepo.get())
+            .thenReturn(Mono.just(polis));
+
+        client.get().uri("/api/users/{id}", RESPONSE_USER_WITH_ROLE.id())
+            .exchange()
+            .expectStatus().isOk()
+            .expectBody(UserDto.class).isEqualTo(RESPONSE_USER_WITH_ROLE);
     }
 
     @Test
@@ -68,19 +101,13 @@ public class UsersRouterTest {
 
     @Test
     public void testGetUserByIdNotFoundInRepo() {
-        Mockito.when(repository.findById(Mockito.anyLong()))
+        when(userRepo.findById(anyLong()))
                 .thenReturn(Mono.empty());
+        when(currentUserRepo.get())
+            .thenReturn(Mono.empty());
 
-        client.get().uri("/api/users/{id}", RESPONSE_USER.id)
+        client.get().uri("/api/users/{id}", RESPONSE_USER.id())
                 .exchange()
                 .expectStatus().isNotFound();
-    }
-
-    @JsonInclude
-    @Value
-    private static class ResponseUser {
-        Long id;
-        String login;
-        String name;
     }
 }
