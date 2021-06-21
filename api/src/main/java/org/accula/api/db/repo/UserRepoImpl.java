@@ -125,7 +125,9 @@ public final class UserRepoImpl implements UserRepo, ConnectionProvidedRepo {
                     return setUserRole(connection)
                         .thenEmpty(setAdminRole(connection, newAdmins))
                         .thenReturn(allUsers);
-                }));
+                }))
+                .doOnNext(u -> onUpserts
+                    .forEach(onUpsert -> onUpsert.onUpsert(null)));
         });
     }
 

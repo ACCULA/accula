@@ -1,6 +1,7 @@
 package org.accula.api.db.repo;
 
 import org.accula.api.db.model.User;
+import org.jetbrains.annotations.Nullable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -25,6 +26,6 @@ public interface UserRepo {
 
     @FunctionalInterface
     interface OnUpsert {
-        void onUpsert(Long userId);
+        void onUpsert(@Nullable Long userId);
     }
 }
