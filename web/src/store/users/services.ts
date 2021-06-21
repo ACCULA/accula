@@ -24,11 +24,12 @@ const updateRefreshToken = (endpoint: AuthEndpoint): Promise<IToken> => {
 export const refreshToken = () => updateRefreshToken(REFRESH_TOKEN)
 export const logout = () => updateRefreshToken(LOGOUT)
 
-export const getUserById = async (id: number): Promise<IUser> => {
+export const getUserById = async (id: number, token: IToken): Promise<IUser> => {
   return axios
     .get(`${API_URL}/api/users/${id}`, {
       headers: {
-        Accept: 'application/json'
+        Accept: 'application/json',
+        Authorization: `Bearer ${token.accessToken}`
       },
       withCredentials: true
     })

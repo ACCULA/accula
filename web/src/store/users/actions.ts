@@ -63,7 +63,7 @@ export const getCurrentUserAction = () => async (
     }
 
     dispatch(setUser(fetching))
-    const user = await getUserById(id)
+    const user = await getUserById(id, users.token)
     dispatch(setUser(fetched(user)))
   } catch (e) {
     dispatch(setUser(failed(e)))

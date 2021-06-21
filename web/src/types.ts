@@ -11,7 +11,7 @@ export interface IUser {
   login: string
   name: string
   avatar: string
-  role: UserRole
+  role?: UserRole
 }
 
 export const hasAtLeastAdminRole = (user: IUser) => {
