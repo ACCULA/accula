@@ -56,6 +56,13 @@ import java.util.List;
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 import static org.accula.api.util.ApiErrors.toApiError;
+import static org.accula.api.util.TestData.acculaAccula;
+import static org.accula.api.util.TestData.acculaGithub;
+import static org.accula.api.util.TestData.acculaProject;
+import static org.accula.api.util.TestData.admin;
+import static org.accula.api.util.TestData.lamtev;
+import static org.accula.api.util.TestData.user;
+import static org.accula.api.util.TestData.user1;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
@@ -80,32 +87,22 @@ class ProjectsRouterTest {
     static final String REPO_URL_HIGHLOAD2 = "https://github.com/%s/%s".formatted(REPO_OWNER_HIGHLOAD, REPO_NAME_HIGHLOAD2);
     static final String REPO_URL_HIGHLOAD3 = "https://github.com/%s/%s".formatted(REPO_OWNER_HIGHLOAD, REPO_NAME_HIGHLOAD3);
 
-    static final GithubUser GITHUB_USER = GithubUser.builder().id(1L).login("accula").name("name").avatar("avatar").isOrganization(false).build();
-    static final GithubRepo REPO = GithubRepo.builder().id(1L).name("accula").isPrivate(false).description("description").owner(GITHUB_USER).build();
     static final Pull PULL = Pull.builder()
             .id(1L)
             .number(2)
             .isOpen(true)
             .createdAt(Instant.MIN)
             .updatedAt(Instant.EPOCH)
-            .author(GITHUB_USER)
+            .author(acculaGithub)
             .title("title")
-            .head(Snapshot.builder().repo(REPO).branch("branch1").build())
-            .base(Snapshot.builder().repo(REPO).branch("branch2").build())
+            .head(Snapshot.builder().repo(acculaAccula).branch("branch1").build())
+            .base(Snapshot.builder().repo(acculaAccula).branch("branch2").build())
             .primaryProjectId(1L)
             .build();
     static final GithubUser GITHUB_USER_HIGHLOAD = GithubUser.builder().id(1L).login(REPO_OWNER_HIGHLOAD).name(REPO_OWNER_HIGHLOAD).avatar("avatar").isOrganization(false).build();
     static final GithubRepo REPO_HIGHLOAD = GithubRepo.builder().id(1L).name(REPO_NAME_HIGHLOAD4).isPrivate(false).description("description").owner(GITHUB_USER_HIGHLOAD).build();
     static final List<Pull> PULLS = List.of(PULL, PULL, PULL);
     static final String EMPTY = "";
-    static final User CURRENT_USER = new User(0L, "", GITHUB_USER, User.Role.ROOT);
-    static final User CURRENT_USER_ADMIN = new User(0L, "", GITHUB_USER, User.Role.ADMIN);
-    static final GithubUser GH_USER_2 = GithubUser.builder().id(2L).login("l").name("n").avatar("a").isOrganization(false).build();
-    static final GithubUser GH_USER_4 = GithubUser.builder().id(4L).login("l").name("n").avatar("a").isOrganization(false).build();
-    static final User USER_2 = new User(1L, "", GH_USER_2, User.Role.USER);
-    static final GithubUser GH_USER_3 = GithubUser.builder().id(3L).login("l").name("n").avatar("a").isOrganization(false).build();
-    static final User USER_3 = new User(2L, "", GH_USER_3, User.Role.USER);
-    static final User USER_4 = new User(4L, "", GH_USER_4, User.Role.USER);
     static final GithubApiUser GH_OWNER = new GithubApiUser(1L, REPO_OWNER, EMPTY, EMPTY, EMPTY, GithubApiUser.Type.USER);
     static final GithubApiUser GH_OWNER_HIGHLOAD = new GithubApiUser(1L, REPO_OWNER_HIGHLOAD, EMPTY, EMPTY, EMPTY, GithubApiUser.Type.USER);
     static final GithubApiRepo GH_REPO = new GithubApiRepo(1L, REPO_URL, REPO_NAME, false, EMPTY, GH_OWNER);
@@ -115,8 +112,7 @@ class ProjectsRouterTest {
     static final GithubApiSnapshot MARKER = GithubApiSnapshot.builder().label("").ref("").user(GH_OWNER).repo(GH_REPO).sha("").build();
     static final GithubApiPull GH_PULL = GithubApiPull.builder().id(0L).htmlUrl("").head(MARKER).base(MARKER).user(GH_OWNER).number(0).title("").state(State.OPEN).createdAt(Instant.now()).updatedAt(Instant.now()).mergedAt(Instant.now()).assignee(null).assignees(new GithubApiUser[0]).build();
     static final GithubApiPull[] OPEN_PULLS = new GithubApiPull[]{GH_PULL, GH_PULL, GH_PULL};
-    static final Project PROJECT = Project.builder().id(1L).state(Project.State.CONFIGURING).githubRepo(REPO).creator(CURRENT_USER).openPullCount(0).build();
-    static final Project PROJECT_HIGHLOAD = Project.builder().id(2L).state(Project.State.CONFIGURING).githubRepo(REPO_HIGHLOAD).creator(CURRENT_USER).openPullCount(0).build();
+    static final Project PROJECT_HIGHLOAD = Project.builder().id(2L).state(Project.State.CONFIGURING).githubRepo(REPO_HIGHLOAD).creator(lamtev).openPullCount(0).build();
     static final CreateProjectDto REQUEST_BODY = new CreateProjectDto(REPO_URL);
     static final String INVALID_REPO_URL = "htps://bad_url";
     static final CreateProjectDto REQUEST_BODY_INVALID_URL = new CreateProjectDto(INVALID_REPO_URL);
@@ -160,13 +156,13 @@ class ProjectsRouterTest {
     @Test
     void testCreateProjectSuccess() {
         when(currentUser.get())
-                .thenReturn(Mono.just(CURRENT_USER));
+                .thenReturn(Mono.just(lamtev));
 
         when(githubUserRepo.upsert(Mockito.any(GithubUser.class)))
-                .thenReturn(Mono.just(GITHUB_USER));
+                .thenReturn(Mono.just(acculaGithub));
 
         when(projectRepo.upsert(Mockito.any(GithubRepo.class), Mockito.any(User.class)))
-                .thenReturn(Mono.just(PROJECT));
+                .thenReturn(Mono.just(acculaProject));
 
         when(projectRepo.notExists(anyLong()))
                 .thenReturn(Mono.just(TRUE));
@@ -198,7 +194,7 @@ class ProjectsRouterTest {
         when(cloneDetectionService.fillSuffixTree(anyLong(), Flux.fromIterable(Mockito.anyCollection())))
                 .thenReturn(Mono.empty());
 
-        final var expectedBody = ModelToDtoConverter.convert(PROJECT);
+        final var expectedBody = ModelToDtoConverter.convert(acculaProject);
 
         client.post().uri("/api/projects")
                 .contentType(APPLICATION_JSON)
@@ -211,7 +207,7 @@ class ProjectsRouterTest {
     @Test
     void testCreateProjectInsufficientRole() {
         when(currentUser.get())
-            .thenReturn(Mono.just(USER_2));
+            .thenReturn(Mono.just(user));
 
         client.post().uri("/api/projects")
             .contentType(APPLICATION_JSON)
@@ -224,7 +220,7 @@ class ProjectsRouterTest {
     @Test
     void testCreateProjectFailureInvalidUrl() {
         when(currentUser.get())
-            .thenReturn(Mono.just(CURRENT_USER));
+            .thenReturn(Mono.just(lamtev));
 
         client.post().uri("/api/projects")
                 .contentType(APPLICATION_JSON)
@@ -237,7 +233,7 @@ class ProjectsRouterTest {
     @Test
     void testCreateProjectFailureWrongUrl() {
         when(currentUser.get())
-                .thenReturn(Mono.just(CURRENT_USER_ADMIN));
+                .thenReturn(Mono.just(admin));
 
         // simulate github client error that is usually caused by wrong url
         when(githubClient.hasAdminPermission(Mockito.anyString(), Mockito.anyString()))
@@ -260,7 +256,7 @@ class ProjectsRouterTest {
     @Test
     void testCreateProjectFailureAlreadyExists() {
         when(currentUser.get())
-                .thenReturn(Mono.just(CURRENT_USER));
+                .thenReturn(Mono.just(lamtev));
 
         // make repo existing
         when(projectRepo.notExists(anyLong()))
@@ -280,14 +276,13 @@ class ProjectsRouterTest {
                 .bodyValue(REQUEST_BODY)
                 .exchange()
                 .expectStatus().isEqualTo(HttpStatus.CONFLICT)
-                .expectBody(ApiError.class).isEqualTo(toApiError(ProjectsHandlerException.alreadyExists(REPO.identity())));
-
+                .expectBody(ApiError.class).isEqualTo(toApiError(ProjectsHandlerException.alreadyExists(acculaAccula.identity())));
     }
 
     @Test
     void testCreateProjectFailureNoPermission() {
         when(currentUser.get())
-                .thenReturn(Mono.just(CURRENT_USER));
+                .thenReturn(Mono.just(lamtev));
 
         // disable admin permission
         when(githubClient.hasAdminPermission(Mockito.anyString(), Mockito.anyString()))
@@ -311,14 +306,14 @@ class ProjectsRouterTest {
     @Test
     void testGetProjectSuccess() {
         when(githubUserRepo.upsert(Mockito.any(GithubUser.class)))
-                .thenReturn(Mono.just(GITHUB_USER));
+                .thenReturn(Mono.just(acculaGithub));
 
         when(projectRepo.findById(anyLong()))
-                .thenReturn(Mono.just(PROJECT));
+                .thenReturn(Mono.just(acculaProject));
 
-        final var expectedBody = ModelToDtoConverter.convert(PROJECT);
+        final var expectedBody = ModelToDtoConverter.convert(acculaProject);
 
-        client.get().uri("/api/projects/{id}", PROJECT.id())
+        client.get().uri("/api/projects/{id}", acculaProject.id())
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(ProjectDto.class).isEqualTo(expectedBody);
@@ -344,9 +339,9 @@ class ProjectsRouterTest {
     @Test
     void testGetAllProjects() {
         when(projectRepo.getTop(Mockito.anyInt()))
-                .thenReturn(Flux.fromArray(new Project[]{PROJECT, PROJECT}));
+                .thenReturn(Flux.fromArray(new Project[]{acculaProject, acculaProject}));
 
-        final var expectedBody = ModelToDtoConverter.convert(PROJECT);
+        final var expectedBody = ModelToDtoConverter.convert(acculaProject);
 
         client.get().uri("/api/projects?count={count}", 2L)
                 .exchange()
@@ -365,7 +360,7 @@ class ProjectsRouterTest {
         when(projectRepo.delete(anyLong(), anyLong()))
                 .thenReturn(Mono.just(TRUE));
 
-        client.delete().uri("/api/projects/{id}", PROJECT.id())
+        client.delete().uri("/api/projects/{id}", acculaProject.id())
                 .exchange()
                 .expectStatus().isAccepted();
     }
@@ -377,13 +372,13 @@ class ProjectsRouterTest {
         when(projectRepo.hasAdmin(anyLong(), anyLong()))
                 .thenReturn(Mono.just(TRUE));
         when(projectRepo.findById(anyLong()))
-                .thenReturn(Mono.just(PROJECT));
+                .thenReturn(Mono.just(acculaProject));
         when(githubClient.getRepoAdmins(Mockito.anyString(), Mockito.anyString()))
                 .thenReturn(Mono.just(List.of(1L, 2L)));
         when(userRepo.findByGithubIds(Mockito.anyCollection()))
-                .thenReturn(Flux.fromIterable(List.of(USER_2, USER_3)));
+                .thenReturn(Flux.fromIterable(List.of(user, user1)));
 
-        client.get().uri("/api/projects/{id}/githubAdmins", PROJECT.id())
+        client.get().uri("/api/projects/{id}/githubAdmins", acculaProject.id())
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(UserDto[].class).value(it -> assertEquals(2, it.length));
@@ -393,7 +388,7 @@ class ProjectsRouterTest {
     void testGetGithubAdminsForbidden() {
         mockForbidden();
 
-        client.get().uri("/api/projects/{id}/githubAdmins", PROJECT.id())
+        client.get().uri("/api/projects/{id}/githubAdmins", acculaProject.id())
                 .exchange()
                 .expectStatus().isForbidden();
     }
@@ -402,7 +397,7 @@ class ProjectsRouterTest {
     void testGetGithubAdminsNotFound() {
         mockNotFound();
 
-        client.get().uri("/api/projects/{id}/githubAdmins", PROJECT.id())
+        client.get().uri("/api/projects/{id}/githubAdmins", acculaProject.id())
                 .exchange()
                 .expectStatus().isNotFound();
     }
@@ -417,7 +412,7 @@ class ProjectsRouterTest {
         when(projectRepo.confById(anyLong()))
                 .thenReturn(Mono.just(Project.Conf.DEFAULT.withAdminIds(adminIds)));
 
-        client.get().uri("/api/projects/{id}/conf", PROJECT.id())
+        client.get().uri("/api/projects/{id}/conf", acculaProject.id())
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(ProjectConfDto.class)
@@ -433,7 +428,7 @@ class ProjectsRouterTest {
     void testGetConfForbidden() {
         mockForbidden();
 
-        client.get().uri("/api/projects/{id}/conf", PROJECT.id())
+        client.get().uri("/api/projects/{id}/conf", acculaProject.id())
                 .exchange()
                 .expectStatus().isForbidden();
     }
@@ -444,7 +439,7 @@ class ProjectsRouterTest {
         when(projectRepo.confById(anyLong()))
                 .thenReturn(Mono.empty());
 
-        client.get().uri("/api/projects/{id}/conf", PROJECT.id())
+        client.get().uri("/api/projects/{id}/conf", acculaProject.id())
                 .exchange()
                 .expectStatus().isNotFound();
     }
@@ -459,7 +454,7 @@ class ProjectsRouterTest {
         when(projectRepo.upsertConf(anyLong(), Mockito.any(Project.Conf.class)))
                 .thenReturn(Mono.just(Project.Conf.DEFAULT.withAdminIds(adminIds)));
 
-        client.put().uri("/api/projects/{id}/conf", PROJECT.id())
+        client.put().uri("/api/projects/{id}/conf", acculaProject.id())
                 .contentType(APPLICATION_JSON)
                 .bodyValue(ProjectConfDto.builder()
                         .admins(adminIds)
@@ -478,7 +473,7 @@ class ProjectsRouterTest {
         when(projectRepo.hasAdmin(anyLong(), anyLong()))
                 .thenReturn(Mono.just(TRUE));
 
-        client.put().uri("/api/projects/{id}/conf", PROJECT.id())
+        client.put().uri("/api/projects/{id}/conf", acculaProject.id())
                 .contentType(APPLICATION_JSON)
                 .bodyValue(ProjectConfDto.builder().build())
                 .exchange()
@@ -493,11 +488,11 @@ class ProjectsRouterTest {
         when(projectRepo.hasAdmin(anyLong(), anyLong()))
                 .thenReturn(Mono.just(TRUE));
         when(projectRepo.findById(anyLong()))
-                .thenReturn(Mono.just(PROJECT));
+                .thenReturn(Mono.just(acculaProject));
         when(projectService.headFiles(Mockito.any()))
                 .thenReturn(Mono.just(List.of(expectedFiles)));
 
-        client.get().uri("/api/projects/{id}/headFiles", PROJECT.id())
+        client.get().uri("/api/projects/{id}/headFiles", acculaProject.id())
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(String[].class).isEqualTo(expectedFiles);
@@ -507,7 +502,7 @@ class ProjectsRouterTest {
     void testHeadFilesForbidden() {
         mockForbidden();
 
-        client.get().uri("/api/projects/{id}/headFiles", PROJECT.id())
+        client.get().uri("/api/projects/{id}/headFiles", acculaProject.id())
                 .exchange()
                 .expectStatus().isForbidden();
     }
@@ -516,7 +511,7 @@ class ProjectsRouterTest {
     void testHeadFilesNotFound() {
         mockNotFound();
 
-        client.get().uri("/api/projects/{id}/headFiles", PROJECT.id())
+        client.get().uri("/api/projects/{id}/headFiles", acculaProject.id())
                 .exchange()
                 .expectStatus().isNotFound();
     }
