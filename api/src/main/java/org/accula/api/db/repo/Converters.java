@@ -26,7 +26,7 @@ import java.util.List;
 final class Converters {
     static final String NOTHING = "";
     static final String EMPTY_CLAUSE = NOTHING;
-    static final char IDENT = ' ';
+    static final char SPACE = ' ';
 
     private Converters() {
     }

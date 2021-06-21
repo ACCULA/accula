@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static org.accula.api.db.repo.ConnectionProvidedRepo.convertMany;
 import static org.accula.api.db.repo.Converters.EMPTY_CLAUSE;
-import static org.accula.api.db.repo.Converters.IDENT;
+import static org.accula.api.db.repo.Converters.SPACE;
 
 /**
  * @author Anton Lamtev
@@ -161,15 +161,15 @@ public final class UserRepoImpl implements UserRepo, ConnectionProvidedRepo {
         final var sqlSb = new StringBuilder();
         sqlSb.append(sql);
         if (!joinClause.isBlank()) {
-            sqlSb.append(IDENT);
+            sqlSb.append(SPACE);
             sqlSb.append(joinClause);
         }
         if (!whereClause.isBlank()) {
-            sqlSb.append(IDENT);
+            sqlSb.append(SPACE);
             sqlSb.append(whereClause);
         }
         if (!orderByClause.isBlank()) {
-            sqlSb.append(IDENT);
+            sqlSb.append(SPACE);
             sqlSb.append(orderByClause);
         }
         return (PostgresqlStatement) connection.createStatement(sqlSb.toString());
