@@ -78,9 +78,12 @@ const Settings = ({ appSettings, getAppSettings, updateAppSettings }: SettingsPr
                   limitTags={5}
                   id="admins-select"
                   options={adminOptions}
-                  getOptionLabel={(option: IUser) => option.login}
                   filterSelectedOptions
                   defaultValue={adminOptions.filter(u => appSettings.admins.includes(u.id))}
+                  filterOptions={options => options}
+                  getOptionSelected={(option, value) => option.id === value.id}
+                  value={values.admins}
+                  disableCloseOnSelect
                   onChange={(_, value: IUser[]) => setFieldValue('admins', value)}
                   renderTags={(value: IUser[], getTagProps: any) =>
                     value.map((option, index) => (
