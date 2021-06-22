@@ -17,7 +17,7 @@ public final class HandlerException extends ResponseConvertibleException {
     @Serial
     private static final long serialVersionUID = 7419056439410069539L;
 
-    private HandlerException(final ApiError.Code code, final @Nullable String description) {
+    private HandlerException(final ApiError.Code code, @Nullable final String description) {
         super(code, description);
     }
 

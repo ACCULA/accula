@@ -203,10 +203,9 @@ class CodeLoaderTest {
 
     @Test
     void testLoadCommits() {
-        var headRepo = GithubRepo.builder().id(1L).name("2019-highload-dht").isPrivate(false).description("descr").owner(vaddyaGithub).build();
         var sinceRef = "b5e4943c3690a54c325f7a95db20893f75b0b41b";
         var untilRef = "50bcdd747aa571e0776bed65fe474784cd73377b";
-        StepVerifier.create(codeLoader.loadCommits(headRepo, sinceRef, untilRef).collectList())
+        StepVerifier.create(codeLoader.loadCommits(vaddyaHighload2019, sinceRef, untilRef).collectList())
                 .expectNextMatches(commits -> commits.size() == 9)
                 .expectComplete()
                 .verify();
@@ -214,8 +213,7 @@ class CodeLoaderTest {
 
     @Test
     void testLoadAllCommits() {
-        var headRepo = GithubRepo.builder().id(1L).name("2019-highload-dht").isPrivate(false).description("descr").owner(vaddyaGithub).build();
-        StepVerifier.create(codeLoader.loadAllCommits(headRepo).collectList())
+        StepVerifier.create(codeLoader.loadAllCommits(vaddyaHighload2019).collectList())
                 .expectNextMatches(commits -> !commits.isEmpty())
                 .expectComplete()
                 .verify();
@@ -223,8 +221,7 @@ class CodeLoaderTest {
 
     @Test
     void testLoadCommitsUntilRef() {
-        var headRepo = GithubRepo.builder().id(1L).name("2019-highload-dht").isPrivate(false).description("descr").owner(vaddyaGithub).build();
-        StepVerifier.create(codeLoader.loadCommits(headRepo, "7a490a1e518df228c203c3690100bd2d0ab559c5").collectList())
+        StepVerifier.create(codeLoader.loadCommits(vaddyaHighload2019, "7a490a1e518df228c203c3690100bd2d0ab559c5").collectList())
                 .expectNextMatches(commits -> commits.size() == 145)
                 .expectComplete()
                 .verify();
@@ -232,8 +229,7 @@ class CodeLoaderTest {
 
     @Test
     void testLoadCommit() {
-        var headRepo = GithubRepo.builder().id(1L).name("2019-highload-dht").isPrivate(false).description("descr").owner(vaddyaGithub).build();
-        StepVerifier.create(codeLoader.loadCommit(headRepo, "7a490a1e518df228c203c3690100bd2d0ab559c5"))
+        StepVerifier.create(codeLoader.loadCommit(vaddyaHighload2019, "7a490a1e518df228c203c3690100bd2d0ab559c5"))
             .expectNextMatches(commit -> commit.sha().equals("7a490a1e518df228c203c3690100bd2d0ab559c5"))
             .expectComplete()
             .verify();

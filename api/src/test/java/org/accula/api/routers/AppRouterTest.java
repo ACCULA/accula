@@ -35,7 +35,6 @@ import static org.accula.api.util.TestData.user;
 import static org.accula.api.util.TestData.user1;
 import static org.accula.api.util.TestData.user2;
 import static org.accula.api.util.TestData.vaddya;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -81,10 +80,6 @@ class AppRouterTest {
                 final var settingsUrl = (String) response.get("settingsUrl");
                 assertNotNull(settingsUrl);
                 assertTrue(settingsUrl.contains("https://github.com/settings/connections/applications/"));
-                assertDoesNotThrow(() -> {
-                    final var id = Strings.suffixAfterPrefix(settingsUrl, "https://github.com/settings/connections/applications/");
-                    assertNotNull(id);
-                });
             });
     }
 

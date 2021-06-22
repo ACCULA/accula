@@ -35,6 +35,8 @@ services:
       - REPOS_PATH=/app/repos/
       - JWT_SIGNATURE_PUBLIC_KEY=/app/keys/accula.public.der
       - JWT_SIGNATURE_PRIVATE_KEY=/app/keys/accula.private.der
+      - ROLE_ROOT=10428179,15687094,28392375,665821
+      - ROLE_ADMIN=
     volumes:
       - ./repos:/app/repos
       - ./keys:/app/keys

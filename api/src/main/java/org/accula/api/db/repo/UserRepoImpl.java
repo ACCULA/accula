@@ -4,7 +4,6 @@ import io.r2dbc.postgresql.api.PostgresqlResult;
 import io.r2dbc.postgresql.api.PostgresqlStatement;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.Row;
-import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.accula.api.db.model.User;
@@ -15,8 +14,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -93,9 +92,9 @@ public final class UserRepoImpl implements UserRepo, ConnectionProvidedRepo {
     }
 
     @Override
-    public Mono<List<User>> setAdminRole(final Collection<Long> users) {
+    public Mono<List<User>> setAdminRole(final Collection<Long> adminIds) {
         return Mono.defer(() -> {
-            final var adminSet = users instanceof Set<Long> s ? s : new LongOpenHashSet(users);
+            final var adminIdSet = adminIds instanceof Set<Long> s ? s : new HashSet<>(adminIds);
             return transactional(connection -> findAll(connection)
                 .collectList()
                 .flatMap(allUsers -> {
@@ -103,31 +102,26 @@ public final class UserRepoImpl implements UserRepo, ConnectionProvidedRepo {
                         return Mono.empty();
                     }
 
-                    final var newAdmins = allUsers
-                        .stream()
-                        .map(user -> {
-                            if (!adminSet.contains(user.id()) || !user.is(Role.USER)) {
-                                return null;
-                            }
-                            return user;
-                        })
-                        .filter(Objects::nonNull)
-                        .toList();
-
                     allUsers = allUsers
                         .stream()
                         .map(user -> {
-                            if (adminSet.contains(user.id()) && user.is(Role.USER)) {
+                            if (adminIdSet.contains(user.id()) && user.is(Role.USER)) {
                                 return user.withRole(Role.ADMIN);
-                            } else if (!adminSet.contains(user.id()) && user.is(Role.ADMIN)) {
+                            } else if (!adminIdSet.contains(user.id()) && user.is(Role.ADMIN)) {
                                 return user.withRole(Role.USER);
                             }
                             return user;
                         })
                         .toList();
 
+                    final var newAdminIds = allUsers
+                        .stream()
+                        .map(User::id)
+                        .filter(adminIdSet::contains)
+                        .toArray(Long[]::new);
+
                     return setUserRole(connection)
-                        .thenEmpty(setAdminRole(connection, newAdmins))
+                        .thenEmpty(setAdminRole(connection, newAdminIds))
                         .thenReturn(allUsers);
                 }))
                 .doOnNext(u -> onUpserts
@@ -222,13 +216,13 @@ public final class UserRepoImpl implements UserRepo, ConnectionProvidedRepo {
             .then();
     }
 
-    private static Mono<Void> setAdminRole(final Connection connection, final List<User> admins) {
+    private static Mono<Void> setAdminRole(final Connection connection, final Long[] adminIds) {
         return ((PostgresqlStatement) connection.createStatement("""
             UPDATE user_
             SET role = 'ADMIN'
             WHERE role != 'ROOT' AND id = ANY($1)
             """))
-            .bind("$1", admins.stream().map(User::id).toArray(Long[]::new))
+            .bind("$1", adminIds)
             .execute()
             .flatMap(PostgresqlResult::getRowsUpdated)
             .then();

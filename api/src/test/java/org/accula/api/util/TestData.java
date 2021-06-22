@@ -81,6 +81,8 @@ public final class TestData {
     public static final User polis = new User(id.incrementAndGet(), "uuu", polisGithub, Role.USER);
     public static final List<User> users = List.of(lamtev, vaddya, admin, user, user1, user2, accula, polis);
 
+    public static final User lamtevNoIdentity = User.noIdentity(lamtev.githubAccessToken(), lamtev.githubUser(), lamtev.role());
+
     public static final GithubRepo acculaAccula = GithubRepo.builder()
         .id(246121041L)
         .name("accula")

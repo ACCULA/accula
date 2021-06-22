@@ -10,23 +10,31 @@ import reactor.test.StepVerifier;
 
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
+import static java.util.function.Predicate.not;
 import static org.accula.api.util.TestData.lamtev;
+import static org.accula.api.util.TestData.lamtevNoIdentity;
 import static org.accula.api.util.TestData.users;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class UserRepoTest extends AbstractRepoTest {
+/**
+ * @author Anton Lamtev
+ */
+class UserRepoTest extends BaseRepoTest {
     private UserRepo userRepo;
 
     @BeforeEach
     void setUp() {
+        super.setUp();
         userRepo = new UserRepoImpl(connectionProvider());
     }
 
     @Test
     void testUpsert() {
-        StepVerifier.create(userRepo.upsert(lamtev.withId(-1L)))
+        StepVerifier.create(userRepo.upsert(lamtevNoIdentity))
             .expectNext(lamtev)
             .expectComplete()
             .verify();
@@ -34,9 +42,7 @@ class UserRepoTest extends AbstractRepoTest {
 
     @Test
     void testFindById() {
-        StepVerifier.create(userRepo.findById(lamtev.id()))
-            .expectComplete()
-            .verify();
+        expectCompleteEmpty(userRepo.findById(lamtev.id()));
 
         StepVerifier.create(userRepo.upsert(lamtev)
                 .then(userRepo.findById(lamtev.id())))
@@ -47,6 +53,8 @@ class UserRepoTest extends AbstractRepoTest {
 
     @Test
     void testFindByGithubIds() {
+        expectCompleteEmpty(userRepo.findByGithubIds(List.of()));
+
         var githubIds = users.stream().map(User::githubUser).map(GithubUser::id).toList();
         StepVerifier.create(userRepo.findByGithubIds(githubIds))
             .expectComplete()
@@ -69,9 +77,7 @@ class UserRepoTest extends AbstractRepoTest {
 
     @Test
     void testFindAll() {
-        StepVerifier.create(userRepo.findAll())
-            .expectComplete()
-            .verify();
+        expectCompleteEmpty(userRepo.findAll());
 
         StepVerifier.create(Flux.fromIterable(users)
                 .flatMap(userRepo::upsert)
@@ -84,9 +90,7 @@ class UserRepoTest extends AbstractRepoTest {
 
     @Test
     void testSetAdminRole() {
-        StepVerifier.create(userRepo.setAdminRole(List.of(1L, 2L)))
-            .expectComplete()
-            .verify();
+        expectCompleteEmpty(userRepo.setAdminRole(Set.of(1L, 2L)));
 
         final var allUsers = Flux.fromIterable(users)
             .flatMap(userRepo::upsert)
@@ -114,5 +118,24 @@ class UserRepoTest extends AbstractRepoTest {
             })
             .expectComplete()
             .verify();
+
+        // Make everyone except roots a regular user
+        StepVerifier.create(userRepo.setAdminRole(Set.of()))
+            .expectNextMatches(updatedAllUsers -> updatedAllUsers.stream().allMatch(not(Role.ADMIN::is)))
+            .expectComplete()
+            .verify();
+    }
+
+    @Test
+    void testAddOnUpsert() {
+        final var didUpsert = new AtomicBoolean(false);
+        userRepo.addOnUpsert(upsertedUserId -> didUpsert.set(true));
+
+        StepVerifier.create(userRepo.upsert(lamtevNoIdentity))
+            .expectNext(lamtev)
+            .expectComplete()
+            .verify();
+
+        assertTrue(didUpsert.get());
     }
 }

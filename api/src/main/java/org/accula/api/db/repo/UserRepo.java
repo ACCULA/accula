@@ -20,7 +20,7 @@ public interface UserRepo {
 
     Flux<User> findAll();
 
-    Mono<List<User>> setAdminRole(Collection<Long> ids);
+    Mono<List<User>> setAdminRole(Collection<Long> adminIds);
 
     void addOnUpsert(OnUpsert onUpsert);
 
