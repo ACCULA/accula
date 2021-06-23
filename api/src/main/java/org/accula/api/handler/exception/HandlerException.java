@@ -26,7 +26,7 @@ public final class HandlerException extends ResponseConvertibleException {
     }
 
     public static HandlerException atLeastRoleRequired(final User.Role role) {
-        return new HandlerException(Error.INSUFFICIENT_ROLE, "At least " + role + "role required");
+        return new HandlerException(Error.INSUFFICIENT_ROLE, "At least " + role + " role required");
     }
 
     @Override
