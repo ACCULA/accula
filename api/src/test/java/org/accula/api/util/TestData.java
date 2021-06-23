@@ -60,6 +60,7 @@ public final class TestData {
     public static final GithubUser user2Github = GithubUser.builder()
         .id(789456321L)
         .login("user2")
+        .name("")
         .avatar("ava")
         .isOrganization(false)
         .build();
