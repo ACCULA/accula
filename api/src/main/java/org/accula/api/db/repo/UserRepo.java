@@ -27,5 +27,9 @@ public interface UserRepo {
     @FunctionalInterface
     interface OnUpsert {
         void onUpsert(@Nullable Long userId);
+
+        static void forEach(final Iterable<? extends OnUpsert> onUpserts, @Nullable final Long userId) {
+            onUpserts.forEach(onUpsert -> onUpsert.onUpsert(userId));
+        }
     }
 }

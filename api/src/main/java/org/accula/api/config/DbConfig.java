@@ -4,12 +4,9 @@ import io.r2dbc.pool.ConnectionPool;
 import io.r2dbc.pool.ConnectionPoolConfiguration;
 import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
 import io.r2dbc.postgresql.PostgresqlConnectionFactory;
-import io.r2dbc.postgresql.codec.EnumCodec;
 import lombok.RequiredArgsConstructor;
-import org.accula.api.db.model.Project;
-import org.accula.api.db.model.User;
 import org.accula.api.db.repo.ConnectionProvidedRepo;
-import org.accula.api.db.repo.type.Enums;
+import org.accula.api.db.repo.codecs.Codecs;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -37,10 +34,7 @@ public class DbConfig extends AbstractR2dbcConfiguration {
                 .username(dbProperties.user())
                 .password(dbProperties.password())
                 .database(dbProperties.database())
-                .codecRegistrar(EnumCodec.builder()
-                        .withEnum(Enums.PROJECT_STATE, Project.State.class)
-                        .withEnum(Enums.USER_ROLE, User.Role.class)
-                        .build())
+                .codecRegistrar(Codecs.enums())
                 .build());
 
         final var poolConfig = ConnectionPoolConfiguration.builder()

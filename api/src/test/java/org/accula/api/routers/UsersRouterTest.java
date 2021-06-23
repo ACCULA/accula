@@ -1,6 +1,5 @@
 package org.accula.api.routers;
 
-import lombok.SneakyThrows;
 import org.accula.api.converter.ModelToDtoConverter;
 import org.accula.api.db.repo.CurrentUserRepo;
 import org.accula.api.db.repo.UserRepo;
@@ -17,6 +16,7 @@ import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
+import static org.accula.api.util.TestData.accula;
 import static org.accula.api.util.TestData.lamtev;
 import static org.accula.api.util.TestData.polis;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -50,9 +50,9 @@ public class UsersRouterTest {
                 .build();
     }
 
-    @SneakyThrows
     @Test
-    public void testGetUserByIdOk() {
+    public void testGetUserByIdWithoutRoleOk() {
+        //No authorization
         when(userRepo.findById(anyLong()))
             .thenReturn(Mono.just(polis));
         when(currentUserRepo.get())
@@ -62,9 +62,19 @@ public class UsersRouterTest {
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(UserDto.class).isEqualTo(RESPONSE_USER);
+
+        //With authorization
+        when(userRepo.findById(anyLong()))
+            .thenReturn(Mono.just(polis));
+        when(currentUserRepo.get())
+            .thenReturn(Mono.just(accula));
+
+        client.get().uri("/api/users/{id}", RESPONSE_USER.id())
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(UserDto.class).isEqualTo(RESPONSE_USER);
     }
 
-    @SneakyThrows
     @Test
     public void testGetUserByIdOkWithRoleAsRoot() {
         when(userRepo.findById(anyLong()))
@@ -78,7 +88,6 @@ public class UsersRouterTest {
             .expectBody(UserDto.class).isEqualTo(RESPONSE_USER_WITH_ROLE);
     }
 
-    @SneakyThrows
     @Test
     public void testGetUserByIdOkWithRoleAsCurrentUser() {
         when(userRepo.findById(anyLong()))

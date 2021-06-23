@@ -13,8 +13,10 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.util.function.Predicate.not;
+import static org.accula.api.util.TestData.admin1Github;
 import static org.accula.api.util.TestData.lamtev;
 import static org.accula.api.util.TestData.lamtevNoIdentity;
+import static org.accula.api.util.TestData.user1Github;
 import static org.accula.api.util.TestData.users;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -98,17 +100,36 @@ class UserRepoTest extends BaseRepoTest {
             .block();
         assertNotNull(allUsers);
 
-        final var users = allUsers.stream().filter(Role.USER::is).toList();
-        final var userIds = users.stream().map(User::id).toList();
-        final var adminIds = allUsers.stream().filter(Role.ADMIN::is).map(User::id).toList();
+        final var user1 = allUsers
+            .stream()
+            .filter(user -> user.githubUser().equals(user1Github))
+            .findFirst()
+            .orElseThrow(AssertionError::new);
+        final var admin1 = allUsers
+            .stream()
+            .filter(user -> user.githubUser().equals(admin1Github))
+            .findFirst()
+            .orElseThrow(AssertionError::new);
 
-        // Make regular users admins and vice-versa
-        StepVerifier.create(userRepo.setAdminRole(userIds))
+        final var newUserIds = allUsers
+            .stream()
+            .filter(user -> user.is(Role.ADMIN) && !user.equals(admin1) || user.equals(user1))
+            .map(User::id)
+            .toList();
+        final var newAdminIds = allUsers
+            .stream()
+            .filter(user -> user.is(Role.USER) && !user.equals(user1) || user.equals(admin1))
+            .map(User::id)
+            .toList();
+
+        // Make all regular users except `user1` admins and all admins except `admin1` regular users
+        StepVerifier.create(userRepo.setAdminRole(newAdminIds))
             .expectNextMatches(updatedAllUsers -> {
                 updatedAllUsers.forEach(user -> {
-                    if (userIds.contains(user.id())) {
+                    final var userId = user.id();
+                    if (newAdminIds.contains(userId)) {
                         assertEquals(Role.ADMIN, user.role());
-                    } else if (adminIds.contains(user.id())) {
+                    } else if (newUserIds.contains(userId)) {
                         assertEquals(Role.USER, user.role());
                     } else {
                         assertEquals(Role.ROOT, user.role());
@@ -119,7 +140,7 @@ class UserRepoTest extends BaseRepoTest {
             .expectComplete()
             .verify();
 
-        // Make everyone except roots a regular user
+        // Make everyone except root regular user
         StepVerifier.create(userRepo.setAdminRole(Set.of()))
             .expectNextMatches(updatedAllUsers -> updatedAllUsers.stream().allMatch(not(Role.ADMIN::is)))
             .expectComplete()

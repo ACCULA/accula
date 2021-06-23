@@ -58,8 +58,7 @@ public final class UserRepoImpl implements UserRepo, ConnectionProvidedRepo {
                 .execute())
             .flatMap(result -> ConnectionProvidedRepo
                 .convert(result, row -> user.withId(Converters.longInteger(row, "id")))))
-            .doOnNext(u -> onUpserts
-                .forEach(onUpsert -> onUpsert.onUpsert(u.id())));
+            .doOnNext(u -> OnUpsert.forEach(onUpserts, u.id()));
     }
 
     @Override
@@ -102,7 +101,13 @@ public final class UserRepoImpl implements UserRepo, ConnectionProvidedRepo {
                         return Mono.empty();
                     }
 
-                    allUsers = allUsers
+                    final var newAdminIds = allUsers
+                        .stream()
+                        .map(User::id)
+                        .filter(adminIdSet::contains)
+                        .toArray(Long[]::new);
+
+                    final var updatedAllUsers = allUsers
                         .stream()
                         .map(user -> {
                             if (adminIdSet.contains(user.id()) && user.is(Role.USER)) {
@@ -114,18 +119,11 @@ public final class UserRepoImpl implements UserRepo, ConnectionProvidedRepo {
                         })
                         .toList();
 
-                    final var newAdminIds = allUsers
-                        .stream()
-                        .map(User::id)
-                        .filter(adminIdSet::contains)
-                        .toArray(Long[]::new);
-
                     return setUserRole(connection)
                         .thenEmpty(setAdminRole(connection, newAdminIds))
-                        .thenReturn(allUsers);
+                        .thenReturn(updatedAllUsers);
                 }))
-                .doOnNext(u -> onUpserts
-                    .forEach(onUpsert -> onUpsert.onUpsert(null)));
+                .doOnNext(__ -> OnUpsert.forEach(onUpserts, null));
         });
     }
 
