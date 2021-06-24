@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * @author Anton Lamtev
  */
-class UserRepoTest extends BaseRepoTest {
+final class UserRepoTest extends BaseRepoTest {
     private UserRepo userRepo;
 
     @BeforeEach

@@ -9,7 +9,6 @@ import org.accula.api.handler.dto.ApiError;
 import org.accula.api.handler.dto.AppSettingsDto;
 import org.accula.api.handler.dto.validation.InputDtoValidator;
 import org.accula.api.handler.exception.HandlerException;
-import org.accula.api.util.Strings;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -97,8 +96,8 @@ class AppRouterTest {
             .expectStatus().isOk()
             .expectBody(AppSettingsDto.class).value(settings -> {
                 assertEquals(Stream.of(user, admin, user1, user2).map(ModelToDtoConverter::convertWithRole).toList(), settings.users());
-                assertEquals(List.of(admin.id()), settings.admins());
-                assertEquals(List.of(lamtev.id(), vaddya.id()), settings.roots());
+                assertEquals(Stream.of(vaddya, lamtev).map(ModelToDtoConverter::convertWithRole).toList(), settings.roots());
+                assertEquals(List.of(admin.id()), settings.adminIds());
             });
     }
 
@@ -122,8 +121,8 @@ class AppRouterTest {
             .expectStatus().isCreated()
             .expectBody(AppSettingsDto.class).value(settings -> {
                 assertEquals(Stream.of(user, admin, user1.withRole(ADMIN), user2).map(ModelToDtoConverter::convertWithRole).toList(), settings.users());
-                assertEquals(List.of(admin.id(), user1.id()), settings.admins());
-                assertEquals(List.of(lamtev.id(), vaddya.id()), settings.roots());
+                assertEquals(Stream.of(vaddya, lamtev).map(ModelToDtoConverter::convertWithRole).toList(), settings.roots());
+                assertEquals(List.of(admin.id(), user1.id()), settings.adminIds());
             });
     }
 

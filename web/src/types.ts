@@ -76,8 +76,8 @@ export interface ISettings {
 
 export interface IAppSettings {
   users?: IUser[]
-  roots?: number[]
-  admins: number[]
+  roots?: IUser[]
+  adminIds: number[]
 }
 
 export interface IRouteInfo {

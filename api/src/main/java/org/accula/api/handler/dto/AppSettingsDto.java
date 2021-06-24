@@ -12,6 +12,6 @@ import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
  */
 @JsonAutoDetect(fieldVisibility = ANY)
 public record AppSettingsDto(@OptionalField @Nullable Collection<UserDto> users,
-                             @OptionalField @Nullable Collection<Long> roots,
-                             Collection<Long> admins) implements InputDto {
+                             @OptionalField @Nullable Collection<UserDto> roots,
+                             Collection<Long> adminIds) implements InputDto {
 }

@@ -42,7 +42,7 @@ const Settings = ({ appSettings, getAppSettings, updateAppSettings }: SettingsPr
       setFetching(true)
       updateAppSettings(
         {
-          admins: admins.map(a => a.id)
+          adminIds: admins.map(a => a.id)
         },
         () => {
           getNotifier('success', snackbarContext)('App settings has been successfully updated')
@@ -63,7 +63,7 @@ const Settings = ({ appSettings, getAppSettings, updateAppSettings }: SettingsPr
       </Typography>
       <Formik
         initialValues={{
-          admins: adminOptions.filter(u => appSettings.admins.includes(u.id))
+          admins: adminOptions.filter(u => appSettings.adminIds.includes(u.id))
         }}
         onSubmit={handleSubmit}
       >
@@ -79,7 +79,7 @@ const Settings = ({ appSettings, getAppSettings, updateAppSettings }: SettingsPr
                   id="admins-select"
                   options={adminOptions}
                   filterSelectedOptions
-                  defaultValue={adminOptions.filter(u => appSettings.admins.includes(u.id))}
+                  defaultValue={adminOptions.filter(u => appSettings.adminIds.includes(u.id))}
                   filterOptions={options => options}
                   getOptionSelected={(option, value) => option.id === value.id}
                   value={values.admins}

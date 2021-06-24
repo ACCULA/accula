@@ -17,7 +17,8 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
-import java.util.stream.Collectors;
+
+import static java.util.function.Predicate.not;
 
 /**
  * @author Anton Lamtev
@@ -43,28 +44,28 @@ public final class AppHandler implements Handler {
         return checkRootRole()
             .then(request.bodyToMono(AppSettingsDto.class))
             .doOnNext(this::validate)
-            .flatMap(settings -> userRepo.setAdminRole(settings.admins()))
+            .flatMap(settings -> userRepo.setAdminRole(settings.adminIds()))
             .map(AppHandler::toSettingsDto)
             .flatMap(Responses::created)
             .onErrorResume(ResponseConvertibleException::onErrorResume);
     }
 
     private static AppSettingsDto toSettingsDto(final List<User> allUsers) {
+        final var users = allUsers
+            .stream()
+            .filter(not(Role.ROOT::is))
+            .map(ModelToDtoConverter::convertWithRole)
+            .toList();
         final var roots = allUsers
             .stream()
             .filter(Role.ROOT::is)
-            .map(User::id)
-            .collect(Collectors.toSet());
-        final var admins = allUsers
+            .map(ModelToDtoConverter::convertWithRole)
+            .toList();
+        final var adminIds = allUsers
             .stream()
             .filter(Role.ADMIN::is)
             .map(User::id)
             .toList();
-        final var users = allUsers
-            .stream()
-            .filter(user -> !roots.contains(user.id()))
-            .map(ModelToDtoConverter::convertWithRole)
-            .toList();
-        return new AppSettingsDto(users, roots, admins);
+        return new AppSettingsDto(users, roots, adminIds);
     }
 }
