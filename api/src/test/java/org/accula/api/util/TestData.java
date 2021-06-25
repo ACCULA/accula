@@ -1,5 +1,8 @@
 package org.accula.api.util;
 
+import org.accula.api.code.git.GitCommit;
+import org.accula.api.converter.CodeToModelConverter;
+import org.accula.api.db.model.Commit;
 import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.GithubUser;
 import org.accula.api.db.model.Project;
@@ -16,7 +19,6 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Anton Lamtev
  */
 public final class TestData {
-    private static final AtomicLong id = new AtomicLong();
     public static final GithubUser lamtevGithub = GithubUser.builder()
         .id(10428179L)
         .login("lamtev")
@@ -78,16 +80,18 @@ public final class TestData {
         .avatar("https://avatars.githubusercontent.com/u/31819365?v=4")
         .isOrganization(true)
         .build();
+    public static final List<GithubUser> usersGithub = List.of(lamtevGithub, vaddyaGithub, adminGithub, admin1Github, userGithub, user1Github, user2Github, acculaGithub, polisGithub);
 
-    public static final User lamtev = new User(id.incrementAndGet(), "ghr_accessToken", lamtevGithub, Role.ROOT);
-    public static final User vaddya = new User(id.incrementAndGet(), "ghr_accessToken", vaddyaGithub, Role.ROOT);
-    public static final User admin = new User(id.incrementAndGet(), "xxx", adminGithub, Role.ADMIN);
-    public static final User admin1 = new User(id.incrementAndGet(), "kkk", admin1Github, Role.ADMIN);
-    public static final User user = new User(id.incrementAndGet(), "yyy", userGithub, Role.USER);
-    public static final User user1 = new User(id.incrementAndGet(), "zzz", user1Github, Role.USER);
-    public static final User user2 = new User(id.incrementAndGet(), "www", user2Github, Role.USER);
-    public static final User accula = new User(id.incrementAndGet(), "vvv", acculaGithub, Role.USER);
-    public static final User polis = new User(id.incrementAndGet(), "uuu", polisGithub, Role.USER);
+    private static final AtomicLong userId = new AtomicLong();
+    public static final User lamtev = new User(userId.incrementAndGet(), "ghr_accessToken", lamtevGithub, Role.ROOT);
+    public static final User vaddya = new User(userId.incrementAndGet(), "ghr_accessToken", vaddyaGithub, Role.ROOT);
+    public static final User admin = new User(userId.incrementAndGet(), "xxx", adminGithub, Role.ADMIN);
+    public static final User admin1 = new User(userId.incrementAndGet(), "kkk", admin1Github, Role.ADMIN);
+    public static final User user = new User(userId.incrementAndGet(), "yyy", userGithub, Role.USER);
+    public static final User user1 = new User(userId.incrementAndGet(), "zzz", user1Github, Role.USER);
+    public static final User user2 = new User(userId.incrementAndGet(), "www", user2Github, Role.USER);
+    public static final User accula = new User(userId.incrementAndGet(), "vvv", acculaGithub, Role.USER);
+    public static final User polis = new User(userId.incrementAndGet(), "uuu", polisGithub, Role.USER);
     public static final List<User> users = List.of(lamtev, vaddya, admin, admin1, user, user1, user2, accula, polis);
 
     public static final User lamtevNoIdentity = User.noIdentity(lamtev.githubAccessToken(), lamtev.githubUser(), lamtev.role());
@@ -113,9 +117,21 @@ public final class TestData {
         .description("descr")
         .owner(vaddyaGithub)
         .build();
+    public static final List<GithubRepo> repos = List.of(acculaAccula, polisHighload2019, vaddyaHighload2019);
+
+    public static final GitCommit accula69f5528Git = GitCommit.builder()
+        .sha("69f552851f0f6093816c3064b6e00438e0ff3b19")
+        .isMerge(false)
+        .authorName("Anton Lamtev")
+        .authorEmail("antonlamtev@gmail.com")
+        .date(Instant.parse("2020-05-03T13:27:09Z"))
+        .build();
+
+    public static final Commit accula69f5528 = CodeToModelConverter.convert(accula69f5528Git);
+    public static final List<Commit> commits = List.of(accula69f5528);
 
     public static final Project acculaProject = Project.builder()
-        .id(id.incrementAndGet())
+        .id(userId.incrementAndGet())
         .state(Project.State.CONFIGURING)
         .githubRepo(acculaAccula)
         .creator(lamtev)
