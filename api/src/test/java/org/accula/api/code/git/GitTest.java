@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
-import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -18,6 +17,7 @@ import java.util.stream.IntStream;
 import static org.accula.api.code.lines.LineRange.of;
 import static org.accula.api.code.lines.LineSet.inRange;
 import static org.accula.api.code.lines.LineSet.of;
+import static org.accula.api.util.TestData.accula69f5528Git;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -265,12 +265,7 @@ final class GitTest {
                             assertDoesNotThrow(() -> {
                                 final var commits = repo.log(BASE_REF, HEAD_REF).get();
                                 assertEquals(1, commits.size());
-                                assertEquals(GitCommit.builder()
-                                        .sha("69f552851f0f6093816c3064b6e00438e0ff3b19")
-                                        .authorName("Anton Lamtev")
-                                        .authorEmail("antonlamtev@gmail.com")
-                                        .date(Instant.parse("2020-05-03T13:27:09Z"))
-                                        .build(), commits.get(0));
+                                assertEquals(accula69f5528Git, commits.get(0));
                             }));
         });
     }

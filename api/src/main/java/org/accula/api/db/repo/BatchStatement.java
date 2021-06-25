@@ -56,8 +56,7 @@ final class BatchStatement {
                 boundValues.append(COMMA);
             }
             while (items.hasNext()) {
-                final var el = items.next();
-                final var bindings = bind.apply(el);
+                final var bindings = bind.apply(items.next());
                 final var bindingsLength = bindings.length;
                 if (bindingsLength == 0) {
                     throw new IllegalArgumentException("bind must produce non-empty bindings");
