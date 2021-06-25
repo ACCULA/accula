@@ -2,6 +2,7 @@ package org.accula.api.db.repo;
 
 import org.accula.api.auth.CurrentAuthorizedUserProvider;
 import org.accula.api.db.model.User;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
@@ -32,7 +33,11 @@ public final class CachingCurrentUserRepoImpl implements CurrentUserRepo {
                                 .doOnNext(user -> cache.put(authorizedUser.id(), user))));
     }
 
-    private void evict(final Long userId) {
+    private void evict(@Nullable final Long userId) {
+        if (userId == null) {
+            cache.clear();
+            return;
+        }
         cache.remove(userId);
     }
 }

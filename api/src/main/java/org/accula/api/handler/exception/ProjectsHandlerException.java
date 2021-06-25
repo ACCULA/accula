@@ -21,10 +21,6 @@ public final class ProjectsHandlerException extends ResponseConvertibleException
         super(error, description);
     }
 
-    public static ProjectsHandlerException badFormat(final String description) {
-        return new ProjectsHandlerException(Error.BAD_FORMAT, description);
-    }
-
     public static ProjectsHandlerException invalidUrl(final String url) {
         return new ProjectsHandlerException(Error.INVALID_URL, "Invalid url: " + url);
     }
@@ -46,7 +42,7 @@ public final class ProjectsHandlerException extends ResponseConvertibleException
     @Override
     public Function<Object, Mono<ServerResponse>> responseFunctionForCode(final ApiError.Code code) {
         return switch ((Error) code) {
-            case BAD_FORMAT, INVALID_URL, UNABLE_RETRIEVE_GITHUB_REPO -> Responses::badRequest;
+            case INVALID_URL, UNABLE_RETRIEVE_GITHUB_REPO -> Responses::badRequest;
             case NO_PERMISSION -> Responses::forbidden;
             case ALREADY_EXISTS -> Responses::conflict;
         };
@@ -58,7 +54,6 @@ public final class ProjectsHandlerException extends ResponseConvertibleException
     }
 
     private enum Error implements ApiError.Code {
-        BAD_FORMAT,
         INVALID_URL,
         ALREADY_EXISTS,
         UNABLE_RETRIEVE_GITHUB_REPO,

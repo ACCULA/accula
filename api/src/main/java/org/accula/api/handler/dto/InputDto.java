@@ -1,5 +1,7 @@
 package org.accula.api.handler.dto;
 
+import javax.annotation.meta.TypeQualifierDefault;
+import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.function.Consumer;
@@ -27,6 +29,7 @@ public interface InputDto {
     }
 
     @Retention(RetentionPolicy.RUNTIME)
+    @TypeQualifierDefault({ElementType.FIELD, ElementType.RECORD_COMPONENT, ElementType.METHOD})
     @interface OptionalField {
     }
 }

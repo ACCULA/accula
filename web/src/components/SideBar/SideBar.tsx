@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useHistory } from 'react-router-dom'
 
-import { IRouteInfo } from 'types'
+import { hasAtLeastAdminRole, IRouteInfo } from 'types'
 import { ReactComponent as FinImg } from 'images/fin.svg'
 import {
   Drawer,
@@ -25,7 +25,7 @@ interface SideBarProps extends PropsFromRedux {
   routes: IRouteInfo[]
 }
 
-const SideBar = ({ routes, settings, changeSettings, token }: SideBarProps) => {
+const SideBar = ({ routes, settings, changeSettings, token, user }: SideBarProps) => {
   const theme = useTheme()
   const history = useHistory()
   const classes = useStyles()
@@ -97,7 +97,7 @@ const SideBar = ({ routes, settings, changeSettings, token }: SideBarProps) => {
             )
         )}
       </List>
-      {token && (
+      {token && hasAtLeastAdminRole(user) && (
         <div className={classes.drawerBottom}>
           <Tooltip title="Settings">
             <IconButton
@@ -134,6 +134,7 @@ const SideBar = ({ routes, settings, changeSettings, token }: SideBarProps) => {
 
 const mapStateToProps = (state: AppState) => ({
   token: state.users.token.accessToken,
+  user: state.users.user.value,
   settings: state.settings.settings
 })
 

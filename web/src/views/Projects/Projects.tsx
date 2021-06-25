@@ -9,7 +9,7 @@ import Button from '@material-ui/core/Button'
 import BreadCrumbs from 'components/BreadCrumbs'
 import Tabs from 'components/Tabs'
 import Table from 'components/Table'
-import { IProject } from 'types'
+import { IProject, hasAtLeastAdminRole } from 'types'
 import { HeadCell } from 'components/Table/TableHeader/TableHeader'
 import { ReactComponent as LayersImg } from 'images/layers.svg'
 import { PageTitle } from 'components/PageTitle'
@@ -53,7 +53,7 @@ const Projects = ({ user, projects, getProjects, resetProjects }: ProjectsProps)
       {projects.length === 0 ? (
         <EmptyContent className={classes.emptyContent} Icon={LayersImg} info="Projects">
           <>
-            {user && (
+            {hasAtLeastAdminRole(user) && (
               <>
                 <Button
                   className={classes.addProjectBtn}
@@ -76,13 +76,17 @@ const Projects = ({ user, projects, getProjects, resetProjects }: ProjectsProps)
             headCells={headCells}
             count={projects.length}
             toolBarTitle=""
-            toolBarButtons={[
-              {
-                toolTip: 'Add project',
-                iconButton: <AddBoxOutlined />,
-                onClick: () => setCreateProjectDialogOpen(true)
-              }
-            ]}
+            toolBarButtons={
+              hasAtLeastAdminRole(user)
+                ? [
+                    {
+                      toolTip: 'Add project',
+                      iconButton: <AddBoxOutlined />,
+                      onClick: () => setCreateProjectDialogOpen(true)
+                    }
+                  ]
+                : []
+            }
           >
             {() => (
               <>

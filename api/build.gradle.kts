@@ -59,6 +59,12 @@ dependencies {
     implementation("it.unimi.dsi:fastutil:8.5.4")
     implementation("info.debatty:java-string-similarity:2.0.0")
     implementation("commons-codec:commons-codec:1.15")
+
+    implementation(platform("org.testcontainers:testcontainers-bom:1.15.3"))
+    testImplementation("org.testcontainers:testcontainers")
+    testImplementation("org.testcontainers:junit-jupiter")
+    testImplementation("org.testcontainers:postgresql")
+    testImplementation("org.testcontainers:r2dbc")
 }
 
 fun gprCredentialWith(propertyNamed: String, orEnvVarNamed: String) = project.findProperty(propertyNamed) as String?

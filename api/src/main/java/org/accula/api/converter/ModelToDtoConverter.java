@@ -93,8 +93,30 @@ public final class ModelToDtoConverter {
                 .build();
     }
 
+    public static UserDto convertUser(final User user, boolean withRole) {
+        return new UserDto(
+            user.id(),
+            user.githubUser().login(),
+            user.githubUser().name(),
+            user.githubUser().avatar(),
+            withRole ? convert(user.role()) : null
+        );
+    }
+
+    public static UserDto convertWithRole(final User user) {
+        return convertUser(user, true);
+    }
+
     public static UserDto convert(final User user) {
-        return new UserDto(user.id(), user.githubUser().login(), user.githubUser().name(), user.githubUser().avatar());
+        return convertUser(user, false);
+    }
+
+    public static UserDto.Role convert(final User.Role role) {
+        return switch (role) {
+            case USER -> UserDto.Role.USER;
+            case ADMIN -> UserDto.Role.ADMIN;
+            case ROOT -> UserDto.Role.ROOT;
+        };
     }
 
     public static GithubUserDto convert(final GithubUser user) {
