@@ -19,6 +19,7 @@ const Settings = ({ appSettings, getAppSettings, updateAppSettings }: SettingsPr
   const classes = useStyles()
 
   const [adminOptions, setAdminOptions] = useState<IUser[]>(null)
+  const [rootOptions, setRootOptions] = useState<IUser[]>(null)
   const [fetching, setFetching] = useState(false)
 
   useEffect(() => {
@@ -29,6 +30,7 @@ const Settings = ({ appSettings, getAppSettings, updateAppSettings }: SettingsPr
   useEffect(() => {
     if (appSettings) {
       setAdminOptions(appSettings.users)
+      setRootOptions(appSettings.roots)
     }
     // eslint-disable-next-line
   }, [appSettings])
@@ -63,6 +65,7 @@ const Settings = ({ appSettings, getAppSettings, updateAppSettings }: SettingsPr
       </Typography>
       <Formik
         initialValues={{
+          roots: rootOptions,
           admins: adminOptions.filter(u => appSettings.adminIds.includes(u.id))
         }}
         onSubmit={handleSubmit}
@@ -71,6 +74,52 @@ const Settings = ({ appSettings, getAppSettings, updateAppSettings }: SettingsPr
           <Form>
             <Card className={classes.card}>
               <CardContent>
+                <Field
+                  name="roots"
+                  component={Autocomplete}
+                  multiple
+                  limitTags={25}
+                  id="roots-select"
+                  options={rootOptions}
+                  value={values.roots}
+                  renderTags={(value: IUser[]) =>
+                    value.map(option => (
+                      <Chip
+                        className={classes.chip}
+                        key={option.id}
+                        avatar={<Avatar alt={option.login} src={option.avatar} />}
+                        label={`@${option.login}`}
+                        color="secondary"
+                      />
+                    ))
+                  }
+                  disabled
+                  disableClearable
+                  renderOption={(option: IUser) => (
+                    <div className={classes.option}>
+                      <Avatar
+                        className={classes.avatarOption}
+                        alt={option.login}
+                        src={option.avatar}
+                      />
+                      <span className={classes.optionText}>
+                        {option.name ? `@${option.login} (${option.name})` : `@${option.login}`}
+                      </span>
+                    </div>
+                  )}
+                  renderInput={params => (
+                    <TextField
+                      {...params}
+                      variant="outlined"
+                      label="App root users"
+                      color="secondary"
+                      placeholder="App root users"
+                    />
+                  )}
+                />
+                <Typography className={classes.description} variant="body2" component="p">
+                  App root user can add new admins
+                </Typography>
                 <Field
                   name="admins"
                   component={Autocomplete}
