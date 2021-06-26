@@ -103,6 +103,27 @@ public final class TestData {
         .description("description")
         .owner(acculaGithub)
         .build();
+    public static final GithubRepo lamtevHighload2017 = GithubRepo.builder()
+        .id(104192667L)
+        .name("2017-highload-kv")
+        .isPrivate(false)
+        .description("Курсовой проект 2017 года курса \"Проектирование высоконагруженных систем\"")
+        .owner(lamtevGithub)
+        .build();
+    public static final GithubRepo vaddyaHighload2017 = GithubRepo.builder()
+        .id(105875956L)
+        .name("2017-highload-kv")
+        .isPrivate(false)
+        .description("")
+        .owner(vaddyaGithub)
+        .build();
+    public static final GithubRepo polisHighload2017 = GithubRepo.builder()
+        .id(103418817L)
+        .name("2017-highload-kv")
+        .isPrivate(false)
+        .description("Курсовой проект 2017 года курса \"Проектирование высоконагруженных систем\"")
+        .owner(polisGithub)
+        .build();
     public static final GithubRepo polisHighload2019 = GithubRepo.builder()
         .id(211175384L)
         .name("2019-highload-dht")
@@ -117,7 +138,7 @@ public final class TestData {
         .description("descr")
         .owner(vaddyaGithub)
         .build();
-    public static final List<GithubRepo> repos = List.of(acculaAccula, polisHighload2019, vaddyaHighload2019);
+    public static final List<GithubRepo> repos = List.of(acculaAccula, lamtevHighload2017, vaddyaHighload2017, polisHighload2017, polisHighload2019, vaddyaHighload2019);
 
     public static final GitCommit accula69f5528Git = GitCommit.builder()
         .sha("69f552851f0f6093816c3064b6e00438e0ff3b19")
@@ -126,28 +147,82 @@ public final class TestData {
         .authorEmail("antonlamtev@gmail.com")
         .date(Instant.parse("2020-05-03T13:27:09Z"))
         .build();
+    public static final GitCommit accula485b362Git = GitCommit.builder()
+        .sha("485b362c088e93915e50aeb1dfac3f473fee6a6c")
+        .isMerge(false)
+        .authorName("Anton Lamtev")
+        .authorEmail("lamtev@users.noreply.github.com")
+        .date(Instant.parse("2021-06-25T06:07:36Z"))
+        .build();
+    public static final GitCommit accula14dd20fGit = GitCommit.builder()
+        .sha("14dd20fe8a501713be8d4eec3f7e2cdc273905a0")
+        .isMerge(false)
+        .authorName("Anton Lamtev")
+        .authorEmail("lamtev@users.noreply.github.com")
+        .date(Instant.parse("2021-06-20T10:49:21Z"))
+        .build();
+    public static GitCommit vaddyaHighload2019_7d8e10cGit = GitCommit.builder()
+        .sha("7d8e10c9b91174aacc244590a7d81c23cbb01e8b")
+        .isMerge(false)
+        .authorName("vaddya")
+        .authorEmail("vadik.dyachkov@gmail.com")
+        .date(Instant.parse("2019-11-20T06:55:44Z"))
+        .build();
+    public static final GitCommit highload2019_720cefbGit = GitCommit.builder()
+        .sha("720cefb3f361895e9e23524c2b4025f9a949d5d2")
+        .isMerge(false)
+        .authorName("Vadim TSesko")
+        .authorEmail("incubos@users.noreply.github.com")
+        .date(Instant.parse("2019-11-22T15:50:32Z"))
+        .build();
 
     public static final Commit accula69f5528 = CodeToModelConverter.convert(accula69f5528Git);
-    public static final List<Commit> commits = List.of(accula69f5528);
+    public static final Commit accula485b362 = CodeToModelConverter.convert(accula485b362Git);
+    public static final Commit accula14dd20f = CodeToModelConverter.convert(accula14dd20fGit);
+    public static final Commit vaddyaHighload2019_7d8e10c = CodeToModelConverter.convert(vaddyaHighload2019_7d8e10cGit);
+    public static final Commit highload2019_720cefb = CodeToModelConverter.convert(highload2019_720cefbGit);
 
-    public static final Project acculaProject = Project.builder()
-        .id(userId.incrementAndGet())
+    private static final AtomicLong projectId = new AtomicLong();
+    public static final Project highload19Project = Project.builder()
+        .id(projectId.incrementAndGet())
         .state(Project.State.CONFIGURING)
-        .githubRepo(acculaAccula)
+        .githubRepo(polisHighload2019)
         .creator(lamtev)
         .openPullCount(0)
         .build();
 
-    public static final Pull acculaPull256 = Pull.builder()
-        .id(674101692L)
-        .number(256)
-        .isOpen(true)
-        .createdAt(Instant.parse("2021-06-20T21:38:24Z"))
-        .updatedAt(Instant.parse("2021-06-29T07:02:17Z"))
-        .author(acculaGithub)
-        .title("Introduce user roles (#239)")
-        .head(Snapshot.builder().repo(acculaAccula).branch("lamtev/#239-add-roles").build())
-        .base(Snapshot.builder().repo(acculaAccula).branch("develop").build())
-        .primaryProjectId(acculaProject.id())
+    public static final Snapshot accula485b362Snap = Snapshot.builder()
+        .commit(accula485b362)
+        .branch("develop")
+        .repo(acculaAccula)
+        .build();
+    public static final Snapshot accula14dd20fSnap = Snapshot.builder()
+        .commit(accula14dd20f)
+        .branch("develop")
+        .repo(acculaAccula)
+        .build();
+    public static final Snapshot highload2019_174Head = Snapshot.builder()
+        .commit(vaddyaHighload2019_7d8e10c)
+        .branch("master")
+        .repo(vaddyaHighload2019)
+        .build();
+    public static final Snapshot highload2019_174Base = Snapshot.builder()
+        .commit(highload2019_720cefb)
+        .branch("master")
+        .repo(polisHighload2019)
+        .build();
+    public static final List<Snapshot> snapshots = List.of(highload2019_174Head, accula485b362Snap, highload2019_174Base, accula14dd20fSnap);
+
+    public static final Pull highload19_174 = Pull.builder()
+        .id(342695057L)
+        .number(174)
+        .isOpen(false)
+        .createdAt(Instant.parse("2019-11-19T14:00:41Z"))
+        .updatedAt(Instant.parse("2019-11-23T14:54:34Z"))
+        .author(vaddyaGithub)
+        .title("Leveled Compaction | Vadim Dyachkov")
+        .head(highload2019_174Head)
+        .base(highload2019_174Base)
+        .primaryProjectId(highload19Project.id())
         .build();
 }

@@ -23,7 +23,7 @@ import reactor.core.publisher.Mono;
 import java.util.Collections;
 import java.util.List;
 
-import static org.accula.api.util.TestData.acculaPull256;
+import static org.accula.api.util.TestData.highload19_174;
 import static org.accula.api.util.TestData.userGithub;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -57,15 +57,15 @@ class PullsRouterTest {
     @Test
     void testGetOk() {
         when(repository.findByNumber(anyLong(), Mockito.anyInt()))
-                .thenReturn(Mono.just(acculaPull256));
+                .thenReturn(Mono.just(highload19_174));
 
         when(repository.findPrevious(anyLong(), Mockito.anyInt(), anyLong()))
                 .thenReturn(Flux.fromIterable(Collections.emptyList()));
 
-        client.get().uri("/api/projects/{projectId}/pulls/{pullNumber}", 1L, acculaPull256.number())
+        client.get().uri("/api/projects/{projectId}/pulls/{pullNumber}", 1L, highload19_174.number())
                 .exchange()
                 .expectStatus().isOk()
-                .expectBody(PullDto.class).isEqualTo(ModelToDtoConverter.convert(acculaPull256, Collections.emptyList()));
+                .expectBody(PullDto.class).isEqualTo(ModelToDtoConverter.convert(highload19_174, Collections.emptyList()));
     }
 
     @Test
@@ -81,7 +81,7 @@ class PullsRouterTest {
         when(repository.findByNumber(anyLong(), Mockito.anyInt()))
                 .thenReturn(Mono.empty());
 
-        client.get().uri("/api/projects/{projectId}/pulls/{pullNumber}", 1L, acculaPull256.number())
+        client.get().uri("/api/projects/{projectId}/pulls/{pullNumber}", 1L, highload19_174.number())
                 .exchange()
                 .expectStatus().isNotFound()
                 .expectBody(Void.class).value(Matchers.nullValue());
@@ -90,12 +90,12 @@ class PullsRouterTest {
     @Test
     void testGetManyOk() {
         when(repository.findByProjectId(anyLong()))
-                .thenReturn(Flux.just(acculaPull256));
+                .thenReturn(Flux.just(highload19_174));
 
         client.get().uri("/api/projects/{projectId}/pulls", 1L)
                 .exchange()
                 .expectStatus().isOk()
-                .expectBody(ShortPullDto[].class).isEqualTo(ModelToDtoConverter.convertShort(List.of(acculaPull256)).toArray(new ShortPullDto[0]));
+                .expectBody(ShortPullDto[].class).isEqualTo(ModelToDtoConverter.convertShort(List.of(highload19_174)).toArray(new ShortPullDto[0]));
     }
 
     @Test
@@ -118,7 +118,7 @@ class PullsRouterTest {
 
     @Test
     void testGetManyAssignedToMeAuthorized() {
-        final var pull = acculaPull256.withAssignees(List.of(userGithub));
+        final var pull = highload19_174.withAssignees(List.of(userGithub));
         when(repository.findByProjectIdIncludingAssignees(anyLong()))
             .thenReturn(Flux.just(pull));
         when(currentUserRepo.get(any()))
@@ -133,7 +133,7 @@ class PullsRouterTest {
     @Test
     void testGetManyAssignedToMeAuthorizedNotMatches() {
         when(repository.findByProjectIdIncludingAssignees(anyLong()))
-            .thenReturn(Flux.just(acculaPull256));
+            .thenReturn(Flux.just(highload19_174));
         when(currentUserRepo.get(any()))
             .thenReturn(Mono.just(userGithub));
 
@@ -146,7 +146,7 @@ class PullsRouterTest {
     @Test
     void testGetManyAssignedToMeNotAuthorized() {
         when(repository.findByProjectIdIncludingAssignees(anyLong()))
-            .thenReturn(Flux.just(acculaPull256));
+            .thenReturn(Flux.just(highload19_174));
         when(currentUserRepo.get(any()))
             .thenReturn(Mono.empty());
 

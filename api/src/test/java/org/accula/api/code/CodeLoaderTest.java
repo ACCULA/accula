@@ -4,7 +4,6 @@ import org.accula.api.code.git.Git;
 import org.accula.api.code.lines.LineRange;
 import org.accula.api.code.lines.LineSet;
 import org.accula.api.db.model.Commit;
-import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.Snapshot;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,10 +14,10 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.Executors;
 
+import static org.accula.api.util.TestData.lamtevHighload2017;
+import static org.accula.api.util.TestData.polisHighload2017;
 import static org.accula.api.util.TestData.polisHighload2019;
-import static org.accula.api.util.TestData.lamtevGithub;
-import static org.accula.api.util.TestData.polisGithub;
-import static org.accula.api.util.TestData.vaddyaGithub;
+import static org.accula.api.util.TestData.vaddyaHighload2017;
 import static org.accula.api.util.TestData.vaddyaHighload2019;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -56,11 +55,10 @@ class CodeLoaderTest {
 
     @Test
     void testGetMultipleFiles() {
-        var repo = GithubRepo.builder().id(1L).name("2017-highload-kv").isPrivate(false).description("descr").owner(lamtevGithub).build();
         final var s1 = Snapshot
                 .builder()
                 .commit(Commit.shaOnly("ecb40217f36891809693e4d9d37a3e841ff740b9"))
-                .repo(repo)
+                .repo(lamtevHighload2017)
                 .pullInfo(Snapshot.PullInfo.of(10L, 7))
                 .build();
         final var s2 = s1.withCommit(Commit.shaOnly("5d66d3b0c3f07c07eb841b1620dcba2b0a970bc7"))
@@ -168,21 +166,18 @@ class CodeLoaderTest {
 
     @Test
     void testRemoteDiff() {
-        var projectRepo = GithubRepo.builder().id(1L).name("2017-highload-kv").isPrivate(false).description("descr").owner(polisGithub).build();
-        var baseRepo = GithubRepo.builder().id(0L).name("2017-highload-kv").isPrivate(false).description("").owner(lamtevGithub).build();
         var base = Snapshot
                 .builder()
                 .commit(Commit.shaOnly("fe675f17ad4aab9a8c853b5f3b07b0bc64f06907"))
-                .repo(baseRepo)
+                .repo(lamtevHighload2017)
                 .build();
-        var headRepo = GithubRepo.builder().id(0L).name("2017-highload-kv").isPrivate(false).description("").owner(vaddyaGithub).build();
         var head = Snapshot
                 .builder()
                 .commit(Commit.shaOnly("076c99d7bbb06b31c27a9c3164f152d5c18c5010"))
-                .repo(headRepo)
+                .repo(vaddyaHighload2017)
                 .build();
 
-        final var diffEntries = codeLoader.loadRemoteDiff(projectRepo, base, head, 1, FileFilter.SRC_JAVA).collectList().block();
+        final var diffEntries = codeLoader.loadRemoteDiff(polisHighload2017, base, head, 1, FileFilter.SRC_JAVA).collectList().block();
         assertNotNull(diffEntries);
         assertEquals(9, diffEntries.size());
         final var possibleRenameCount = diffEntries
@@ -194,8 +189,7 @@ class CodeLoaderTest {
 
     @Test
     void testLoadFilenames() {
-        var projectRepo = GithubRepo.builder().id(1L).name("2017-highload-kv").isPrivate(false).description("descr").owner(polisGithub).build();
-        final var filenames = codeLoader.loadFilenames(projectRepo).collectList().block();
+        final var filenames = codeLoader.loadFilenames(polisHighload2017).collectList().block();
         assertNotNull(filenames);
         assertEquals(21, filenames.size());
         assertTrue(filenames.contains(README));
