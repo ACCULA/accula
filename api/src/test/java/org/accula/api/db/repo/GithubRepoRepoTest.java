@@ -31,7 +31,7 @@ final class GithubRepoRepoTest extends BaseRepoTest {
     void testUpsert() {
         expectCompleteEmpty(repoRepo.upsert(List.of()));
 
-        assertNotNull(userRepo.upsert(repos.stream().map(GithubRepo::owner).toList()).collectList().block());
+        assertNotNull(userRepo.upsert(repos.stream().map(GithubRepo::owner).distinct().toList()).collectList().block());
 
         StepVerifier.create(repoRepo.upsert(repos))
             .expectNext(repos.toArray(GithubRepo[]::new))

@@ -184,7 +184,6 @@ public final class ProjectsHandler implements Handler {
         return havingAdminPermissionAtProject(request)
             .flatMap(projectRepo::findById)
             .zipWith(githubClient.getAllRepos(GithubClient.MAX_PAGE_SIZE)
-                .map(GithubApiToModelConverter::convert)
                 .map(repo -> RepoShortDto.builder()
                     .id(repo.id())
                     .owner(repo.owner().login())
