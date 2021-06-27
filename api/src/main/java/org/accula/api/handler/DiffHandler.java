@@ -109,7 +109,7 @@ public final class DiffHandler {
     }
 
     private Flux<DiffEntry<Snapshot>> loadRemoteDiff(final GithubRepo repo, final Snapshot base, final Snapshot head, final Project.Conf conf) {
-        return codeLoader.loadDiff(base, head, conf.fileMinSimilarityIndex(), Languages.filter(conf.languages()));
+        return codeLoader.loadRemoteDiff(repo, base, head, conf.fileMinSimilarityIndex(), Languages.filter(conf.languages()));
     }
 
     private static Mono<ServerResponse> toResponse(final Flux<DiffEntry<Snapshot>> diff) {
