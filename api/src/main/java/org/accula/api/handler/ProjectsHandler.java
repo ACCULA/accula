@@ -146,6 +146,15 @@ public final class ProjectsHandler implements Handler {
                 .onErrorResume(ResponseConvertibleException::onErrorResume);
     }
 
+    public Mono<ServerResponse> supportedLanguages(final ServerRequest request) {
+        return havingAdminPermissionAtProject(request)
+            .then(projectRepo.supportedLanguages())
+            .defaultIfEmpty(List.of())
+            .map(ModelToDtoConverter::convertLanguages)
+            .flatMap(Responses::ok)
+            .onErrorResume(ResponseConvertibleException::onErrorResume);
+    }
+
     public Mono<ServerResponse> getConf(final ServerRequest request) {
         final var confMono = havingAdminPermissionAtProject(request)
                 .flatMap(projectRepo::confById)
@@ -306,7 +315,7 @@ public final class ProjectsHandler implements Handler {
         return Mono.usingWhen(
                 projectMono,
                 Mono::just,
-                project -> projectRepo.upsertConf(project.id(), Project.Conf.DEFAULT)
+                project -> projectRepo.upsertConf(project.id(), Project.Conf.defaultConf())
         );
     }
 

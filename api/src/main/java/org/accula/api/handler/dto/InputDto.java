@@ -4,6 +4,7 @@ import javax.annotation.meta.TypeQualifierDefault;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.util.Collection;
 import java.util.function.Consumer;
 
 /**
@@ -21,6 +22,13 @@ public interface InputDto {
                 }
                 if (field.get(this) == null) {
                     fieldName.accept(field.getName());
+                    continue;
+                }
+                if (field.getAnnotation(NotEmpty.class) != null &&
+                    field.get(this) instanceof Collection<?> collection &&
+                    collection.isEmpty()) {
+                    field.set(this, null);
+                    fieldName.accept(field.getName());
                 }
             } catch (IllegalAccessException e) {
                 throw new IllegalStateException(e);
@@ -31,5 +39,10 @@ public interface InputDto {
     @Retention(RetentionPolicy.RUNTIME)
     @TypeQualifierDefault({ElementType.FIELD, ElementType.RECORD_COMPONENT, ElementType.METHOD})
     @interface OptionalField {
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @TypeQualifierDefault({ElementType.FIELD, ElementType.RECORD_COMPONENT, ElementType.METHOD})
+    @interface NotEmpty {
     }
 }

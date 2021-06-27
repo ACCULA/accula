@@ -11,12 +11,14 @@ import org.accula.api.code.FileFilter;
 import org.accula.api.db.model.Snapshot;
 import org.accula.api.token.Token;
 import org.accula.api.token.TokenProvider;
-import org.accula.api.token.TokenProvider.Language;
+import org.accula.api.token.java.JavaTokenProvider;
+import org.accula.api.token.kotlin.KotlinTokenProvider;
 import org.accula.api.util.Comparators;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
+import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -30,7 +32,6 @@ public final class CloneDetectorImpl implements CloneDetector {
     private static final int CHEAP_CHECK_CLONE_COUNT_THRESHOLD = 10;
     //FIXME: avoid blocking
     private final SuffixTreeCloneDetector<Token<Snapshot>, Snapshot> suffixTreeCloneDetector = new SuffixTreeCloneDetector<>();
-    private final TokenProvider<Snapshot> tokenProvider = TokenProvider.of(Language.JAVA);
     private final ConfigProvider configProvider;
 
     @Override
@@ -58,10 +59,30 @@ public final class CloneDetectorImpl implements CloneDetector {
     }
 
     private Mono<Void> addFilesToSuffixTree(final Flux<FileEntity<Snapshot>> files) {
-        return tokenProvider.tokensByMethods(files)
+        return tokensByMethods(files)
                 .flatMap(method ->
                         Mono.fromSupplier(() -> suffixTreeCloneDetector.addTokens(method)))
                 .then();
+    }
+
+    private Flux<List<Token<Snapshot>>> tokensByMethods(final Flux<FileEntity<Snapshot>> files) {
+        return configProvider
+            .get()
+            .flatMapMany(config -> {
+                final var tokenProviders = config
+                    .languages()
+                    .stream()
+                    .map(language -> switch (language) {
+                        case JAVA -> new JavaTokenProvider<Snapshot>();
+                        case KOTLIN -> new KotlinTokenProvider<Snapshot>();
+                    })
+                    .toList();
+                if (tokenProviders.isEmpty()) {
+                    log.warn("No token providers configured");
+                    return Mono.empty();
+                }
+                return new TokenProvider<>(tokenProviders).tokensByMethods(files);
+            });
     }
 
     private Flux<CodeClone> readClonesFromSuffixTreeForPull(final Snapshot pullSnapshot,

@@ -83,6 +83,7 @@ public class WebSecurityConfig {
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers(GET, "/api/projects/{id}/githubAdmins").authenticated()
                         .pathMatchers(GET, "/api/projects/{id}/headFiles").authenticated()
+                        .pathMatchers(GET, "/api/projects/{id}/supportedLanguages").authenticated()
                         .pathMatchers(GET, "/api/projects/{id}/conf").authenticated()
                         .pathMatchers(GET, "/api/projects/{id}/repoSuggestion").authenticated()
                         .pathMatchers(GET, "/api/projects/**").permitAll()

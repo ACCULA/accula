@@ -98,6 +98,18 @@ export const getBaseFiles = async (id: number, token: IToken): Promise<string[]>
     .then(resp => resp.data as string[])
 }
 
+export const getSupportedLanguages = async (id: number, token: IToken): Promise<string[]> => {
+  return axios
+    .get(`${API_URL}/api/projects/${id}/supportedLanguages`, {
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token.accessToken}`
+      },
+      withCredentials: true
+    })
+    .then(resp => resp.data as string[])
+}
+
 export const postProject = async (url: string, token: IToken): Promise<IProject | string> => {
   return axios
     .post(

@@ -1,13 +1,16 @@
 package org.accula.api.clone;
 
 import lombok.Builder;
+import lombok.Singular;
 import lombok.Value;
 import org.accula.api.code.FileEntity;
 import org.accula.api.code.FileFilter;
+import org.accula.api.db.model.CodeLanguage;
 import org.accula.api.db.model.Snapshot;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
 import java.util.function.Supplier;
 
 /**
@@ -30,7 +33,9 @@ public interface CloneDetector {
     @Value
     class Config {
         int cloneMinTokenCount;
-        @Builder.Default
-        FileFilter filter = FileFilter.SRC_JAVA;
+        FileFilter filter;
+        @Singular
+        List<CodeLanguage> languages;
+        FileFilter languageFilter;
     }
 }

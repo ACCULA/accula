@@ -4,49 +4,22 @@ import org.accula.api.code.FileEntity;
 import org.accula.api.code.lines.LineSet;
 import org.accula.api.token.Token;
 import org.accula.api.token.TokenProvider;
+import org.accula.api.token.java.JavaTokenProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
+import java.util.List;
+
+import static org.accula.api.token.java.JavaTokenProviderTest.jf1;
+import static org.accula.api.token.java.JavaTokenProviderTest.jf2;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Anton Lamtev
  */
 public class SuffixTreeCloneDetectorTest {
-    public static final String F1 = """
-            public class Cell {
-                public Cell(@NotNull final ByteBuffer key, @NotNull final Value value) {
-                    this.key = key;
-                    this.value = value;
-                }
-                public Value getValue() {
-                    return value;
-                }
-                public ByteBuffer getKey() {
-                    println(k);
-                    //comment
-                    return key.asReadOnlyBuffer();
-                }
-            }
-            """;
-    public static final String F2 = """
-            public class Cell {
-                public Cell(@Another ByteBuffer k, final Value v) {
-                    Objects.requireNonNull(k);
-                    Objects.requireNonNull(v);
-                    this.k = k;
-                    this.v = v;
-                }
-                public ByteBuffer k() {
-                    return k.asReadOnlyBuffer();
-                }
-                public Value v() {
-                    return v;
-                }
-            }
-            """;
     public static final String F3 = """
             public class SSTable {
                 private int getElementPosition(final ByteBuffer key) throws IOException {
@@ -94,7 +67,7 @@ public class SuffixTreeCloneDetectorTest {
                 }
             }
              """;
-    final TokenProvider<String> tokenProvider = TokenProvider.of(TokenProvider.Language.JAVA);
+    final TokenProvider<String> tokenProvider = new TokenProvider<>(List.of(new JavaTokenProvider<>()));
     SuffixTreeCloneDetector<Token<String>, String> detector;
 
     @BeforeEach
@@ -104,10 +77,7 @@ public class SuffixTreeCloneDetectorTest {
 
     @Test
     void test1() {
-        final var f1 = new FileEntity<>("ref1", "Cell.java", F1, LineSet.all());
-        final var f2 = new FileEntity<>("ref2", "Cell.java", F2, LineSet.all());
-
-        StepVerifier.create(tokenProvider.tokensByMethods(Flux.just(f1, f2))
+        StepVerifier.create(tokenProvider.tokensByMethods(Flux.just(jf1, jf2))
                 .collectList())
                 .expectNextMatches(methods -> {
                     methods.forEach(method -> detector.addTokens(method));

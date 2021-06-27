@@ -1,4 +1,4 @@
-package org.accula.api.token.psi.java;
+package org.accula.api.token.java.psi;
 
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
@@ -24,8 +24,7 @@ public final class JavaPsiUtils {
             JavaTokenType.FINAL_KEYWORD,
             JavaTokenType.C_STYLE_COMMENT,
             JavaTokenType.END_OF_LINE_COMMENT,
-            JavaTokenType.SYNCHRONIZED_KEYWORD,
-            JavaTokenType.THIS_KEYWORD
+            JavaTokenType.SYNCHRONIZED_KEYWORD
     );
     private static final TokenSet TOKENS_TO_EXCLUDE = TokenSet.orSet(
             TokenSet.WHITE_SPACE,

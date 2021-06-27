@@ -5,6 +5,7 @@ import org.accula.api.clone.CloneDetector;
 import org.accula.api.clone.CloneDetectorImpl;
 import org.accula.api.code.CodeLoader;
 import org.accula.api.code.FileFilter;
+import org.accula.api.code.Languages;
 import org.accula.api.converter.CodeToModelConverter;
 import org.accula.api.db.model.Clone;
 import org.accula.api.db.model.Pull;
@@ -17,9 +18,11 @@ import org.accula.api.util.Checks;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 /**
  * @author Anton Lamtev
@@ -64,11 +67,10 @@ public final class CloneDetectionService {
 
     public Flux<Clone> detectClonesInNewFilesAndSaveToDb(final Long projectId, final Pull pull, final Iterable<Snapshot> snapshots) {
         final var head = pull.head();
-
-        final var clones = cloneDetector(projectId)
-                .findClones(head, loader.loadFiles(head.repo(), snapshots, FileFilter.SRC_JAVA), snapshots)
-                .distinct()
-                .map(CodeToModelConverter::convert);
+        final var clones = withConfig(projectId, config -> cloneDetector(projectId)
+            .findClones(head, loader.loadFiles(head.repo(), snapshots, config.languageFilter()), snapshots)
+            .distinct()
+            .map(CodeToModelConverter::convert));
 
         return clones
                 .collectList()
@@ -84,14 +86,15 @@ public final class CloneDetectionService {
     }
 
     public Mono<Void> fillSuffixTree(final Long projectId, final Flux<Pull> pullFlux) {
-        final var files = pullFlux
-                .flatMap(pull -> snapshotRepo
-                        .findByPullId(pull.id())
-                        .map(snapshot -> snapshot.withPull(pull)))
-                .groupBy(Snapshot::repo)
-                .flatMap(snapshotFlux -> snapshotFlux
-                        .collectList()
-                        .flatMapMany(snaps -> loader.loadFiles(snapshotFlux.key(), snaps, FileFilter.SRC_JAVA)));
+        final var files = withConfig(projectId, config -> pullFlux
+            .flatMap(pull -> snapshotRepo
+                .findByPullId(pull.id())
+                .map(snapshot -> snapshot.withPull(pull)))
+            .groupBy(Snapshot::repo)
+            .flatMap(snapshotFlux -> snapshotFlux
+                .collectList()
+                .flatMapMany(snaps -> loader.loadFiles(snapshotFlux.key(), snaps, config.languageFilter())))
+            .subscribeOn(Schedulers.parallel()));
         return cloneDetector(projectId).fill(files);
     }
 
@@ -116,9 +119,17 @@ public final class CloneDetectionService {
                         .confById(projectId)
                         .map(conf -> CloneDetector.Config.builder()
                                 .cloneMinTokenCount(conf.cloneMinTokenCount())
-                                .filter(FileFilter.SRC_JAVA.and(FileFilter.exclude(conf.excludedFiles())))
+                                .filter(FileFilter.exclude(conf.excludedFiles()))
+                                .languages(conf.languages())
+                                .languageFilter(Languages.filter(conf.languages()))
                                 .build()))
                 .doOnNext(conf -> cloneDetectorConfigs.put(projectId, conf));
+    }
+
+    private <R> Flux<R> withConfig(final Long projectId, final Function<CloneDetector.Config, Flux<R>> configUse) {
+        return cloneDetectorConfigProvider(projectId)
+            .get()
+            .flatMapMany(configUse);
     }
 
     private void evictConfigForProject(final Long projectId) {

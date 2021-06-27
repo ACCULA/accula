@@ -126,6 +126,7 @@ export interface IProjectConf {
   cloneMinTokenCount: number
   fileMinSimilarityIndex: number
   excludedFiles: string[]
+  languages: string[]
 }
 
 export interface IShortPull {

@@ -44,6 +44,11 @@ final class SnapshotRepoTest extends BaseRepoTest {
             .expectNext(snapshots.toArray(Snapshot[]::new))
             .expectComplete()
             .verify();
+
+        snapshotRepo.insert(highload2019_174Head)
+            .as(StepVerifier::create)
+            .expectNext(highload2019_174Head)
+            .verifyComplete();
     }
 
     @Test

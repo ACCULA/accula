@@ -2,56 +2,42 @@ package org.accula.api.token.java;
 
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiMethod;
 import org.accula.api.code.FileEntity;
+import org.accula.api.token.LanguageTokenProvider;
 import org.accula.api.token.Token;
-import org.accula.api.token.TokenProvider;
 import org.accula.api.token.TraverseUtils;
+import org.accula.api.token.java.psi.JavaPsiUtils;
+import org.accula.api.token.java.psi.PsiFileFactoryProvider;
 import org.accula.api.token.psi.PsiUtils;
-import org.accula.api.token.psi.java.JavaPsiUtils;
-import org.accula.api.token.psi.java.PsiFileFactoryProvider;
 import org.accula.api.util.Checks;
-import reactor.core.publisher.Flux;
-import reactor.core.scheduler.Schedulers;
-import reactor.pool.Pool;
-import reactor.pool.PoolBuilder;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 import static java.util.function.Predicate.not;
 
 /**
  * @author Anton Lamtev
  */
-public final class JavaTokenProvider<Ref> implements TokenProvider<Ref> {
-    private final Pool<PsiFileFactory> fileFactoryPool = PoolBuilder
-            .from(PsiFileFactoryProvider.instance().get())
-            .sizeBetween(0, Runtime.getRuntime().availableProcessors())
-            .buildPool();
-
+public final class JavaTokenProvider<Ref> implements LanguageTokenProvider<Ref> {
     @Override
-    public Flux<List<Token<Ref>>> tokensByMethods(final Flux<FileEntity<Ref>> files) {
-        return files
-                .window(Runtime.getRuntime().availableProcessors() * 4)
-                .flatMap(fileFlux -> fileFactoryPool
-                        .withPoolable(psiFileFactory -> fileFlux
-                                .parallel(Runtime.getRuntime().availableProcessors())
-                                .runOn(Schedulers.parallel())
-                                .flatMap(file -> tokensFromFile(file, psiFileFactory)))
-                );
+    public boolean supportsFile(final FileEntity<Ref> file) {
+        return file.name().endsWith(".java");
     }
 
-    private static <Ref> Flux<List<Token<Ref>>> tokensFromFile(final FileEntity<Ref> file, final PsiFileFactory psiFileFactory) {
+    @Override
+    public Stream<List<Token<Ref>>> tokensByMethods(FileEntity<Ref> file) {
         final var filename = Checks.notNull(file.name(), "FileEntity name");
         final var content = Checks.notNull(file.content(), "FileEntity content");
-        final var methods = JavaPsiUtils
-                .methods(psiFileFactory.createFileFromText(filename, JavaLanguage.INSTANCE, content), file.lines()::containsAny)
-                .stream()
-                .map(psiFile -> methodTokens(psiFile, file))
-                .filter(not(List::isEmpty));
-        return Flux.fromStream(methods);
+        final var psiFile = PsiFileFactoryProvider.instance().fileFactory().createFileFromText(filename, JavaLanguage.INSTANCE, content);
+
+        return JavaPsiUtils
+            .methods(psiFile, file.lines()::containsAny)
+            .stream()
+            .map(method -> methodTokens(method, file))
+            .filter(not(List::isEmpty));
     }
 
     private static <Ref> List<Token<Ref>> methodTokens(final PsiMethod method, final FileEntity<Ref> file) {
@@ -65,7 +51,8 @@ public final class JavaTokenProvider<Ref> implements TokenProvider<Ref> {
                     if (!file.lines().containsAny(lineRange)) {
                         return null;
                     }
-                    return Token.of(token, filename, method.getName(), lineRange, file.ref());
+                    final var string = JavaPsiUtils.optimizeTokenString(token.getNode().getElementType());
+                    return Token.of(string, filename, method.getName(), lineRange, file.ref());
                 })
                 .filter(Objects::nonNull)
                 .toList();

@@ -1,4 +1,4 @@
-package org.accula.api.token.psi.java;
+package org.accula.api.token.java.psi;
 
 import com.intellij.DynamicBundle;
 import com.intellij.codeInsight.ContainerProvider;

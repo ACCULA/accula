@@ -45,8 +45,7 @@ abstract class BaseRepoTest implements ConnectionProvidedRepo {
 
     final <P extends Publisher<?>> void expectCompleteEmpty(final P publisher) {
         StepVerifier.create(publisher)
-            .expectComplete()
-            .verify();
+            .verifyComplete();
     }
 
     private void migrate() {
@@ -63,6 +62,7 @@ abstract class BaseRepoTest implements ConnectionProvidedRepo {
             DROP TABLE project_repo;
             DROP TABLE project_admin;
             DROP TABLE project_conf;
+            DROP TYPE code_language_enum;
             DROP TABLE project;
             DROP TYPE project_state_enum;
             DROP TABLE user_;

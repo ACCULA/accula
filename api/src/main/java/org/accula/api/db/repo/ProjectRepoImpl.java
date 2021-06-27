@@ -6,6 +6,7 @@ import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.Row;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.accula.api.db.model.CodeLanguage;
 import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.Project;
 import org.accula.api.db.model.User;
@@ -18,6 +19,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
+
+import static org.accula.api.db.repo.ConnectionProvidedRepo.convertMany;
 
 /**
  * @author Anton Lamtev
@@ -129,7 +133,7 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
                 .from(selectTopStatement(connection)
                         .bind("$1", count)
                         .execute())
-                .flatMapMany(result -> ConnectionProvidedRepo.convertMany(result, this::convert)));
+                .flatMapMany(result -> convertMany(result, this::convert)));
     }
 
     @Override
@@ -186,13 +190,15 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
                         .forEach(onConfUpdate -> onConfUpdate.onConfUpdate(id)));
     }
 
+    //TODO: remove code_language_enum[] to TEXT[] cast once r2dbc-postgres 0.9.0 is released
     @Override
     public Mono<Project.Conf> confById(final Long id) {
         return withConnection(connection -> Mono.from(((PostgresqlStatement) connection.createStatement("""
                 SELECT conf.clone_min_token_count               AS clone_min_token_count,
                        conf.file_min_similarity_index           AS file_min_similarity_index,
                        COALESCE(admins.ids, Array[]::BIGINT[])  AS admin_ids,
-                       conf.excluded_files                      AS excluded_files
+                       conf.excluded_files                      AS excluded_files,
+                       conf.languages::TEXT[]                   AS languages
                 FROM project_conf conf
                          LEFT JOIN (SELECT this.project_id,
                                            array_agg(this.admin_id) AS ids
@@ -204,6 +210,17 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
                 .bind("$1", id)
                 .execute())
                 .flatMap(result -> ConnectionProvidedRepo.convert(result, this::convertConf)));
+    }
+
+    @Override
+    public Mono<List<CodeLanguage>> supportedLanguages() {
+        return withConnection(connection -> Flux
+            .from(connection.createStatement("""
+                    SELECT unnest(enum_range(NULL::code_language_enum)) AS language
+                    """)
+                .execute())
+            .flatMap(result -> convertMany(result, ProjectRepoImpl::convertDetectorLanguage))
+            .collectList());
     }
 
     @Override
@@ -375,7 +392,7 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
             )
             .bind("$1", projectId)
             .execute()
-            .flatMap(result -> ConnectionProvidedRepo.convertMany(result, GithubRepoRepoImpl::convert))
+            .flatMap(result -> convertMany(result, GithubRepoRepoImpl::convert))
             .collectList();
     }
 
@@ -410,19 +427,22 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
         return deleteProjectAdmins.then(insertNewAdmins);
     }
 
+    //TODO: remove TEXT[] to code_language_enum[] cast once r2dbc-postgres 0.9.0 is released
     private Mono<Void> upsertConf(final Connection connection, final Long projectId, final Project.Conf conf) {
         return ((PostgresqlStatement) connection.createStatement("""
-                INSERT INTO project_conf (project_id, clone_min_token_count, file_min_similarity_index, excluded_files)
-                VALUES ($1, $2, $3, $4)
+                INSERT INTO project_conf (project_id, clone_min_token_count, file_min_similarity_index, excluded_files, languages)
+                VALUES ($1, $2, $3, $4, $5::code_language_enum[])
                 ON CONFLICT (project_id) DO UPDATE
                       SET clone_min_token_count = $2,
                           file_min_similarity_index = $3,
-                          excluded_files = $4
+                          excluded_files = $4,
+                          languages = $5::code_language_enum[]
                 """))
                 .bind("$1", projectId)
                 .bind("$2", conf.cloneMinTokenCount())
                 .bind("$3", conf.fileMinSimilarityIndex())
                 .bind("$4", conf.excludedFiles().toArray(new String[0]))
+                .bind("$5", conf.languages().stream().map(CodeLanguage::name).toArray(String[]::new))
                 .execute()
                 .flatMap(PostgresqlResult::getRowsUpdated)
                 .then();
@@ -456,12 +476,18 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
                 .build();
     }
 
+    //TODO: remove String[] to DetectorLanguage[] transform once r2dbc-postgres 0.9.0 is released
     private Project.Conf convertConf(final Row row) {
         return Project.Conf.builder()
                 .adminIds(Converters.ids(row, "admin_ids"))
                 .cloneMinTokenCount(Converters.integer(row, "clone_min_token_count"))
                 .fileMinSimilarityIndex(Converters.integer(row, "file_min_similarity_index"))
                 .excludedFiles(Converters.strings(row, "excluded_files"))
+                .languages(Stream.of(Converters.value(row, "languages", String[].class)).map(CodeLanguage::valueOf).toList())
                 .build();
+    }
+
+    private static CodeLanguage convertDetectorLanguage(final Row row) {
+        return Converters.value(row, "language", CodeLanguage.class);
     }
 }
