@@ -19,9 +19,9 @@ public final class CodeToDtoConverter {
         final var base = diff.base();
         final var head = diff.head();
         return DiffDto.builder()
-                .baseFilename(base.name())
+                .baseFilename(nullIfEmpty(base.name()))
                 .baseContent(encode(base.content()))
-                .headFilename(head.name())
+                .headFilename(nullIfEmpty(head.name()))
                 .headContent(encode(head.content()))
                 .build();
     }
@@ -32,5 +32,13 @@ public final class CodeToDtoConverter {
             return null;
         }
         return Base64.getEncoder().encodeToString(text.getBytes(StandardCharsets.UTF_8));
+    }
+
+    @Nullable
+    private static String nullIfEmpty(@Nullable final String string) {
+        if (string == null || string.isEmpty()) {
+            return null;
+        }
+        return string;
     }
 }

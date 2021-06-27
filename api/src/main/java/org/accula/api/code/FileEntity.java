@@ -12,7 +12,6 @@ import org.jetbrains.annotations.Nullable;
 @Value
 public class FileEntity<Ref> {
     Ref ref;
-    @Nullable
     String name;
     @EqualsAndHashCode.Exclude
     @Nullable
@@ -20,7 +19,7 @@ public class FileEntity<Ref> {
     LineSet lines;
 
     public static <Ref> FileEntity<Ref> absent(final Ref ref) {
-        return new FileEntity<>(ref, null, null, null);
+        return new FileEntity<>(ref, "", null, LineSet.empty());
     }
 
     @Override
