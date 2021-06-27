@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+//FIXME: get rid of duplication by replacing kotlin-compiler-embeddable with kotlin-compiler
+// and reuse code around psi once kotlin-compiler developers are stopped including unshadowed libraries into jar
 /**
  * @author Anton Lamtev
  */
