@@ -1,6 +1,5 @@
 package org.accula.api.token.java.psi;
 
-import com.intellij.core.CoreProjectEnvironment;
 import com.intellij.core.JavaCoreProjectEnvironment;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiFileFactory;
@@ -25,7 +24,7 @@ public final class PsiFileFactoryProvider {
         final var appEnvDisposable = Disposer.newDisposable("appEnvDisposable");
         final var appEnv = JavaApplicationEnvironment.of(appEnvDisposable);
         final var projectEnvDisposable = Disposer.newDisposable(appEnvDisposable, "projectEnvDisposable");
-        CoreProjectEnvironment projectEnvironment = new JavaCoreProjectEnvironment(projectEnvDisposable, appEnv);
+        final var projectEnvironment = new JavaCoreProjectEnvironment(projectEnvDisposable, appEnv);
         return PsiFileFactory.getInstance(projectEnvironment.getProject());
     }
 }

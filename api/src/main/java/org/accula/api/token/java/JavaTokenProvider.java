@@ -28,7 +28,7 @@ public final class JavaTokenProvider<Ref> implements LanguageTokenProvider<Ref> 
     }
 
     @Override
-    public Stream<List<Token<Ref>>> tokensByMethods(FileEntity<Ref> file) {
+    public Stream<List<Token<Ref>>> tokensByMethods(final FileEntity<Ref> file) {
         final var filename = Checks.notNull(file.name(), "FileEntity name");
         final var content = Checks.notNull(file.content(), "FileEntity content");
         final var psiFile = PsiFileFactoryProvider.instance().fileFactory().createFileFromText(filename, JavaLanguage.INSTANCE, content);

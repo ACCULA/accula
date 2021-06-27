@@ -108,7 +108,10 @@ public final class DiffHandler {
             .as(DiffHandler::toResponse);
     }
 
-    private Flux<DiffEntry<Snapshot>> loadRemoteDiff(final GithubRepo repo, final Snapshot base, final Snapshot head, final Project.Conf conf) {
+    private Flux<DiffEntry<Snapshot>> loadRemoteDiff(final GithubRepo repo,
+                                                     final Snapshot base,
+                                                     final Snapshot head,
+                                                     final Project.Conf conf) {
         return codeLoader.loadRemoteDiff(repo, base, head, conf.fileMinSimilarityIndex(), Languages.filter(conf.languages()));
     }
 
