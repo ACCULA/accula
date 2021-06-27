@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.kdoc.parser.KDocElementTypes;
 import org.jetbrains.kotlin.lexer.KtTokens;
 import org.jetbrains.kotlin.psi.KtNamedFunction;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -58,14 +57,10 @@ public final class KotlinPsiUtils {
     private KotlinPsiUtils() {
     }
 
-    public static List<KtNamedFunction> methods(final PsiElement root) {
-        return methods(root, null);
-    }
-
-    public static List<KtNamedFunction> methods(final PsiElement root, @Nullable final Predicate<LineRange> lineRangeFilter) {
+    public static List<KtNamedFunction> methods(final PsiElement root, final Predicate<LineRange> lineRangeFilter) {
         final var methods = new ArrayList<KtNamedFunction>();
         forEachDescendantOfType(root, KtNamedFunction.class, method -> {
-            if (method.hasBody() && matchesLineRangeFilter(method, lineRangeFilter)) {
+            if (method.hasBody() && lineRangeFilter.test(lineRange(method))) {
                 methods.add(method);
             }
         });
@@ -91,10 +86,6 @@ public final class KotlinPsiUtils {
             return "_LITERAL";
         }
         return token.toString();
-    }
-
-    private static boolean matchesLineRangeFilter(final KtNamedFunction method, @Nullable final Predicate<LineRange> lineRangeFilter) {
-        return lineRangeFilter == null || lineRangeFilter.test(lineRange(method));
     }
 
     private static <T extends PsiElement> void forEachDescendantOfType(final PsiElement root,

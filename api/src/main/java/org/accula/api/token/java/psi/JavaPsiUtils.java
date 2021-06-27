@@ -9,7 +9,6 @@ import com.intellij.psi.tree.TokenSet;
 import org.accula.api.code.lines.LineRange;
 import org.accula.api.token.psi.PsiUtils;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
@@ -68,14 +67,10 @@ public final class JavaPsiUtils {
     private JavaPsiUtils() {
     }
 
-    public static List<PsiMethod> methods(final PsiElement root) {
-        return methods(root, null);
-    }
-
-    public static List<PsiMethod> methods(final PsiElement root, @Nullable final Predicate<LineRange> lineRangeFilter) {
+    public static List<PsiMethod> methods(final PsiElement root, final Predicate<LineRange> lineRangeFilter) {
         final var methods = new ArrayList<PsiMethod>();
         PsiUtils.forEachDescendantOfType(root, PsiMethod.class, method -> {
-            if (method.getBody() != null && matchesLineRangeFilter(method, lineRangeFilter)) {
+            if (method.getBody() != null && lineRangeFilter.test(PsiUtils.lineRange(method))) {
                 methods.add(method);
             }
         });
@@ -94,9 +89,5 @@ public final class JavaPsiUtils {
             return "_TYPE";
         }
         return token.toString();
-    }
-
-    private static boolean matchesLineRangeFilter(final PsiMethod method, @Nullable final Predicate<LineRange> lineRangeFilter) {
-        return lineRangeFilter == null || lineRangeFilter.test(PsiUtils.lineRange(method));
     }
 }
