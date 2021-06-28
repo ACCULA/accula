@@ -5,6 +5,7 @@ import org.accula.api.code.lines.LineSet;
 import org.accula.api.token.Token;
 import org.accula.api.token.TokenProvider;
 import org.accula.api.token.java.JavaTokenProvider;
+import org.accula.api.token.kotlin.KotlinTokenProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
@@ -14,7 +15,10 @@ import java.util.List;
 
 import static org.accula.api.token.java.JavaTokenProviderTest.jf1;
 import static org.accula.api.token.java.JavaTokenProviderTest.jf2;
+import static org.accula.api.token.kotlin.KotlinTokenProviderTest.content1;
+import static org.accula.api.token.kotlin.KotlinTokenProviderTest.content2;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * @author Anton Lamtev
@@ -67,7 +71,10 @@ public class SuffixTreeCloneDetectorTest {
                 }
             }
              """;
-    final TokenProvider<String> tokenProvider = new TokenProvider<>(List.of(new JavaTokenProvider<>()));
+    final TokenProvider<String> tokenProvider = new TokenProvider<>(List.of(
+        new JavaTokenProvider<>(),
+        new KotlinTokenProvider<>()
+    ));
     SuffixTreeCloneDetector<Token<String>, String> detector;
 
     @BeforeEach
@@ -100,5 +107,23 @@ public class SuffixTreeCloneDetectorTest {
                     return cloneClasses.size() == 1 && cloneClasses.get(0).cloneCount() == 2;
                 })
                 .verifyComplete();
+    }
+
+    @Test
+    void test3() {
+        final var f1 = new FileEntity<>("1", "Cell.kt", content1, LineSet.inRange(1, 33));
+        final var f2 = new FileEntity<>("2", "myFile.kt", content2, LineSet.all());
+        final var methods = tokenProvider
+            .tokensByMethods(Flux.just(f1, f2))
+            .collectList()
+            .block();
+        assertNotNull(methods);
+
+        for (var m : methods) {
+            detector.addTokens(m);
+        }
+        final var cloneClasses = detector.cloneClasses(cc -> cc.length() > 10);
+        assertEquals(1, cloneClasses.size());
+        assertEquals(2, cloneClasses.get(0).cloneCount());
     }
 }

@@ -49,7 +49,7 @@ public final class KotlinTokenProvider<Ref> implements LanguageTokenProvider<Ref
                 if (!file.lines().containsAny(lineRange)) {
                     return null;
                 }
-                final var string = KotlinPsiUtils.optimizeTokenString(token.getNode().getElementType());
+                final var string = KotlinPsiUtils.optimizeTokenString(token);
                 return Token.of(string, filename, method.getName(), lineRange, file.ref());
             })
             .filter(Objects::nonNull)

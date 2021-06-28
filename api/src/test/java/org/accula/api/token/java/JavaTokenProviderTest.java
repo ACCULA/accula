@@ -56,7 +56,7 @@ public class JavaTokenProviderTest extends BaseLanguageTokenProviderTest {
     public static final FileEntity<String> jf2 = new FileEntity<>("2", "Cell.java", content2, LineSet.all());
     public static final FileEntity<String> jf3 = new FileEntity<>("3", "Cell.java", content3, LineSet.all());
 
-    private final JavaTokenProvider<String> tokenProvider = new JavaTokenProvider<>();
+    private final JavaTokenProvider<Object> tokenProvider = new JavaTokenProvider<>();
 
     @Override
     @SuppressWarnings("unchecked")

@@ -2,14 +2,15 @@ package org.accula.api.token.kotlin.psi;
 
 import org.accula.api.code.lines.LineRange;
 import org.accula.api.util.Checks;
+import org.jetbrains.kotlin.KtNodeTypes;
 import org.jetbrains.kotlin.com.intellij.psi.PsiElement;
 import org.jetbrains.kotlin.com.intellij.psi.PsiRecursiveElementVisitor;
-import org.jetbrains.kotlin.com.intellij.psi.tree.IElementType;
 import org.jetbrains.kotlin.com.intellij.psi.tree.TokenSet;
 import org.jetbrains.kotlin.kdoc.lexer.KDocTokens;
 import org.jetbrains.kotlin.kdoc.parser.KDocElementTypes;
 import org.jetbrains.kotlin.lexer.KtTokens;
 import org.jetbrains.kotlin.psi.KtNamedFunction;
+import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,10 +19,12 @@ import java.util.function.Predicate;
 
 //FIXME: get rid of duplication by replacing kotlin-compiler-embeddable with kotlin-compiler
 // and reuse code around psi once kotlin-compiler developers are stopped including unshadowed libraries into jar
+
 /**
  * @author Anton Lamtev
  */
 public final class KotlinPsiUtils {
+    private static final String LITERAL = "_LITERAL";
     private static final TokenSet OPTIONAL_TOKENS = TokenSet.orSet(
         TokenSet.create(
             KtTokens.FINAL_KEYWORD,
@@ -41,17 +44,17 @@ public final class KotlinPsiUtils {
             KtTokens.SEMICOLON,
             KtTokens.DOUBLE_SEMICOLON,
             KtTokens.LPAR,
-            KtTokens.RPAR
+            KtTokens.RPAR,
+            KtStubElementTypes.LITERAL_STRING_TEMPLATE_ENTRY
         )
     );
     private static final TokenSet LITERALS = TokenSet.create(
-        KtTokens.TRUE_KEYWORD,
-        KtTokens.FALSE_KEYWORD,
-        KtTokens.CHARACTER_LITERAL,
-        KtTokens.INTEGER_LITERAL,
-        KtTokens.FLOAT_LITERAL,
-        KtTokens.REGULAR_STRING_PART,
-        KtTokens.NULL_KEYWORD
+        KtStubElementTypes.BOOLEAN_CONSTANT,
+        KtStubElementTypes.CHARACTER_CONSTANT,
+        KtStubElementTypes.INTEGER_CONSTANT,
+        KtStubElementTypes.FLOAT_CONSTANT,
+        KtStubElementTypes.STRING_TEMPLATE,
+        KtStubElementTypes.NULL
     );
 
     private KotlinPsiUtils() {
@@ -81,11 +84,20 @@ public final class KotlinPsiUtils {
         return !TOKENS_TO_EXCLUDE.contains(token.getNode().getElementType());
     }
 
-    public static String optimizeTokenString(final IElementType token) {
-        if (LITERALS.contains(token)) {
-            return "_LITERAL";
+    public static String optimizeTokenString(final PsiElement token) {
+        final var type = token.getNode().getElementType();
+        if (LITERALS.contains(type)) {
+            return LITERAL;
         }
-        return token.toString();
+        if (type.equals(KtNodeTypes.REFERENCE_EXPRESSION)) {
+            final var parent = token.getParent();
+            if (parent != null &&
+                parent.getNode().getElementType().equals(KtNodeTypes.VALUE_ARGUMENT) &&
+                token.getChildren().length == 0) {
+                return LITERAL;
+            }
+        }
+        return type.toString();
     }
 
     private static <T extends PsiElement> void forEachDescendantOfType(final PsiElement root,

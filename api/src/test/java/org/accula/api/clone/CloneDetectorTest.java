@@ -12,6 +12,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.util.List;
 import java.util.Set;
 
 import static org.accula.api.util.TestData.accula485b362Snap;
@@ -22,13 +23,18 @@ import static org.accula.api.util.TestData.highload2019_174Head;
  * @author Anton Lamtev
  */
 class CloneDetectorTest {
+    public static final Snapshot commitSnapshot1 = highload2019_174Head.withPullInfo(Snapshot.PullInfo.of(1L, 2));
+    public static final Snapshot commitSnapshot2 = accula485b362Snap.withPullInfo(Snapshot.PullInfo.of(2L, 3));
+    public static final FileEntity<Snapshot> source1 = new FileEntity<>(commitSnapshot1, "owner1/repo1/src/main/java/Cell.java", JavaTokenProviderTest.content1, LineSet.all());
+    public static final FileEntity<Snapshot> target1 = new FileEntity<>(commitSnapshot2, "owner2/repo2/src/main/java/Cell.java", JavaTokenProviderTest.content2, LineSet.all());
+
     CloneDetector cloneDetector;
 
     @BeforeEach
     void setUp() {
         cloneDetector = new CloneDetectorImpl(() -> Mono.just(CloneDetector.Config.builder()
                 .cloneMinTokenCount(5)
-                .filter(FileFilter.exclude(Set.of("other/guy/src/main/java/Cell.java")))
+                .filter(FileFilter.notIn(Set.of("other/guy/src/main/java/Cell.java")))
                 .language(CodeLanguage.JAVA)
                 .language(CodeLanguage.KOTLIN)
                 .build()));
@@ -36,12 +42,6 @@ class CloneDetectorTest {
 
     @Test
     void test() {
-        var commitSnapshot1 = highload2019_174Head.withPullInfo(Snapshot.PullInfo.of(1L, 2));
-        var commitSnapshot2 = accula485b362Snap.withPullInfo(Snapshot.PullInfo.of(2L, 3));
-
-        var source1 = new FileEntity<>(commitSnapshot1, "owner1/repo1/src/main/java/Cell.java", JavaTokenProviderTest.content1, LineSet.all());
-        var target1 = new FileEntity<>(commitSnapshot2, "owner2/repo2/src/main/java/Cell.java", JavaTokenProviderTest.content2, LineSet.all());
-
         StepVerifier.create(cloneDetector.fill(Flux.just(source1, target1)))
                 .verifyComplete();
 
@@ -55,5 +55,21 @@ class CloneDetectorTest {
                     return clones.stream().allMatch(clone -> clone.source().snapshot().equals(commitSnapshot1));
                 })
                 .verifyComplete();
+    }
+
+    @Test
+    void testNoTokenProviders() {
+        final var cloneDetector = new CloneDetectorImpl(() -> Mono.just(CloneDetector.Config.builder()
+            .cloneMinTokenCount(5)
+            .filter(FileFilter.notIn(Set.of("other/guy/src/main/java/Cell.java")))
+            .languages(List.of())
+            .build()));
+
+        cloneDetector.fill(Flux.just(source1, target1))
+            .as(StepVerifier::create)
+            .verifyComplete();
+        cloneDetector.readClones(commitSnapshot2)
+            .as(StepVerifier::create)
+            .verifyComplete();
     }
 }
