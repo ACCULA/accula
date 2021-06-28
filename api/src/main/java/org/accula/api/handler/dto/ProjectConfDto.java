@@ -2,6 +2,7 @@ package org.accula.api.handler.dto;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import lombok.Builder;
+import lombok.Singular;
 import lombok.Value;
 
 import java.util.List;
@@ -19,4 +20,12 @@ public class ProjectConfDto implements InputDto {
     Integer cloneMinTokenCount;
     Integer fileMinSimilarityIndex;
     List<String> excludedFiles;
+    @NotEmpty
+    @Singular
+    List<Language> languages;
+
+    public enum Language {
+        JAVA,
+        KOTLIN,
+    }
 }

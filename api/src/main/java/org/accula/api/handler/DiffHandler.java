@@ -3,8 +3,9 @@ package org.accula.api.handler;
 import lombok.RequiredArgsConstructor;
 import org.accula.api.code.CodeLoader;
 import org.accula.api.code.DiffEntry;
-import org.accula.api.code.FileFilter;
+import org.accula.api.code.Languages;
 import org.accula.api.converter.CodeToDtoConverter;
+import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.Project;
 import org.accula.api.db.model.Pull;
 import org.accula.api.db.model.Snapshot;
@@ -20,6 +21,7 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.function.TupleUtils;
 
 /**
  * @author Vadim Dyachkov
@@ -67,19 +69,21 @@ public final class DiffHandler {
     private Mono<ServerResponse> diff(final Long projectId, final Integer pullNumber) {
         final var pullMono = pullRepo
                 .findByNumber(projectId, pullNumber)
+                .switchIfEmpty(Mono.error(Http4xxException::notFound))
                 .cache();
         final var base = pullMono.map(Pull::base);
         final var head = pullMono.map(Pull::head);
-        final var minSimilarityIndex = projectRepo
-                .confById(projectId)
-                .switchIfEmpty(Mono.error(Http4xxException::notFound))
-                .map(Project.Conf::fileMinSimilarityIndex);
+        final var conf = projectRepo
+            .confById(projectId)
+            .switchIfEmpty(Mono.error(Http4xxException::notFound));
 
-        final var diff = Mono
-                .zip(base, head, minSimilarityIndex)
-                .flatMapMany(t -> codeLoader.loadDiff(t.getT1(), t.getT2(), t.getT3(), FileFilter.SRC_JAVA));
+        return Mono.zip(base, head, conf)
+            .flatMapMany(TupleUtils.function(this::loadDiff))
+            .as(DiffHandler::toResponse);
+    }
 
-        return toResponse(diff);
+    private Flux<DiffEntry<Snapshot>> loadDiff(final Snapshot base, final Snapshot head, final Project.Conf conf) {
+        return codeLoader.loadDiff(base, head, conf.fileMinSimilarityIndex(), Languages.filter(conf.languages()));
     }
 
     private Mono<ServerResponse> diffBetweenPulls(final Long projectId, final Integer basePullNumber, final Integer headPullNumber) {
@@ -95,16 +99,20 @@ public final class DiffHandler {
                 .map(Pull::head);
         final var projectGithubRepo = headPull
                 .map(pull -> pull.base().repo());
-        final var minSimilarityIndex = projectRepo
+        final var conf = projectRepo
                 .confById(projectId)
-                .switchIfEmpty(Mono.error(Http4xxException::notFound))
-                .map(Project.Conf::fileMinSimilarityIndex);
+                .switchIfEmpty(Mono.error(Http4xxException::notFound));
 
-        final var diff = Mono
-                .zip(projectGithubRepo, basePullSnapshot, headPullSnapshot, minSimilarityIndex)
-                .flatMapMany(t -> codeLoader.loadRemoteDiff(t.getT1(), t.getT2(), t.getT3(), t.getT4(), FileFilter.SRC_JAVA));
+        return Mono.zip(projectGithubRepo, basePullSnapshot, headPullSnapshot, conf)
+            .flatMapMany(TupleUtils.function(this::loadRemoteDiff))
+            .as(DiffHandler::toResponse);
+    }
 
-        return toResponse(diff);
+    private Flux<DiffEntry<Snapshot>> loadRemoteDiff(final GithubRepo repo,
+                                                     final Snapshot base,
+                                                     final Snapshot head,
+                                                     final Project.Conf conf) {
+        return codeLoader.loadRemoteDiff(repo, base, head, conf.fileMinSimilarityIndex(), Languages.filter(conf.languages()));
     }
 
     private static Mono<ServerResponse> toResponse(final Flux<DiffEntry<Snapshot>> diff) {

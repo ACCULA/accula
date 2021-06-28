@@ -4,6 +4,7 @@ import lombok.SneakyThrows;
 import org.accula.api.code.CodeLoader;
 import org.accula.api.config.WebConfig;
 import org.accula.api.converter.ModelToDtoConverter;
+import org.accula.api.db.model.CodeLanguage;
 import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.GithubUser;
 import org.accula.api.db.model.Project;
@@ -58,8 +59,8 @@ import static java.lang.Boolean.TRUE;
 import static org.accula.api.util.ApiErrors.toApiError;
 import static org.accula.api.util.TestData.acculaAccula;
 import static org.accula.api.util.TestData.acculaGithub;
-import static org.accula.api.util.TestData.highload19Project;
 import static org.accula.api.util.TestData.admin;
+import static org.accula.api.util.TestData.highload19Project;
 import static org.accula.api.util.TestData.lamtev;
 import static org.accula.api.util.TestData.user;
 import static org.accula.api.util.TestData.user1;
@@ -168,7 +169,7 @@ class ProjectsRouterTest {
                 .thenReturn(Mono.just(TRUE));
 
         when(projectRepo.upsertConf(anyLong(), Mockito.any(Project.Conf.class)))
-                .thenReturn(Mono.just(Project.Conf.DEFAULT));
+                .thenReturn(Mono.just(Project.Conf.defaultConf()));
 
         when(pullRepo.upsert(Mockito.anyCollection()))
                 .thenReturn(Flux.fromIterable(PULLS));
@@ -410,7 +411,9 @@ class ProjectsRouterTest {
                 .thenReturn(Mono.just(TRUE));
         final var adminIds = List.of(1L, 2L);
         when(projectRepo.confById(anyLong()))
-                .thenReturn(Mono.just(Project.Conf.DEFAULT.withAdminIds(adminIds)));
+                .thenReturn(Mono.just(Project.Conf.defaultConf()
+                    .withAdminIds(adminIds)
+                    .withLanguages(List.of(CodeLanguage.JAVA))));
 
         client.get().uri("/api/projects/{id}/conf", highload19Project.id())
                 .exchange()
@@ -418,10 +421,11 @@ class ProjectsRouterTest {
                 .expectBody(ProjectConfDto.class)
                 .isEqualTo(ProjectConfDto.builder()
                         .admins(adminIds)
-                        .cloneMinTokenCount(Project.Conf.DEFAULT.cloneMinTokenCount())
-                        .fileMinSimilarityIndex(Project.Conf.DEFAULT.fileMinSimilarityIndex())
-                        .excludedFiles(Project.Conf.DEFAULT.excludedFiles())
-                        .build());
+                        .cloneMinTokenCount(Project.Conf.defaultConf().cloneMinTokenCount())
+                        .fileMinSimilarityIndex(Project.Conf.defaultConf().fileMinSimilarityIndex())
+                        .excludedFiles(Project.Conf.defaultConf().excludedFiles())
+                        .language(ProjectConfDto.Language.JAVA)
+                    .build());
     }
 
     @Test
@@ -452,15 +456,16 @@ class ProjectsRouterTest {
                 .thenReturn(Mono.just(TRUE));
         final var adminIds = List.of(1L, 2L);
         when(projectRepo.upsertConf(anyLong(), Mockito.any(Project.Conf.class)))
-                .thenReturn(Mono.just(Project.Conf.DEFAULT.withAdminIds(adminIds)));
+                .thenReturn(Mono.just(Project.Conf.defaultConf().withAdminIds(adminIds)));
 
         client.put().uri("/api/projects/{id}/conf", highload19Project.id())
                 .contentType(APPLICATION_JSON)
                 .bodyValue(ProjectConfDto.builder()
                         .admins(adminIds)
-                        .cloneMinTokenCount(Project.Conf.DEFAULT.cloneMinTokenCount())
-                        .fileMinSimilarityIndex(Project.Conf.DEFAULT.fileMinSimilarityIndex())
-                        .excludedFiles(Project.Conf.DEFAULT.excludedFiles())
+                        .cloneMinTokenCount(Project.Conf.defaultConf().cloneMinTokenCount())
+                        .fileMinSimilarityIndex(Project.Conf.defaultConf().fileMinSimilarityIndex())
+                        .excludedFiles(Project.Conf.defaultConf().excludedFiles())
+                        .language(ProjectConfDto.Language.JAVA)
                         .build())
                 .exchange()
                 .expectStatus().isCreated();
@@ -514,6 +519,29 @@ class ProjectsRouterTest {
         client.get().uri("/api/projects/{id}/headFiles", highload19Project.id())
                 .exchange()
                 .expectStatus().isNotFound();
+    }
+
+    @Test
+    void testSupportedLanguagesOk() {
+        when(currentUser.get(Mockito.any()))
+            .thenReturn(Mono.just(0L));
+        when(projectRepo.hasAdmin(anyLong(), anyLong()))
+            .thenReturn(Mono.just(TRUE));
+        when(projectRepo.supportedLanguages())
+            .thenReturn(Mono.just(List.of(CodeLanguage.values())));
+
+        client.get().uri("/api/projects/{id}/supportedLanguages", highload19Project.id())
+            .exchange()
+            .expectStatus().isOk()
+            .expectBody(ProjectConfDto.Language[].class).isEqualTo(ProjectConfDto.Language.values());
+
+        when(projectRepo.supportedLanguages())
+            .thenReturn(Mono.empty());
+
+        client.get().uri("/api/projects/{id}/supportedLanguages", highload19Project.id())
+            .exchange()
+            .expectStatus().isOk()
+            .expectBody(List.class).isEqualTo(List.of());
     }
 
     @Test

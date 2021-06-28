@@ -39,11 +39,11 @@ public class CloneClass<Ref> {
                     final var offset = entry.getIntValue();
                     final var to = edge.getEnd() - offset;
                     final var from = to - length() + 1;
-                    return Clone.<Ref>builder()
-                            .parent(this)
-                            .end(SuffixTreeUtils.get(edge, to))
-                            .start(SuffixTreeUtils.get(edge, from))
-                            .build();
+                    return new Clone<>(
+                        this,
+                        SuffixTreeUtils.get(edge, from),
+                        SuffixTreeUtils.get(edge, to)
+                    );
                 })
                 .toList();
     }

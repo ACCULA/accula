@@ -24,6 +24,7 @@ import { bindActionCreators } from 'redux'
 import { AppDispatch, AppState } from 'store'
 import {
   getBaseFilesAction,
+  getSupportedLanguagesAction,
   getProjectConfAction,
   getRepoAdminsAction,
   updateProjectConfAction
@@ -37,6 +38,7 @@ import DeleteProjectDialog from '../DeleteProjectDialog'
 import AddRepoToProjectDialog from '../AddRepoToProjectDialog'
 import BreadCrumbs from '../../../components/BreadCrumbs'
 
+const minLanguageCount = 1
 const minFileMinSimilarityIndex = 0
 const minCloneTokenCount = 0
 
@@ -63,15 +65,18 @@ const ProjectSettingsTab = ({
   repoAdmins,
   projectConf,
   baseFiles,
+  supportedLanguages,
   updateProjectConf,
   getRepoAdmins,
   getProjectConf,
-  getBaseFiles
+  getBaseFiles,
+  getSupportedLanguages
 }: ProjectSettingsTabProps) => {
   const classes = useStyles()
   const snackbarContext = useSnackbar()
   const [adminOptions, setAdminOptions] = useState<IUser[]>(null)
   const [excludedFilesOptions, setExcludedFilesOptions] = useState(null)
+  const [languagesOptions, setLanguagesOptions] = useState<string[]>(null)
   const [fetching, setFetching] = useState(false)
   const [isDeleteProjectDialogOpen, setDeleteProjectDialogOpen] = useState(false)
   const [isAddRepoToProjectDialogOpen, setAddRepoToProjectDialogOpen] = useState(false)
@@ -80,6 +85,7 @@ const ProjectSettingsTab = ({
     getProjectConf(project.id, getNotifier('error', snackbarContext))
     getRepoAdmins(project.id, getNotifier('error', snackbarContext))
     getBaseFiles(project.id, getNotifier('error', snackbarContext))
+    getSupportedLanguages(project.id, getNotifier('error', snackbarContext))
     // eslint-disable-next-line
   }, [])
 
@@ -98,6 +104,13 @@ const ProjectSettingsTab = ({
     // eslint-disable-next-line
   }, [baseFiles])
 
+  useEffect(() => {
+    if (supportedLanguages) {
+      setLanguagesOptions(supportedLanguages.value)
+    }
+    // eslint-disable-next-line
+  }, [supportedLanguages, projectConf])
+
   if (
     !project ||
     !projectConf ||
@@ -111,6 +124,7 @@ const ProjectSettingsTab = ({
 
   const handleSubmit = ({
     admins,
+    languages,
     excludedFiles,
     fileMinSimilarityIndex,
     cloneMinTokenCount
@@ -121,6 +135,7 @@ const ProjectSettingsTab = ({
         project.id,
         {
           admins: admins.map(a => a.id),
+          languages,
           excludedFiles,
           fileMinSimilarityIndex:
             fileMinSimilarityIndex === '' ? minFileMinSimilarityIndex : fileMinSimilarityIndex,
@@ -147,6 +162,7 @@ const ProjectSettingsTab = ({
         validationSchema={validationSchema}
         initialValues={{
           admins: adminOptions.filter(u => projectConf.admins.includes(u.id)),
+          languages: projectConf.languages,
           excludedFiles:
             excludedFilesOptions.length === projectConf.excludedFiles.length
               ? excludedFilesOptions.slice(1)
@@ -208,6 +224,46 @@ const ProjectSettingsTab = ({
                 <Typography className={classes.description} variant="body2" component="p">
                   Admin can resolve clones and update project settings. Only a repository admin can
                   become a project admin
+                </Typography>
+                <Field
+                  error={errors.languages !== undefined}
+                  name="languages"
+                  component={Autocomplete}
+                  multiple
+                  limitTags={5}
+                  id="languages-select"
+                  options={languagesOptions}
+                  getOptionLabel={(option: string) => option}
+                  filterSelectedOptions
+                  disableCloseOnSelect
+                  defaultValue={languagesOptions.filter(l => projectConf.languages.includes(l))}
+                  value={values.languages}
+                  onChange={(_, value: string[]) => setFieldValue('languages', value)}
+                  renderTags={(value: string[], getTagProps: any) =>
+                    value.map((option, index) => (
+                      <Chip
+                        className={classes.chip}
+                        key={option}
+                        label={option}
+                        color="secondary"
+                        {...getTagProps({ index })}
+                        disabled={values.languages.length === minLanguageCount}
+                      />
+                    ))
+                  }
+                  renderInput={params => (
+                    <TextField
+                      {...params}
+                      variant="outlined"
+                      label="Languages"
+                      color="secondary"
+                      placeholder="Languages"
+                    />
+                  )}
+                />
+                <Typography className={classes.description} variant="body2" component="p">
+                  Files written in the specified languages will be taken into account during clone
+                  detection and diff computing
                 </Typography>
                 <Field
                   name="excludedFiles"
@@ -349,7 +405,10 @@ const ProjectSettingsTab = ({
                   <LoadingButton
                     text="Save"
                     submitting={fetching}
-                    disabled={errors.fileMinSimilarityIndex !== undefined}
+                    disabled={
+                      errors.fileMinSimilarityIndex !== undefined ||
+                      values.languages.length < minLanguageCount
+                    }
                     onClick={() => handleSubmit(values)}
                   />
                 </div>
@@ -390,14 +449,16 @@ const ProjectSettingsTab = ({
 const mapStateToProps = (state: AppState) => ({
   repoAdmins: state.projects.repoAdmins.value,
   projectConf: state.projects.projectConf.value,
-  baseFiles: state.projects.baseFiles.value
+  baseFiles: state.projects.baseFiles.value,
+  supportedLanguages: state.projects.supportedLanguages
 })
 
 const mapDispatchToProps = (dispatch: AppDispatch) => ({
   getRepoAdmins: bindActionCreators(getRepoAdminsAction, dispatch),
   updateProjectConf: bindActionCreators(updateProjectConfAction, dispatch),
   getProjectConf: bindActionCreators(getProjectConfAction, dispatch),
-  getBaseFiles: bindActionCreators(getBaseFilesAction, dispatch)
+  getBaseFiles: bindActionCreators(getBaseFilesAction, dispatch),
+  getSupportedLanguages: bindActionCreators(getSupportedLanguagesAction, dispatch)
 })
 
 const connector = connect(mapStateToProps, mapDispatchToProps)

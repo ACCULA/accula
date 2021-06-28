@@ -1,5 +1,6 @@
 package org.accula.api.db.repo;
 
+import org.accula.api.db.model.CodeLanguage;
 import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.Project;
 import org.accula.api.db.model.User;
@@ -7,6 +8,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Anton Lamtev
@@ -34,6 +36,8 @@ public interface ProjectRepo {
     Mono<Project.Conf> upsertConf(Long id, Project.Conf conf);
 
     Mono<Project.Conf> confById(Long id);
+
+    Mono<List<CodeLanguage>> supportedLanguages();
 
     Mono<Boolean> projectDoesNotContainRepo(final Long projectId, final Long repoId);
 

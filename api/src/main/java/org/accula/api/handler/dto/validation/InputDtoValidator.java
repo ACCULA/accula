@@ -18,6 +18,6 @@ public final class InputDtoValidator implements Validator {
     public void validate(final Object target, final Errors errors) {
         final var input = (InputDto) target;
         input.enumerateMissingRequiredFields(field ->
-                ValidationUtils.rejectIfEmpty(errors, field, "%s.empty".formatted(field), "%s is empty".formatted(field)));
+                ValidationUtils.rejectIfEmpty(errors, field, "%s.empty".formatted(field), "%s field is empty".formatted(field)));
     }
 }

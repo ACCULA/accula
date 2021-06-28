@@ -1,6 +1,5 @@
 package org.accula.api.clone.suffixtree;
 
-import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Value;
@@ -10,7 +9,6 @@ import org.accula.api.token.Token;
 /**
  * @author Anton Lamtev
  */
-@Builder
 @Value
 public class Clone<Ref> {
     @EqualsAndHashCode.Exclude

@@ -3,6 +3,7 @@ import {
   ProjectsActionTypes,
   ProjectsState,
   SET_BASE_FILES,
+  SET_SUPPORTED_LANGUAGES,
   SET_PROJECT,
   SET_TOP_PLAGIARISTS,
   SET_TOP_CLONE_SOURCES,
@@ -20,7 +21,8 @@ const initialState: ProjectsState = {
   topCloneSources: notFetching,
   projectConf: notFetching,
   repoAdmins: notFetching,
-  baseFiles: notFetching
+  baseFiles: notFetching,
+  supportedLanguages: notFetching
 }
 
 export function projectsReducer(
@@ -68,6 +70,12 @@ export function projectsReducer(
       return {
         ...state,
         baseFiles: action.payload
+      }
+    }
+    case SET_SUPPORTED_LANGUAGES: {
+      return {
+        ...state,
+        supportedLanguages: action.payload
       }
     }
     case RESET_PROJECT_INFO: {

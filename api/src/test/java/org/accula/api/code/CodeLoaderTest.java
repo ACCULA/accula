@@ -69,7 +69,7 @@ class CodeLoaderTest {
                 .withPullInfo(Snapshot.PullInfo.of(13L, 12));
         final var s5 = s3.withCommit(Commit.shaOnly("38f07e6b48c6594d9b3cfaa64b76a9aecc811b25"))
                 .withPullInfo(Snapshot.PullInfo.of(14L, 13));
-        var files = codeLoader.loadFiles(s1.repo(), List.of(s1, s2, s5, s3, s1, s4), FileFilter.SRC_JAVA)
+        var files = codeLoader.loadFiles(s1.repo(), List.of(s1, s2, s5, s3, s1, s4), JvmFileFilter.JVM_MAIN)
                 .collectList().block();
         assertNotNull(files);
         assertEquals(19, files.size());
@@ -158,7 +158,7 @@ class CodeLoaderTest {
     void testDiff() {
         var head = Snapshot.builder().commit(Commit.shaOnly("a1c28a1b500701819cf9919246f15f3f900bb609")).branch("branch").repo(vaddyaHighload2019).build();
         var base = Snapshot.builder().commit(Commit.shaOnly("d6357dccc16c7d5c001fd2a2203298c36fe96b63")).branch("branch").repo(polisHighload2019).build();
-        StepVerifier.create(codeLoader.loadDiff(base, head, 0, FileFilter.SRC_JAVA))
+        StepVerifier.create(codeLoader.loadDiff(base, head, 0, JvmFileFilter.JVM_MAIN))
                 .expectNextCount(11)
                 .expectComplete()
                 .verify();
@@ -177,7 +177,7 @@ class CodeLoaderTest {
                 .repo(vaddyaHighload2017)
                 .build();
 
-        final var diffEntries = codeLoader.loadRemoteDiff(polisHighload2017, base, head, 1, FileFilter.SRC_JAVA).collectList().block();
+        final var diffEntries = codeLoader.loadRemoteDiff(polisHighload2017, base, head, 1, JvmFileFilter.JVM_MAIN).collectList().block();
         assertNotNull(diffEntries);
         assertEquals(9, diffEntries.size());
         final var possibleRenameCount = diffEntries

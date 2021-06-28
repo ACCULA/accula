@@ -2,6 +2,7 @@ package org.accula.api.db.model;
 
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
+import lombok.Singular;
 import lombok.Value;
 import lombok.With;
 
@@ -37,17 +38,24 @@ public class Project {
     @Value
     public static class Conf {
         public static final String KEEP_EXCLUDED_FILES_SYNCED = "Keep list synced with project primary git repo";
-        public static final Conf DEFAULT = builder()
+        private static final Conf DEFAULT = builder()
                 .adminIds(List.of())
-                .cloneMinTokenCount(15)
+                .cloneMinTokenCount(50)
                 .fileMinSimilarityIndex(5)
                 .excludedFiles(List.of())
+                .languages(List.of(CodeLanguage.values()))
                 .build();
 
         List<Long> adminIds;
         Integer cloneMinTokenCount;
         Integer fileMinSimilarityIndex;
         List<String> excludedFiles;
+        @Singular
+        List<CodeLanguage> languages;
+
+        public static Conf defaultConf() {
+            return DEFAULT;
+        }
 
         public boolean keepsExcludedFilesSyncedWithGit() {
             return excludedFiles.contains(KEEP_EXCLUDED_FILES_SYNCED);

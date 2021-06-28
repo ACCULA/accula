@@ -256,7 +256,7 @@ public class GithubWebhookRouterTest {
         when(projectRepo.idByRepoId(any()))
             .thenReturn(Mono.just(1L));
         when(projectRepo.confById(any()))
-            .thenReturn(Mono.just(Project.Conf.DEFAULT.withExcludedFiles(List.of("f1", "f2"))));
+            .thenReturn(Mono.just(Project.Conf.defaultConf().withExcludedFiles(List.of("f1", "f2"))));
 
         client.post().uri(API_WEBHOOK_ENDPOINT)
             .header(GITHUB_EVENT, GITHUB_EVENT_PUSH)
@@ -273,7 +273,7 @@ public class GithubWebhookRouterTest {
         when(projectRepo.idByRepoId(any()))
             .thenReturn(Mono.just(1L));
         when(projectRepo.confById(any()))
-            .thenReturn(Mono.just(Project.Conf.DEFAULT.withExcludedFiles(List.of(Project.Conf.KEEP_EXCLUDED_FILES_SYNCED))));
+            .thenReturn(Mono.just(Project.Conf.defaultConf().withExcludedFiles(List.of(Project.Conf.KEEP_EXCLUDED_FILES_SYNCED))));
         when(projectService.headFiles(any()))
             .thenReturn(Mono.just(files));
         when(projectRepo.upsertConf(any(), any()))

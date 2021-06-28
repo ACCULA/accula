@@ -4,6 +4,7 @@ import { failed, fetched, fetching } from 'store/wrapper'
 import { IProjectConf } from 'types'
 import {
   SET_BASE_FILES,
+  SET_SUPPORTED_LANGUAGES,
   SET_PROJECT,
   SET_TOP_PLAGIARISTS,
   SET_TOP_CLONE_SOURCES,
@@ -13,6 +14,7 @@ import {
   RESET_PROJECT_INFO,
   RESET_PROJECTS,
   SetBaseFiles,
+  SetSupportedLanguages,
   SetProject,
   SetTopPlagiarists,
   SetTopCloneSources,
@@ -30,6 +32,7 @@ import {
   getProjectConf,
   getProjects,
   getRepoAdmins,
+  getSupportedLanguages,
   putProjectConf,
   deleteProject,
   postProject,
@@ -76,6 +79,11 @@ const setRepoAdmins = (payload): SetRepoAdmins => ({
 
 const setBaseFiles = (payload): SetBaseFiles => ({
   type: SET_BASE_FILES,
+  payload
+})
+
+const setSupportedLanguages = (payload): SetSupportedLanguages => ({
+  type: SET_SUPPORTED_LANGUAGES,
   payload
 })
 
@@ -349,6 +357,31 @@ export const getBaseFilesAction = (
     dispatch(setBaseFiles(fetching))
     const files = await getBaseFiles(projectId, users.token)
     dispatch(setBaseFiles(fetched(files, projectId)))
+  } catch (e) {
+    dispatch(setBaseFiles(failed(e)))
+    if (handleError) {
+      handleError(e.message)
+    }
+  }
+}
+
+export const getSupportedLanguagesAction = (
+  projectId: number,
+  handleError?: (msg: string) => void
+) => async (
+  dispatch: AppDispatch, //
+  getState: AppStateSupplier
+) => {
+  const { projects } = getState()
+  if (projects.supportedLanguages.value && projects.supportedLanguages.projectId === projectId) {
+    return
+  }
+  await requireToken(dispatch, getState)
+  const { users } = getState()
+  try {
+    dispatch(setSupportedLanguages(fetching))
+    const languages = await getSupportedLanguages(projectId, users.token)
+    dispatch(setSupportedLanguages(fetched(languages, projectId)))
   } catch (e) {
     dispatch(setBaseFiles(failed(e)))
     if (handleError) {

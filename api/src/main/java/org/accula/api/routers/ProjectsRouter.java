@@ -34,6 +34,7 @@ public final class ProjectsRouter {
                                 .POST("/addRepoByInfo", projectsHandler::addRepoByInfo)
                                 .GET("/githubAdmins", projectsHandler::githubAdmins)
                                 .GET("/headFiles", projectsHandler::headFiles)
+                                .GET("/supportedLanguages", projectsHandler::supportedLanguages)
                                 .GET("/repoSuggestion", projectsHandler::repoSuggestion)
                                 .nest(path("/conf"), b3 -> b3
                                         .GET("", projectsHandler::getConf)

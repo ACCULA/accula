@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import org.accula.api.code.FileEntity;
 import org.accula.api.db.model.Clone;
 import org.accula.api.db.model.CloneStatistics;
+import org.accula.api.db.model.CodeLanguage;
 import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.GithubUser;
 import org.accula.api.db.model.Project;
@@ -90,7 +91,22 @@ public final class ModelToDtoConverter {
                 .cloneMinTokenCount(conf.cloneMinTokenCount())
                 .fileMinSimilarityIndex(conf.fileMinSimilarityIndex())
                 .excludedFiles(conf.excludedFiles())
+                .languages(convertLanguages(conf.languages()))
                 .build();
+    }
+
+    public static List<ProjectConfDto.Language> convertLanguages(final Collection<CodeLanguage> languages) {
+        return languages
+            .stream()
+            .map(ModelToDtoConverter::convert)
+            .toList();
+    }
+
+    public static ProjectConfDto.Language convert(final CodeLanguage language) {
+        return switch (language) {
+            case JAVA -> ProjectConfDto.Language.JAVA;
+            case KOTLIN -> ProjectConfDto.Language.KOTLIN;
+        };
     }
 
     public static UserDto convertUser(final User user, boolean withRole) {
