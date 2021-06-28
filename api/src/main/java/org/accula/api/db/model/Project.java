@@ -7,7 +7,6 @@ import lombok.Value;
 import lombok.With;
 
 import java.util.List;
-import java.util.stream.Stream;
 
 /**
  * @author Anton Lamtev
@@ -44,7 +43,7 @@ public class Project {
                 .cloneMinTokenCount(50)
                 .fileMinSimilarityIndex(5)
                 .excludedFiles(List.of())
-                .languages(Stream.of(CodeLanguage.values()).toList())
+                .languages(List.of(CodeLanguage.values()))
                 .build();
 
         List<Long> adminIds;
