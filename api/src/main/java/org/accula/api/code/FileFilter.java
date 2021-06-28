@@ -17,36 +17,35 @@ public interface FileFilter extends Predicate<String> {
     FileFilter ALL = file -> true;
     FileFilter NONE = file -> false;
 
-    static FileFilter exclude(final Collection<String> excludedFiles) {
+    static FileFilter notIn(final Collection<String> excludedFiles) {
         final var set = excludedFiles instanceof Set<String> s ? s : new HashSet<>(excludedFiles);
-        return f -> !set.contains(f);
+        return file -> !set.contains(file);
     }
 
-    static FileFilter extension(final String extension) {
-        final var suffix = "." + extension;
-        return file -> file.endsWith(suffix);
+    static FileFilter hasExtension(final String extension) {
+        return endsWith("." + extension);
     }
 
     static FileFilter contains(final String part) {
         return file -> file.contains(part);
     }
 
-    static FileFilter lastComponent(final String name) {
+    static FileFilter endsWith(final String name) {
         return file -> file.endsWith(name);
     }
 
     @Override
     default FileFilter and(final Predicate<? super String> other) {
-        return f -> test(f) && other.test(f);
+        return file -> test(file) && other.test(file);
     }
 
     @Override
     default FileFilter or(final Predicate<? super String> other) {
-        return f -> test(f) || other.test(f);
+        return file -> test(file) || other.test(file);
     }
 
     @Override
     default FileFilter negate() {
-        return f -> !test(f);
+        return file -> !test(file);
     }
 }

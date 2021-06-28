@@ -119,7 +119,7 @@ public final class CloneDetectionService {
                         .confById(projectId)
                         .map(conf -> CloneDetector.Config.builder()
                                 .cloneMinTokenCount(conf.cloneMinTokenCount())
-                                .filter(FileFilter.exclude(conf.excludedFiles()))
+                                .filter(FileFilter.notIn(conf.excludedFiles()))
                                 .languages(conf.languages())
                                 .languageFilter(Languages.filter(conf.languages()))
                                 .build()))

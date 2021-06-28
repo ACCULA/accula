@@ -17,7 +17,7 @@ public final class Languages {
         final var java = languageSet.contains(CodeLanguage.JAVA);
         final var kotlin = languageSet.contains(CodeLanguage.KOTLIN);
         if (java && kotlin) {
-            return JvmFileFilter.MAIN;
+            return JvmFileFilter.JVM_MAIN;
         } else if (java) {
             return JvmFileFilter.JAVA_MAIN;
         }
