@@ -24,7 +24,7 @@ import java.util.function.Predicate;
  * @author Anton Lamtev
  */
 public final class KotlinPsiUtils {
-    private static final String LITERAL = "_LITERAL";
+    private static final String VALUE = "_VALUE";
     private static final TokenSet OPTIONAL_TOKENS = TokenSet.orSet(
         TokenSet.create(
             KtTokens.FINAL_KEYWORD,
@@ -87,14 +87,14 @@ public final class KotlinPsiUtils {
     public static String optimizeTokenString(final PsiElement token) {
         final var type = token.getNode().getElementType();
         if (LITERALS.contains(type)) {
-            return LITERAL;
+            return VALUE;
         }
         if (type.equals(KtNodeTypes.REFERENCE_EXPRESSION)) {
             final var parent = token.getParent();
             if (parent != null &&
                 parent.getNode().getElementType().equals(KtNodeTypes.VALUE_ARGUMENT) &&
                 token.getChildren().length == 0) {
-                return LITERAL;
+                return VALUE;
             }
         }
         return type.toString();
