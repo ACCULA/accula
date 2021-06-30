@@ -111,6 +111,7 @@ public final class CloneDetectorImpl implements CloneDetector {
 
                 return clones
                     .stream()
+                    .filter(clone -> authorIsDifferentFromSource(clone, source))
                     .filter(cloneMatcher)
                     .map(clone -> convert(source, clone));
             }))
@@ -198,5 +199,9 @@ public final class CloneDetectorImpl implements CloneDetector {
             }
         }
         return false;
+    }
+
+    private static boolean authorIsDifferentFromSource(final Clone<Snapshot> possibleClone, final Clone<Snapshot> source) {
+        return !possibleClone.ref().repo().owner().equals(source.ref().repo().owner());
     }
 }

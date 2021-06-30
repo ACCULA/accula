@@ -24,9 +24,11 @@ import static org.accula.api.util.TestData.highload2019_174Head;
  */
 class CloneDetectorTest {
     public static final Snapshot commitSnapshot1 = highload2019_174Head.withPullInfo(Snapshot.PullInfo.of(1L, 2));
-    public static final Snapshot commitSnapshot2 = accula485b362Snap.withPullInfo(Snapshot.PullInfo.of(2L, 3));
+    public static final Snapshot commitSnapshot2 = highload2019_174Head.withPullInfo(Snapshot.PullInfo.of(1L, 3));
+    public static final Snapshot commitSnapshot3 = accula485b362Snap.withPullInfo(Snapshot.PullInfo.of(2L, 3));
     public static final FileEntity<Snapshot> source1 = new FileEntity<>(commitSnapshot1, "owner1/repo1/src/main/java/Cell.java", JavaTokenProviderTest.content1, LineSet.all());
-    public static final FileEntity<Snapshot> target1 = new FileEntity<>(commitSnapshot2, "owner2/repo2/src/main/java/Cell.java", JavaTokenProviderTest.content2, LineSet.all());
+    public static final FileEntity<Snapshot> source2 = new FileEntity<>(commitSnapshot2, "owner1/repo1/src/main/java/Cell.java", JavaTokenProviderTest.content1, LineSet.all());
+    public static final FileEntity<Snapshot> target1 = new FileEntity<>(commitSnapshot3, "owner2/repo2/src/main/java/Cell.java", JavaTokenProviderTest.content2, LineSet.all());
 
     CloneDetector cloneDetector;
 
@@ -42,10 +44,10 @@ class CloneDetectorTest {
 
     @Test
     void test() {
-        StepVerifier.create(cloneDetector.fill(Flux.just(source1, target1)))
+        StepVerifier.create(cloneDetector.fill(Flux.just(source1, source2, target1)))
                 .verifyComplete();
 
-        StepVerifier.create(cloneDetector.readClones(commitSnapshot2)
+        StepVerifier.create(cloneDetector.readClones(commitSnapshot3)
                 .collectList())
                 .expectNextMatches(clones -> {
                     if (clones.size() != 5) {
@@ -68,7 +70,7 @@ class CloneDetectorTest {
         cloneDetector.fill(Flux.just(source1, target1))
             .as(StepVerifier::create)
             .verifyComplete();
-        cloneDetector.readClones(commitSnapshot2)
+        cloneDetector.readClones(commitSnapshot3)
             .as(StepVerifier::create)
             .verifyComplete();
     }
