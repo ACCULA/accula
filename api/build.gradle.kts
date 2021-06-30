@@ -1,5 +1,5 @@
 plugins {
-    id("org.springframework.boot") version "2.5.1"
+    id("org.springframework.boot") version "2.5.2"
     id("io.spring.dependency-management") version "1.0.11.RELEASE"
     kotlin("jvm") version "1.5.20"
 }
@@ -38,12 +38,11 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
     implementation("org.springframework.security:spring-security-oauth2-client")
 
-    implementation("com.auth0:java-jwt:3.16.0")
+    implementation("com.auth0:java-jwt:3.17.0")
 
     implementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
     implementation("io.r2dbc:r2dbc-postgresql")
     implementation("io.r2dbc:r2dbc-pool")
-    implementation("io.r2dbc:r2dbc-spi")
 
     implementation("org.slf4j:slf4j-api:2.0.0-alpha1")
     implementation("org.slf4j:slf4j-log4j12:2.0.0-alpha1")
@@ -55,7 +54,7 @@ dependencies {
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
     implementation("org.codeclone:suffix-tree:1.0.0")
-    implementation("com.jetbrains.intellij.java:java-psi-impl:211.7442.40")
+    implementation("com.jetbrains.intellij.java:java-psi-impl:211.7628.21")
     implementation(kotlin("compiler-embeddable"))
     implementation("com.google.guava:guava:30.1.1-jre")
     implementation("it.unimi.dsi:fastutil:8.5.4")
