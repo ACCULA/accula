@@ -129,7 +129,7 @@ final class FileChangesParseIterator implements Iterator<Object> {
                                         lineRanges.add(LineRange.of(rangeStart, lineIdx - 1));
                                         rangeStart = -1;
                                     }
-                                    if (!l.startsWith("-") && !l.startsWith(" -")) {
+                                    if (!l.startsWith("-") && (!isThreeWayMergeHunk || !l.startsWith(" -"))) {
                                         diffLinesRead++;
                                         lineIdx++;
                                     }

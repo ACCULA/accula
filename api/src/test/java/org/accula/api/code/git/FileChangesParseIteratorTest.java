@@ -276,4 +276,56 @@ class FileChangesParseIteratorTest {
         assertEquals(GitFileChanges.of(GitFile.of("ddee675", "README.md"), LineSet.inRange(67, 77)), iter.next());
         assertFalse(iter.hasNext());
     }
+
+    @Test
+    void testYamlThatLooksLikeAThreeWayMergeHunk() {
+        final var diff = """
+            81eee0f8c7b8b201bd70c45a1b2b964818a74415 Fix test ignore
+            diff --git a/.codeclimate.yml b/.codeclimate.yml
+            index 7bcb5b0..c00c8b4 100644
+            --- a/.codeclimate.yml
+            +++ b/.codeclimate.yml
+            @@ -59,4 +59,4 @@ checks:
+                   threshold: 10 # Have pattern-matching-like code
+             exclude_patterns:
+             - "**/*.svg"
+            -- "test/**/*.java"
+            +- "src/test/"
+            b7e755e5a278c10e19a5181e362c52189cb6775e ammogenerator and testResults
+            diff --git a/src/main/java/ru/mail/polis/service/bezrukova/AmmoGenerator.java b/src/main/java/ru/mail/polis/service/bezrukova/AmmoGenerator.java
+            new file mode 100644
+            index 0000000..e7b224a
+            --- /dev/null
+            +++ b/src/main/java/ru/mail/polis/service/bezrukova/AmmoGenerator.java
+            @@ -0,0 +1,14 @@
+            +package ru.mail.polis.service.bezrukova;
+            +
+            +import java.io.ByteArrayOutputStream;
+            +
+            +public class AmmoGenerator {
+            +
+            +    private static final int LENGTH = 256;
+            +    private static final Logger logger = Logger.getLogger(AmmoGenerator.class.getName());
+            +
+            +    private static byte[] randomValue() {
+            +        final byte[] result = new byte[LENGTH];
+            +        ThreadLocalRandom.current().nextBytes(result);
+            +        return result;
+            +    }
+            +}
+            fb1b904c3fe5817d6c8fdab35727ac3d01d9fffb Fixed CodeClimate issues
+            """;
+        var iter = new FileChangesParseIterator(Iterators.nextResettable(diff.lines().iterator()));
+        assertTrue(iter.hasNext());
+        assertEquals("81eee0f8c7b8b201bd70c45a1b2b964818a74415 Fix test ignore", iter.next());
+        assertTrue(iter.hasNext());
+        assertEquals(GitFileChanges.of(GitFile.of("c00c8b4", ".codeclimate.yml"), LineSet.inRange(LineRange.of(62))), iter.next());
+        assertTrue(iter.hasNext());
+        assertEquals("b7e755e5a278c10e19a5181e362c52189cb6775e ammogenerator and testResults", iter.next());
+        assertTrue(iter.hasNext());
+        assertEquals(GitFileChanges.of(GitFile.of("e7b224a", "src/main/java/ru/mail/polis/service/bezrukova/AmmoGenerator.java"), LineSet.inRange(1, 14)), iter.next());
+        assertTrue(iter.hasNext());
+        assertEquals("fb1b904c3fe5817d6c8fdab35727ac3d01d9fffb Fixed CodeClimate issues", iter.next());
+        assertFalse(iter.hasNext());
+    }
 }
