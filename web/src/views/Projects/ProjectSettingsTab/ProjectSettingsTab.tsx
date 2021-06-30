@@ -226,7 +226,6 @@ const ProjectSettingsTab = ({
                   become a project admin
                 </Typography>
                 <Field
-                  error={errors.languages !== undefined}
                   name="languages"
                   component={Autocomplete}
                   multiple
@@ -236,6 +235,7 @@ const ProjectSettingsTab = ({
                   getOptionLabel={(option: string) => option}
                   filterSelectedOptions
                   disableCloseOnSelect
+                  disableClearable
                   defaultValue={languagesOptions.filter(l => projectConf.languages.includes(l))}
                   value={values.languages}
                   onChange={(_, value: string[]) => setFieldValue('languages', value)}
