@@ -245,6 +245,9 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
 
     @Override
     public Mono<Void> attachRepos(final Long projectId, final Collection<Long> repoIds) {
+        if (repoIds.isEmpty()) {
+            return Mono.empty();
+        }
         return withConnection(connection -> {
             final var statement = BatchStatement.of(connection, """
                 INSERT INTO project_repo (project_id, repo_id)

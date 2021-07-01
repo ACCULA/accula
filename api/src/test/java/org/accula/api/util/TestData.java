@@ -95,6 +95,7 @@ public final class TestData {
     public static final List<User> users = List.of(lamtev, vaddya, admin, admin1, user, user1, user2, accula, polis);
 
     public static final User lamtevNoIdentity = User.noIdentity(lamtev.githubAccessToken(), lamtev.githubUser(), lamtev.role());
+    public static final User vaddyaNoIdentity = User.noIdentity(vaddya.githubAccessToken(), vaddya.githubUser(), vaddya.role());
 
     public static final GithubRepo acculaAccula = GithubRepo.builder()
         .id(246121041L)
