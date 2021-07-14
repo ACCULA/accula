@@ -38,8 +38,7 @@ final class UserRepoTest extends BaseRepoTest {
     void testUpsert() {
         StepVerifier.create(userRepo.upsert(lamtevNoIdentity))
             .expectNext(lamtev)
-            .expectComplete()
-            .verify();
+            .verifyComplete();
     }
 
     @Test
@@ -49,8 +48,7 @@ final class UserRepoTest extends BaseRepoTest {
         StepVerifier.create(userRepo.upsert(lamtev)
                 .then(userRepo.findById(lamtev.id())))
             .expectNext(lamtev)
-            .expectComplete()
-            .verify();
+            .verifyComplete();
     }
 
     @Test
@@ -59,8 +57,7 @@ final class UserRepoTest extends BaseRepoTest {
 
         var githubIds = users.stream().map(User::githubUser).map(GithubUser::id).toList();
         StepVerifier.create(userRepo.findByGithubIds(githubIds))
-            .expectComplete()
-            .verify();
+            .verifyComplete();
 
         final var insertedUsers = Flux.fromIterable(users)
             .flatMap(userRepo::upsert)
@@ -73,8 +70,7 @@ final class UserRepoTest extends BaseRepoTest {
         final var usersArray = insertedUsers.toArray(new User[0]);
         StepVerifier.create(userRepo.findByGithubIds(githubIds))
             .expectNext(usersArray)
-            .expectComplete()
-            .verify();
+            .verifyComplete();
     }
 
     @Test
@@ -86,8 +82,7 @@ final class UserRepoTest extends BaseRepoTest {
                 .thenMany(userRepo.findAll())
                 .collectList())
             .expectNextMatches(allUsers -> Set.copyOf(allUsers).containsAll(users))
-            .expectComplete()
-            .verify();
+            .verifyComplete();
     }
 
     @Test
@@ -137,14 +132,12 @@ final class UserRepoTest extends BaseRepoTest {
                 });
                 return true;
             })
-            .expectComplete()
-            .verify();
+            .verifyComplete();
 
         // Make everyone except root regular user
         StepVerifier.create(userRepo.setAdminRole(Set.of()))
             .expectNextMatches(updatedAllUsers -> updatedAllUsers.stream().allMatch(not(Role.ADMIN::is)))
-            .expectComplete()
-            .verify();
+            .verifyComplete();
     }
 
     @Test
@@ -154,8 +147,7 @@ final class UserRepoTest extends BaseRepoTest {
 
         StepVerifier.create(userRepo.upsert(lamtevNoIdentity))
             .expectNext(lamtev)
-            .expectComplete()
-            .verify();
+            .verifyComplete();
 
         assertTrue(didUpsert.get());
     }

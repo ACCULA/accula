@@ -176,12 +176,28 @@ public final class TestData {
         .authorEmail("incubos@users.noreply.github.com")
         .date(Instant.parse("2019-11-22T15:50:32Z"))
         .build();
+    public static final GitCommit lamtevHighload17_8ad07b9Git = GitCommit.builder()
+        .sha("8ad07b914c0c2cee8b5a47993061b79c611db65d")
+        .isMerge(false)
+        .authorName("Anton Lamtev")
+        .authorEmail("antonlamtev@gmail.com")
+        .date(Instant.parse("2018-01-09T15:26:20Z"))
+        .build();
+    public static final GitCommit highload17_b2b9e4aGit = GitCommit.builder()
+        .sha("b2b9e4a1c69cee84bdcb61005b74868fc276a99a")
+        .isMerge(false)
+        .authorName("Vadim Tsesko")
+        .authorEmail("incubos@yandex.com")
+        .date(Instant.parse("2017-11-06T18:47:26Z"))
+        .build();
 
     public static final Commit accula69f5528 = CodeToModelConverter.convert(accula69f5528Git);
     public static final Commit accula485b362 = CodeToModelConverter.convert(accula485b362Git);
     public static final Commit accula14dd20f = CodeToModelConverter.convert(accula14dd20fGit);
     public static final Commit vaddyaHighload2019_7d8e10c = CodeToModelConverter.convert(vaddyaHighload2019_7d8e10cGit);
     public static final Commit highload2019_720cefb = CodeToModelConverter.convert(highload2019_720cefbGit);
+    public static final Commit lamtevHighload17_8ad07b9 = CodeToModelConverter.convert(lamtevHighload17_8ad07b9Git);
+    public static final Commit highload17_b2b9e4a = CodeToModelConverter.convert(highload17_b2b9e4aGit);
 
     private static final AtomicLong projectId = new AtomicLong();
     public static final Project highload19Project = Project.builder()
@@ -191,6 +207,14 @@ public final class TestData {
         .creator(lamtev)
         .openPullCount(0)
         .build();
+    public static final Project highload17Project = Project.builder()
+        .id(projectId.incrementAndGet())
+        .state(Project.State.CONFIGURED)
+        .githubRepo(polisHighload2017)
+        .creator(lamtev)
+        .openPullCount(0)
+        .build();
+    public static final List<Project> projects = List.of(highload19Project, highload17Project);
 
     public static final Snapshot accula485b362Snap = Snapshot.builder()
         .commit(accula485b362)
@@ -212,7 +236,18 @@ public final class TestData {
         .branch("master")
         .repo(polisHighload2019)
         .build();
-    public static final List<Snapshot> snapshots = List.of(highload2019_174Head, accula485b362Snap, highload2019_174Base, accula14dd20fSnap);
+    public static final Snapshot highload17_61Head = Snapshot.builder()
+        .commit(lamtevHighload17_8ad07b9)
+        .branch("master")
+        .repo(lamtevHighload2017)
+        .build();
+    public static final Snapshot highload17_61Base = Snapshot.builder()
+        .commit(highload17_b2b9e4a)
+        .branch("master")
+        .repo(polisHighload2017)
+        .build();
+
+    public static final List<Snapshot> snapshots = List.of(highload2019_174Head, accula485b362Snap, highload2019_174Base, accula14dd20fSnap, highload17_61Head, highload17_61Base);
 
     public static final Pull highload19_174 = Pull.builder()
         .id(342695057L)
@@ -226,4 +261,17 @@ public final class TestData {
         .base(highload2019_174Base)
         .primaryProjectId(highload19Project.id())
         .build();
+    public static final Pull highload17_61 = Pull.builder()
+        .id(161901269L)
+        .number(61)
+        .isOpen(false)
+        .createdAt(Instant.parse("2018-01-09T15:30:27Z"))
+        .updatedAt(Instant.parse("2018-01-09T16:47:11Z"))
+        .author(lamtevGithub)
+        .title("hw 3")
+        .head(highload17_61Head)
+        .base(highload17_61Base)
+        .primaryProjectId(highload17Project.id())
+        .build();
+    public static final List<Pull> pulls = List.of(highload19_174, highload17_61);
 }

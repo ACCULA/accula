@@ -128,7 +128,7 @@ public final class Git {
         }
 
         public <I extends Identifiable> CompletableFuture<Map<I, String>> catFiles(final Iterable<I> identifiableObjects) {
-            if (org.accula.api.util.Iterables.isEmptyCollection(identifiableObjects)) {
+            if (Iterables.isEmpty(identifiableObjects)) {
                 return CompletableFuture.completedFuture(Map.of());
             }
             return readingAsync(() -> {

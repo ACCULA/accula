@@ -32,13 +32,11 @@ final class GithubUserRepoTest extends BaseRepoTest {
 
         StepVerifier.create(userRepo.upsert(usersGithub))
             .expectNext(usersGithub.toArray(GithubUser[]::new))
-            .expectComplete()
-            .verify();
+            .verifyComplete();
 
         StepVerifier.create(userRepo.upsert(polisGithub))
             .expectNext(polisGithub)
-            .expectComplete()
-            .verify();
+            .verifyComplete();
     }
 
     @Test
@@ -49,7 +47,6 @@ final class GithubUserRepoTest extends BaseRepoTest {
 
         StepVerifier.create(userRepo.findById(vaddyaGithub.id()))
             .expectNext(vaddyaGithub)
-            .expectComplete()
-            .verify();
+            .verifyComplete();
     }
 }
