@@ -42,8 +42,7 @@ final class SnapshotRepoTest extends BaseRepoTest {
 
         StepVerifier.create(snapshotRepo.insert(snapshots))
             .expectNext(snapshots.toArray(Snapshot[]::new))
-            .expectComplete()
-            .verify();
+            .verifyComplete();
 
         snapshotRepo.insert(highload2019_174Head)
             .as(StepVerifier::create)
@@ -66,8 +65,7 @@ final class SnapshotRepoTest extends BaseRepoTest {
 
         StepVerifier.create(snapshotRepo.findById(highload2019_174Head.id()))
             .expectNext(highload2019_174Head)
-            .expectComplete()
-            .verify();
+            .verifyComplete();
     }
 
     @Test
@@ -84,8 +82,7 @@ final class SnapshotRepoTest extends BaseRepoTest {
             .collect(Collectors.toSet());
         StepVerifier.create(snapshotRepo.findByRepoId(acculaAccula.id()).collect(Collectors.toSet()))
             .expectNext(acculaSnapshots)
-            .expectComplete()
-            .verify();
+            .verifyComplete();
     }
 
     @Test

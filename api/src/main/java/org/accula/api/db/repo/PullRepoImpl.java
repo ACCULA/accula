@@ -1,5 +1,6 @@
 package org.accula.api.db.repo;
 
+import com.google.common.collect.Iterables;
 import io.r2dbc.postgresql.api.PostgresqlResult;
 import io.r2dbc.postgresql.api.PostgresqlStatement;
 import io.r2dbc.spi.Connection;
@@ -9,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import org.accula.api.db.model.GithubUser;
 import org.accula.api.db.model.Pull;
 import org.accula.api.db.model.PullSnapshots;
-import org.accula.api.util.Iterables;
 import org.intellij.lang.annotations.Language;
 import org.reactivestreams.Publisher;
 import org.springframework.stereotype.Component;
@@ -150,7 +150,7 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
 
     @Override
     public Publisher<Void> mapSnapshots(final Iterable<PullSnapshots> pullSnapshots) {
-        if (Iterables.isEmptyCollection(pullSnapshots)) {
+        if (Iterables.isEmpty(pullSnapshots)) {
             return Flux.empty();
         }
 

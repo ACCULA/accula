@@ -26,7 +26,7 @@ public final class SnapshotRepoImpl implements SnapshotRepo, ConnectionProvidedR
 
     @Override
     public Flux<Snapshot> insert(final Iterable<Snapshot> snapshots) {
-        if (org.accula.api.util.Iterables.isEmptyCollection(snapshots)) {
+        if (Iterables.isEmpty(snapshots)) {
             return Flux.empty();
         }
 

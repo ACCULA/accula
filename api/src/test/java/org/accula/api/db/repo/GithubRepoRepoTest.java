@@ -35,13 +35,11 @@ final class GithubRepoRepoTest extends BaseRepoTest {
 
         StepVerifier.create(repoRepo.upsert(repos))
             .expectNext(repos.toArray(GithubRepo[]::new))
-            .expectComplete()
-            .verify();
+            .verifyComplete();
 
         StepVerifier.create(repoRepo.upsert(acculaAccula))
             .expectNext(acculaAccula)
-            .expectComplete()
-            .verify();
+            .verifyComplete();
     }
 
     @Test
@@ -53,8 +51,7 @@ final class GithubRepoRepoTest extends BaseRepoTest {
 
         StepVerifier.create(repoRepo.findById(polisHighload2019.id()))
             .expectNext(polisHighload2019)
-            .expectComplete()
-            .verify();
+            .verifyComplete();
     }
 
     @Test
@@ -66,7 +63,6 @@ final class GithubRepoRepoTest extends BaseRepoTest {
 
         StepVerifier.create(repoRepo.findByName(acculaAccula.owner().login(), acculaAccula.name()))
             .expectNext(acculaAccula)
-            .expectComplete()
-            .verify();
+            .verifyComplete();
     }
 }

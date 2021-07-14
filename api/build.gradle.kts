@@ -68,6 +68,10 @@ dependencies {
     testImplementation("org.testcontainers:r2dbc")
 }
 
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    enabled = false
+}
+
 fun gprCredentialWith(propertyNamed: String, orEnvVarNamed: String) = project.findProperty(propertyNamed) as String?
     ?: System.getenv(orEnvVarNamed)
     ?: throw IllegalStateException("Either project property '$propertyNamed' or environment variable '$orEnvVarNamed' MUST be present for successful GPR authentication")
