@@ -2,14 +2,11 @@ import { notFetching } from 'store/wrapper'
 import {
   ProjectsActionTypes,
   ProjectsState,
-  SET_BASE_FILES,
-  SET_SUPPORTED_LANGUAGES,
   SET_PROJECT,
   SET_TOP_PLAGIARISTS,
   SET_TOP_CLONE_SOURCES,
   SET_PROJECT_CONF,
   SET_PROJECTS,
-  SET_REPO_ADMINS,
   RESET_PROJECT_INFO,
   RESET_PROJECTS
 } from './types'
@@ -19,10 +16,7 @@ const initialState: ProjectsState = {
   project: notFetching,
   topPlagiarists: notFetching,
   topCloneSources: notFetching,
-  projectConf: notFetching,
-  repoAdmins: notFetching,
-  baseFiles: notFetching,
-  supportedLanguages: notFetching
+  projectConf: notFetching
 }
 
 export function projectsReducer(
@@ -58,24 +52,6 @@ export function projectsReducer(
       return {
         ...state,
         projectConf: action.payload
-      }
-    }
-    case SET_REPO_ADMINS: {
-      return {
-        ...state,
-        repoAdmins: action.payload
-      }
-    }
-    case SET_BASE_FILES: {
-      return {
-        ...state,
-        baseFiles: action.payload
-      }
-    }
-    case SET_SUPPORTED_LANGUAGES: {
-      return {
-        ...state,
-        supportedLanguages: action.payload
       }
     }
     case RESET_PROJECT_INFO: {

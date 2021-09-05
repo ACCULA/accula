@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 import { API_URL } from 'utils'
-import { ICloneStatistics, IProject, IProjectConf, IToken, IUser } from 'types'
+import { ICloneStatistics, IProject, IProjectConf, IToken } from 'types'
 
 export const getProjects = async (): Promise<IProject[]> => {
   return axios
@@ -72,42 +72,6 @@ export const putProjectConf = async (
       },
       withCredentials: true
     })
-}
-
-export const getRepoAdmins = async (id: number, token: IToken): Promise<IUser[]> => {
-  return axios
-    .get(`${API_URL}/api/projects/${id}/githubAdmins`, {
-      headers: {
-        Accept: 'application/json',
-        Authorization: `Bearer ${token.accessToken}`
-      },
-      withCredentials: true
-    })
-    .then(resp => resp.data as IUser[])
-}
-
-export const getBaseFiles = async (id: number, token: IToken): Promise<string[]> => {
-  return axios
-    .get(`${API_URL}/api/projects/${id}/headFiles`, {
-      headers: {
-        Accept: 'application/json',
-        Authorization: `Bearer ${token.accessToken}`
-      },
-      withCredentials: true
-    })
-    .then(resp => resp.data as string[])
-}
-
-export const getSupportedLanguages = async (id: number, token: IToken): Promise<string[]> => {
-  return axios
-    .get(`${API_URL}/api/projects/${id}/supportedLanguages`, {
-      headers: {
-        Accept: 'application/json',
-        Authorization: `Bearer ${token.accessToken}`
-      },
-      withCredentials: true
-    })
-    .then(resp => resp.data as string[])
 }
 
 export const postProject = async (url: string, token: IToken): Promise<IProject | string> => {

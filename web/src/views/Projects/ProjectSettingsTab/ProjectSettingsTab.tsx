@@ -14,7 +14,7 @@ import {
 import Table from 'components/Table'
 
 import DeleteRoundedIcon from '@material-ui/icons/DeleteRounded'
-import { IProject, IShortProject, IUser } from 'types'
+import { IGithubUser, IProject, IShortProject, IUser } from 'types'
 import Autocomplete from '@material-ui/lab/Autocomplete'
 import { Field, Form, Formik } from 'formik'
 import * as Yup from 'yup'
@@ -22,13 +22,7 @@ import LoadingButton from 'components/LoadingButton'
 import { connect, ConnectedProps } from 'react-redux'
 import { bindActionCreators } from 'redux'
 import { AppDispatch, AppState } from 'store'
-import {
-  getBaseFilesAction,
-  getSupportedLanguagesAction,
-  getProjectConfAction,
-  getRepoAdminsAction,
-  updateProjectConfAction
-} from 'store/projects/actions'
+import { getProjectConfAction, updateProjectConfAction } from 'store/projects/actions'
 import Button from '@material-ui/core/Button'
 import { useSnackbar } from 'notistack'
 import { getNotifier } from 'App'
@@ -62,20 +56,15 @@ interface ProjectSettingsTabProps extends PropsFromRedux {
 const ProjectSettingsTab = ({
   user,
   project,
-  repoAdmins,
   projectConf,
-  baseFiles,
-  supportedLanguages,
   updateProjectConf,
-  getRepoAdmins,
-  getProjectConf,
-  getBaseFiles,
-  getSupportedLanguages
+  getProjectConf
 }: ProjectSettingsTabProps) => {
   const classes = useStyles()
   const snackbarContext = useSnackbar()
   const [adminOptions, setAdminOptions] = useState<IUser[]>(null)
   const [excludedFilesOptions, setExcludedFilesOptions] = useState(null)
+  const [excludedSourceAuthorsOptions, setExcludedSourceAuthorsOptions] = useState(null)
   const [languagesOptions, setLanguagesOptions] = useState<string[]>(null)
   const [fetching, setFetching] = useState(false)
   const [isDeleteProjectDialogOpen, setDeleteProjectDialogOpen] = useState(false)
@@ -83,40 +72,32 @@ const ProjectSettingsTab = ({
 
   useEffect(() => {
     getProjectConf(project.id, getNotifier('error', snackbarContext))
-    getRepoAdmins(project.id, getNotifier('error', snackbarContext))
-    getBaseFiles(project.id, getNotifier('error', snackbarContext))
-    getSupportedLanguages(project.id, getNotifier('error', snackbarContext))
     // eslint-disable-next-line
   }, [])
 
   useEffect(() => {
-    if (repoAdmins && projectConf) {
-      const options = repoAdmins.filter(u => u.id !== project.creatorId)
+    if (projectConf) {
+      const options = projectConf.admins.suggestion.filter(u => u.id !== project.creatorId)
       setAdminOptions(options)
-    }
-    // eslint-disable-next-line
-  }, [repoAdmins, projectConf])
 
-  useEffect(() => {
-    if (baseFiles) {
-      setExcludedFilesOptions(['All', ...baseFiles])
-    }
-    // eslint-disable-next-line
-  }, [baseFiles])
+      const headFiles = projectConf.clones.excludedFiles.suggestion
+      setExcludedFilesOptions(['All', ...headFiles])
 
-  useEffect(() => {
-    if (supportedLanguages) {
-      setLanguagesOptions(supportedLanguages.value)
+      const allPullAuthors = projectConf.clones.excludedSourceAuthors.suggestion
+      setExcludedSourceAuthorsOptions(allPullAuthors)
+
+      const supportedLanguages = projectConf.code.languages.suggestion
+      setLanguagesOptions(supportedLanguages)
     }
     // eslint-disable-next-line
-  }, [supportedLanguages, projectConf])
+  }, [projectConf])
 
   if (
     !project ||
     !projectConf ||
-    !repoAdmins ||
-    !baseFiles ||
     !excludedFilesOptions ||
+    !excludedSourceAuthorsOptions ||
+    !languagesOptions ||
     !adminOptions
   ) {
     return <></>
@@ -126,6 +107,7 @@ const ProjectSettingsTab = ({
     admins,
     languages,
     excludedFiles,
+    excludedSourceAuthors,
     fileMinSimilarityIndex,
     cloneMinTokenCount
   }: any) => {
@@ -134,12 +116,25 @@ const ProjectSettingsTab = ({
       updateProjectConf(
         project.id,
         {
-          admins: admins.map(a => a.id),
-          languages,
-          excludedFiles,
-          fileMinSimilarityIndex:
-            fileMinSimilarityIndex === '' ? minFileMinSimilarityIndex : fileMinSimilarityIndex,
-          cloneMinTokenCount: cloneMinTokenCount === '' ? minCloneTokenCount : cloneMinTokenCount
+          admins: {
+            value: admins.map(a => a.id)
+          },
+          code: {
+            fileMinSimilarityIndex:
+              fileMinSimilarityIndex === '' ? minFileMinSimilarityIndex : fileMinSimilarityIndex,
+            languages: {
+              value: languages
+            }
+          },
+          clones: {
+            minTokenCount: cloneMinTokenCount === '' ? minCloneTokenCount : cloneMinTokenCount,
+            excludedFiles: {
+              value: excludedFiles
+            },
+            excludedSourceAuthors: {
+              value: excludedSourceAuthors ? excludedSourceAuthors.map(u => u.id) : []
+            }
+          }
         },
         () => {
           getNotifier('success', snackbarContext)('Configuration has been successfully updated')
@@ -161,14 +156,16 @@ const ProjectSettingsTab = ({
       <Formik
         validationSchema={validationSchema}
         initialValues={{
-          admins: adminOptions.filter(u => projectConf.admins.includes(u.id)),
-          languages: projectConf.languages,
+          admins: adminOptions.filter(u => projectConf.admins.value.includes(u.id)),
+          languages: projectConf.code.languages.value,
           excludedFiles:
-            excludedFilesOptions.length === projectConf.excludedFiles.length
+            excludedFilesOptions.length === projectConf.clones.excludedFiles.value.length
               ? excludedFilesOptions.slice(1)
-              : excludedFilesOptions.filter((f: string) => projectConf.excludedFiles.includes(f)),
-          fileMinSimilarityIndex: projectConf ? projectConf.fileMinSimilarityIndex : '',
-          cloneMinTokenCount: projectConf ? projectConf.cloneMinTokenCount : ''
+              : excludedFilesOptions.filter((f: string) =>
+                  projectConf.clones.excludedFiles.value.includes(f)
+                ),
+          fileMinSimilarityIndex: projectConf ? projectConf.code.fileMinSimilarityIndex : '',
+          cloneMinTokenCount: projectConf ? projectConf.clones.minTokenCount : ''
         }}
         onSubmit={handleSubmit}
       >
@@ -185,7 +182,7 @@ const ProjectSettingsTab = ({
                   options={adminOptions}
                   getOptionLabel={(option: IUser) => option.login}
                   filterSelectedOptions
-                  defaultValue={adminOptions.filter(u => projectConf.admins.includes(u.id))}
+                  defaultValue={adminOptions.filter(u => projectConf.admins.value.includes(u.id))}
                   onChange={(_, value: IUser[]) => setFieldValue('admins', value)}
                   renderTags={(value: IUser[], getTagProps: any) =>
                     value.map((option, index) => (
@@ -236,7 +233,9 @@ const ProjectSettingsTab = ({
                   filterSelectedOptions
                   disableCloseOnSelect
                   disableClearable
-                  defaultValue={languagesOptions.filter(l => projectConf.languages.includes(l))}
+                  defaultValue={languagesOptions.filter(l =>
+                    projectConf.code.languages.value.includes(l)
+                  )}
                   value={values.languages}
                   onChange={(_, value: string[]) => setFieldValue('languages', value)}
                   renderTags={(value: string[], getTagProps: any) =>
@@ -276,7 +275,7 @@ const ProjectSettingsTab = ({
                   filterSelectedOptions
                   disableCloseOnSelect
                   defaultValue={excludedFilesOptions.filter((f: string) =>
-                    projectConf.excludedFiles.includes(f)
+                    projectConf.clones.excludedFiles.value.includes(f)
                   )}
                   value={values.excludedFiles}
                   onChange={(_, value: string[]) => {
@@ -315,6 +314,58 @@ const ProjectSettingsTab = ({
                 />
                 <Typography className={classes.description} variant="body2" component="p">
                   Files that will be excluded during code clone analysis
+                </Typography>
+                <Field
+                  name="excludedSourceAuthors"
+                  component={Autocomplete}
+                  multiple
+                  limitTags={5}
+                  id="excluded-source-authors-select"
+                  options={excludedSourceAuthorsOptions}
+                  getOptionLabel={(option: IGithubUser) => option.login}
+                  filterSelectedOptions
+                  defaultValue={excludedSourceAuthorsOptions.filter(u =>
+                    projectConf.clones.excludedSourceAuthors.value.includes(u.id)
+                  )}
+                  onChange={(_, value: IGithubUser[]) =>
+                    setFieldValue('excludedSourceAuthors', value)
+                  }
+                  renderTags={(value: IGithubUser[], getTagProps: any) =>
+                    value.map((option, index) => (
+                      <Chip
+                        className={classes.chip}
+                        key={option.login}
+                        avatar={<Avatar alt={option.login} src={option.avatar} />}
+                        label={`@${option.login}`}
+                        color="secondary"
+                        {...getTagProps({ index })}
+                      />
+                    ))
+                  }
+                  renderOption={(option: IUser) => (
+                    <div className={classes.option}>
+                      <Avatar
+                        className={classes.avatarOption}
+                        alt={option.login}
+                        src={option.avatar}
+                      />
+                      <span className={classes.optionText}>
+                        {option.name ? `@${option.login} (${option.name})` : `@${option.login}`}
+                      </span>
+                    </div>
+                  )}
+                  renderInput={params => (
+                    <TextField
+                      {...params}
+                      variant="outlined"
+                      label="Excluded source authors"
+                      color="secondary"
+                      placeholder="Excluded source authors"
+                    />
+                  )}
+                />
+                <Typography className={classes.description} variant="body2" component="p">
+                  Authors that will not be considered as clone sources
                 </Typography>
                 <Field
                   error={errors.cloneMinTokenCount !== undefined}
@@ -447,18 +498,12 @@ const ProjectSettingsTab = ({
 }
 
 const mapStateToProps = (state: AppState) => ({
-  repoAdmins: state.projects.repoAdmins.value,
-  projectConf: state.projects.projectConf.value,
-  baseFiles: state.projects.baseFiles.value,
-  supportedLanguages: state.projects.supportedLanguages
+  projectConf: state.projects.projectConf.value
 })
 
 const mapDispatchToProps = (dispatch: AppDispatch) => ({
-  getRepoAdmins: bindActionCreators(getRepoAdminsAction, dispatch),
   updateProjectConf: bindActionCreators(updateProjectConfAction, dispatch),
-  getProjectConf: bindActionCreators(getProjectConfAction, dispatch),
-  getBaseFiles: bindActionCreators(getBaseFilesAction, dispatch),
-  getSupportedLanguages: bindActionCreators(getSupportedLanguagesAction, dispatch)
+  getProjectConf: bindActionCreators(getProjectConfAction, dispatch)
 })
 
 const connector = connect(mapStateToProps, mapDispatchToProps)

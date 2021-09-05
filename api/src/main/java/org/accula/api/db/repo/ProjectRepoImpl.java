@@ -184,6 +184,7 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
     @Override
     public Mono<Project.Conf> upsertConf(final Long id, final Project.Conf conf) {
         return transactional(connection -> upsertAdmins(connection, id, conf)
+                .then(upsertExcludedSourceAuthors(connection, id, conf))
                 .then(upsertConf(connection, id, conf))
                 .thenReturn(conf))
                 .doOnNext(c -> onConfUpdates
@@ -194,17 +195,23 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
     @Override
     public Mono<Project.Conf> confById(final Long id) {
         return withConnection(connection -> Mono.from(((PostgresqlStatement) connection.createStatement("""
-                SELECT conf.clone_min_token_count               AS clone_min_token_count,
-                       conf.file_min_similarity_index           AS file_min_similarity_index,
-                       COALESCE(admins.ids, Array[]::BIGINT[])  AS admin_ids,
-                       conf.excluded_files                      AS excluded_files,
-                       conf.languages::TEXT[]                   AS languages
+                SELECT conf.clone_min_token_count                               AS clone_min_token_count,
+                       conf.file_min_similarity_index                           AS file_min_similarity_index,
+                       COALESCE(admins.ids, Array[]::BIGINT[])                  AS admin_ids,
+                       conf.excluded_files                                      AS excluded_files,
+                       conf.languages::TEXT[]                                   AS languages,
+                       COALESCE(excluded_source_authors.ids, Array[]::BIGINT[]) AS excluded_source_authors_ids
                 FROM project_conf conf
                          LEFT JOIN (SELECT this.project_id,
                                            array_agg(this.admin_id) AS ids
                                     FROM project_admin this
                                     GROUP BY this.project_id) admins
                                    ON conf.project_id = admins.project_id
+                         LEFT JOIN (SELECT this.project_id,
+                                           array_agg(this.excluded_source_author_id) AS ids
+                                    FROM project_excluded_source_author this
+                                    GROUP BY this.project_id) excluded_source_authors
+                                   ON conf.project_id = excluded_source_authors.project_id
                 WHERE conf.project_id = $1
                 """))
                 .bind("$1", id)
@@ -430,6 +437,39 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
         return deleteProjectAdmins.then(insertNewAdmins);
     }
 
+    private Mono<Void> upsertExcludedSourceAuthors(final Connection connection,
+                                                   final Long projectId,
+                                                   final Project.Conf conf) {
+        final var deleteSourceAuthors = ((PostgresqlStatement) connection.createStatement("""
+                DELETE FROM project_excluded_source_author
+                WHERE project_id = $1
+                """))
+            .bind("$1", projectId)
+            .execute()
+            .flatMap(PostgresqlResult::getRowsUpdated)
+            .then();
+
+        final Mono<Void> insertNewSourceAuthors;
+        if (conf.excludedSourceAuthorIds().isEmpty()) {
+            insertNewSourceAuthors = Mono.empty();
+        } else {
+            final var insertSourceAuthorsBackStatement = BatchStatement.of(connection, """
+                    INSERT INTO project_excluded_source_author (project_id, excluded_source_author_id)
+                    VALUES ($collection)
+                    """);
+            insertSourceAuthorsBackStatement.bind(conf.excludedSourceAuthorIds(), excludedSourceAuthorId -> Bindings.of(
+                projectId,
+                excludedSourceAuthorId
+            ));
+            insertNewSourceAuthors = insertSourceAuthorsBackStatement
+                .execute()
+                .flatMap(PostgresqlResult::getRowsUpdated)
+                .then();
+        }
+
+        return deleteSourceAuthors.then(insertNewSourceAuthors);
+    }
+
     //TODO: remove TEXT[] to code_language_enum[] cast once r2dbc-postgres 0.9.0 is released
     private Mono<Void> upsertConf(final Connection connection, final Long projectId, final Project.Conf conf) {
         return ((PostgresqlStatement) connection.createStatement("""
@@ -487,6 +527,7 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
                 .fileMinSimilarityIndex(Converters.integer(row, "file_min_similarity_index"))
                 .excludedFiles(Converters.strings(row, "excluded_files"))
                 .languages(Stream.of(Converters.value(row, "languages", String[].class)).map(CodeLanguage::valueOf).toList())
+                .excludedSourceAuthorIds(Converters.ids(row, "excluded_source_authors_ids"))
                 .build();
     }
 

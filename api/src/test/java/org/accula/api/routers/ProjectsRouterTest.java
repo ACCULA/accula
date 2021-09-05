@@ -31,7 +31,7 @@ import org.accula.api.handler.dto.CreateProjectDto;
 import org.accula.api.handler.dto.ProjectConfDto;
 import org.accula.api.handler.dto.ProjectDto;
 import org.accula.api.handler.dto.RepoShortDto;
-import org.accula.api.handler.dto.UserDto;
+import org.accula.api.handler.dto.ValuesWithSuggestion;
 import org.accula.api.handler.exception.HandlerException;
 import org.accula.api.handler.exception.ProjectsHandlerException;
 import org.accula.api.service.CloneDetectionService;
@@ -64,7 +64,6 @@ import static org.accula.api.util.TestData.highload19Project;
 import static org.accula.api.util.TestData.lamtev;
 import static org.accula.api.util.TestData.user;
 import static org.accula.api.util.TestData.user1;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
@@ -367,64 +366,49 @@ class ProjectsRouterTest {
     }
 
     @Test
-    void testGetGithubAdmins() {
-        when(currentUser.get(Mockito.any()))
-                .thenReturn(Mono.just(0L));
-        when(projectRepo.hasAdmin(anyLong(), anyLong()))
-                .thenReturn(Mono.just(TRUE));
-        when(projectRepo.findById(anyLong()))
-                .thenReturn(Mono.just(highload19Project));
-        when(githubClient.getRepoAdmins(Mockito.anyString(), Mockito.anyString()))
-                .thenReturn(Mono.just(List.of(1L, 2L)));
-        when(userRepo.findByGithubIds(Mockito.anyCollection()))
-                .thenReturn(Flux.fromIterable(List.of(user, user1)));
-
-        client.get().uri("/api/projects/{id}/githubAdmins", highload19Project.id())
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody(UserDto[].class).value(it -> assertEquals(2, it.length));
-    }
-
-    @Test
-    void testGetGithubAdminsForbidden() {
-        mockForbidden();
-
-        client.get().uri("/api/projects/{id}/githubAdmins", highload19Project.id())
-                .exchange()
-                .expectStatus().isForbidden();
-    }
-
-    @Test
-    void testGetGithubAdminsNotFound() {
-        mockNotFound();
-
-        client.get().uri("/api/projects/{id}/githubAdmins", highload19Project.id())
-                .exchange()
-                .expectStatus().isNotFound();
-    }
-
-    @Test
     void testGetConf() {
         when(currentUser.get(Mockito.any()))
                 .thenReturn(Mono.just(0L));
         when(projectRepo.hasAdmin(anyLong(), anyLong()))
                 .thenReturn(Mono.just(TRUE));
+        when(projectRepo.findById(anyLong()))
+            .thenReturn(Mono.just(highload19Project));
+        when(userRepo.findByGithubIds(Mockito.anyCollection()))
+            .thenReturn(Flux.fromIterable(List.of(user, user1)));
+        when(pullRepo.findByProjectIdIncludingSecondaryRepos(anyLong()))
+            .thenReturn(Flux.empty());
         final var adminIds = List.of(1L, 2L);
+        final var expectedFiles = List.of(Project.Conf.KEEP_EXCLUDED_FILES_SYNCED, "file1", "file2", "file3");
         when(projectRepo.confById(anyLong()))
                 .thenReturn(Mono.just(Project.Conf.defaultConf()
                     .withAdminIds(adminIds)
+                    .withExcludedFiles(expectedFiles)
                     .withLanguages(List.of(CodeLanguage.JAVA))));
+
+        when(githubClient.getRepoAdmins(Mockito.anyString(), Mockito.anyString()))
+            .thenReturn(Mono.just(adminIds));
+
+        when(projectService.headFiles(Mockito.any()))
+            .thenReturn(Mono.just(expectedFiles));
+
+        when(projectRepo.supportedLanguages())
+            .thenReturn(Mono.just(List.of(CodeLanguage.values())));
 
         client.get().uri("/api/projects/{id}/conf", highload19Project.id())
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(ProjectConfDto.class)
                 .isEqualTo(ProjectConfDto.builder()
-                        .admins(adminIds)
-                        .cloneMinTokenCount(Project.Conf.defaultConf().cloneMinTokenCount())
+                    .admins(new ValuesWithSuggestion<>(adminIds, List.of(user, user1).stream().map(ModelToDtoConverter::convert).toList()))
+                    .code(ProjectConfDto.Code.builder()
                         .fileMinSimilarityIndex(Project.Conf.defaultConf().fileMinSimilarityIndex())
-                        .excludedFiles(Project.Conf.defaultConf().excludedFiles())
-                        .language(ProjectConfDto.Language.JAVA)
+                        .languages(new ValuesWithSuggestion<>(List.of(ProjectConfDto.Language.JAVA), List.of(ProjectConfDto.Language.values())))
+                        .build())
+                    .clones(ProjectConfDto.Clones.builder()
+                        .minTokenCount(Project.Conf.defaultConf().cloneMinTokenCount())
+                        .excludedFiles(new ValuesWithSuggestion<>(expectedFiles, expectedFiles))
+                        .excludedSourceAuthors(new ValuesWithSuggestion<>(1L))
+                        .build())
                     .build());
     }
 
@@ -461,12 +445,17 @@ class ProjectsRouterTest {
         client.put().uri("/api/projects/{id}/conf", highload19Project.id())
                 .contentType(APPLICATION_JSON)
                 .bodyValue(ProjectConfDto.builder()
-                        .admins(adminIds)
-                        .cloneMinTokenCount(Project.Conf.defaultConf().cloneMinTokenCount())
+                    .admins(new ValuesWithSuggestion<>(adminIds))
+                    .code(ProjectConfDto.Code.builder()
                         .fileMinSimilarityIndex(Project.Conf.defaultConf().fileMinSimilarityIndex())
-                        .excludedFiles(Project.Conf.defaultConf().excludedFiles())
-                        .language(ProjectConfDto.Language.JAVA)
+                        .languages(new ValuesWithSuggestion<>(ProjectConfDto.Language.JAVA))
                         .build())
+                    .clones(ProjectConfDto.Clones.builder()
+                        .minTokenCount(Project.Conf.defaultConf().cloneMinTokenCount())
+                        .excludedFiles(new ValuesWithSuggestion<>(Project.Conf.defaultConf().excludedFiles()))
+                        .excludedSourceAuthors(new ValuesWithSuggestion<>(1L))
+                        .build())
+                    .build())
                 .exchange()
                 .expectStatus().isCreated();
     }
@@ -483,65 +472,6 @@ class ProjectsRouterTest {
                 .bodyValue(ProjectConfDto.builder().build())
                 .exchange()
                 .expectStatus().isBadRequest();
-    }
-
-    @Test
-    void testHeadFiles() {
-        final var expectedFiles = new String[]{Project.Conf.KEEP_EXCLUDED_FILES_SYNCED, "file1", "file2", "file3"};
-        when(currentUser.get(Mockito.any()))
-                .thenReturn(Mono.just(0L));
-        when(projectRepo.hasAdmin(anyLong(), anyLong()))
-                .thenReturn(Mono.just(TRUE));
-        when(projectRepo.findById(anyLong()))
-                .thenReturn(Mono.just(highload19Project));
-        when(projectService.headFiles(Mockito.any()))
-                .thenReturn(Mono.just(List.of(expectedFiles)));
-
-        client.get().uri("/api/projects/{id}/headFiles", highload19Project.id())
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody(String[].class).isEqualTo(expectedFiles);
-    }
-
-    @Test
-    void testHeadFilesForbidden() {
-        mockForbidden();
-
-        client.get().uri("/api/projects/{id}/headFiles", highload19Project.id())
-                .exchange()
-                .expectStatus().isForbidden();
-    }
-
-    @Test
-    void testHeadFilesNotFound() {
-        mockNotFound();
-
-        client.get().uri("/api/projects/{id}/headFiles", highload19Project.id())
-                .exchange()
-                .expectStatus().isNotFound();
-    }
-
-    @Test
-    void testSupportedLanguagesOk() {
-        when(currentUser.get(Mockito.any()))
-            .thenReturn(Mono.just(0L));
-        when(projectRepo.hasAdmin(anyLong(), anyLong()))
-            .thenReturn(Mono.just(TRUE));
-        when(projectRepo.supportedLanguages())
-            .thenReturn(Mono.just(List.of(CodeLanguage.values())));
-
-        client.get().uri("/api/projects/{id}/supportedLanguages", highload19Project.id())
-            .exchange()
-            .expectStatus().isOk()
-            .expectBody(ProjectConfDto.Language[].class).isEqualTo(ProjectConfDto.Language.values());
-
-        when(projectRepo.supportedLanguages())
-            .thenReturn(Mono.empty());
-
-        client.get().uri("/api/projects/{id}/supportedLanguages", highload19Project.id())
-            .exchange()
-            .expectStatus().isOk()
-            .expectBody(List.class).isEqualTo(List.of());
     }
 
     @Test

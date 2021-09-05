@@ -16,12 +16,13 @@ public final class DtoToModelConverter {
 
     public static Project.Conf convert(final ProjectConfDto conf) {
         return Project.Conf.builder()
-                .adminIds(conf.admins())
-                .cloneMinTokenCount(conf.cloneMinTokenCount())
-                .fileMinSimilarityIndex(conf.fileMinSimilarityIndex())
-                .excludedFiles(conf.excludedFiles())
-                .languages(convertLanguages(conf.languages()))
-                .build();
+            .adminIds(conf.admins().value())
+            .cloneMinTokenCount(conf.clones().minTokenCount())
+            .fileMinSimilarityIndex(conf.code().fileMinSimilarityIndex())
+            .excludedFiles(conf.clones().excludedFiles().value())
+            .languages(convertLanguages(conf.code().languages().value()))
+            .excludedSourceAuthorIds(conf.clones().excludedSourceAuthors().value())
+            .build();
     }
 
     public static List<CodeLanguage> convertLanguages(final Collection<ProjectConfDto.Language> languages) {

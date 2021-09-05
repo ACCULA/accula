@@ -3,36 +3,27 @@ import { requireToken } from 'store/users/actions'
 import { failed, fetched, fetching } from 'store/wrapper'
 import { IProjectConf } from 'types'
 import {
-  SET_BASE_FILES,
-  SET_SUPPORTED_LANGUAGES,
   SET_PROJECT,
   SET_TOP_PLAGIARISTS,
   SET_TOP_CLONE_SOURCES,
   SET_PROJECT_CONF,
   SET_PROJECTS,
-  SET_REPO_ADMINS,
   RESET_PROJECT_INFO,
   RESET_PROJECTS,
-  SetBaseFiles,
-  SetSupportedLanguages,
   SetProject,
   SetTopPlagiarists,
   SetTopCloneSources,
   SetProjectConf,
   SetProjects,
-  SetRepoAdmins,
   ResetProjectInfo,
   ResetProjects
 } from './types'
 import {
-  getBaseFiles,
   getProject,
   getTopPlagiarists,
   getTopCloneSources,
   getProjectConf,
   getProjects,
-  getRepoAdmins,
-  getSupportedLanguages,
   putProjectConf,
   deleteProject,
   postProject,
@@ -70,21 +61,6 @@ export const resetProjectInfo = (): ResetProjectInfo => ({
 
 export const resetProjectsAction = (): ResetProjects => ({
   type: RESET_PROJECTS
-})
-
-const setRepoAdmins = (payload): SetRepoAdmins => ({
-  type: SET_REPO_ADMINS,
-  payload
-})
-
-const setBaseFiles = (payload): SetBaseFiles => ({
-  type: SET_BASE_FILES,
-  payload
-})
-
-const setSupportedLanguages = (payload): SetSupportedLanguages => ({
-  type: SET_SUPPORTED_LANGUAGES,
-  payload
 })
 
 export const getProjectsAction = (handleError?: (message: string) => void) => async (
@@ -245,34 +221,6 @@ export const updateProjectConfAction = (
   }
 }
 
-export const getRepoAdminsAction = (
-  projectId: number,
-  handleError?: (msg: string) => void
-) => async (
-  dispatch: AppDispatch, //
-  getState: AppStateSupplier
-) => {
-  const { projects } = getState()
-  if (projects.repoAdmins.value && projects.repoAdmins.projectId === projectId) {
-    return
-  }
-  await requireToken(dispatch, getState)
-  const { users } = getState()
-  if (!users.token) {
-    return
-  }
-  try {
-    dispatch(setRepoAdmins(fetching))
-    const admins = await getRepoAdmins(projectId, users.token)
-    dispatch(setRepoAdmins(fetched(admins, projectId)))
-  } catch (e) {
-    dispatch(setRepoAdmins(failed(e)))
-    if (handleError) {
-      handleError(e.message)
-    }
-  }
-}
-
 const messageFromError = (error: string): string => {
   switch (error) {
     case 'NO_PERMISSION':
@@ -336,56 +284,6 @@ export const addRepoToProjectAction = (
       if (handleSuccess) {
         handleSuccess()
       }
-    }
-  }
-}
-
-export const getBaseFilesAction = (
-  projectId: number,
-  handleError?: (msg: string) => void
-) => async (
-  dispatch: AppDispatch, //
-  getState: AppStateSupplier
-) => {
-  const { projects } = getState()
-  if (projects.baseFiles.value && projects.baseFiles.projectId === projectId) {
-    return
-  }
-  await requireToken(dispatch, getState)
-  const { users } = getState()
-  try {
-    dispatch(setBaseFiles(fetching))
-    const files = await getBaseFiles(projectId, users.token)
-    dispatch(setBaseFiles(fetched(files, projectId)))
-  } catch (e) {
-    dispatch(setBaseFiles(failed(e)))
-    if (handleError) {
-      handleError(e.message)
-    }
-  }
-}
-
-export const getSupportedLanguagesAction = (
-  projectId: number,
-  handleError?: (msg: string) => void
-) => async (
-  dispatch: AppDispatch, //
-  getState: AppStateSupplier
-) => {
-  const { projects } = getState()
-  if (projects.supportedLanguages.value && projects.supportedLanguages.projectId === projectId) {
-    return
-  }
-  await requireToken(dispatch, getState)
-  const { users } = getState()
-  try {
-    dispatch(setSupportedLanguages(fetching))
-    const languages = await getSupportedLanguages(projectId, users.token)
-    dispatch(setSupportedLanguages(fetched(languages, projectId)))
-  } catch (e) {
-    dispatch(setBaseFiles(failed(e)))
-    if (handleError) {
-      handleError(e.message)
     }
   }
 }

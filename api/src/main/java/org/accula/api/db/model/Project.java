@@ -52,6 +52,7 @@ public class Project {
         List<String> excludedFiles;
         @Singular
         List<CodeLanguage> languages;
+        List<Long> excludedSourceAuthorIds;
 
         public static Conf defaultConf() {
             return DEFAULT;

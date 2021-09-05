@@ -62,6 +62,7 @@ abstract class BaseRepoTest implements ConnectionProvidedRepo {
             DROP TABLE project_repo;
             DROP TABLE project_admin;
             DROP TABLE project_conf;
+            DROP TABLE project_excluded_source_author;
             DROP TYPE code_language_enum;
             DROP TABLE project;
             DROP TYPE project_state_enum;
