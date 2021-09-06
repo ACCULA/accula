@@ -16,10 +16,39 @@ public record ValuesWithSuggestion<Value, Suggested>(
     @OptionalField @Nullable List<Suggested> suggestion
 ) implements InputDto {
     public ValuesWithSuggestion(final Value value) {
-        this(List.of(value), null);
+        this(List.of(value), List.of());
     }
 
     public ValuesWithSuggestion(final List<Value> values) {
-        this(values, null);
+        this(values, List.of());
+    }
+
+    public static Builder<?, ?> builder() {
+        return new Builder<>();
+    }
+
+    public static final class Builder<Value, Suggested> {
+        private List<Value> values = List.of();
+        private List<Suggested> suggestion = List.of();
+
+        private Builder() {
+        }
+
+        @SuppressWarnings("unchecked")
+        public <V> Builder<V, ?> values(final List<V> values) {
+            this.values = (List<Value>) values;
+            return (Builder<V, ?>) this;
+        }
+
+        @SuppressWarnings("unchecked")
+        public <S> Builder<?, S> suggestion(final List<S> suggestion) {
+            this.suggestion = (List<Suggested>) suggestion;
+            return (Builder<?, S>) this;
+        }
+
+        @SuppressWarnings({"rawtypes", "unchecked"})
+        public <V, S> ValuesWithSuggestion<V, S> build() {
+            return new ValuesWithSuggestion(values, suggestion);
+        }
     }
 }

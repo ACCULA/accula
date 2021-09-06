@@ -383,7 +383,8 @@ class ProjectsRouterTest {
                 .thenReturn(Mono.just(Project.Conf.defaultConf()
                     .withAdminIds(adminIds)
                     .withExcludedFiles(expectedFiles)
-                    .withLanguages(List.of(CodeLanguage.JAVA))));
+                    .withLanguages(List.of(CodeLanguage.JAVA))
+                    .withExcludedSourceAuthorIds(List.of(1L))));
 
         when(githubClient.getRepoAdmins(Mockito.anyString(), Mockito.anyString()))
             .thenReturn(Mono.just(adminIds));
@@ -426,6 +427,8 @@ class ProjectsRouterTest {
         mockNotFound();
         when(projectRepo.confById(anyLong()))
                 .thenReturn(Mono.empty());
+        when(pullRepo.findByProjectIdIncludingSecondaryRepos(anyLong()))
+            .thenReturn(Flux.empty());
 
         client.get().uri("/api/projects/{id}/conf", highload19Project.id())
                 .exchange()

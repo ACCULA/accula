@@ -92,10 +92,10 @@ public final class ModelToDtoConverter {
                                              final List<String> headFiles,
                                              final List<GithubUser> allPullAuthors) {
         return ProjectConfDto.builder()
-            .admins(new ValuesWithSuggestion<>(
-                conf.adminIds(),
-                githubAdmins.stream().map(ModelToDtoConverter::convert).toList()
-            ))
+            .admins(ValuesWithSuggestion.builder()
+                .values(conf.adminIds())
+                .suggestion(githubAdmins.stream().map(ModelToDtoConverter::convert).toList())
+                .build())
             .code(ProjectConfDto.Code.builder()
                 .fileMinSimilarityIndex(conf.fileMinSimilarityIndex())
                 .languages(new ValuesWithSuggestion<>(

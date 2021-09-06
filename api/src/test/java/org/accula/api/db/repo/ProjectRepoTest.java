@@ -146,7 +146,8 @@ final class ProjectRepoTest extends BaseRepoTest implements ProjectRepo.OnConfUp
         final var project = upsertProject();
         final var conf = Project.Conf
             .defaultConf()
-            .withLanguages(List.of(CodeLanguage.values()));
+            .withLanguages(List.of(CodeLanguage.values()))
+            .withExcludedSourceAuthorIds(List.of());
         projectRepo
             .upsertConf(project.id(), conf)
             .as(StepVerifier::create)
@@ -162,7 +163,8 @@ final class ProjectRepoTest extends BaseRepoTest implements ProjectRepo.OnConfUp
         final var conf = Project.Conf
             .defaultConf()
             .withLanguages(List.of(CodeLanguage.values()))
-            .withAdminIds(List.of(admin.id()));
+            .withAdminIds(List.of(admin.id()))
+            .withExcludedSourceAuthorIds(List.of());
         assertNotNull(projectRepo.upsertConf(project.id(), conf).block());
 
         projectRepo
