@@ -123,7 +123,7 @@ public final class CloneDetectionService {
                                 .filter(FileFilter.notIn(conf.excludedFiles()))
                                 .languages(conf.languages())
                                 .languageFilter(Languages.filter(conf.languages()))
-                                .isExcludedSourceAuthor(new LongOpenHashSet(conf.excludedSourceAuthorIds())::contains)
+                                .excludedSourceAuthors(new LongOpenHashSet(conf.excludedSourceAuthorIds())::contains)
                                 .build()))
                 .doOnNext(conf -> cloneDetectorConfigs.put(projectId, conf));
     }

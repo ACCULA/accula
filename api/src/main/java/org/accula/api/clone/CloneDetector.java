@@ -38,6 +38,6 @@ public interface CloneDetector {
         @Singular
         List<CodeLanguage> languages;
         FileFilter languageFilter;
-        LongPredicate isExcludedSourceAuthor;
+        LongPredicate excludedSourceAuthors;
     }
 }
