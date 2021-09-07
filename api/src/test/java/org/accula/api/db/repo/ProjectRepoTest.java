@@ -2,13 +2,16 @@ package org.accula.api.db.repo;
 
 import org.accula.api.db.model.CodeLanguage;
 import org.accula.api.db.model.GithubRepo;
+import org.accula.api.db.model.GithubUser;
 import org.accula.api.db.model.Project;
+import org.accula.api.util.TestData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import reactor.test.StepVerifier;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 import static org.accula.api.util.TestData.highload19Project;
@@ -144,14 +147,22 @@ final class ProjectRepoTest extends BaseRepoTest implements ProjectRepo.OnConfUp
     @Test
     void testUpsertConf() {
         final var project = upsertProject();
+        final var users = upsertGithubUsers();
         final var conf = Project.Conf
             .defaultConf()
             .withLanguages(List.of(CodeLanguage.values()))
-            .withExcludedSourceAuthorIds(List.of());
+            .withExcludedSourceAuthorIds(users.stream().map(GithubUser::id).toList());
         projectRepo
             .upsertConf(project.id(), conf)
             .as(StepVerifier::create)
             .expectNext(conf)
+            .verifyComplete();
+
+        final var conf2 = conf.withExcludedSourceAuthorIds(List.of());
+        projectRepo
+            .upsertConf(project.id(), conf2)
+            .as(StepVerifier::create)
+            .expectNext(conf2)
             .verifyComplete();
     }
 
@@ -249,5 +260,9 @@ final class ProjectRepoTest extends BaseRepoTest implements ProjectRepo.OnConfUp
                 return upsertedRepo;
             })
             .toList();
+    }
+
+    private List<GithubUser> upsertGithubUsers() {
+        return Objects.requireNonNull(githubUserRepo.upsert(TestData.usersGithub).collectList().block());
     }
 }
