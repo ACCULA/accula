@@ -11,6 +11,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.function.LongPredicate;
 import java.util.function.Supplier;
 
 /**
@@ -37,5 +38,6 @@ public interface CloneDetector {
         @Singular
         List<CodeLanguage> languages;
         FileFilter languageFilter;
+        LongPredicate isExcludedSourceAuthor;
     }
 }

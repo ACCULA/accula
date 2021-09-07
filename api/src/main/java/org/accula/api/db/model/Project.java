@@ -44,6 +44,7 @@ public class Project {
                 .fileMinSimilarityIndex(5)
                 .excludedFiles(List.of())
                 .languages(List.of(CodeLanguage.values()))
+                .excludedSourceAuthorIds(List.of())
                 .build();
 
         List<Long> adminIds;
