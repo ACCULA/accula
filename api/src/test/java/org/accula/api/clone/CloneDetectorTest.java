@@ -39,6 +39,7 @@ class CloneDetectorTest {
                 .filter(FileFilter.notIn(Set.of("other/guy/src/main/java/Cell.java")))
                 .language(CodeLanguage.JAVA)
                 .language(CodeLanguage.KOTLIN)
+                .excludedSourceAuthors(id -> id == Long.MIN_VALUE)
                 .build()));
     }
 
