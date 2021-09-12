@@ -17,6 +17,7 @@ import java.util.Set;
 
 import static org.accula.api.util.TestData.accula485b362Snap;
 import static org.accula.api.util.TestData.highload2019_174Head;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Vadim Dyachkov
@@ -30,16 +31,18 @@ class CloneDetectorTest {
     public static final FileEntity<Snapshot> source2 = new FileEntity<>(commitSnapshot2, "owner1/repo1/src/main/java/Cell.java", JavaTokenProviderTest.content1, LineSet.all());
     public static final FileEntity<Snapshot> target1 = new FileEntity<>(commitSnapshot3, "owner2/repo2/src/main/java/Cell.java", JavaTokenProviderTest.content2, LineSet.all());
 
+    Long excludedSourceAuthor;
     CloneDetector cloneDetector;
 
     @BeforeEach
     void setUp() {
+        excludedSourceAuthor = null;
         cloneDetector = new CloneDetectorImpl(() -> Mono.just(CloneDetector.Config.builder()
                 .cloneMinTokenCount(5)
                 .filter(FileFilter.notIn(Set.of("other/guy/src/main/java/Cell.java")))
                 .language(CodeLanguage.JAVA)
                 .language(CodeLanguage.KOTLIN)
-                .excludedSourceAuthors(id -> id == Long.MIN_VALUE)
+                .excludedSourceAuthors(authorId -> excludedSourceAuthor != null && excludedSourceAuthor.equals(authorId))
                 .build()));
     }
 
@@ -58,6 +61,22 @@ class CloneDetectorTest {
                     return clones.stream().allMatch(clone -> clone.source().snapshot().equals(commitSnapshot1));
                 })
                 .verifyComplete();
+    }
+
+    @Test
+    void testNoClonesBecauseOfExcludedSourceAuthors() {
+        excludedSourceAuthor = source1.ref().repo().owner().id();
+
+        StepVerifier.create(cloneDetector.fill(Flux.just(source1, source2, target1)))
+            .verifyComplete();
+
+        StepVerifier
+            .create(cloneDetector.readClones(commitSnapshot3).collectList())
+            .expectNextMatches(clones -> {
+                assertEquals(0, clones.size(), "Actual size = " + clones.size());
+                return true;
+            })
+            .verifyComplete();
     }
 
     @Test
