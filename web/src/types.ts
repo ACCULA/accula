@@ -111,22 +111,35 @@ export interface IProject {
   secondaryRepos: IShortProject[]
 }
 
+export interface IGithubUser {
+  id: number
+  login: string
+  avatar: string
+  url: string
+}
+
 export interface ICloneStatistics {
-  user: {
-    url: string
-    login: string
-    avatar: string
-  }
+  user: IGithubUser
   cloneCount: number
   lineCount: number
 }
 
+export interface IValuesWithSuggestion<Value, Suggested> {
+  value: Value[]
+  suggestion?: Suggested[]
+}
+
 export interface IProjectConf {
-  admins: number[]
-  cloneMinTokenCount: number
-  fileMinSimilarityIndex: number
-  excludedFiles: string[]
-  languages: string[]
+  admins: IValuesWithSuggestion<number, IUser>
+  code: {
+    fileMinSimilarityIndex: number
+    languages: IValuesWithSuggestion<string, string>
+  }
+  clones: {
+    minTokenCount: number
+    excludedFiles: IValuesWithSuggestion<string, string>
+    excludedSourceAuthors: IValuesWithSuggestion<number, IGithubUser>
+  }
 }
 
 export interface IShortPull {
@@ -137,11 +150,7 @@ export interface IShortPull {
   open: boolean
   createdAt: string
   updatedAt: string
-  author: {
-    url: string
-    login: string
-    avatar: string
-  }
+  author: IGithubUser
 }
 
 export interface IPull {
@@ -156,11 +165,7 @@ export interface IPull {
     url: string
     label: string
   }
-  author: {
-    url: string
-    login: string
-    avatar: string
-  }
+  author: IGithubUser
   title: string
   open: boolean
   createdAt: string

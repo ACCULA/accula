@@ -11,6 +11,7 @@ import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
 @JsonAutoDetect(fieldVisibility = ANY)
 @Value
 public class GithubUserDto {
+    Long id;
     String login;
     String avatar;
     String url;

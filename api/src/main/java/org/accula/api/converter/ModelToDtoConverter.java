@@ -20,6 +20,7 @@ import org.accula.api.handler.dto.PullDto;
 import org.accula.api.handler.dto.RepoShortDto;
 import org.accula.api.handler.dto.ShortPullDto;
 import org.accula.api.handler.dto.UserDto;
+import org.accula.api.handler.dto.ValuesWithSuggestion;
 import org.accula.api.util.Checks;
 
 import java.net.URLEncoder;
@@ -85,14 +86,35 @@ public final class ModelToDtoConverter {
             .build();
     }
 
-    public static ProjectConfDto convert(final Project.Conf conf) {
+    public static ProjectConfDto convertConf(final Project.Conf conf,
+                                             final List<User> githubAdmins,
+                                             final List<CodeLanguage> languagesAvailable,
+                                             final List<String> headFiles,
+                                             final List<GithubUser> allPullAuthors) {
         return ProjectConfDto.builder()
-                .admins(conf.adminIds())
-                .cloneMinTokenCount(conf.cloneMinTokenCount())
+            .admins(new ValuesWithSuggestion<>(
+                conf.adminIds(),
+                githubAdmins.stream().map(ModelToDtoConverter::convert).toList()
+            ))
+            .code(ProjectConfDto.Code.builder()
                 .fileMinSimilarityIndex(conf.fileMinSimilarityIndex())
-                .excludedFiles(conf.excludedFiles())
-                .languages(convertLanguages(conf.languages()))
-                .build();
+                .languages(new ValuesWithSuggestion<>(
+                    convertLanguages(conf.languages()),
+                    convertLanguages(languagesAvailable)
+                ))
+                .build())
+            .clones(ProjectConfDto.Clones.builder()
+                .minTokenCount(conf.cloneMinTokenCount())
+                .excludedFiles(new ValuesWithSuggestion<>(
+                    conf.excludedFiles(),
+                    headFiles
+                ))
+                .excludedSourceAuthors(new ValuesWithSuggestion<>(
+                    conf.excludedSourceAuthorIds(),
+                    allPullAuthors.stream().map(ModelToDtoConverter::convert).toList()
+                ))
+                .build())
+            .build();
     }
 
     public static List<ProjectConfDto.Language> convertLanguages(final Collection<CodeLanguage> languages) {
@@ -136,7 +158,7 @@ public final class ModelToDtoConverter {
     }
 
     public static GithubUserDto convert(final GithubUser user) {
-        return new GithubUserDto(user.login(), user.avatar(), String.format(GITHUB_USER_URL_FORMAT, user.login()));
+        return new GithubUserDto(user.id(), user.login(), user.avatar(), String.format(GITHUB_USER_URL_FORMAT, user.login()));
     }
 
     public static PullDto convert(final Pull pull, final List<Pull> previousPulls) {

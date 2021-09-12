@@ -44,6 +44,7 @@ public class Project {
                 .fileMinSimilarityIndex(5)
                 .excludedFiles(List.of())
                 .languages(List.of(CodeLanguage.values()))
+                .excludedSourceAuthorIds(List.of())
                 .build();
 
         List<Long> adminIds;
@@ -52,6 +53,7 @@ public class Project {
         List<String> excludedFiles;
         @Singular
         List<CodeLanguage> languages;
+        List<Long> excludedSourceAuthorIds;
 
         public static Conf defaultConf() {
             return DEFAULT;

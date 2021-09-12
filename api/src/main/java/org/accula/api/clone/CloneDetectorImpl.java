@@ -108,6 +108,9 @@ public final class CloneDetectorImpl implements CloneDetector {
                 if (source.ref().repo().equals(pullSnapshot.repo())) {
                     return Stream.empty();
                 }
+                if (config.excludedSourceAuthors().test(source.ref().repo().owner().id())) {
+                    return Stream.empty();
+                }
 
                 return clones
                     .stream()

@@ -8,12 +8,14 @@ import org.accula.api.converter.DtoToModelConverter;
 import org.accula.api.converter.GithubApiToModelConverter;
 import org.accula.api.converter.ModelToDtoConverter;
 import org.accula.api.db.model.GithubRepo;
+import org.accula.api.db.model.GithubUser;
 import org.accula.api.db.model.Project;
 import org.accula.api.db.model.User;
 import org.accula.api.db.repo.CurrentUserRepo;
 import org.accula.api.db.repo.GithubRepoRepo;
 import org.accula.api.db.repo.GithubUserRepo;
 import org.accula.api.db.repo.ProjectRepo;
+import org.accula.api.db.repo.PullRepo;
 import org.accula.api.db.repo.UserRepo;
 import org.accula.api.github.api.GithubClient;
 import org.accula.api.github.api.GithubClientException;
@@ -44,6 +46,7 @@ import reactor.core.scheduler.Schedulers;
 import reactor.function.TupleUtils;
 import reactor.util.context.ContextView;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -67,6 +70,7 @@ public final class ProjectsHandler implements Handler {
     private final CurrentUserRepo currentUserRepo;
     private final GithubClient githubClient;
     private final ProjectRepo projectRepo;
+    private final PullRepo pullRepo;
     private final GithubRepoRepo repoRepo;
     private final GithubUserRepo githubUserRepo;
     private final UserRepo userRepo;
@@ -119,50 +123,22 @@ public final class ProjectsHandler implements Handler {
             .onErrorResume(ResponseConvertibleException::onErrorResume);
     }
 
-    public Mono<ServerResponse> githubAdmins(final ServerRequest request) {
-        final var adminsMono = havingAdminPermissionAtProject(request)
-                .flatMap(projectRepo::findById)
-                .switchIfEmpty(Mono.error(Http4xxException::notFound))
-                .flatMap(this::githubRepoAdmins)
-                .flatMapMany(userRepo::findByGithubIds)
-                .map(ModelToDtoConverter::convert)
-                .collectList();
-        return adminsMono
-                .flatMap(Responses::ok)
-                .onErrorResume(GithubClientException.class, e -> {
-                    log.warn("Cannot fetch repository admins", e);
-                    return Responses.badRequest();
-                })
-                .onErrorResume(ResponseConvertibleException::onErrorResume);
-    }
-
-    public Mono<ServerResponse> headFiles(final ServerRequest request) {
+    public Mono<ServerResponse> getConf(final ServerRequest request) {
         return havingAdminPermissionAtProject(request)
-                .flatMap(projectRepo::findById)
-                .switchIfEmpty(Mono.error(Http4xxException::notFound))
-                .map(Project::githubRepo)
-                .flatMap(projectService::headFiles)
-                .flatMap(Responses::ok)
-                .onErrorResume(ResponseConvertibleException::onErrorResume);
-    }
-
-    public Mono<ServerResponse> supportedLanguages(final ServerRequest request) {
-        return havingAdminPermissionAtProject(request)
-            .then(projectRepo.supportedLanguages())
-            .defaultIfEmpty(List.of())
-            .map(ModelToDtoConverter::convertLanguages)
+            .flatMap(projectId -> Mono
+                .zip(
+                    projectRepo.confById(projectId),
+                    githubAdmins(projectId),
+                    projectRepo.supportedLanguages(),
+                    headFiles(projectId),
+                    allPullAuthors(projectId)
+                )
+                .subscribeOn(Schedulers.parallel())
+                .map(TupleUtils.function(ModelToDtoConverter::convertConf))
+            )
+            .switchIfEmpty(Mono.error(Http4xxException::notFound))
             .flatMap(Responses::ok)
             .onErrorResume(ResponseConvertibleException::onErrorResume);
-    }
-
-    public Mono<ServerResponse> getConf(final ServerRequest request) {
-        final var confMono = havingAdminPermissionAtProject(request)
-                .flatMap(projectRepo::confById)
-                .switchIfEmpty(Mono.error(Http4xxException::notFound))
-                .map(ModelToDtoConverter::convert);
-        return confMono
-                .flatMap(Responses::ok)
-                .onErrorResume(ResponseConvertibleException::onErrorResume);
     }
 
     public Mono<ServerResponse> updateConf(final ServerRequest request) {
@@ -306,9 +282,36 @@ public final class ProjectsHandler implements Handler {
                 .flatMap(currentUserId -> projectRepo.hasAdmin(projectId, currentUserId));
     }
 
+    private Mono<List<User>> githubAdmins(final Long projectId) {
+        return projectRepo
+            .findById(projectId)
+            .flatMap(this::githubRepoAdmins)
+            .flatMapMany(userRepo::findByGithubIds)
+            .collectList()
+            .onErrorResume(GithubClientException.class, e -> {
+                log.warn("Cannot fetch repository admins", e);
+                return Mono.just(List.of());
+            });
+    }
+
     private Mono<List<Long>> githubRepoAdmins(final Project project) {
         final var repo = project.githubRepo();
         return githubClient.getRepoAdmins(repo.owner().login(), repo.name());
+    }
+
+    private Mono<List<String>> headFiles(final Long projectId) {
+        return projectRepo
+            .findById(projectId)
+            .map(Project::githubRepo)
+            .flatMap(projectService::headFiles);
+    }
+
+    private Mono<List<GithubUser>> allPullAuthors(final Long projectId) {
+        return pullRepo
+            .findByProjectIdIncludingSecondaryRepos(projectId)
+            .map(pull -> pull.head().repo().owner())
+            .collect(Collectors.toSet())
+            .map(users -> users.stream().sorted(Comparator.comparing(GithubUser::login)).toList());
     }
 
     private Mono<Project> saveDefaultConf(final Mono<Project> projectMono) {

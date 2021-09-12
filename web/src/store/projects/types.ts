@@ -1,4 +1,4 @@
-import { IProject, IProjectConf, IProjectRef, IUser, ICloneStatistics } from 'types'
+import { IProject, IProjectConf, IProjectRef, ICloneStatistics } from 'types'
 import { Wrapper } from 'store/wrapper'
 
 export const SET_PROJECTS = 'SET_PROJECTS'
@@ -6,11 +6,8 @@ export const SET_PROJECT = 'SET_PROJECT'
 export const SET_TOP_PLAGIARISTS = 'SET_TOP_PLAGIARISTS'
 export const SET_TOP_CLONE_SOURCES = 'SET_TOP_CLONE_SOURCES'
 export const SET_PROJECT_CONF = 'SET_PROJECT_CONF'
-export const SET_REPO_ADMINS = 'SET_REPO_ADMINS'
 export const RESET_PROJECT_INFO = 'RESET_PROJECT_INFO'
 export const RESET_PROJECTS = 'RESET_PROJECTS'
-export const SET_BASE_FILES = 'SET_BASE_FILES'
-export const SET_SUPPORTED_LANGUAGES = 'SET_SUPPORTED_LANGUAGES'
 export const CREATE_PROJECT = 'CREATE_PROJECT'
 
 export interface ProjectsState {
@@ -19,9 +16,6 @@ export interface ProjectsState {
   topPlagiarists: Wrapper<ICloneStatistics[]> & IProjectRef
   topCloneSources: Wrapper<ICloneStatistics[]> & IProjectRef
   projectConf: Wrapper<IProjectConf> & IProjectRef
-  repoAdmins: Wrapper<IUser[]> & IProjectRef
-  baseFiles: Wrapper<string[]> & IProjectRef
-  supportedLanguages: Wrapper<string[]> & IProjectRef
 }
 
 export interface SetProjects {
@@ -49,27 +43,12 @@ export interface SetProjectConf {
   payload: Wrapper<IProjectConf> & IProjectRef
 }
 
-export interface SetRepoAdmins {
-  type: typeof SET_REPO_ADMINS
-  payload: Wrapper<IUser[]> & IProjectRef
-}
-
 export interface ResetProjectInfo {
   type: typeof RESET_PROJECT_INFO
 }
 
 export interface ResetProjects {
   type: typeof RESET_PROJECTS
-}
-
-export interface SetBaseFiles {
-  type: typeof SET_BASE_FILES
-  payload: Wrapper<string[]> & IProjectRef
-}
-
-export interface SetSupportedLanguages {
-  type: typeof SET_SUPPORTED_LANGUAGES
-  payload: Wrapper<string[]> & IProjectRef
 }
 
 export interface CreateProject {
@@ -83,9 +62,6 @@ export type ProjectsActionTypes =
   | SetTopPlagiarists
   | SetTopCloneSources
   | SetProjectConf
-  | SetRepoAdmins
   | ResetProjectInfo
   | ResetProjects
-  | SetBaseFiles
-  | SetSupportedLanguages
   | CreateProject
