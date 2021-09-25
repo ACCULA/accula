@@ -60,7 +60,11 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
                            open = excluded.open,
                            updated_at = excluded.updated_at,
                            head_snapshot_sha = excluded.head_snapshot_sha,
-                           base_snapshot_sha = excluded.base_snapshot_sha
+                           head_snapshot_repo_id = excluded.head_snapshot_repo_id,
+                           head_snapshot_branch = excluded.head_snapshot_branch,
+                           base_snapshot_sha = excluded.base_snapshot_sha,
+                           base_snapshot_repo_id = excluded.base_snapshot_repo_id,
+                           base_snapshot_branch = excluded.base_snapshot_branch
                     """);
             statement.bind(pulls, pull -> Bindings.of(
                     pull.id(),
