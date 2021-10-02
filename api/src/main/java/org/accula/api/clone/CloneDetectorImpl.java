@@ -13,15 +13,17 @@ import org.accula.api.token.Token;
 import org.accula.api.token.TokenProvider;
 import org.accula.api.token.java.JavaTokenProvider;
 import org.accula.api.token.kotlin.KotlinTokenProvider;
-import org.accula.api.util.Comparators;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
+
+import static java.util.function.BinaryOperator.minBy;
 
 /**
  * @author Anton Lamtev
@@ -96,9 +98,9 @@ public final class CloneDetectorImpl implements CloneDetector {
                 final var clones = cloneClass.clones();
                 final var source = clones
                     .stream()
-                    .reduce(Comparators.minBy(
-                        clone -> clone.ref().commit().date(),
-                        clone -> clone.ref().pullInfo().number()
+                    .reduce(minBy(
+                        Comparator.comparing((Clone<Snapshot> clone) -> clone.ref().commit().date())
+                            .thenComparing(clone -> clone.ref().pullInfo().number())
                     ))
                     .orElseThrow(IllegalStateException::new);
 
