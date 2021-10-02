@@ -164,6 +164,9 @@ const ProjectSettingsTab = ({
               : excludedFilesOptions.filter((f: string) =>
                   projectConf.clones.excludedFiles.value.includes(f)
                 ),
+          excludedSourceAuthors: excludedSourceAuthorsOptions.filter(u =>
+            projectConf.clones.excludedSourceAuthors.value.includes(u.id)
+          ),
           fileMinSimilarityIndex: projectConf ? projectConf.code.fileMinSimilarityIndex : '',
           cloneMinTokenCount: projectConf ? projectConf.clones.minTokenCount : ''
         }}
