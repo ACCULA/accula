@@ -15,8 +15,8 @@ import java.util.NoSuchElementException;
 final class FileChangesParseIterator implements Iterator<Object> {
     private final Iterators.NextResettableIterator<String> lines;
 
-    FileChangesParseIterator(final Iterators.NextResettableIterator<String> lines) {
-        this.lines = lines;
+    FileChangesParseIterator(final Iterator<String> lines) {
+        this.lines = Iterators.nextResettable(lines);
     }
 
     @Override
@@ -163,7 +163,9 @@ final class FileChangesParseIterator implements Iterator<Object> {
     }
 
     private static boolean isFileStart(final String line) {
-        return line.startsWith("diff --git a/") || line.startsWith("diff --cc");
+        return line.startsWith("diff --git a/") ||
+               line.startsWith("diff --git \"a/") ||
+               line.startsWith("diff --cc");
     }
 
     private static boolean isBinaryFiles(final String line) {

@@ -2,7 +2,6 @@ package org.accula.api.code.git;
 
 import org.accula.api.code.lines.LineRange;
 import org.accula.api.code.lines.LineSet;
-import org.accula.api.util.Iterators;
 import org.junit.jupiter.api.Test;
 
 import java.util.NoSuchElementException;
@@ -19,14 +18,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class FileChangesParseIteratorTest {
     @Test
     void testIteratorContract() {
-        final var iter = new FileChangesParseIterator(Iterators.nextResettable("".lines().iterator()));
+        final var iter = new FileChangesParseIterator("".lines().iterator());
         assertFalse(iter.hasNext());
         assertThrows(NoSuchElementException.class, iter::next);
     }
 
     @Test
     void testInvalidInput() {
-        final var iter = new FileChangesParseIterator(Iterators.nextResettable("something".lines().iterator()));
+        final var iter = new FileChangesParseIterator("something".lines().iterator());
         assertTrue(iter.hasNext());
         assertThrows(IllegalStateException.class, iter::next);
     }
@@ -48,7 +47,7 @@ class FileChangesParseIteratorTest {
                          this.timestamp = timestamp;
                          this.buffer = buffer;
                                 """;
-        final var iter = new FileChangesParseIterator(Iterators.nextResettable(diff.lines().iterator()));
+        final var iter = new FileChangesParseIterator(diff.lines().iterator());
         assertTrue(iter.hasNext());
         assertEquals("eac1afb872a8a802b50b6eef92629fa2a026ee7e Remove extra line", iter.next());
         assertTrue(iter.hasNext());
@@ -65,7 +64,7 @@ class FileChangesParseIteratorTest {
                 index 0000000..5c2d1cf
                 Binary files /dev/null and b/gradle/wrapper/gradle-wrapper.jar differ
                 """;
-        final var iter = new FileChangesParseIterator(Iterators.nextResettable(diff.lines().iterator()));
+        final var iter = new FileChangesParseIterator(diff.lines().iterator());
         assertTrue(iter.hasNext());
         assertEquals("4ba6786323dc3440fe278691248f230f392fc885 add all", iter.next());
         assertTrue(iter.hasNext());
@@ -122,7 +121,7 @@ class FileChangesParseIteratorTest {
                       @Test
                       void emptyTable() {
                 """;
-        final var iter = new FileChangesParseIterator(Iterators.nextResettable(diff.lines().iterator()));
+        final var iter = new FileChangesParseIterator(diff.lines().iterator());
         assertTrue(iter.hasNext());
         assertEquals("24b59ea9175ec3b9ea50d51edd691b0d6cc8bb53 Merge remote-tracking branch 'mainframe/hash' into hash", iter.next());
         assertTrue(iter.hasNext());
@@ -151,7 +150,7 @@ class FileChangesParseIteratorTest {
                   /**
                    * Constructs {@link Service} instances.
                 """;
-        final var iter = new FileChangesParseIterator(Iterators.nextResettable(diff.lines().iterator()));
+        final var iter = new FileChangesParseIterator(diff.lines().iterator());
         assertTrue(iter.hasNext());
         assertEquals("93c573238ace9b217bdb2080e4a90cf3c4d23efb Merge branch 'master' of github.com:polis-mail-ru/2020-highload-dht into stage4", iter.next());
         assertTrue(iter.hasNext());
@@ -168,7 +167,7 @@ class FileChangesParseIteratorTest {
             rename from src/main/java/ru/mail/polis/DAOImpl.java
             rename to src/main/java/ru/mail/polis/valaubr/DAOImpl.java
             """;
-        var iter = new FileChangesParseIterator(Iterators.nextResettable(diff.lines().iterator()));
+        var iter = new FileChangesParseIterator(diff.lines().iterator());
         assertTrue(iter.hasNext());
         assertEquals("06a7e9f1f8c3391dcb68356617964ce76d695eb8 Эм, все как обычно, валимся перед дедлайном. попытка фикса n1.", iter.next());
         assertTrue(iter.hasNext());
@@ -182,7 +181,7 @@ class FileChangesParseIteratorTest {
             16624d43ddc49c777ef8541406d677efbdc56c4a Merge branch 'master' of https://github.com/polis-mail-ru/2020-db-lsm into task3
             
             """;
-        var iter = new FileChangesParseIterator(Iterators.nextResettable(diff.lines().iterator()));
+        var iter = new FileChangesParseIterator(diff.lines().iterator());
         assertTrue(iter.hasNext());
         assertEquals("16624d43ddc49c777ef8541406d677efbdc56c4a Merge branch 'master' of https://github.com/polis-mail-ru/2020-db-lsm into task3", iter.next());
         assertTrue(iter.hasNext());
@@ -233,7 +232,7 @@ class FileChangesParseIteratorTest {
                      ThreadLocalRandom.current().nextBytes(result);
                      return result;
             """;
-        var iter = new FileChangesParseIterator(Iterators.nextResettable(diff.lines().iterator()));
+        var iter = new FileChangesParseIterator(diff.lines().iterator());
         assertTrue(iter.hasNext());
         assertSame(GitFileChanges.empty(), iter.next());
         assertTrue(iter.hasNext());
@@ -269,7 +268,7 @@ class FileChangesParseIteratorTest {
             +  * https://www.e-olymp.com/ru/problems/1457 - Станция "Сортировочная"
             \\ No newline at end of file
             """;
-        var iter = new FileChangesParseIterator(Iterators.nextResettable(diff.lines().iterator()));
+        var iter = new FileChangesParseIterator(diff.lines().iterator());
         assertTrue(iter.hasNext());
         assertEquals("3c7c78070355f136a054bde726e86081cced4bf0 Task 3", iter.next());
         assertTrue(iter.hasNext());
@@ -315,7 +314,7 @@ class FileChangesParseIteratorTest {
             +}
             fb1b904c3fe5817d6c8fdab35727ac3d01d9fffb Fixed CodeClimate issues
             """;
-        var iter = new FileChangesParseIterator(Iterators.nextResettable(diff.lines().iterator()));
+        var iter = new FileChangesParseIterator(diff.lines().iterator());
         assertTrue(iter.hasNext());
         assertEquals("81eee0f8c7b8b201bd70c45a1b2b964818a74415 Fix test ignore", iter.next());
         assertTrue(iter.hasNext());
@@ -326,6 +325,27 @@ class FileChangesParseIteratorTest {
         assertEquals(GitFileChanges.of(GitFile.of("e7b224a", "src/main/java/ru/mail/polis/service/bezrukova/AmmoGenerator.java"), LineSet.inRange(1, 14)), iter.next());
         assertTrue(iter.hasNext());
         assertEquals("fb1b904c3fe5817d6c8fdab35727ac3d01d9fffb Fixed CodeClimate issues", iter.next());
+        assertFalse(iter.hasNext());
+    }
+
+    @Test
+    void testQuotedFilenameAtStart() {
+        final var diff = """
+            81eee0f8c7b8b201bd70c45a1b2b964818a74415 Fix test ignore
+            diff --git "a/report/stage1/abc.md" "b/report/stage1/abc.md"
+            new file mode 100644
+            index 0000000..ed8da6f
+            --- /dev/null
+            +++ "b/report/stage1/abc.md"
+            @@ -0,0 +1,1 @@
+            +# Отчёт
+            \\ No newline at end of file
+            """;
+        var iter = new FileChangesParseIterator(diff.lines().iterator());
+        assertTrue(iter.hasNext());
+        assertEquals("81eee0f8c7b8b201bd70c45a1b2b964818a74415 Fix test ignore", iter.next());
+        assertTrue(iter.hasNext());
+        assertEquals(GitFileChanges.of(GitFile.of("ed8da6f", "abc.md"), LineSet.inRange(LineRange.of(1))), iter.next());
         assertFalse(iter.hasNext());
     }
 }

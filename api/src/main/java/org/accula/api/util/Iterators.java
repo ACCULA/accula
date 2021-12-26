@@ -13,6 +13,9 @@ public final class Iterators {
     }
 
     public static <T> NextResettableIterator<T> nextResettable(final Iterator<T> iterator) {
+        if (iterator instanceof NextResettableIteratorImpl<T> i) {
+            return i;
+        }
         return new NextResettableIteratorImpl<>(iterator);
     }
 

@@ -5,7 +5,6 @@ import com.google.common.collect.Streams;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import org.accula.api.util.Checks;
-import org.accula.api.util.Iterators;
 import org.accula.api.util.Sync;
 import org.jetbrains.annotations.Nullable;
 
@@ -427,7 +426,7 @@ public final class Git {
         if (!lines.hasNext()) {
             return List.of();
         }
-        return Streams.stream(new FileChangesParseIterator(Iterators.nextResettable(lines)))
+        return Streams.stream(new FileChangesParseIterator(lines))
                 .filter(GitFileChanges.class::isInstance)
                 .map(GitFileChanges.class::cast)
                 .toList();
@@ -438,8 +437,7 @@ public final class Git {
             return Map.of();
         }
         final var entries = new HashMap<GitFileChanges, String>();
-        final var nextResettableIter = Iterators.nextResettable(lines);
-        final var iter = new FileChangesParseIterator(nextResettableIter);
+        final var iter = new FileChangesParseIterator(lines);
         var sha = (String) null;
         while (iter.hasNext()) {
             final var next = iter.next();
