@@ -7,13 +7,13 @@ import org.accula.api.code.lines.LineSet;
  * @author Anton Lamtev
  */
 @Value(staticConstructor = "of")
-public class GitFileChanges implements Identifiable {
-    private static final GitFileChanges EMPTY = GitFileChanges.of(GitFile.devNull(), LineSet.empty());
+public class FileDiff implements Identifiable {
+    private static final FileDiff EMPTY = FileDiff.of(GitFile.devNull(), LineSet.empty());
 
     GitFile file;
     LineSet changedLines;
 
-    public static GitFileChanges empty() {
+    public static FileDiff empty() {
         return EMPTY;
     }
 

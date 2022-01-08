@@ -34,4 +34,9 @@ final class LineSetAllImpl implements LineSet {
     public IntIterator iterator() {
         return new LineRange.FromTo.Iterator(1, Integer.MAX_VALUE);
     }
+
+    @Override
+    public String toString() {
+        return "[1, 2, 3, ..., %d]".formatted(Integer.MAX_VALUE);
+    }
 }

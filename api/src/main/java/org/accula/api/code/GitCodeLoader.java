@@ -2,6 +2,7 @@ package org.accula.api.code;
 
 import com.google.common.collect.Streams;
 import lombok.RequiredArgsConstructor;
+import org.accula.api.code.git.FileDiff;
 import org.accula.api.code.git.Git;
 import org.accula.api.code.git.Git.Repo;
 import org.accula.api.code.git.GitCommit;
@@ -11,7 +12,6 @@ import org.accula.api.code.git.GitDiffEntry.Deletion;
 import org.accula.api.code.git.GitDiffEntry.Modification;
 import org.accula.api.code.git.GitDiffEntry.Renaming;
 import org.accula.api.code.git.GitFile;
-import org.accula.api.code.git.GitFileChanges;
 import org.accula.api.code.git.GitRefs;
 import org.accula.api.code.git.Identifiable;
 import org.accula.api.code.git.Snippet;
@@ -197,7 +197,7 @@ public final class GitCodeLoader implements CodeLoader {
                 }));
     }
 
-    private static Mono<Stream<FileEntity<Snapshot>>> loadFiles(final Map<GitFileChanges, String> changesToSha,
+    private static Mono<Stream<FileEntity<Snapshot>>> loadFiles(final Map<FileDiff, String> changesToSha,
                                                                 final FileFilter filter,
                                                                 final Repo repo,
                                                                 final Map<String, List<Snapshot>> snapshotMap) {
@@ -207,9 +207,9 @@ public final class GitCodeLoader implements CodeLoader {
                 .map(filesContent -> convertFiles(changesToSha, snapshotMap, filesContent));
     }
 
-    private static Stream<FileEntity<Snapshot>> convertFiles(final Map<GitFileChanges, String> changesToSha,
+    private static Stream<FileEntity<Snapshot>> convertFiles(final Map<FileDiff, String> changesToSha,
                                                              final Map<String, List<Snapshot>> snapshotMap,
-                                                             final Map<GitFileChanges, String> filesContent) {
+                                                             final Map<FileDiff, String> filesContent) {
         return changesToSha
                 .entrySet()
                 .stream()
@@ -223,7 +223,7 @@ public final class GitCodeLoader implements CodeLoader {
     }
 
     private static Stream<FileEntity<Snapshot>> convertFiles(final List<Snapshot> snapshots,
-                                                             final GitFileChanges fileChanges,
+                                                             final FileDiff fileChanges,
                                                              final String fileContent) {
         return snapshots
                 .stream()

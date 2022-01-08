@@ -1,6 +1,5 @@
 package org.accula.api.code.git;
 
-import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
@@ -9,7 +8,7 @@ import lombok.Value;
  * @author Anton Lamtev
  */
 @Value
-@RequiredArgsConstructor(staticName = "of", access = AccessLevel.PACKAGE)
+@RequiredArgsConstructor(staticName = "of")
 public class GitFile implements Identifiable {
     private static final GitFile DEV_NULL = GitFile.of("00000000", "/dev/null");
     String id;

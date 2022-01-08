@@ -29,4 +29,9 @@ class LineSetInRangeImpl implements LineSet {
     public IntIterator iterator() {
         return range.iterator();
     }
+
+    @Override
+    public String toString() {
+        return range.toString();
+    }
 }

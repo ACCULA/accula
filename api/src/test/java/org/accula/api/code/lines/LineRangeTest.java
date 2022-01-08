@@ -121,7 +121,7 @@ class LineRangeTest {
     void testOther() {
         assertEquals(LineRange.of(1), LineRange.of(1, 1));
         assertEquals("[1]", LineRange.of(1).toString());
-        assertEquals("[1:2]", LineRange.of(1, 2).toString());
+        assertEquals("[1...2]", LineRange.of(1, 2).toString());
     }
 
     int testCompareTo(LineRange r1, LineRange r2) {
