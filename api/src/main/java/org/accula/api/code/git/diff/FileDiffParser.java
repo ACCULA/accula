@@ -25,7 +25,7 @@ final class FileDiffParser {
             case START -> processStart(lines);
             case ID -> processId(lines, diffBuilder);
             case NAME -> processName(lines, diffBuilder);
-            case CHANGES -> processChanges(lines, diffBuilder);
+            case HUNKS -> processHunks(lines, diffBuilder);
             case END -> throw new IllegalStateException();
         }) != State.END);
         return diffBuilder.build();
@@ -99,7 +99,7 @@ final class FileDiffParser {
             final var secondComponent = components[1];
             if (secondComponent.length() > 2) {
                 builder.filename(secondComponent.substring(2));
-                return State.CHANGES;
+                return State.HUNKS;
             }
         } else if (DiffParsingUtils.isBinaryFiles(line)) {
             if (components.length == 6) {
@@ -111,8 +111,8 @@ final class FileDiffParser {
     }
 
     // TODO: simplify
-    private static State processChanges(final PeekingIterator<String> lines, final DiffBuilder builder) {
-        consumeNextUntilChangesReached(lines);
+    private static State processHunks(final PeekingIterator<String> lines, final DiffBuilder builder) {
+        consumeNextUntilHunksReached(lines);
 
         while (lines.hasNext()) {
             final var line = lines.peek();
@@ -201,7 +201,7 @@ final class FileDiffParser {
         );
     }
 
-    private static void consumeNextUntilChangesReached(final PeekingIterator<String> lines) {
+    private static void consumeNextUntilHunksReached(final PeekingIterator<String> lines) {
         DiffParsingUtils.consumeNextUntilMatchesPredicate(
             lines,
             ((Predicate<String>) DiffParsingUtils::isGeneralHunk)
@@ -213,7 +213,7 @@ final class FileDiffParser {
         START,
         ID,
         NAME,
-        CHANGES,
+        HUNKS,
         END
     }
 
