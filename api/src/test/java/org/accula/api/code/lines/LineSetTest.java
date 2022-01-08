@@ -162,10 +162,7 @@ class LineSetTest {
 
     @Test
     void testToString() {
-        assertEquals(
-            LineRange.until(10).toString(),
-            LineSet.inRange(1, 10).toString()
-        );
+        assertEquals(LineRange.until(10).toString(), LineSet.inRange(1, 10).toString());
         assertEquals("[]", LineSet.empty().toString());
         assertEquals("[1, 2, 3, ..., 2147483647]", LineSet.all().toString());
         assertEquals("[[1...4], [6...8]]", LineSet.of(LineRange.until(4), LineRange.of(6, 8)).toString());
