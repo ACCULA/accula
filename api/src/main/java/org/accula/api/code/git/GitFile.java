@@ -15,10 +15,6 @@ public class GitFile implements Identifiable {
     @EqualsAndHashCode.Exclude
     String name;
 
-    public static GitFile devNull() {
-        return DEV_NULL;
-    }
-
     public boolean isDeleted() {
         final int length = Math.min(id.length(), 40);
         for (int i = 0; i < length; ++i) {
@@ -30,6 +26,6 @@ public class GitFile implements Identifiable {
     }
 
     public boolean isDevNull() {
-        return this == DEV_NULL || this.equals(DEV_NULL);
+        return equals(DEV_NULL);
     }
 }
