@@ -2,8 +2,8 @@ package org.accula.api.code.git.diff;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.PeekingIterator;
-import org.accula.api.code.git.GitFile;
 import org.accula.api.code.git.FileDiff;
+import org.accula.api.code.git.GitFile;
 import org.accula.api.code.lines.LineRange;
 import org.accula.api.code.lines.LineSet;
 import org.accula.api.util.Strings;
@@ -194,11 +194,19 @@ final class FileDiffParser {
     }
 
     private static void consumeNextUntilNameReached(final PeekingIterator<String> lines) {
-        DiffParsingUtils.consumeNextUntilMatchesPredicate(lines, ((Predicate<String>) DiffParsingUtils::isFilename).or(DiffParsingUtils::isBinaryFiles));
+        DiffParsingUtils.consumeNextUntilMatchesPredicate(
+            lines,
+            ((Predicate<String>) DiffParsingUtils::isFilename)
+                .or(DiffParsingUtils::isBinaryFiles)
+        );
     }
 
     private static void consumeNextUntilChangesReached(final PeekingIterator<String> lines) {
-        DiffParsingUtils.consumeNextUntilMatchesPredicate(lines, ((Predicate<String>) DiffParsingUtils::isGeneralHunk).or(DiffParsingUtils::isThreeWayMergeHunk));
+        DiffParsingUtils.consumeNextUntilMatchesPredicate(
+            lines,
+            ((Predicate<String>) DiffParsingUtils::isGeneralHunk)
+                .or(DiffParsingUtils::isThreeWayMergeHunk)
+        );
     }
 
     private enum State {
