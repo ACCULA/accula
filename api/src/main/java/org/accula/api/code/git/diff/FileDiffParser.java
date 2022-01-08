@@ -2,7 +2,6 @@ package org.accula.api.code.git.diff;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.PeekingIterator;
-import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import org.accula.api.code.git.GitFile;
 import org.accula.api.code.git.FileDiff;
 import org.accula.api.code.lines.LineRange;
@@ -111,6 +110,7 @@ final class FileDiffParser {
         throw new IllegalStateException();
     }
 
+    // TODO: simplify
     private static State processChanges(final PeekingIterator<String> lines, final DiffBuilder builder) {
         consumeNextUntilChangesReached(lines);
 
@@ -217,38 +217,24 @@ final class FileDiffParser {
         String filename;
         boolean isBinary;
 
-        @CanIgnoreReturnValue
-        DiffBuilder id(final String id) {
+        void id(final String id) {
             Preconditions.checkArgument(this.id == null);
             this.id = id;
-            return this;
         }
 
-        @CanIgnoreReturnValue
-        DiffBuilder filename(final String filename) {
+        void filename(final String filename) {
             Preconditions.checkArgument(this.filename == null);
             this.filename = filename;
-            return this;
         }
 
-        @CanIgnoreReturnValue
-        DiffBuilder binary(final String filename) {
+        void binary(final String filename) {
             Preconditions.checkArgument(this.filename == null);
             this.filename = filename;
             this.isBinary = true;
-            return this;
         }
 
-        @CanIgnoreReturnValue
-        DiffBuilder lineRanges(final List<LineRange> lineRanges) {
-            this.lineRanges.addAll(lineRanges);
-            return this;
-        }
-
-        @CanIgnoreReturnValue
-        DiffBuilder lineRange(final LineRange lineRange) {
+        void lineRange(final LineRange lineRange) {
             lineRanges.add(lineRange);
-            return this;
         }
 
         @Nullable
