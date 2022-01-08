@@ -10,7 +10,6 @@ import lombok.Value;
 @Value
 @RequiredArgsConstructor(staticName = "of")
 public class GitFile implements Identifiable {
-    private static final GitFile DEV_NULL = GitFile.of("00000000", "/dev/null");
     String id;
     @EqualsAndHashCode.Exclude
     String name;
@@ -23,9 +22,5 @@ public class GitFile implements Identifiable {
             }
         }
         return true;
-    }
-
-    public boolean isDevNull() {
-        return equals(DEV_NULL);
     }
 }

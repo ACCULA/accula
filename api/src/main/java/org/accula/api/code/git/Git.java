@@ -440,7 +440,7 @@ public final class Git {
         while (iter.hasNext()) {
             final var next = iter.next();
             for (final var fileChanges : next.changes()) {
-                if (!fileChanges.file().isDeleted() && !fileChanges.file().isDevNull() && !fileChanges.changedLines().isEmpty()) {
+                if (!fileChanges.file().isDeleted() && !fileChanges.changedLines().isEmpty()) {
                     entries.put(fileChanges, next.sha());
                 }
             }
