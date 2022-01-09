@@ -289,37 +289,27 @@ public final class GitCodeLoader implements CodeLoader {
     private static Function<Mono<Map<Identifiable, String>>, Mono<Stream<DiffEntry<Snapshot>>>>
     convertDiffEntries(final List<GitDiffEntry> diffEntries, final Snapshot base, final Snapshot head) {
         return filesMono -> filesMono
-                .map(files -> diffEntries
-                        .stream()
-                        .map(diffEntry -> {
-                            if (diffEntry instanceof Addition addition) {
-                                return DiffEntry.of(
-                                        FileEntity.absent(base),
-                                        new FileEntity<>(head, addition.head().name(), files.get(addition.head()), LineSet.all())
-                                );
-                            }
-                            if (diffEntry instanceof Deletion deletion) {
-                                return DiffEntry.of(
-                                        new FileEntity<>(base, deletion.base().name(), files.get(deletion.base()), LineSet.all()),
-                                        FileEntity.absent(head)
-                                );
-                            }
-                            if (diffEntry instanceof Modification modification) {
-                                return DiffEntry.of(
-                                        new FileEntity<>(base, modification.base().name(), files.get(modification.base()), LineSet.all()),
-                                        new FileEntity<>(head, modification.head().name(), files.get(modification.head()), LineSet.all())
-                                );
-                            }
-                            if (diffEntry instanceof Renaming renaming) {
-                                return new DiffEntry<>(
-                                        new FileEntity<>(base, renaming.base().name(), files.get(renaming.base()), LineSet.all()),
-                                        new FileEntity<>(head, renaming.head().name(), files.get(renaming.head()), LineSet.all()),
-                                        renaming.similarityIndex()
-                                );
-                            }
-
-                            throw new IllegalStateException("Unexpected diffEntry class: " + diffEntry.getClass().getName());
-                        }));
+            .map(files -> diffEntries
+                .stream()
+                .map(diffEntry -> switch (diffEntry) {
+                    case Addition addition -> DiffEntry.of(
+                        FileEntity.absent(base),
+                        new FileEntity<>(head, addition.head().name(), files.get(addition.head()), LineSet.all())
+                    );
+                    case Deletion deletion -> DiffEntry.of(
+                        new FileEntity<>(base, deletion.base().name(), files.get(deletion.base()), LineSet.all()),
+                        FileEntity.absent(head)
+                    );
+                    case Modification modification -> DiffEntry.of(
+                        new FileEntity<>(base, modification.base().name(), files.get(modification.base()), LineSet.all()),
+                        new FileEntity<>(head, modification.head().name(), files.get(modification.head()), LineSet.all())
+                    );
+                    case Renaming renaming -> new DiffEntry<>(
+                        new FileEntity<>(base, renaming.base().name(), files.get(renaming.base()), LineSet.all()),
+                        new FileEntity<>(head, renaming.head().name(), files.get(renaming.head()), LineSet.all()),
+                        renaming.similarityIndex()
+                    );
+                }));
     }
 
     private static List<Snippet> convertSnippets(final List<GitFile> files, final List<SnippetMarker> markers) {

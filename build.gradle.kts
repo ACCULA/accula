@@ -24,9 +24,9 @@ configure(subprojects.filterNot(project(":web")::equals)) {
     }
 
     dependencies {
-        compileOnly("org.jetbrains:annotations:22.0.0")
+        compileOnly("org.jetbrains:annotations:23.0.0")
 
-        val lombok = "org.projectlombok:lombok:1.18.20"
+        val lombok = "org.projectlombok:lombok:1.18.22"
         compileOnly(lombok)
         annotationProcessor(lombok)
         testCompileOnly(lombok)
@@ -35,7 +35,7 @@ configure(subprojects.filterNot(project(":web")::equals)) {
 
     java {
         toolchain {
-            languageVersion.set(JavaLanguageVersion.of(16))
+            languageVersion.set(JavaLanguageVersion.of(17))
         }
     }
 
@@ -68,15 +68,28 @@ configure(subprojects.filterNot(project(":web")::equals)) {
             systemProperty("org.accula.api.code.lines.LineRange.Single.Cache.size", testSingleLineRangeCacheSize)
 
             finalizedBy(jacocoTestReport)
+
+            jvmArgs("--enable-preview")
         }
 
         compileJava {
-            options.compilerArgs.addAll(
-                listOf(
-                    "-Xlint:deprecation",
-                    "-Xlint:unchecked",
-                )
-            )
+            options.compilerArgs.addAll(listOf(
+                "-Xlint:deprecation",
+                "-Xlint:unchecked",
+                "-Xlint:preview",
+                "--enable-preview",
+            ))
+        }
+
+        compileTestJava {
+            options.compilerArgs.addAll(listOf(
+                "-Xlint:preview",
+                "--enable-preview",
+            ))
+        }
+
+        withType<JavaExec> {
+            jvmArgs("--enable-preview")
         }
     }
 }

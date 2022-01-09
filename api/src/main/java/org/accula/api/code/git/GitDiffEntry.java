@@ -10,7 +10,11 @@ import java.util.stream.Stream;
 /**
  * @author Anton Lamtev
  */
-public interface GitDiffEntry {
+public sealed interface GitDiffEntry
+    permits GitDiffEntry.Modification,
+            GitDiffEntry.Addition,
+            GitDiffEntry.Deletion,
+            GitDiffEntry.Renaming {
     static GitDiffEntry modification(final String baseObjectId, final String headObjectId, final String filename) {
         return Modification.of(GitFile.of(baseObjectId, filename), GitFile.of(headObjectId, filename));
     }
