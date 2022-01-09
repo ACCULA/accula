@@ -1,7 +1,7 @@
 plugins {
-    id("org.springframework.boot") version "2.5.4"
+    id("org.springframework.boot") version "2.6.2"
     id("io.spring.dependency-management") version "1.0.11.RELEASE"
-    kotlin("jvm") version "1.5.30"
+    kotlin("jvm") version "1.6.10"
 }
 
 repositories {
@@ -38,14 +38,14 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
     implementation("org.springframework.security:spring-security-oauth2-client")
 
-    implementation("com.auth0:java-jwt:3.18.1")
+    implementation("com.auth0:java-jwt:3.18.2")
 
     implementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
     implementation("io.r2dbc:r2dbc-postgresql")
     implementation("io.r2dbc:r2dbc-pool")
 
-    implementation("org.slf4j:slf4j-api:2.0.0-alpha1")
-    implementation("org.slf4j:slf4j-log4j12:2.0.0-alpha1")
+    implementation("org.slf4j:slf4j-api:2.0.0-alpha5")
+    implementation("org.slf4j:slf4j-log4j12:2.0.0-alpha5")
 
     implementation("org.postgresql:postgresql")
     implementation("org.springframework:spring-jdbc")
@@ -56,12 +56,12 @@ dependencies {
     implementation("org.codeclone:suffix-tree:1.0.0")
     implementation("com.jetbrains.intellij.java:java-psi-impl:211.7628.21")
     implementation(kotlin("compiler-embeddable"))
-    implementation("com.google.guava:guava:30.1.1-jre")
-    implementation("it.unimi.dsi:fastutil:8.5.4")
+    implementation("com.google.guava:guava:31.0.1-jre")
+    implementation("it.unimi.dsi:fastutil:8.5.6")
     implementation("info.debatty:java-string-similarity:2.0.0")
     implementation("commons-codec:commons-codec:1.15")
 
-    implementation(platform("org.testcontainers:testcontainers-bom:1.16.0"))
+    implementation(platform("org.testcontainers:testcontainers-bom:1.16.2"))
     testImplementation("org.testcontainers:testcontainers")
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("org.testcontainers:postgresql")
