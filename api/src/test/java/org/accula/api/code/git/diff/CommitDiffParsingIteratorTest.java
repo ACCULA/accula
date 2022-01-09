@@ -84,15 +84,7 @@ class CommitDiffParsingIteratorTest {
         assertEquals(
             new CommitDiff(
                 "4ba6786323dc3440fe278691248f230f392fc885",
-                List.of(
-                    FileDiff.of(
-                        GitFile.of(
-                            "5c2d1cf",
-                            "b/gradle/wrapper/gradle-wrapper.jar"
-                        ),
-                        LineSet.all()
-                    )
-                )
+                List.of()
             ),
             iter.next()
         );
@@ -494,11 +486,11 @@ class CommitDiffParsingIteratorTest {
     void testQuotedFilenameAtStart() {
         final var diff = """
             81eee0f8c7b8b201bd70c45a1b2b964818a74415 Fix test ignore
-            diff --git "a/report/stage1/abc.md" "b/report/stage1/abc.md"
+            diff --git "a/rep ort/stage1/abc.md" "b/rep ort/stage1/abc.md"
             new file mode 100644
             index 0000000..ed8da6f
             --- /dev/null
-            +++ "b/report/stage1/abc.md"
+            +++ "b/rep ort/stage1/abc.md"
             @@ -0,0 +1,1 @@
             +# Отчёт
             \\ No newline at end of file
@@ -515,6 +507,112 @@ class CommitDiffParsingIteratorTest {
                             "abc.md"
                         ),
                         LineSet.inRange(LineRange.of(1))
+                    )
+                )
+            ),
+            iter.next()
+        );
+        assertFalse(iter.hasNext());
+    }
+
+    @Test
+    void testEmptyFiles() {
+        var diff = """
+            d59787aea288f9f5607f4dbab908b37d022c4ade scripts
+            diff --git a/src/main/java/ru/mail/polis/service/ogamoga/ServiceImpl.java b/src/main/java/ru/mail/polis/service/ogamoga/ServiceImpl.java
+            new file mode 100644
+            index 0000000..52f83a7
+            --- /dev/null
+            +++ b/src/main/java/ru/mail/polis/service/ogamoga/ServiceImpl.java
+            @@ -0,0 +1,9 @@
+            +package ru.mail.polis.service.ogamoga;
+            +
+            +import ru.mail.polis.lsm.DAO;
+            +import ru.mail.polis.service.Service;
+            +
+            +public class ServiceImpl implements Service {
+            +    public ServiceImpl(int port, DAO dao) {
+            +    }
+            +}
+            diff --git a/src/test/java/ru/mail/polis/lsm/ReverseTest.java b/src/test/java/ru/mail/polis/lsm/ReverseTest.java
+            new file mode 100644
+            index 0000000..a4bad25
+            --- /dev/null
+            +++ b/src/test/java/ru/mail/polis/lsm/ReverseTest.java
+            @@ -0,0 +1,12 @@
+            +package ru.mail.polis.lsm;
+            +
+            +public class ReverseTest {
+            +    @Test
+            +    void emptyReverse(@TempDir Path data) throws IOException {
+            +        try (DAO dao = TestDaoWrapper.create(new DAOConfig(data))) {
+            +            ByteBuffer notExistedKey = ByteBuffer.wrap("NOT_EXISTED_KEY".getBytes(StandardCharsets.UTF_8));
+            +            Iterator<Record> shouldBeEmptyReverse = dao.descendingRange(notExistedKey, null);
+            +            assertFalse(shouldBeEmptyReverse.hasNext());
+            +        }
+            +    }
+            +}
+            diff --git a/wrk/get.lua b/wrk/get.lua
+            new file mode 100644
+            index 0000000..e69de29
+            diff --git a/wrk/put.lua b/wrk/put.lua
+            new file mode 100644
+            index 0000000..e69de29
+            e673478ed2102c2f6bfe72628f172c386a5080dc [stage-1] - fixed * in imports
+            diff --git a/src/main/java/ru/mail/polis/lsm/LsmDAO.java b/src/main/java/ru/mail/polis/lsm/LsmDAO.java
+            index 3161084..202daf9 100644
+            --- a/src/main/java/ru/mail/polis/lsm/LsmDAO.java
+            +++ b/src/main/java/ru/mail/polis/lsm/LsmDAO.java
+            @@ -6,7 +6,12 @@ import java.io.IOException;
+             import java.io.UncheckedIOException;
+             import java.nio.ByteBuffer;
+             import java.nio.file.Path;
+            -import java.util.*;
+            +import java.util.ArrayList;
+            +import java.util.Collections;
+            +import java.util.Iterator;
+            +import java.util.List;
+            +import java.util.NavigableMap;
+            +import java.util.SortedMap;
+             import java.util.concurrent.ConcurrentLinkedDeque;
+             import java.util.concurrent.ConcurrentSkipListMap;
+            \s
+            """;
+        final var iter = new CommitDiffParsingIterator(diff.lines().iterator());
+        assertTrue(iter.hasNext());
+        assertEquals(
+            new CommitDiff(
+                "d59787aea288f9f5607f4dbab908b37d022c4ade",
+                List.of(
+                    FileDiff.of(
+                        GitFile.of(
+                            "52f83a7",
+                            "src/main/java/ru/mail/polis/service/ogamoga/ServiceImpl.java"
+                        ),
+                        LineSet.inRange(LineRange.until(9))
+                    ),
+                    FileDiff.of(
+                        GitFile.of(
+                            "a4bad25",
+                            "src/test/java/ru/mail/polis/lsm/ReverseTest.java"
+                        ),
+                        LineSet.inRange(LineRange.until(12))
+                    )
+                )
+            ),
+            iter.next()
+        );
+        assertTrue(iter.hasNext());
+        assertEquals(
+            new CommitDiff(
+                "e673478ed2102c2f6bfe72628f172c386a5080dc",
+                List.of(
+                    FileDiff.of(
+                        GitFile.of(
+                            "202daf9",
+                            "src/main/java/ru/mail/polis/lsm/LsmDAO.java"
+                        ),
+                        LineSet.inRange(LineRange.of(9, 14))
                     )
                 )
             ),

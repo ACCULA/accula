@@ -89,25 +89,19 @@ final class FileDiffParser {
     }
 
     private static State processName(final PeekingIterator<String> lines, final DiffBuilder builder) {
-        consumeNextUntilNameReached(lines);
-
-        final var line = lines.peek();
-        final var components = line.split("\\s+");
-        final var componentCount = components.length;
-        final var isFilename = componentCount == 2 && components[0].equals("+++");
-        if (isFilename) {
-            final var secondComponent = components[1];
-            if (secondComponent.length() > 2) {
-                builder.filename(secondComponent.substring(2));
-                return State.HUNKS;
+        return switch (consumeNextUntilNameReached(lines)) {
+            case NO_MATCH -> throw new IllegalStateException();
+            case FIRST_MATCH -> {
+                final var line = lines.peek();
+                final var filenameComponent = Strings.suffixAfterPrefix(line, "+++ ");
+                if (filenameComponent != null && filenameComponent.length() > 2) {
+                    builder.filename(filenameComponent.substring(2).replaceAll("\\s+", ""));
+                    yield  State.HUNKS;
+                }
+                throw new IllegalStateException();
             }
-        } else if (DiffParsingUtils.isBinaryFiles(line)) {
-            if (components.length == 6) {
-                builder.binary(components[4]);
-                return State.END;
-            }
-        }
-        throw new IllegalStateException();
+            case SECOND_MATCH -> State.END;
+        };
     }
 
     // TODO: simplify
@@ -193,19 +187,20 @@ final class FileDiffParser {
         );
     }
 
-    private static void consumeNextUntilNameReached(final PeekingIterator<String> lines) {
-        DiffParsingUtils.consumeNextUntilMatchesPredicate(
+    private static DiffParsingUtils.ConsumptionResult consumeNextUntilNameReached(final PeekingIterator<String> lines) {
+        return DiffParsingUtils.consumeNextUntilMatchesPredicateOrPredicate(
             lines,
-            ((Predicate<String>) DiffParsingUtils::isFilename)
-                .or(DiffParsingUtils::isBinaryFiles)
+            DiffParsingUtils::isFilename,
+            ((Predicate<String>) DiffParsingUtils::isBinaryFiles)
+                .or(DiffParsingUtils::isFileStart)
+                .or(DiffParsingUtils::isCommitSha)
         );
     }
 
     private static void consumeNextUntilHunksReached(final PeekingIterator<String> lines) {
         DiffParsingUtils.consumeNextUntilMatchesPredicate(
             lines,
-            ((Predicate<String>) DiffParsingUtils::isGeneralHunk)
-                .or(DiffParsingUtils::isThreeWayMergeHunk)
+            DiffParsingUtils::isHunk
         );
     }
 
@@ -223,7 +218,6 @@ final class FileDiffParser {
         String id;
         @Nullable
         String filename;
-        boolean isBinary;
 
         void id(final String id) {
             Preconditions.checkArgument(this.id == null);
@@ -235,12 +229,6 @@ final class FileDiffParser {
             this.filename = filename;
         }
 
-        void binary(final String filename) {
-            Preconditions.checkArgument(this.filename == null);
-            this.filename = filename;
-            this.isBinary = true;
-        }
-
         void lineRange(final LineRange lineRange) {
             lineRanges.add(lineRange);
         }
@@ -250,7 +238,7 @@ final class FileDiffParser {
             if (id == null || filename == null) {
                 return null;
             }
-            return FileDiff.of(GitFile.of(id, filename), isBinary ? LineSet.all() : LineSet.of(lineRanges));
+            return FileDiff.of(GitFile.of(id, filename), LineSet.of(lineRanges));
         }
     }
 }

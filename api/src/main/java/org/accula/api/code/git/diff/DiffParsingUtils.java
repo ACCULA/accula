@@ -49,6 +49,10 @@ final class DiffParsingUtils {
         return line.startsWith("@@@ ") && line.length() > 8;
     }
 
+    static boolean isHunk(final String line) {
+        return isGeneralHunk(line) || isThreeWayMergeHunk(line);
+    }
+
     static boolean isCommitSha(final String line) {
         return Strings.startsWithSha40(line);
     }
@@ -61,5 +65,27 @@ final class DiffParsingUtils {
             }
             lines.next();
         }
+    }
+
+    static ConsumptionResult consumeNextUntilMatchesPredicateOrPredicate(final PeekingIterator<String> lines,
+                                                                         final Predicate<String> first,
+                                                                         final Predicate<String> second) {
+        while (lines.hasNext()) {
+            final var line = lines.peek();
+            if (first.test(line)) {
+                return ConsumptionResult.FIRST_MATCH;
+            }
+            if (second.test(line)) {
+                return ConsumptionResult.SECOND_MATCH;
+            }
+            lines.next();
+        }
+        return ConsumptionResult.NO_MATCH;
+    }
+
+    enum ConsumptionResult {
+        NO_MATCH,
+        FIRST_MATCH,
+        SECOND_MATCH,
     }
 }
