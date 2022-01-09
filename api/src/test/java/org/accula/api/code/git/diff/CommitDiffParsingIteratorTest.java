@@ -84,7 +84,15 @@ class CommitDiffParsingIteratorTest {
         assertEquals(
             new CommitDiff(
                 "4ba6786323dc3440fe278691248f230f392fc885",
-                List.of()
+                List.of(
+                    FileDiff.of(
+                        GitFile.of(
+                            "5c2d1cf",
+                            "gradle/wrapper/gradle-wrapper.jar"
+                        ),
+                        LineSet.empty()
+                    )
+                )
             ),
             iter.next()
         );
@@ -597,6 +605,20 @@ class CommitDiffParsingIteratorTest {
                             "src/test/java/ru/mail/polis/lsm/ReverseTest.java"
                         ),
                         LineSet.inRange(LineRange.until(12))
+                    ),
+                    FileDiff.of(
+                        GitFile.of(
+                            "e69de29",
+                            "wrk/get.lua"
+                        ),
+                        LineSet.empty()
+                    ),
+                    FileDiff.of(
+                        GitFile.of(
+                            "e69de29",
+                            "wrk/put.lua"
+                        ),
+                        LineSet.empty()
                     )
                 )
             ),

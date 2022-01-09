@@ -22,17 +22,31 @@ final class FileDiffParser {
         final var diffBuilder = new DiffBuilder();
         var state = State.START;
         while ((state = switch (state) {
-            case START -> processStart(lines);
+            case START -> processStart(lines, diffBuilder);
             case ID -> processId(lines, diffBuilder);
-            case NAME -> processName(lines, diffBuilder);
             case HUNKS -> processHunks(lines, diffBuilder);
             case END -> throw new IllegalStateException();
         }) != State.END);
         return diffBuilder.build();
     }
 
-    private static State processStart(final PeekingIterator<String> lines) {
+    private static State processStart(final PeekingIterator<String> lines, final DiffBuilder builder) {
         DiffParsingUtils.consumeNextUntilMatchesPredicate(lines, DiffParsingUtils::isFileStart);
+        if (!lines.hasNext()) {
+            return State.END;
+        }
+        final var line = lines.peek();
+        final var regex = "\\s+(?=((\\\\[\\\\\"]|[^\\\\\"])*\"(\\\\[\\\\\"]|[^\\\\\"])*\")*(\\\\[\\\\\"]|[^\\\\\"])*$)";
+        final var components = line.split(regex);
+        final var componentIdx = DiffParsingUtils.isDiffGit(line) ? 3 : DiffParsingUtils.isDiffCc(line) ? 2 : Integer.MAX_VALUE;
+        if (componentIdx >= components.length) {
+            return State.END;
+        }
+        final var filenameComponent = components[componentIdx];
+        if (filenameComponent.length() <= 2) {
+            return State.END;
+        }
+        builder.filename(filenameComponent.substring(2).replace("\"", ""));
         return State.ID;
     }
 
@@ -65,7 +79,7 @@ final class FileDiffParser {
         final var fileIdStart = fileIds.indexOf("..") + 2;
         if (fileIdStart != 1) {
             builder.id(fileIds.substring(fileIdStart));
-            return State.NAME;
+            return State.HUNKS;
         }
         throw new IllegalStateException();
     }
@@ -88,25 +102,12 @@ final class FileDiffParser {
         return State.END;
     }
 
-    private static State processName(final PeekingIterator<String> lines, final DiffBuilder builder) {
-        return switch (consumeNextUntilNameReached(lines)) {
-            case NO_MATCH -> throw new IllegalStateException();
-            case FIRST_MATCH -> {
-                final var line = lines.peek();
-                final var filenameComponent = Strings.suffixAfterPrefix(line, "+++ ");
-                if (filenameComponent != null && filenameComponent.length() > 2) {
-                    builder.filename(filenameComponent.substring(2).replaceAll("\\s+", ""));
-                    yield  State.HUNKS;
-                }
-                throw new IllegalStateException();
-            }
-            case SECOND_MATCH -> State.END;
-        };
-    }
-
     // TODO: simplify
     private static State processHunks(final PeekingIterator<String> lines, final DiffBuilder builder) {
-        consumeNextUntilHunksReached(lines);
+        final var res = consumeNextUntilHunksReached(lines);
+        if (res != DiffParsingUtils.ConsumptionResult.FIRST_MATCH) {
+            return State.END;
+        }
 
         while (lines.hasNext()) {
             final var line = lines.peek();
@@ -187,27 +188,18 @@ final class FileDiffParser {
         );
     }
 
-    private static DiffParsingUtils.ConsumptionResult consumeNextUntilNameReached(final PeekingIterator<String> lines) {
+    private static DiffParsingUtils.ConsumptionResult consumeNextUntilHunksReached(final PeekingIterator<String> lines) {
         return DiffParsingUtils.consumeNextUntilMatchesPredicateOrPredicate(
             lines,
-            DiffParsingUtils::isFilename,
-            ((Predicate<String>) DiffParsingUtils::isBinaryFiles)
-                .or(DiffParsingUtils::isFileStart)
+            DiffParsingUtils::isHunk,
+            ((Predicate<String>) DiffParsingUtils::isFileStart)
                 .or(DiffParsingUtils::isCommitSha)
-        );
-    }
-
-    private static void consumeNextUntilHunksReached(final PeekingIterator<String> lines) {
-        DiffParsingUtils.consumeNextUntilMatchesPredicate(
-            lines,
-            DiffParsingUtils::isHunk
         );
     }
 
     private enum State {
         START,
         ID,
-        NAME,
         HUNKS,
         END
     }

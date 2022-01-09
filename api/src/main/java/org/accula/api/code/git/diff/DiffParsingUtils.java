@@ -13,12 +13,15 @@ final class DiffParsingUtils {
     }
 
     static boolean isFileStart(final String line) {
-        if (!line.startsWith("diff --")) {
-            return false;
-        }
-        final var unescaped = line.replace("\"", "");
-        return unescaped.startsWith("diff --git a/") ||
-               unescaped.startsWith("diff --cc");
+        return isDiffGit(line) || isDiffCc(line);
+    }
+
+    static boolean isDiffGit(final String line) {
+        return line.startsWith("diff --git");
+    }
+
+    static boolean isDiffCc(final String line) {
+        return line.startsWith("diff --cc");
     }
 
     static boolean isFileIndex(final String line) {
@@ -27,14 +30,6 @@ final class DiffParsingUtils {
 
     static boolean isFileRenaming(final String line) {
         return "similarity index 100%".equals(line) || line.startsWith("rename from") || line.startsWith("rename to");
-    }
-
-    static boolean isFilename(final String line) {
-        return line.startsWith("+++");
-    }
-
-    static boolean isBinaryFiles(final String line) {
-        return line.startsWith("Binary files");
     }
 
     static boolean isNoNewlineAtEndOfFile(final String line) {
