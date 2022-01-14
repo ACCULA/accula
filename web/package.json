@@ -1,4 +1,4 @@
- {
+{
   "name": "accula-web",
   "version": "0.1.0",
   "private": true,
@@ -40,7 +40,6 @@
     "js-base64": "^3.6.1",
     "jwt-decode": "^3.1.2",
     "memoize-one": "^5.1.1",
-    "node-sass": "4.14.1",
     "notistack": "^1.0.0",
     "prettier": "^2.0.4",
     "prismjs": "^1.25.0",
@@ -60,6 +59,7 @@
     "redux-logger": "^3.0.6",
     "redux-mock-store": "1.5.4",
     "redux-thunk": "^2.3.0",
+    "sass": "1.48.0",
     "typescript": "~3.9.2",
     "yup": "^0.29.3"
   },
