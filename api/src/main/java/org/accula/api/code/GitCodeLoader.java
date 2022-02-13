@@ -68,7 +68,9 @@ public final class GitCodeLoader implements CodeLoader {
                                         .map(snippet -> new FileEntity<>(
                                                 snapshot,
                                                 snippet.file().name(),
-                                                Checks.notNull(filesContent.get(snippet), "File content"),
+                                                Checks.notNull(filesContent.get(snippet), () -> """
+                                                    File content for snippet = %s for snapshot = %s
+                                                    """.formatted(snippet, snapshot)),
                                                 LineSet.inRange(snippet.lines()))))))
                 .flatMapMany(Flux::fromStream);
     }
