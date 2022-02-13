@@ -58,9 +58,9 @@ final class DiffParsingUtils {
         }
     }
 
-    static ConsumptionResult consumeNextUntilMatchesPredicateOrPredicate(final PeekingIterator<String> lines,
-                                                                         final Predicate<String> first,
-                                                                         final Predicate<String> second) {
+    static ConsumptionResult consumeNextUntilMatchesPredicates(final PeekingIterator<String> lines,
+                                                               final Predicate<String> first,
+                                                               final Predicate<String> second) {
         while (lines.hasNext()) {
             final var line = lines.peek();
             if (first.test(line)) {

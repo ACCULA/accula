@@ -20,7 +20,7 @@ final class FileDiffParser {
     FileDiff parse(final PeekingIterator<String> lines) {
         final var diffBuilder = new DiffBuilder();
         var state = State.START;
-        while ((state = state.process(lines, diffBuilder)) != State.END) ;
+        while ((state = state.process(lines, diffBuilder)) != State.END);
         return diffBuilder.build();
     }
 
@@ -189,7 +189,7 @@ final class FileDiffParser {
         abstract State processAndGetNextState(final PeekingIterator<String> lines, final DiffBuilder builder);
 
         State process(final PeekingIterator<String> lines, final DiffBuilder builder) {
-            return switch (DiffParsingUtils.consumeNextUntilMatchesPredicateOrPredicate(lines, this::isReached, this::isStopWordReached)) {
+            return switch (DiffParsingUtils.consumeNextUntilMatchesPredicates(lines, this::isReached, this::isStopWordReached)) {
                 case FIRST_MATCH -> processAndGetNextState(lines, builder);
                 case SECOND_MATCH, NO_MATCH -> State.END;
             };
