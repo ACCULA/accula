@@ -6,24 +6,20 @@ import org.jetbrains.annotations.Nullable;
  * @author Anton Lamtev
  */
 public final class Strings {
+    // https://stackoverflow.com/a/9584469
+    private static final String SPLIT_BY_SPACE_IGNORING_SPACES_BETWEEN_QUOTES =
+        "\\s+(?=((\\\\[\\\\\"]|[^\\\\\"])*\"(\\\\[\\\\\"]|[^\\\\\"])*\")*(\\\\[\\\\\"]|[^\\\\\"])*$)";
+
     private Strings() {
     }
 
     @Nullable
     public static String suffixAfterPrefix(final String string, final String prefix) {
-        final var prefixLength = prefix.length();
-
-        if (prefixLength >= string.length()) {
+        if (!string.startsWith(prefix)) {
             return null;
         }
 
-        for (int i = 0; i < prefixLength; ++i) {
-            if (prefix.charAt(i) != string.charAt(i)) {
-                return null;
-            }
-        }
-
-        return string.substring(prefixLength);
+        return string.substring(prefix.length());
     }
 
     public static boolean startsWithSha40(final String string) {
@@ -37,5 +33,9 @@ public final class Strings {
             }
         }
         return true;
+    }
+
+    public static String[] splitBySpaceIgnoringSpacesBetweenQuotes(final String string) {
+        return string.split(SPLIT_BY_SPACE_IGNORING_SPACES_BETWEEN_QUOTES);
     }
 }

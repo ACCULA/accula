@@ -36,8 +36,7 @@ final class FileDiffParser {
             return State.END;
         }
         final var line = lines.peek();
-        final var regex = "\\s+(?=((\\\\[\\\\\"]|[^\\\\\"])*\"(\\\\[\\\\\"]|[^\\\\\"])*\")*(\\\\[\\\\\"]|[^\\\\\"])*$)";
-        final var components = line.split(regex);
+        final var components = Strings.splitBySpaceIgnoringSpacesBetweenQuotes(line);
         final var componentIdx = DiffParsingUtils.isDiffGit(line) ? 3 : DiffParsingUtils.isDiffCc(line) ? 2 : Integer.MAX_VALUE;
         if (componentIdx >= components.length) {
             return State.END;
@@ -46,7 +45,13 @@ final class FileDiffParser {
         if (filenameComponent.length() <= 2) {
             return State.END;
         }
-        builder.filename(filenameComponent.substring(2).replace("\"", ""));
+        final String filename;
+        if (filenameComponent.startsWith("\"") && filenameComponent.endsWith("\"")) {
+            filename = filenameComponent.substring(3, filenameComponent.length() - 1);
+        } else {
+            filename = filenameComponent.substring(2);
+        }
+        builder.filename(filename);
         return State.ID;
     }
 
