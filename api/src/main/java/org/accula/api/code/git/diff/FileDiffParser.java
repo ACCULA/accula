@@ -114,23 +114,22 @@ final class FileDiffParser {
 
                     lines.next();
                     final var lastIndexOfCommercialAts = line.indexOf(" @@");
-                    final var linesInfos = line.substring(isGeneralHunk ? 3 : 4, lastIndexOfCommercialAts).split("\\s+");
-                    if (linesInfos.length != 2 && linesInfos.length != 3) {
+                    final var linesInfo = line.substring(isGeneralHunk ? 3 : 4, lastIndexOfCommercialAts).split("\\s+");
+                    if (linesInfo.length != 2 && linesInfo.length != 3) {
                         return State.END;
                     }
-                    final var linesInfo = linesInfos[linesInfos.length - 1];
-                    final var rawLinesInfo = Strings.suffixAfterPrefix(linesInfo, "+");
-                    if (rawLinesInfo == null) {
+                    final var additionsInfo = Strings.suffixAfterPrefix(linesInfo[linesInfo.length - 1], "+");
+                    if (additionsInfo == null) {
                         return State.END;
                     }
                     final int start;
                     final int count;
-                    if (rawLinesInfo.equals("1")) {
+                    if (additionsInfo.equals("1")) {
                         start = count = 1;
                     } else {
-                        final var commaPosition = rawLinesInfo.indexOf(',');
-                        start = Integer.parseInt(rawLinesInfo.substring(0, commaPosition));
-                        count = Integer.parseInt(rawLinesInfo.substring(commaPosition + 1));
+                        final var commaPosition = additionsInfo.indexOf(',');
+                        start = Integer.parseInt(additionsInfo.substring(0, commaPosition));
+                        count = Integer.parseInt(additionsInfo.substring(commaPosition + 1));
                     }
                     var diffLinesRead = 0;
                     var lineIdx = start;
