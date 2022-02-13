@@ -38,6 +38,11 @@ class LineSetLineRangesImpl implements LineSet {
         return new Iterator();
     }
 
+    @Override
+    public String toString() {
+        return Arrays.toString(lineRanges);
+    }
+
     private static int binSearch(final LineRange[] lines, final int line) {
         int low = 0;
         int high = lines.length - 1;

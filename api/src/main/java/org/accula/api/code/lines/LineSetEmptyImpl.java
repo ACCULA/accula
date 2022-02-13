@@ -40,4 +40,9 @@ final class LineSetEmptyImpl implements LineSet {
     public IntIterator iterator() {
         return IntIterators.EMPTY_ITERATOR;
     }
+
+    @Override
+    public String toString() {
+        return "[]";
+    }
 }

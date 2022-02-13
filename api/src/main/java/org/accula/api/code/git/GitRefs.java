@@ -4,7 +4,7 @@ package org.accula.api.code.git;
  * @author Anton Lamtev
  */
 public final class GitRefs {
-    private static final String ORIGIN_HEAD = "origin/HEAD";
+    private static final String ORIGIN_HEAD = origin("HEAD");
 
     private GitRefs() {
     }

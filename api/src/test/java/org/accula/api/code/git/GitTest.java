@@ -352,16 +352,16 @@ final class GitTest {
             assertNotNull(repo);
 
             final var expectedChanges = List.of(
-                    GitFileChanges.of(GitFile.of("9b1113b", ".codeclimate.yml"), of(of(10), of(33, 35))),
-                    GitFileChanges.of(GitFile.of("e703c8e", "api/build.gradle.kts"), inRange(of(35))),
-                    GitFileChanges.of(GitFile.of("b84f9ad", "api/src/main/java/org/accula/api/auth/jwt/JwtAccessTokenResponseProducer.java"), of(of(25, 26), of(50, 51), of(53), of(58), of(68, 82))),
-                    GitFileChanges.of(GitFile.of("f3c4044", "api/src/main/java/org/accula/api/auth/jwt/refresh/JwtRefreshFilter.java"), of(of(1), of(4, 5), of(19, 22), of(33), of(36, 38), of(46), of(55, 56), of(65), of(75, 76), of(78, 84))),
-                    GitFileChanges.of(GitFile.of("a77479f", "api/src/main/java/org/accula/api/auth/jwt/refresh/RefreshTokenException.java"), inRange(1, 23)),
-                    GitFileChanges.of(GitFile.of("827e34c", "api/src/main/java/org/accula/api/auth/jwt/refresh/package-info.java"), inRange(1, 4)),
-                    GitFileChanges.of(GitFile.of("0743994", "api/src/main/java/org/accula/api/auth/oauth2/OAuth2LoginSuccessHandler.java"), inRange(31, 32)),
-                    GitFileChanges.of(GitFile.of("d66e521", "api/src/main/java/org/accula/api/config/WebSecurityConfig.java"), of(of(9), of(52, 53), of(125), of(178, 179))),
-                    GitFileChanges.of(GitFile.of("c505a06", "api/src/main/java/org/accula/api/db/RefreshTokenRepository.java"), of(of(17), of(19, 21), of(26))),
-                    GitFileChanges.of(GitFile.of("5910d7c", "pmd.xml"), inRange(59, 69))
+                    FileDiff.of(GitFile.of("9b1113b", ".codeclimate.yml"), of(of(10), of(33, 35))),
+                    FileDiff.of(GitFile.of("e703c8e", "api/build.gradle.kts"), inRange(of(35))),
+                    FileDiff.of(GitFile.of("b84f9ad", "api/src/main/java/org/accula/api/auth/jwt/JwtAccessTokenResponseProducer.java"), of(of(25, 26), of(50, 51), of(53), of(58), of(68, 82))),
+                    FileDiff.of(GitFile.of("f3c4044", "api/src/main/java/org/accula/api/auth/jwt/refresh/JwtRefreshFilter.java"), of(of(1), of(4, 5), of(19, 22), of(33), of(36, 38), of(46), of(55, 56), of(65), of(75, 76), of(78, 84))),
+                    FileDiff.of(GitFile.of("a77479f", "api/src/main/java/org/accula/api/auth/jwt/refresh/RefreshTokenException.java"), inRange(1, 23)),
+                    FileDiff.of(GitFile.of("827e34c", "api/src/main/java/org/accula/api/auth/jwt/refresh/package-info.java"), inRange(1, 4)),
+                    FileDiff.of(GitFile.of("0743994", "api/src/main/java/org/accula/api/auth/oauth2/OAuth2LoginSuccessHandler.java"), inRange(31, 32)),
+                    FileDiff.of(GitFile.of("d66e521", "api/src/main/java/org/accula/api/config/WebSecurityConfig.java"), of(of(9), of(52, 53), of(125), of(178, 179))),
+                    FileDiff.of(GitFile.of("c505a06", "api/src/main/java/org/accula/api/db/RefreshTokenRepository.java"), of(of(17), of(19, 21), of(26))),
+                    FileDiff.of(GitFile.of("5910d7c", "pmd.xml"), inRange(59, 69))
             );
 
             IntStream.range(0, Runtime.getRuntime().availableProcessors() * 5)

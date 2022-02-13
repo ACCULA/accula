@@ -116,7 +116,7 @@ public interface LineRange extends Comparable<LineRange>, IntIterable {
 
         @Override
         public String toString() {
-            return "[" + from + ":" + to + "]";
+            return "[" + from + "..." + to + "]";
         }
 
         @Override

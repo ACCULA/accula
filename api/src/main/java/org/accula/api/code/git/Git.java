@@ -4,8 +4,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Streams;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
-import org.accula.api.util.Checks;
-import org.accula.api.util.Iterators;
+import org.accula.api.code.git.diff.CommitDiffParsingIterator;
 import org.accula.api.util.Sync;
 import org.jetbrains.annotations.Nullable;
 
@@ -173,13 +172,13 @@ public final class Git {
             });
         }
 
-        public CompletableFuture<List<GitFileChanges>> fileChanges(final String commitSha) {
+        public CompletableFuture<List<FileDiff>> fileChanges(final String commitSha) {
             return readingAsync(() ->
                     usingStdoutLines(git("show", FORMAT_ONE_LINE, commitSha), lines -> changes(lines.iterator()))
                             .orElse(List.of()));
         }
 
-        public CompletableFuture<Map<GitFileChanges, String>> fileChanges(final Iterable<String> commitsSha) {
+        public CompletableFuture<Map<FileDiff, String>> fileChanges(final Iterable<String> commitsSha) {
             return readingAsync(() -> {
                 final var show = new ArrayList<String>(3 + (commitsSha instanceof Collection<?> col ? col.size() : 10));
                 show.add("show");
@@ -423,33 +422,27 @@ public final class Git {
     }
 
     @SuppressWarnings("UnstableApiUsage")
-    private static List<GitFileChanges> changes(final Iterator<String> lines) {
+    private static List<FileDiff> changes(final Iterator<String> lines) {
         if (!lines.hasNext()) {
             return List.of();
         }
-        return Streams.stream(new FileChangesParseIterator(Iterators.nextResettable(lines)))
-                .filter(GitFileChanges.class::isInstance)
-                .map(GitFileChanges.class::cast)
-                .toList();
+        return Streams.stream(new CommitDiffParsingIterator(lines))
+            .mapMulti(CommitDiff::forEach)
+            .toList();
     }
 
-    private static Map<GitFileChanges, String> changesMap(final Iterator<String> lines) {
+    private static Map<FileDiff, String> changesMap(final Iterator<String> lines) {
         if (!lines.hasNext()) {
             return Map.of();
         }
-        final var entries = new HashMap<GitFileChanges, String>();
-        final var nextResettableIter = Iterators.nextResettable(lines);
-        final var iter = new FileChangesParseIterator(nextResettableIter);
-        var sha = (String) null;
+        final var entries = new HashMap<FileDiff, String>();
+        final var iter = new CommitDiffParsingIterator(lines);
         while (iter.hasNext()) {
             final var next = iter.next();
-            if (next instanceof String sh) {
-                sha = sh.substring(0, 40);
-                continue;
-            }
-            final var fileChanges = (GitFileChanges) next;
-            if (!fileChanges.file().isDeleted() && !fileChanges.file().isDevNull() && !fileChanges.changedLines().isEmpty()) {
-                entries.put(fileChanges, Checks.notNull(sha, "sha"));
+            for (final var fileChanges : next.changes()) {
+                if (!fileChanges.file().isDeleted() && !fileChanges.changedLines().isEmpty()) {
+                    entries.put(fileChanges, next.sha());
+                }
             }
         }
         return entries;
