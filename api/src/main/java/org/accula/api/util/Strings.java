@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class Strings {
     // https://stackoverflow.com/a/9584469
-    private static final String SPLIT_BY_SPACE_IGNORING_SPACES_BETWEEN_QUOTES =
+    private static final String SPACES_EXCEPT_SPACES_BETWEEN_QUOTES =
         "\\s+(?=((\\\\[\\\\\"]|[^\\\\\"])*\"(\\\\[\\\\\"]|[^\\\\\"])*\")*(\\\\[\\\\\"]|[^\\\\\"])*$)";
 
     private Strings() {
@@ -36,6 +36,6 @@ public final class Strings {
     }
 
     public static String[] splitBySpaceIgnoringSpacesBetweenQuotes(final String string) {
-        return string.split(SPLIT_BY_SPACE_IGNORING_SPACES_BETWEEN_QUOTES);
+        return string.split(SPACES_EXCEPT_SPACES_BETWEEN_QUOTES);
     }
 }

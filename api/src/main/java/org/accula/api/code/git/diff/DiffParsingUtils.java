@@ -28,10 +28,6 @@ final class DiffParsingUtils {
         return line.startsWith("index ");
     }
 
-    static boolean isFileRenaming(final String line) {
-        return "similarity index 100%".equals(line) || line.startsWith("rename from") || line.startsWith("rename to");
-    }
-
     static boolean isNoNewlineAtEndOfFile(final String line) {
         return "\\ No newline at end of file".equals(line);
     }

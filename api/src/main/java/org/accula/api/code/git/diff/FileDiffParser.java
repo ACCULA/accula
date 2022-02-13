@@ -79,21 +79,17 @@ final class FileDiffParser {
                 }
 
                 final var line = lines.peek();
-                if (DiffParsingUtils.isFileIndex(line)) {
-                    final var l = lines.peek();
-                    final var components = l.split("\\s+");
-                    final var componentCount = components.length;
-                    final var isIndex = componentCount > 1 && components[0].equals("index");
-                    if (!isIndex) {
-                        throw new IllegalStateException();
-                    }
-                    final var fileIds = components[1];
-                    final var fileIdStart = fileIds.indexOf("..") + 2;
-                    if (fileIdStart != 1) {
-                        builder.id(fileIds.substring(fileIdStart));
-                        return State.HUNKS;
-                    }
+                final var components = line.split("\\s+");
+                final var componentCount = components.length;
+                final var isIndex = componentCount > 1 && components[0].equals("index");
+                if (!isIndex) {
                     throw new IllegalStateException();
+                }
+                final var fileIds = components[1];
+                final var fileIdStart = fileIds.indexOf("..") + 2;
+                if (fileIdStart != 1) {
+                    builder.id(fileIds.substring(fileIdStart));
+                    return State.HUNKS;
                 }
                 throw new IllegalStateException();
             }
