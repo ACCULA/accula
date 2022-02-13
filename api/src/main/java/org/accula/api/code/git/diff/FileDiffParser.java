@@ -38,9 +38,6 @@ final class FileDiffParser {
 
             @Override
             State processAndGetNextState(final PeekingIterator<String> lines, final DiffBuilder builder) {
-                if (!lines.hasNext()) {
-                    return State.END;
-                }
                 final var line = lines.peek();
                 final var components = Strings.splitBySpaceIgnoringSpacesBetweenQuotes(line);
                 final var componentIdx = DiffParsingUtils.isDiffGit(line) ? 3 : DiffParsingUtils.isDiffCc(line) ? 2 : Integer.MAX_VALUE;
@@ -74,10 +71,6 @@ final class FileDiffParser {
 
             @Override
             State processAndGetNextState(final PeekingIterator<String> lines, final DiffBuilder builder) {
-                if (!lines.hasNext()) {
-                    return State.END;
-                }
-
                 final var line = lines.peek();
                 final var components = line.split("\\s+");
                 final var componentCount = components.length;
