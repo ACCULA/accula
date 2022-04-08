@@ -58,7 +58,7 @@ public final class ProjectService {
                     final var repos = new HashSet<GithubRepo>();
                     final var pulls = githubApiPulls
                             .stream()
-                            .filter(pull -> pull.isValid() && pull.isNotMerged())
+                            .filter(GithubApiPull::isValid)
                             .map(pull -> processGithubApiPull(pull, users, repos))
                             .collect(Collectors.toSet());
 
