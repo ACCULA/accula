@@ -207,6 +207,14 @@ public final class CloneDetectorImpl implements CloneDetector {
     }
 
     private static boolean authorIsDifferentFromSource(final Clone<Snapshot> possibleClone, final Clone<Snapshot> source) {
-        return !possibleClone.ref().repo().owner().equals(source.ref().repo().owner());
+        final var cloneSnapshot = possibleClone.ref();
+        final var sourceSnapshot = source.ref();
+        if (cloneSnapshot.repo().owner().equals(sourceSnapshot.repo().owner())) {
+            return false;
+        }
+        if (cloneSnapshot.commit().sha().equals(sourceSnapshot.commit().sha())) {
+            return false;
+        }
+        return !cloneSnapshot.commit().authorEmail().equals(sourceSnapshot.commit().authorEmail());
     }
 }
