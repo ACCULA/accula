@@ -21,16 +21,12 @@ public record ProjectConfDto(ValuesWithSuggestion<Long, UserDto> admins,
 
     @JsonAutoDetect(fieldVisibility = ANY)
     @Builder
-    // FIXME: remove redundant static modifier once lombok fix released
-    static
     public record Code(Integer fileMinSimilarityIndex,
                        ValuesWithSuggestion<Language, Language> languages) {
     }
 
     @JsonAutoDetect(fieldVisibility = ANY)
     @Builder
-    // FIXME: remove redundant static modifier once lombok fix released
-    static
     public record Clones(Integer minTokenCount,
                          ValuesWithSuggestion<String, String> excludedFiles,
                          ValuesWithSuggestion<Long, GithubUserDto> excludedSourceAuthors) {
