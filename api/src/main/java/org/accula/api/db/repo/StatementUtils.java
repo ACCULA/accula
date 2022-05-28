@@ -7,11 +7,11 @@ import java.util.function.BiConsumer;
 /**
  * @author Anton Lamtev
  */
-public final class StatementUtils {
+final class StatementUtils {
     private StatementUtils() {
     }
 
-    public static <S extends Statement, T> Statement bindIterable(
+    static <S extends Statement, T> Statement bindIterable(
             final Iterable<T> iterable,
             final S statement,
             final BiConsumer<T, S> bind) {
