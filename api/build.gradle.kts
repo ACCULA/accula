@@ -1,10 +1,12 @@
 plugins {
-    id("org.springframework.boot") version "2.6.7"
+    id("org.springframework.boot") version "2.7.0"
     id("io.spring.dependency-management") version "1.0.11.RELEASE"
     kotlin("jvm") version "1.6.21"
 }
 
 repositories {
+    mavenCentral()
+
     maven(url = "https://www.jetbrains.com/intellij-repository/releases")
     maven(url = "https://cache-redirector.jetbrains.com/intellij-dependencies")
 
@@ -38,14 +40,14 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
     implementation("org.springframework.security:spring-security-oauth2-client")
 
-    implementation("com.auth0:java-jwt:3.19.1")
+    implementation("com.auth0:java-jwt:3.19.2")
 
     implementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
-    implementation("io.r2dbc:r2dbc-postgresql")
+    implementation("org.postgresql:r2dbc-postgresql")
     implementation("io.r2dbc:r2dbc-pool")
 
-    implementation("org.slf4j:slf4j-api:2.0.0-alpha5")
-    implementation("org.slf4j:slf4j-log4j12:2.0.0-alpha5")
+    implementation("org.slf4j:slf4j-api:2.0.0-alpha7")
+    implementation("org.slf4j:slf4j-log4j12:2.0.0-alpha7")
 
     implementation("org.postgresql:postgresql")
     implementation("org.springframework:spring-jdbc")
@@ -61,7 +63,7 @@ dependencies {
     implementation("info.debatty:java-string-similarity:2.0.0")
     implementation("commons-codec:commons-codec:1.15")
 
-    implementation(platform("org.testcontainers:testcontainers-bom:1.16.3"))
+    implementation(platform("org.testcontainers:testcontainers-bom:1.17.2"))
     testImplementation("org.testcontainers:testcontainers")
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("org.testcontainers:postgresql")

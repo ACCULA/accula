@@ -148,8 +148,8 @@ public final class PullRepoImpl implements PullRepo, ConnectionProvidedRepo {
     public Flux<Pull> findByProjectIdIncludingSecondaryRepos(final Long projectId) {
         return manyWithConnection(connection -> selectByProjectIdIncludingSecondaryRepos(connection)
             .bind("$1", projectId)
-            .execute())
-            .flatMap(result -> convertMany(result, PullRepoImpl::convert));
+            .execute()
+            .flatMap(result -> convertMany(result, PullRepoImpl::convert)));
     }
 
     @Override

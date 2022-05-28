@@ -44,7 +44,7 @@ public final class SnapshotRepoImpl implements SnapshotRepo, ConnectionProvidedR
         }
         return manyWithConnection(connection -> {
             final var statement = selectByIdStatement(connection);
-            ids.forEach(id -> applySelectByIdBindings(id, statement).add());
+            StatementUtils.bindIterable(ids, statement, SnapshotRepoImpl::applySelectByIdBindings);
 
             return statement
                     .execute()
