@@ -11,10 +11,7 @@ final class StatementUtils {
     private StatementUtils() {
     }
 
-    static <S extends Statement, T> Statement bindIterable(
-            final Iterable<T> iterable,
-            final S statement,
-            final BiConsumer<T, S> bind) {
+    static <S extends Statement, T> S bindIterable(final Iterable<T> iterable, final S statement, final BiConsumer<T, S> bind) {
         final var iterator = iterable.iterator();
         while (iterator.hasNext()) {
             bind.accept(iterator.next(), statement);
