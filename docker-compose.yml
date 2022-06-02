@@ -17,18 +17,14 @@ services:
       args:
         - GPR_USERNAME=
         - GPR_TOKEN=
-    expose:
-      - 8080
-    ports:
-      - "8080:8080"
     depends_on:
       - postgres
     environment:
       - PORT=8080
-      - API_URL=http://64.225.96.225
-      - WEB_URL=http://64.225.96.225
-      - WEBHOOK_URL=http://64.225.96.225
-      - WEBHOOK_SECRET=accula
+      - API_URL=
+      - WEB_URL=
+      - WEBHOOK_URL=
+      - WEBHOOK_SECRET=
       - WEBHOOK_SSL_ENABLED=false
       - DB_HOST=postgres
       - DB_PORT=5432

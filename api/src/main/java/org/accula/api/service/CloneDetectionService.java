@@ -1,6 +1,7 @@
 package org.accula.api.service;
 
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.accula.api.clone.CloneDetector;
 import org.accula.api.clone.CloneDetectorImpl;
@@ -21,6 +22,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
+import javax.annotation.PostConstruct;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -30,6 +32,7 @@ import java.util.function.Function;
  */
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public final class CloneDetectionService {
     private final Map<Long, CloneDetector.Config> cloneDetectorConfigs = new ConcurrentHashMap<>();
     private final Map<Long, CloneDetector> cloneDetectors = new ConcurrentHashMap<>();
@@ -39,17 +42,9 @@ public final class CloneDetectionService {
     private final CodeLoader loader;
     private final SnapshotRepo snapshotRepo;
 
-    public CloneDetectionService(final ProjectRepo projectRepo,
-                                 final PullRepo pullRepo,
-                                 final CloneRepo cloneRepo,
-                                 final CodeLoader loader,
-                                 final SnapshotRepo snapshotRepo) {
-        this.projectRepo = projectRepo;
-        this.projectRepo.addOnConfUpdate(this::evictConfigForProject);
-        this.pullRepo = pullRepo;
-        this.cloneRepo = cloneRepo;
-        this.loader = loader;
-        this.snapshotRepo = snapshotRepo;
+    @PostConstruct
+    private void init() {
+        projectRepo.addOnConfUpdate(this::evictConfigForProject);
     }
 
     public Flux<Clone> readClonesAndSaveToDb(final Pull pull) {

@@ -42,14 +42,11 @@ public final class SnapshotRepoImpl implements SnapshotRepo, ConnectionProvidedR
         if (ids.isEmpty()) {
             return Flux.empty();
         }
-        return manyWithConnection(connection -> {
-            final var statement = selectByIdStatement(connection);
-            StatementUtils.bindIterable(ids, statement, SnapshotRepoImpl::applySelectByIdBindings);
-
-            return statement
-                    .execute()
-                    .flatMap(result -> ConnectionProvidedRepo.convertMany(result, SnapshotRepoImpl::convert));
-        });
+        return manyWithConnection(connection ->
+            StatementUtils.bindIterable(ids, selectByIdStatement(connection), SnapshotRepoImpl::applySelectByIdBindings)
+                .execute()
+                .flatMap(result -> ConnectionProvidedRepo.convertMany(result, SnapshotRepoImpl::convert))
+        );
     }
 
     @Override

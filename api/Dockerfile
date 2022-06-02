@@ -6,7 +6,7 @@ WORKDIR /app
 COPY . /app
 RUN gradle bootJar --no-daemon
 
-FROM openjdk:17-alpine
+FROM bellsoft/liberica-openjdk-alpine:17
 RUN apk update && apk upgrade && \
     apk add --no-cache git
 COPY --from=build /app/api/build/libs/*.jar accula.jar
