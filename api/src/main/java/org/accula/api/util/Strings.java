@@ -2,13 +2,16 @@ package org.accula.api.util;
 
 import org.jetbrains.annotations.Nullable;
 
+import java.util.regex.Pattern;
+
 /**
  * @author Anton Lamtev
  */
 public final class Strings {
     // https://stackoverflow.com/a/9584469
-    private static final String SPACES_EXCEPT_BETWEEN_QUOTES =
-        "\\s+(?=((\\\\[\\\\\"]|[^\\\\\"])*\"(\\\\[\\\\\"]|[^\\\\\"])*\")*(\\\\[\\\\\"]|[^\\\\\"])*$)";
+    private static final Pattern SPACES_EXCEPT_BETWEEN_QUOTES = Pattern.compile(
+        "\\s+(?=((\\\\[\\\\\"]|[^\\\\\"])*\"(\\\\[\\\\\"]|[^\\\\\"])*\")*(\\\\[\\\\\"]|[^\\\\\"])*$)"
+    );
 
     private Strings() {
     }
@@ -36,6 +39,6 @@ public final class Strings {
     }
 
     public static String[] splitBySpaceIgnoringSpacesBetweenQuotes(final String string) {
-        return string.split(SPACES_EXCEPT_BETWEEN_QUOTES);
+        return SPACES_EXCEPT_BETWEEN_QUOTES.split(string, 0);
     }
 }
