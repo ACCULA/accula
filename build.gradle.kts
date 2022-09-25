@@ -35,7 +35,7 @@ configure(subprojects.filterNot(project(":web")::equals)) {
 
     java {
         toolchain {
-            languageVersion.set(JavaLanguageVersion.of(17))
+            languageVersion.set(JavaLanguageVersion.of(18))
         }
     }
 

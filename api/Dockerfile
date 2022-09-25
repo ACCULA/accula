@@ -1,4 +1,4 @@
-FROM gradle:jdk17 AS build
+FROM gradle:jdk18 AS build
 ARG GPR_USERNAME
 ARG GPR_TOKEN
 ENV GPR_USERNAME=$GPR_USERNAME GPR_TOKEN=$GPR_TOKEN
@@ -6,7 +6,7 @@ WORKDIR /app
 COPY . /app
 RUN gradle bootJar --no-daemon
 
-FROM bellsoft/liberica-openjdk-alpine:17
+FROM bellsoft/liberica-openjdk-alpine:18
 RUN apk update && apk upgrade && \
     apk add --no-cache git
 COPY --from=build /app/api/build/libs/*.jar accula.jar
