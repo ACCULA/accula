@@ -1,6 +1,6 @@
 plugins {
-    id("org.springframework.boot") version "2.7.2"
-    id("io.spring.dependency-management") version "1.0.13.RELEASE"
+    id("org.springframework.boot") version "2.7.4"
+    id("io.spring.dependency-management") version "1.0.14.RELEASE"
     kotlin("jvm") version "1.7.10"
 }
 
@@ -46,8 +46,8 @@ dependencies {
     implementation("org.postgresql:r2dbc-postgresql")
     implementation("io.r2dbc:r2dbc-pool")
 
-    implementation("org.slf4j:slf4j-api:2.0.0-alpha7")
-    implementation("org.slf4j:slf4j-log4j12:2.0.0-alpha7")
+    implementation("org.slf4j:slf4j-api:2.0.1")
+    implementation("org.slf4j:slf4j-log4j12:2.0.1")
 
     implementation("org.postgresql:postgresql")
     implementation("org.springframework:spring-jdbc")
