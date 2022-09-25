@@ -27,6 +27,7 @@ import static org.accula.api.util.TestData.highload19_174;
 import static org.accula.api.util.TestData.userGithub;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 
@@ -56,10 +57,10 @@ class PullsRouterTest {
 
     @Test
     void testGetOk() {
-        when(repository.findByNumber(anyLong(), Mockito.anyInt()))
+        when(repository.findByNumber(anyLong(), anyInt()))
                 .thenReturn(Mono.just(highload19_174));
 
-        when(repository.findPrevious(anyLong(), Mockito.anyInt(), anyLong()))
+        when(repository.findPrevious(anyLong(), anyInt(), anyLong()))
                 .thenReturn(Flux.fromIterable(Collections.emptyList()));
 
         client.get().uri("/api/projects/{projectId}/pulls/{pullNumber}", 1L, highload19_174.number())
@@ -78,7 +79,7 @@ class PullsRouterTest {
 
     @Test
     void testGetNotFound() {
-        when(repository.findByNumber(anyLong(), Mockito.anyInt()))
+        when(repository.findByNumber(anyLong(), anyInt()))
                 .thenReturn(Mono.empty());
 
         client.get().uri("/api/projects/{projectId}/pulls/{pullNumber}", 1L, highload19_174.number())

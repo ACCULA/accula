@@ -5,7 +5,6 @@ import org.accula.api.code.CodeLoader;
 import org.accula.api.config.WebConfig;
 import org.accula.api.converter.GithubApiToModelConverter;
 import org.accula.api.db.model.Project;
-import org.accula.api.db.model.Pull;
 import org.accula.api.db.model.PullSnapshots;
 import org.accula.api.db.repo.CurrentUserRepo;
 import org.accula.api.db.repo.GithubRepoRepo;
@@ -225,7 +224,7 @@ public class GithubWebhookRouterTest {
 
     @Test
     void testAssigned() {
-        when(projectService.updatePullInfo(any(GithubApiPull.class)))
+        when(projectService.updatePullInfo(any()))
             .thenReturn(Mono.just(GithubApiToModelConverter.convert(assignedPayload.pull())));
 
         client.post().uri(API_WEBHOOK_ENDPOINT)
@@ -239,7 +238,7 @@ public class GithubWebhookRouterTest {
 
     @Test
     void testUnassignedErrorDuringPayloadProcessing() {
-        when(projectService.updatePullInfo(any(GithubApiPull.class)))
+        when(projectService.updatePullInfo(any()))
             .thenReturn(Mono.error(new IllegalStateException()));
 
         client.post().uri(API_WEBHOOK_ENDPOINT)
@@ -296,7 +295,7 @@ public class GithubWebhookRouterTest {
             .thenReturn(Mono.just(1L));
         when(projectService.init(any(GithubApiPull.class)))
             .thenReturn(Mono.just(PullSnapshots.of(pull, List.of(pull.head()))));
-        when(cloneDetectionService.detectClonesInNewFilesAndSaveToDb(anyLong(), any(Pull.class), anyIterable()))
+        when(cloneDetectionService.detectClonesInNewFilesAndSaveToDb(anyLong(), any(), anyIterable()))
             .thenReturn(Flux.empty());
 
         client.post().uri(API_WEBHOOK_ENDPOINT)
@@ -314,9 +313,9 @@ public class GithubWebhookRouterTest {
 
         when(projectRepo.idByRepoId(anyLong()))
             .thenReturn(Mono.just(1L));
-        when(projectService.updateWithNewCommits(any(GithubApiPull.class)))
+        when(projectService.updateWithNewCommits(any()))
             .thenReturn(Mono.just(PullSnapshots.of(pull, List.of(pull.head(), pull.base()))));
-        when(cloneDetectionService.detectClonesInNewFilesAndSaveToDb(anyLong(), any(Pull.class), anyIterable()))
+        when(cloneDetectionService.detectClonesInNewFilesAndSaveToDb(anyLong(), any(), anyIterable()))
             .thenReturn(Flux.empty());
 
         client.post().uri(API_WEBHOOK_ENDPOINT)
