@@ -26,8 +26,7 @@ public final class ProjectsHandlerException extends ResponseConvertibleException
     }
 
     public static ProjectsHandlerException alreadyExists(final GithubRepo.Identity repoIdentity) {
-        return new ProjectsHandlerException(Error.ALREADY_EXISTS,
-                "Repo %s/%s already exists".formatted(repoIdentity.owner(), repoIdentity.name()));
+        return new ProjectsHandlerException(Error.ALREADY_EXISTS, "Repo %s already exists".formatted(repoIdentity));
     }
 
     public static ProjectsHandlerException unableRetrieveGithubRepo(final String owner, final String repo) {

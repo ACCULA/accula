@@ -37,7 +37,7 @@ class CloneDetectorTest {
     @BeforeEach
     void setUp() {
         excludedSourceAuthor = null;
-        cloneDetector = new CloneDetectorImpl(() -> Mono.just(CloneDetector.Config.builder()
+        cloneDetector = new CloneDetectorImpl("", () -> Mono.just(CloneDetector.Config.builder()
                 .cloneMinTokenCount(5)
                 .filter(FileFilter.notIn(Set.of("other/guy/src/main/java/Cell.java")))
                 .language(CodeLanguage.JAVA)
@@ -81,7 +81,7 @@ class CloneDetectorTest {
 
     @Test
     void testNoTokenProviders() {
-        final var cloneDetector = new CloneDetectorImpl(() -> Mono.just(CloneDetector.Config.builder()
+        final var cloneDetector = new CloneDetectorImpl("", () -> Mono.just(CloneDetector.Config.builder()
             .cloneMinTokenCount(5)
             .filter(FileFilter.notIn(Set.of("other/guy/src/main/java/Cell.java")))
             .languages(List.of())

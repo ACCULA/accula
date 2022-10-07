@@ -274,6 +274,13 @@ public final class Git {
             });
         }
 
+        public CompletableFuture<Set<String>> revListAllRemotes() {
+            return readingAsync(() -> usingStdoutLines(
+                git("rev-list", "--all", "--remotes"),
+                lines -> lines.collect(Collectors.toSet())
+            ).orElse(Set.of()));
+        }
+
         private Process git(final String... command) {
             try {
                 final var cmd = new ArrayList<String>();

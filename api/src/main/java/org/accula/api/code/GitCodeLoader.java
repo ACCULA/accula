@@ -141,6 +141,12 @@ public final class GitCodeLoader implements CodeLoader {
                 .map(CodeToModelConverter::convert);
     }
 
+    @Override
+    public Mono<Set<String>> loadAllCommitsSha(final GithubRepo repo) {
+        return withProjectGitRepo(repo)
+            .flatMap(git -> Mono.fromFuture(git.revListAllRemotes()));
+    }
+
     /// We name each common repo git folder like that: <owner-login>_<repo-name>
     private Mono<Repo> withCommonGitRepo(final GithubRepo repo) {
         final var repoGitDirectory = Path.of(repo.owner().login() + "_" + repo.name());

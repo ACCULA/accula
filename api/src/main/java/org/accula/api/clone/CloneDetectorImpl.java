@@ -1,7 +1,6 @@
 package org.accula.api.clone;
 
 import com.google.common.collect.Sets;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.accula.api.clone.suffixtree.Clone;
 import org.accula.api.clone.suffixtree.CloneClass;
@@ -19,6 +18,7 @@ import reactor.core.scheduler.Schedulers;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -29,12 +29,16 @@ import static java.util.function.BinaryOperator.minBy;
  * @author Anton Lamtev
  */
 @Slf4j
-@RequiredArgsConstructor
 public final class CloneDetectorImpl implements CloneDetector {
     private static final int CHEAP_CHECK_CLONE_COUNT_THRESHOLD = 10;
     //FIXME: avoid blocking
-    private final SuffixTreeCloneDetector<Token<Snapshot>, Snapshot> suffixTreeCloneDetector = new SuffixTreeCloneDetector<>();
+    private final SuffixTreeCloneDetector<Token<Snapshot>, Snapshot> suffixTreeCloneDetector;
     private final ConfigProvider configProvider;
+
+    public CloneDetectorImpl(final String id, final ConfigProvider configProvider) {
+        this.suffixTreeCloneDetector = new SuffixTreeCloneDetector<>(id);
+        this.configProvider = configProvider;
+    }
 
     @Override
     public Flux<CodeClone> readClones(final Snapshot pullSnapshot) {
@@ -83,7 +87,8 @@ public final class CloneDetectorImpl implements CloneDetector {
                     log.warn("No token providers configured");
                     return Mono.empty();
                 }
-                return new TokenProvider<>(tokenProviders).tokensByMethods(files);
+                return new TokenProvider<>(tokenProviders).tokensByMethods(files)
+                    .filter(methodTokens -> methodTokens.size() >= config.cloneMinTokenCount());
             });
     }
 
@@ -100,7 +105,7 @@ public final class CloneDetectorImpl implements CloneDetector {
                     .stream()
                     .reduce(minBy(
                         Comparator.comparing((Clone<Snapshot> clone) -> clone.ref().commit().date())
-                            .thenComparing(clone -> clone.ref().pullInfo().number())
+                            .thenComparing(clone -> clone.ref().pullInfo() != null ? clone.ref().pullInfo().number() : 0)
                     ))
                     .orElseThrow(IllegalStateException::new);
 
@@ -193,7 +198,7 @@ public final class CloneDetectorImpl implements CloneDetector {
                 return false;
             }
             final var cloneSnapshot = clone.ref();
-            if (cloneSnapshot.pullInfo().id().equals(pullSnapshot.pullInfo().id())) {
+            if (Objects.equals(cloneSnapshot.pullInfo(), pullSnapshot.pullInfo())) {
                 containsCloneFromThisPull = true;
             }
             if (!cloneSnapshot.repo().equals(pullSnapshot.repo())) {

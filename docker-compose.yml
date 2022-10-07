@@ -20,6 +20,7 @@ services:
     depends_on:
       - postgres
     environment:
+      - JAVA_TOOL_OPTIONS=-XX:MinRAMPercentage=30 -XX:MaxRAMPercentage=90
       - PORT=8080
       - API_URL=
       - WEB_URL=

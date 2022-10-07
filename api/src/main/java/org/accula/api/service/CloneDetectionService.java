@@ -21,11 +21,12 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
+import reactor.function.TupleUtils;
 
 import javax.annotation.PostConstruct;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 /**
  * @author Anton Lamtev
@@ -48,12 +49,12 @@ public final class CloneDetectionService {
     }
 
     public Flux<Clone> readClonesAndSaveToDb(final Pull pull) {
-        final var head = pull.head();
-
+        final var commitsToExclude = loader.loadAllCommitsSha(pull.base().repo()).cache();
         final var clones = cloneDetector(Checks.notNull(pull.primaryProjectId(), "Pull primaryProjectId"))
-                .readClones(head)
-                .distinct()
-                .map(CodeToModelConverter::convert);
+            .flatMapMany(cloneDetector -> cloneDetector.readClones(pull.head()))
+            .filterWhen(codeClone -> commitsToExclude.map(commits -> !commits.contains(codeClone.source().snapshot().sha())))
+            .distinct()
+            .map(CodeToModelConverter::convert);
 
         return clones
                 .collectList()
@@ -62,16 +63,18 @@ public final class CloneDetectionService {
     }
 
     public Flux<Clone> detectClonesInNewFilesAndSaveToDb(final Long projectId, final Pull pull, final Iterable<Snapshot> snapshots) {
+        final var commitsToExclude = loader.loadAllCommitsSha(pull.base().repo()).cache();
         final var head = pull.head();
-        final var clones = withConfig(projectId, config -> cloneDetector(projectId)
-            .findClones(head, loader.loadFiles(head.repo(), snapshots, config.languageFilter()), snapshots)
+        final var clones = with(projectId, (detector, config) -> detector
+            .findClones(head, loader.loadFiles(head.repo(), snapshots, config.languageFilter()), snapshots))
+            .filterWhen(codeClone -> commitsToExclude.map(commits -> !commits.contains(codeClone.source().snapshot().sha())))
             .distinct()
-            .map(CodeToModelConverter::convert));
+            .map(CodeToModelConverter::convert);
 
         return clones
-                .collectList()
-                .doOnNext(cloneList -> log.info("{} clones have been detected", cloneList.size()))
-                .flatMapMany(cloneRepo::insert);
+            .collectList()
+            .doOnNext(cloneList -> log.info("{} clones have been detected", cloneList.size()))
+            .flatMapMany(cloneRepo::insert);
     }
 
     public Mono<Void> fillSuffixTree() {
@@ -81,17 +84,28 @@ public final class CloneDetectionService {
                 .then();
     }
 
+    // TODO: добавлять в дерево все файлы из коммитов в репке проекта
+
     public Mono<Void> fillSuffixTree(final Long projectId, final Flux<Pull> pullFlux) {
-        final var files = withConfig(projectId, config -> pullFlux
-            .flatMap(pull -> snapshotRepo
-                .findByPullId(pull.id())
-                .map(snapshot -> snapshot.withPull(pull)))
-            .groupBy(Snapshot::repo)
-            .flatMap(snapshotFlux -> snapshotFlux
-                .collectList()
-                .flatMapMany(snaps -> loader.loadFiles(snapshotFlux.key(), snaps, config.languageFilter())))
-            .subscribeOn(Schedulers.parallel()));
-        return cloneDetector(projectId).fill(files);
+        return with(projectId, (detector, config) -> Flux.from(detector.fill(
+            pullFlux
+                .flatMap(pull -> snapshotRepo
+                    .findByPullId(pull.id())
+                    .map(snapshot -> snapshot.withPull(pull))
+                )
+                .groupBy(Snapshot::repo)
+                .flatMap(snapshotFlux -> snapshotFlux
+                    .collectList()
+                    .flatMapMany(snaps -> loader.loadFiles(snapshotFlux.key(), snaps, config.languageFilter()))
+                )
+                .concatWith(projectRepo
+                    .findById(projectId)
+                    .flatMapMany(project -> snapshotRepo
+                        .findByRepoId(project.githubRepo().id())
+                        .collectList()
+                        .flatMapMany(snaps -> loader.loadFiles(project.githubRepo(), snaps, config.languageFilter()))))
+                .subscribeOn(Schedulers.parallel())
+        ))).then();
     }
 
     public void dropSuffixTree(final Long projectId) {
@@ -104,8 +118,17 @@ public final class CloneDetectionService {
         return fillSuffixTree(projectId, pullRepo.findByProjectIdIncludingSecondaryRepos(projectId));
     }
 
-    private CloneDetector cloneDetector(final Long projectId) {
-        return cloneDetectors.computeIfAbsent(projectId, id -> new CloneDetectorImpl(cloneDetectorConfigProvider(id)));
+    private Mono<CloneDetector> cloneDetector(final Long projectId) {
+        return Mono
+            .justOrEmpty(cloneDetectors.get(projectId))
+            .switchIfEmpty(projectRepo
+                .findById(projectId)
+                .map(project -> new CloneDetectorImpl(
+                    project.githubRepo().identity().toString(),
+                    cloneDetectorConfigProvider(projectId))
+                )
+            )
+            .map(detector -> cloneDetectors.computeIfAbsent(projectId, __ -> detector));
     }
 
     private CloneDetector.ConfigProvider cloneDetectorConfigProvider(final Long projectId) {
@@ -120,13 +143,13 @@ public final class CloneDetectionService {
                                 .languageFilter(Languages.filter(conf.languages()))
                                 .excludedSourceAuthors(new LongOpenHashSet(conf.excludedSourceAuthorIds())::contains)
                                 .build()))
-                .doOnNext(conf -> cloneDetectorConfigs.put(projectId, conf));
+                .map(conf -> cloneDetectorConfigs.computeIfAbsent(projectId, __ -> conf));
     }
 
-    private <R> Flux<R> withConfig(final Long projectId, final Function<CloneDetector.Config, Flux<R>> configUse) {
-        return cloneDetectorConfigProvider(projectId)
-            .get()
-            .flatMapMany(configUse);
+    private <R> Flux<R> with(final Long projectId, final BiFunction<CloneDetector, CloneDetector.Config, Flux<R>> use) {
+        return cloneDetector(projectId)
+            .zipWith(cloneDetectorConfigProvider(projectId).get())
+            .flatMapMany(TupleUtils.function(use));
     }
 
     private void evictConfigForProject(final Long projectId) {

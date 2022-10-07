@@ -30,7 +30,11 @@ public interface GithubClient {
 
     Mono<GithubApiPull> getRepositoryPull(String owner, String repo, Integer pullNumber);
 
-    Mono<Void> createHook(String owner, String repo, GithubApiHook hook);
+    Mono<List<GithubApiHook>> listHooks(String owner, String repo);
+
+    Mono<GithubApiHook> createHook(String owner, String repo, GithubApiHook hook);
+
+    Mono<Void> deleteHook(String owner, String repo, Integer hookId);
 
     interface LoginProvider {
         Mono<String> login();

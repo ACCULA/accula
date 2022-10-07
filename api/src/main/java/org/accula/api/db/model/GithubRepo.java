@@ -26,5 +26,10 @@ public class GithubRepo {
     public static class Identity {
         String owner;
         String name;
+
+        @Override
+        public String toString() {
+            return owner + "/" + name;
+        }
     }
 }

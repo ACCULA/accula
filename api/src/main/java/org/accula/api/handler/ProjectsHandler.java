@@ -48,6 +48,7 @@ import reactor.util.context.ContextView;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -104,22 +105,16 @@ public final class ProjectsHandler implements Handler {
                 .map(RepoIdentityExtractor::repoIdentity)
                 .flatMap(this::retrieveGithubRepoInfo)
                 .flatMap(this::saveProjectData)
+                .flatMap(this::deleteExistingWebhook)
                 .flatMap(this::createWebhook)
                 .flatMap(Responses::created)
                 .onErrorResume(ResponseConvertibleException::onErrorResume);
     }
 
     public Mono<ServerResponse> delete(final ServerRequest request) {
-        return havingAdminPermissionAtProject(request)
-            .flatMap(projectId -> currentUserRepo
-                .get(User::id)
-                .flatMap(userId -> projectRepo.delete(projectId, userId))
-                .doOnNext(deletedSuccessfully -> {
-                    if (deletedSuccessfully) {
-                        cloneDetectionService.dropSuffixTree(projectId);
-                    }
-                }))
-            .flatMap(__ -> Responses.accepted())
+        return havingCreatorPermissionAtProject(request)
+            .flatMap(this::deleteProject)
+            .then(Responses.accepted())
             .onErrorResume(ResponseConvertibleException::onErrorResume);
     }
 
@@ -263,6 +258,32 @@ public final class ProjectsHandler implements Handler {
                 .thenReturn(project);
     }
 
+    private Mono<ProjectDto> deleteExistingWebhook(final ProjectDto project) {
+        final var owner = project.repoOwner();
+        final var repo = project.repoName();
+        return githubClient
+            .listHooks(owner, repo)
+            .flatMap(hooks -> Mono
+                .justOrEmpty(hooks
+                    .stream()
+                    .filter(hook -> hook.config().callbackUrl().equals(webhookProperties.url()))
+                    .findFirst()))
+            .flatMap(hook -> githubClient.deleteHook(owner, repo, Objects.requireNonNull(hook.id())))
+            .thenReturn(project);
+    }
+
+    private Mono<Void> deleteProject(final Project project) {
+        return projectRepo
+            .delete(project.id(), project.creator().id())
+            .doOnNext(deletedSuccessfully -> {
+                if (deletedSuccessfully) {
+                    cloneDetectionService.dropSuffixTree(project.id());
+                }
+            })
+            .then(deleteExistingWebhook(ModelToDtoConverter.convert(project)))
+            .then();
+    }
+
     private static Mono<Long> withProjectId(final ServerRequest request) {
         return Mono
                 .justOrEmpty(request.pathVariable("id"))
@@ -276,10 +297,23 @@ public final class ProjectsHandler implements Handler {
             .switchIfEmpty(Mono.error(Http4xxException::forbidden));
     }
 
+    private Mono<Project> havingCreatorPermissionAtProject(final ServerRequest request) {
+        return withProjectId(request)
+            .flatMap(projectRepo::findById)
+            .filterWhen(this::isCurrentUserCreator)
+            .switchIfEmpty(Mono.error(Http4xxException::forbidden));
+    }
+
     private Mono<Boolean> isCurrentUserAdmin(final Long projectId) {
         return currentUserRepo
                 .get(User::id)
                 .flatMap(currentUserId -> projectRepo.hasAdmin(projectId, currentUserId));
+    }
+
+    private Mono<Boolean> isCurrentUserCreator(final Project project) {
+        return currentUserRepo
+            .get(User::id)
+            .map(currentUserId -> project.creator().id().equals(currentUserId));
     }
 
     private Mono<List<User>> githubAdmins(final Long projectId) {
