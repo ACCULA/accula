@@ -4,6 +4,7 @@ import org.accula.api.code.FileEntity;
 import org.accula.api.code.FileFilter;
 import org.accula.api.code.lines.LineSet;
 import org.accula.api.db.model.CodeLanguage;
+import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.Snapshot;
 import org.accula.api.token.java.JavaTokenProviderTest;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,7 +38,7 @@ class CloneDetectorTest {
     @BeforeEach
     void setUp() {
         excludedSourceAuthor = null;
-        cloneDetector = new CloneDetectorImpl("", () -> Mono.just(CloneDetector.Config.builder()
+        cloneDetector = new CloneDetectorImpl(GithubRepo.Identity.of("", ""), () -> Mono.just(CloneDetector.Config.builder()
                 .cloneMinTokenCount(5)
                 .filter(FileFilter.notIn(Set.of("other/guy/src/main/java/Cell.java")))
                 .language(CodeLanguage.JAVA)
@@ -81,7 +82,7 @@ class CloneDetectorTest {
 
     @Test
     void testNoTokenProviders() {
-        final var cloneDetector = new CloneDetectorImpl("", () -> Mono.just(CloneDetector.Config.builder()
+        final var cloneDetector = new CloneDetectorImpl(GithubRepo.Identity.of("", ""), () -> Mono.just(CloneDetector.Config.builder()
             .cloneMinTokenCount(5)
             .filter(FileFilter.notIn(Set.of("other/guy/src/main/java/Cell.java")))
             .languages(List.of())

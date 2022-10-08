@@ -193,6 +193,7 @@ public final class GithubClientImpl implements GithubClient {
         return withAccessToken(accessToken -> githubApiWebClient
             .delete()
             .uri("/repos/{owner}/{repo}/hooks/{hook_id}", owner, repo, hookId)
+            .headers(h -> h.setBearerAuth(accessToken))
             .retrieve()
             .onStatus(not(HttpStatus.NO_CONTENT::equals), ClientResponse::createException)
             .bodyToMono(Void.class)

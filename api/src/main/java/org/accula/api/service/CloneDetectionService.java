@@ -124,7 +124,7 @@ public final class CloneDetectionService {
             .switchIfEmpty(projectRepo
                 .findById(projectId)
                 .map(project -> new CloneDetectorImpl(
-                    project.githubRepo().identity().toString(),
+                    project.githubRepo().identity(),
                     cloneDetectorConfigProvider(projectId))
                 )
             )

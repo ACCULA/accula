@@ -7,6 +7,7 @@ import org.accula.api.clone.suffixtree.CloneClass;
 import org.accula.api.clone.suffixtree.SuffixTreeCloneDetector;
 import org.accula.api.code.FileEntity;
 import org.accula.api.code.FileFilter;
+import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.Snapshot;
 import org.accula.api.token.Token;
 import org.accula.api.token.TokenProvider;
@@ -32,11 +33,13 @@ import static java.util.function.BinaryOperator.minBy;
 public final class CloneDetectorImpl implements CloneDetector {
     private static final int CHEAP_CHECK_CLONE_COUNT_THRESHOLD = 10;
     //FIXME: avoid blocking
+    private final GithubRepo.Identity projectId;
     private final SuffixTreeCloneDetector<Token<Snapshot>, Snapshot> suffixTreeCloneDetector;
     private final ConfigProvider configProvider;
 
-    public CloneDetectorImpl(final String id, final ConfigProvider configProvider) {
-        this.suffixTreeCloneDetector = new SuffixTreeCloneDetector<>(id);
+    public CloneDetectorImpl(final GithubRepo.Identity projectId, final ConfigProvider configProvider) {
+        this.projectId = projectId;
+        this.suffixTreeCloneDetector = new SuffixTreeCloneDetector<>(projectId.toString());
         this.configProvider = configProvider;
     }
 
@@ -101,6 +104,9 @@ public final class CloneDetectorImpl implements CloneDetector {
             .stream()
             .flatMap(cloneClass -> {
                 final var clones = cloneClass.clones();
+                if (clones.stream().anyMatch(clone -> clone.ref().repo().identity().equals(projectId))) {
+                    return Stream.empty();
+                }
                 final var source = clones
                     .stream()
                     .reduce(minBy(
@@ -164,7 +170,7 @@ public final class CloneDetectorImpl implements CloneDetector {
         if (cloneCount <= CHEAP_CHECK_CLONE_COUNT_THRESHOLD) {
             for (int i = 0; i < cloneCount; ++i) {
                 final var current = clones.get(i).ref();
-                if (current.pullInfo().id().equals(pullSnapshot.pullInfo().id())) {
+                if (Objects.equals(current.pullInfo(), pullSnapshot.pullInfo())) {
                     return true;
                 }
                 if (i < 1) {
@@ -198,6 +204,9 @@ public final class CloneDetectorImpl implements CloneDetector {
                 return false;
             }
             final var cloneSnapshot = clone.ref();
+            if (cloneSnapshot.pullInfo() == null) {
+                log.info("");
+            }
             if (Objects.equals(cloneSnapshot.pullInfo(), pullSnapshot.pullInfo())) {
                 containsCloneFromThisPull = true;
             }
