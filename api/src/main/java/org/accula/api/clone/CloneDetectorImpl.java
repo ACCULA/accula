@@ -204,9 +204,6 @@ public final class CloneDetectorImpl implements CloneDetector {
                 return false;
             }
             final var cloneSnapshot = clone.ref();
-            if (cloneSnapshot.pullInfo() == null) {
-                log.info("");
-            }
             if (Objects.equals(cloneSnapshot.pullInfo(), pullSnapshot.pullInfo())) {
                 containsCloneFromThisPull = true;
             }

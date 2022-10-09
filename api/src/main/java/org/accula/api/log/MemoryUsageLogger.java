@@ -26,16 +26,16 @@ public final class MemoryUsageLogger {
                     public String toString() {
                         return """
                             <
-                            init=%.2fGB
-                            max=%.2fGB
-                            commited=%.2fGB
-                            used=%.2fGB
+                            init=%s
+                            used=%s
+                            commited=%s
+                            max=%s
                             >
-                            """.formatted(gbs(mem.getInit()), gbs(mem.getMax()), gbs(mem.getCommitted()), gbs(mem.getUsed()));
+                            """.formatted(gbs(mem.getInit()), gbs(mem.getUsed()), gbs(mem.getCommitted()), gbs(mem.getMax()));
                     }
 
-                    static float gbs(final long bytes) {
-                        return (float) bytes / (1024 * 1024 * 1024);
+                    static String gbs(final long bytes) {
+                        return "%.2fGB".formatted((double) bytes / (1024 * 1024 * 1024));
                     }
                 }
                 log.info("Heap usage = {}", new MemUsage(memory.getHeapMemoryUsage()));
