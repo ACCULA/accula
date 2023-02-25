@@ -1,13 +1,13 @@
 package org.accula.api.clone;
 
 import com.google.common.collect.Sets;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.accula.api.clone.suffixtree.Clone;
 import org.accula.api.clone.suffixtree.CloneClass;
 import org.accula.api.clone.suffixtree.SuffixTreeCloneDetector;
 import org.accula.api.code.FileEntity;
 import org.accula.api.code.FileFilter;
+import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.Snapshot;
 import org.accula.api.token.Token;
 import org.accula.api.token.TokenProvider;
@@ -19,6 +19,7 @@ import reactor.core.scheduler.Schedulers;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -29,12 +30,18 @@ import static java.util.function.BinaryOperator.minBy;
  * @author Anton Lamtev
  */
 @Slf4j
-@RequiredArgsConstructor
 public final class CloneDetectorImpl implements CloneDetector {
     private static final int CHEAP_CHECK_CLONE_COUNT_THRESHOLD = 10;
+    private final GithubRepo.Identity projectId;
     //FIXME: avoid blocking
-    private final SuffixTreeCloneDetector<Token<Snapshot>, Snapshot> suffixTreeCloneDetector = new SuffixTreeCloneDetector<>();
+    private final SuffixTreeCloneDetector<Token<Snapshot>, Snapshot> suffixTreeCloneDetector;
     private final ConfigProvider configProvider;
+
+    public CloneDetectorImpl(final GithubRepo.Identity projectId, final ConfigProvider configProvider) {
+        this.projectId = projectId;
+        this.suffixTreeCloneDetector = new SuffixTreeCloneDetector<>(projectId.toString());
+        this.configProvider = configProvider;
+    }
 
     @Override
     public Flux<CodeClone> readClones(final Snapshot pullSnapshot) {
@@ -83,7 +90,8 @@ public final class CloneDetectorImpl implements CloneDetector {
                     log.warn("No token providers configured");
                     return Mono.empty();
                 }
-                return new TokenProvider<>(tokenProviders).tokensByMethods(files);
+                return new TokenProvider<>(tokenProviders).tokensByMethods(files)
+                    .filter(methodTokens -> methodTokens.size() >= config.cloneMinTokenCount());
             });
     }
 
@@ -92,7 +100,7 @@ public final class CloneDetectorImpl implements CloneDetector {
                                                             final Predicate<Clone<Snapshot>> cloneMatcher) {
         return Flux.fromStream(() -> suffixTreeCloneDetector
             .cloneClasses(cloneClass -> isGoodCloneClassForPullCheapCheck(cloneClass, pullSnapshot, config.cloneMinTokenCount()),
-                          cloneClass -> isGoodCloneClassForPullExpensiveCheck(cloneClass, pullSnapshot, config.filter()))
+                          cloneClass -> isGoodCloneClassForPullExpensiveCheck(cloneClass, pullSnapshot, config.filter(), projectId))
             .stream()
             .flatMap(cloneClass -> {
                 final var clones = cloneClass.clones();
@@ -100,7 +108,7 @@ public final class CloneDetectorImpl implements CloneDetector {
                     .stream()
                     .reduce(minBy(
                         Comparator.comparing((Clone<Snapshot> clone) -> clone.ref().commit().date())
-                            .thenComparing(clone -> clone.ref().pullInfo().number())
+                            .thenComparing(clone -> clone.ref().pullInfo() != null ? clone.ref().pullInfo().number() : 0)
                     ))
                     .orElseThrow(IllegalStateException::new);
 
@@ -159,7 +167,7 @@ public final class CloneDetectorImpl implements CloneDetector {
         if (cloneCount <= CHEAP_CHECK_CLONE_COUNT_THRESHOLD) {
             for (int i = 0; i < cloneCount; ++i) {
                 final var current = clones.get(i).ref();
-                if (current.pullInfo().id().equals(pullSnapshot.pullInfo().id())) {
+                if (Objects.equals(current.pullInfo(), pullSnapshot.pullInfo())) {
                     return true;
                 }
                 if (i < 1) {
@@ -176,13 +184,15 @@ public final class CloneDetectorImpl implements CloneDetector {
     }
 
     /**
-     * We accept clone class if all its clones filenames match {@code fileFilter} and both
-     * at least one clone pull matches specified one (via {@code pullSnapshot}) and
+     * We accept clone class if all its clones filenames match {@code fileFilter}
+     * and all its clones repos differ from project's repo (? to be reviewed ?) and
+     * both at least one clone pull matches specified one (via {@code pullSnapshot}) and
      * at least one clone repo is differ than repo of the specified {@code pullSnapshot}
      */
     private static boolean isGoodCloneClassForPullExpensiveCheck(final CloneClass<Snapshot> cloneClass,
                                                                  final Snapshot pullSnapshot,
-                                                                 final FileFilter fileFilter) {
+                                                                 final FileFilter fileFilter,
+                                                                 final GithubRepo.Identity projectId) {
         final var clones = cloneClass.clones();
         final var cloneCount = clones.size();
         var containsCloneFromThisPull = false;
@@ -193,7 +203,14 @@ public final class CloneDetectorImpl implements CloneDetector {
                 return false;
             }
             final var cloneSnapshot = clone.ref();
-            if (cloneSnapshot.pullInfo().id().equals(pullSnapshot.pullInfo().id())) {
+            // Idea was in that if clone repo is equal to project repo
+            // then it's contributed code to project repo and is not clone at all.
+            // But it was actual when students solution was not merging to upstream.
+            // TODO: review the approach
+            if (Objects.equals(cloneSnapshot.repo().identity(), projectId)) {
+                return false;
+            }
+            if (Objects.equals(cloneSnapshot.pullInfo(), pullSnapshot.pullInfo())) {
                 containsCloneFromThisPull = true;
             }
             if (!cloneSnapshot.repo().equals(pullSnapshot.repo())) {

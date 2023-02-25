@@ -79,7 +79,7 @@ public class SuffixTreeCloneDetectorTest {
 
     @BeforeEach
     void setUp() {
-        detector = new SuffixTreeCloneDetector<>();
+        detector = new SuffixTreeCloneDetector<>("test");
     }
 
     @Test
