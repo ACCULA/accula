@@ -55,6 +55,8 @@ configure(subprojects.filterNot(project(":web")::equals)) {
                 xml.required.set(true)
                 html.required.set(true)
             }
+
+            mustRunAfter(test)
         }
 
         test {
@@ -66,8 +68,6 @@ configure(subprojects.filterNot(project(":web")::equals)) {
 
             val testSingleLineRangeCacheSize: String by project
             systemProperty("org.accula.api.code.lines.LineRange.Single.Cache.size", testSingleLineRangeCacheSize)
-
-            finalizedBy(jacocoTestReport)
 
             jvmArgs("--enable-preview")
         }
