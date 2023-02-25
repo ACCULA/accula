@@ -16,7 +16,7 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
     - name: Build with Gradle
-      run: ./gradlew build -x web:build
+      run: ./gradlew build jacocoTestReport -x web:build
       env:
         GPR_USERNAME: ${{ secrets.GPR_USERNAME }}
         GPR_TOKEN: ${{ secrets.GPR_TOKEN }}
