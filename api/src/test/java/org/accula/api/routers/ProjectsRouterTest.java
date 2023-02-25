@@ -193,6 +193,12 @@ class ProjectsRouterTest {
         when(projectRepo.updateState(anyLong(), any()))
                 .thenReturn(Mono.empty());
 
+        when(githubClient.listHooks(any(), any()))
+            .thenReturn(Mono.just(List.of()));
+
+        when(githubClient.deleteHook(any(), any(), any()))
+            .thenReturn(Mono.empty());
+
         when(githubClient.createHook(any(), any(), any()))
                 .thenReturn(Mono.empty());
 
@@ -357,10 +363,19 @@ class ProjectsRouterTest {
     @Test
     void testDeleteProject() {
         when(currentUser.get(any()))
-                .thenReturn(Mono.just(0L));
+            .thenReturn(Mono.just(lamtev.id()));
 
         when(projectRepo.hasAdmin(anyLong(), anyLong()))
             .thenReturn(Mono.just(TRUE));
+
+        when(projectRepo.findById(anyLong()))
+            .thenReturn(Mono.just(PROJECT_HIGHLOAD));
+
+        when(githubClient.listHooks(any(), any()))
+            .thenReturn(Mono.just(List.of()));
+
+        when(githubClient.deleteHook(any(), any(), any()))
+            .thenReturn(Mono.empty());
 
         when(projectRepo.delete(anyLong(), anyLong()))
                 .thenReturn(Mono.just(TRUE));
