@@ -21,17 +21,23 @@ import java.util.stream.Stream;
 public final class SuffixTreeCloneDetector<Token extends Comparable<Token>, Ref> {
     private final SuffixTree<Token> suffixTree = new SuffixTree<>();
     private final Sync sync = new Sync();
+    private final String id;
 
-    public SuffixTreeCloneDetector() {
+    public SuffixTreeCloneDetector(final String id) {
+        this.id = id;
         Flux.interval(Duration.ofMinutes(5L), Schedulers.single())
                 .doOnNext(next ->
-                        log.info("Node count = {}", nodeCount()))
+                        log.info("[{}] Node count = {}", id, nodeCount()))
                 .name("Suffix tree node count timer")
                 .subscribe();
     }
 
     public long addTokens(final List<Token> tokens) {
-        return sync.write(() -> suffixTree.addSequence(tokens));
+        try {
+            return sync.write(() -> suffixTree.addSequence(tokens));
+        } finally {
+            log.info("[{}] Added {} tokens to suffix tree", id, tokens.size());
+        }
     }
 
     public List<CloneClass<Ref>> cloneClasses(final Predicate<CloneClass<Ref>> filter) {

@@ -4,6 +4,7 @@ import org.accula.api.code.FileEntity;
 import org.accula.api.code.FileFilter;
 import org.accula.api.code.lines.LineSet;
 import org.accula.api.db.model.CodeLanguage;
+import org.accula.api.db.model.GithubRepo;
 import org.accula.api.db.model.Snapshot;
 import org.accula.api.token.java.JavaTokenProviderTest;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,6 +31,7 @@ class CloneDetectorTest {
     public static final FileEntity<Snapshot> source1 = new FileEntity<>(commitSnapshot1, "owner1/repo1/src/main/java/Cell.java", JavaTokenProviderTest.content1, LineSet.all());
     public static final FileEntity<Snapshot> source2 = new FileEntity<>(commitSnapshot2, "owner1/repo1/src/main/java/Cell.java", JavaTokenProviderTest.content1, LineSet.all());
     public static final FileEntity<Snapshot> target1 = new FileEntity<>(commitSnapshot3, "owner2/repo2/src/main/java/Cell.java", JavaTokenProviderTest.content2, LineSet.all());
+    public static final GithubRepo.Identity REPO_ID = GithubRepo.Identity.of("", "");
 
     Long excludedSourceAuthor;
     CloneDetector cloneDetector;
@@ -37,7 +39,7 @@ class CloneDetectorTest {
     @BeforeEach
     void setUp() {
         excludedSourceAuthor = null;
-        cloneDetector = new CloneDetectorImpl(() -> Mono.just(CloneDetector.Config.builder()
+        cloneDetector = new CloneDetectorImpl(REPO_ID, () -> Mono.just(CloneDetector.Config.builder()
                 .cloneMinTokenCount(5)
                 .filter(FileFilter.notIn(Set.of("other/guy/src/main/java/Cell.java")))
                 .language(CodeLanguage.JAVA)
@@ -81,7 +83,7 @@ class CloneDetectorTest {
 
     @Test
     void testNoTokenProviders() {
-        final var cloneDetector = new CloneDetectorImpl(() -> Mono.just(CloneDetector.Config.builder()
+        final var cloneDetector = new CloneDetectorImpl(REPO_ID, () -> Mono.just(CloneDetector.Config.builder()
             .cloneMinTokenCount(5)
             .filter(FileFilter.notIn(Set.of("other/guy/src/main/java/Cell.java")))
             .languages(List.of())
