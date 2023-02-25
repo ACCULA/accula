@@ -56,7 +56,7 @@ configure(subprojects.filterNot(project(":web")::equals)) {
                 html.required.set(true)
             }
 
-            mustRunAfter(test)
+            dependsOn(test)
         }
 
         test {
@@ -70,6 +70,8 @@ configure(subprojects.filterNot(project(":web")::equals)) {
             systemProperty("org.accula.api.code.lines.LineRange.Single.Cache.size", testSingleLineRangeCacheSize)
 
             jvmArgs("--enable-preview")
+
+            finalizedBy(jacocoTestReport)
         }
 
         compileJava {
