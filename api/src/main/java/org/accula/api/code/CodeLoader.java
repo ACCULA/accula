@@ -7,6 +7,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Vadim Dyachkov
@@ -64,4 +65,9 @@ public interface CodeLoader {
      * Loads commits of specified repo from the star to the given ref.
      */
     Flux<Commit> loadCommits(GithubRepo repo, String ref);
+
+    /**
+     * Loads all the commits sha
+     */
+    Mono<Set<String>> loadAllCommitsSha(GithubRepo repo);
 }

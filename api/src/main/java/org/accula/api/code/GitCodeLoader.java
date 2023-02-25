@@ -113,7 +113,7 @@ public final class GitCodeLoader implements CodeLoader {
     @Override
     public Flux<Commit> loadAllCommits(final GithubRepo repo) {
         return withCommonGitRepo(repo)
-                .flatMap(gitRepo -> Mono.fromFuture(gitRepo.revListAllPretty()))
+                .flatMap(gitRepo -> Mono.fromFuture(gitRepo.revListAllRemotesPretty()))
                 .flatMapMany(Flux::fromIterable)
                 .map(CodeToModelConverter::convert);
     }
@@ -139,6 +139,13 @@ public final class GitCodeLoader implements CodeLoader {
                 .flatMap(gitRepo -> Mono.fromFuture(gitRepo.log(ref)))
                 .flatMapMany(Flux::fromIterable)
                 .map(CodeToModelConverter::convert);
+    }
+
+    @Override
+    public Mono<Set<String>> loadAllCommitsSha(final GithubRepo repo) {
+        return withProjectGitRepo(repo)
+            .map(Git.Repo::revListAllRemotes)
+            .flatMap(Mono::fromFuture);
     }
 
     /// We name each common repo git folder like that: <owner-login>_<repo-name>

@@ -96,7 +96,7 @@ public final class Git {
                 if (System.currentTimeMillis() - lastFetchTs < INTERVAL_SINCE_LAST_FETCH_THRESHOLD) {
                     return this;
                 }
-                final var process = git("fetch");
+                final var process = git("fetch", "--all");
                 try {
                     //TODO: fetch timeout
                     final var ret = process.waitFor();
@@ -265,18 +265,25 @@ public final class Git {
                     .orElseThrow());
         }
 
-        public CompletableFuture<List<GitCommit>> revListAllPretty() {
+        public CompletableFuture<List<GitCommit>> revListAllRemotesPretty() {
             return readingAsync(() -> {
-                final var log = git("rev-list", "--pretty", "--all", "--date=rfc");
+                final var log = git("rev-list", "--pretty", "--all", "--remotes", "--date=rfc");
                 return usingStdoutLines(log, lines ->
                         commits(lines.iterator()))
                         .orElse(List.of());
             });
         }
 
+        public CompletableFuture<Set<String>> revListAllRemotes() {
+            return readingAsync(() -> usingStdoutLines(
+                git("rev-list", "--all", "--remotes"),
+                lines -> lines.collect(Collectors.toSet())
+            ).orElse(Set.of()));
+        }
+
         private Process git(final String... command) {
             try {
-                final var cmd = new ArrayList<String>();
+                final var cmd = new ArrayList<String>(command.length + 1);
                 cmd.add("git");
                 cmd.addAll(List.of(command));
                 return new ProcessBuilder(cmd)
@@ -365,7 +372,7 @@ public final class Git {
      * @implNote We expect that commit date is in RFC-1123 format, so we
      * can easily convert it to {@link Instant} using built-in {@link DateTimeFormatter}
      * @see Git.Repo#log(String, String)
-     * @see Repo#revListAllPretty()
+     * @see Repo#revListAllRemotesPretty()
      */
     private static List<GitCommit> commits(final Iterator<String> lines) {
         final List<GitCommit> commits = new ArrayList<>();

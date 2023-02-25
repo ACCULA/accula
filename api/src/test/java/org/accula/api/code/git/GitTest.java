@@ -2,6 +2,7 @@ package org.accula.api.code.git;
 
 import lombok.SneakyThrows;
 import org.accula.api.code.lines.LineRange;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -81,8 +82,7 @@ final class GitTest {
     @Test
     void testDiff() {
         assertDoesNotThrow(() -> {
-            final var repo = git.clone(REPO_URL, REPO_DIR).get();
-            assertNotNull(repo);
+            final Git.Repo repo = testRepo();
 
             final var diffEntries1 = repo.diff(BASE_REF, HEAD_REF, 0).get();
             final var diffEntries2 = repo.diff(BASE_REF, HEAD_REF, 100).get();
@@ -99,8 +99,7 @@ final class GitTest {
     @Test
     void testCatFiles() {
         assertDoesNotThrow(() -> {
-            final var repo = git.clone(REPO_URL, REPO_DIR).get();
-            assertNotNull(repo);
+            final Git.Repo repo = testRepo();
 
             final var filesContent = repo.diff(BASE_REF, HEAD_REF, 0)
                     .thenCompose(diffEntries -> repo
@@ -121,8 +120,7 @@ final class GitTest {
     @Test
     void testCatFilesEmptyInput() {
         assertDoesNotThrow(() -> {
-            final var repo = git.clone(REPO_URL, REPO_DIR).get();
-            assertNotNull(repo);
+            final Git.Repo repo = testRepo();
 
             assertTrue(repo.catFiles(Collections.emptyList()).get().isEmpty());
         });
@@ -131,8 +129,7 @@ final class GitTest {
     @Test
     void testCatSnippets() {
         assertDoesNotThrow(() -> {
-            final var repo = git.clone(REPO_URL, REPO_DIR).get();
-            assertNotNull(repo);
+            final Git.Repo repo = testRepo();
 
             final var snippet = Snippet.of(
                     GitFile.of("3c19d0d", "api/src/main/java/org/accula/api/auth/jwt/JwtRefreshFilter.java"),
@@ -180,8 +177,7 @@ final class GitTest {
     @Test
     void testShow() {
         assertDoesNotThrow(() -> {
-            final var repo = git.clone(REPO_URL, REPO_DIR).get();
-            assertNotNull(repo);
+            final Git.Repo repo = testRepo();
 
             final var files = repo.show(HEAD_REF).get();
             assertEquals(41, files.size());
@@ -191,8 +187,7 @@ final class GitTest {
     @Test
     void testShowMany() {
         assertDoesNotThrow(() -> {
-            final var repo = git.clone(REPO_URL, REPO_DIR).get();
-            assertNotNull(repo);
+            final Git.Repo repo = testRepo();
 
             final var shas = Set.of(
                     "183a85a2342f521e3ddc7ecab87d3dcbc9256dd4",
@@ -207,8 +202,7 @@ final class GitTest {
     @Test
     void testLsTree() {
         assertDoesNotThrow(() -> {
-            final var repo = git.clone(REPO_URL, REPO_DIR).get();
-            assertNotNull(repo);
+            final Git.Repo repo = testRepo();
 
             final var files = repo.lsTree(HEAD_REF).get();
             assertEquals(69, files.size());
@@ -218,8 +212,7 @@ final class GitTest {
     @Test
     void testRemote() {
         assertDoesNotThrow(() -> {
-            final var repo = git.clone(REPO_URL, REPO_DIR).get();
-            assertNotNull(repo);
+            final Git.Repo repo = testRepo();
 
             final var remotes = repo.remote().get();
             assertTrue(remotes.contains("origin"));
@@ -229,8 +222,7 @@ final class GitTest {
     @Test
     void testSimultaneousRemoteAdding() {
         assertDoesNotThrow(() -> {
-            final var repo = git.clone(REPO_URL, REPO_DIR).get();
-            assertNotNull(repo);
+            final Git.Repo repo = testRepo();
 
             IntStream.range(0, Runtime.getRuntime().availableProcessors() * 5)
                     .parallel()
@@ -242,8 +234,7 @@ final class GitTest {
     @Test
     void testSimultaneousRemoteUpdate() {
         assertDoesNotThrow(() -> {
-            final var repo = git.clone(REPO_URL, REPO_DIR).get();
-            assertNotNull(repo);
+            final Git.Repo repo = testRepo();
             assertNotNull(repo.remoteAdd(REMOTE_URL, REMOTE_NAME).get());
 
             IntStream.range(0, Runtime.getRuntime().availableProcessors() * 5)
@@ -256,8 +247,7 @@ final class GitTest {
     @Test
     void testLog() {
         assertDoesNotThrow(() -> {
-            final var repo = git.clone(REPO_URL, REPO_DIR).get();
-            assertNotNull(repo);
+            final Git.Repo repo = testRepo();
 
             IntStream.range(0, Runtime.getRuntime().availableProcessors() * 5)
                     .parallel()
@@ -273,8 +263,7 @@ final class GitTest {
     @Test
     void testLogUntilRef() {
         assertDoesNotThrow(() -> {
-            final var repo = git.clone(REPO_URL, REPO_DIR).get();
-            assertNotNull(repo);
+            final Git.Repo repo = testRepo();
 
             IntStream.range(0, Runtime.getRuntime().availableProcessors() * 5)
                     .parallel()
@@ -289,8 +278,7 @@ final class GitTest {
     @Test
     void testLogSingle() {
         assertDoesNotThrow(() -> {
-            final var repo = git.clone(REPO_URL, REPO_DIR).get();
-            assertNotNull(repo);
+            final Git.Repo repo = testRepo();
 
             IntStream.range(0, Runtime.getRuntime().availableProcessors() * 5)
                 .parallel()
@@ -305,8 +293,7 @@ final class GitTest {
     @Test
     void testLogSingleFail() {
         assertThrows(ExecutionException.class, () -> {
-            final var repo = git.clone(REPO_URL, REPO_DIR).get();
-            assertNotNull(repo);
+            final Git.Repo repo = testRepo();
             final var commits = repo.logSingle("NOT_EXISTENT_REF").get();
             assertEquals(HEAD_REF, commits.sha());
         });
@@ -315,14 +302,13 @@ final class GitTest {
     @Test
     void testRevListAllPretty() {
         assertDoesNotThrow(() -> {
-            final var repo = git.clone(REPO_URL, REPO_DIR).get();
-            assertNotNull(repo);
+            final Git.Repo repo = testRepo();
 
             IntStream.range(0, Runtime.getRuntime().availableProcessors() * 5)
                     .parallel()
                     .forEach(it ->
                             assertDoesNotThrow(() -> {
-                                final var commits = repo.revListAllPretty().get();
+                                final var commits = repo.revListAllRemotesPretty().get();
                                 assertFalse(commits.isEmpty());
                             }));
         });
@@ -348,8 +334,7 @@ final class GitTest {
     @Test
     void testFileChanges() {
         assertDoesNotThrow(() -> {
-            final var repo = git.clone(REPO_URL, REPO_DIR).get();
-            assertNotNull(repo);
+            final Git.Repo repo = testRepo();
 
             final var expectedChanges = List.of(
                     FileDiff.of(GitFile.of("9b1113b", ".codeclimate.yml"), of(of(10), of(33, 35))),
@@ -377,8 +362,7 @@ final class GitTest {
     @Test
     void testFileChangesMany() {
         assertDoesNotThrow(() -> {
-            final var repo = git.clone(REPO_URL, REPO_DIR).get();
-            assertNotNull(repo);
+            final Git.Repo repo = testRepo();
 
             IntStream.range(0, Runtime.getRuntime().availableProcessors() * 5)
                     .parallel()
@@ -393,5 +377,28 @@ final class GitTest {
                                 assertEquals(72 + 2 + 1 + 41, changes.size());
                             }));
         });
+    }
+
+    @Test
+    void testRevListAllRemotes() {
+        assertDoesNotThrow(() -> {
+            final Git.Repo repo = testRepo();
+
+            IntStream.range(0, Runtime.getRuntime().availableProcessors() * 5)
+                .parallel()
+                .forEach(it ->
+                    assertDoesNotThrow(() -> {
+                        final var commits = repo.revListAllRemotes().get();
+                        assertFalse(commits.isEmpty());
+                        assertTrue(commits.contains("f4cf7c5bec1e12355d5232e88c9fd0c423341a59"));
+                    }));
+        });
+    }
+
+    @NotNull
+    private Git.Repo testRepo() throws InterruptedException, ExecutionException {
+        final var repo = git.clone(REPO_URL, REPO_DIR).get();
+        assertNotNull(repo);
+        return repo;
     }
 }
