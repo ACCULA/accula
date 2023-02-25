@@ -46,8 +46,8 @@ dependencies {
     implementation("org.postgresql:r2dbc-postgresql")
     implementation("io.r2dbc:r2dbc-pool")
 
-    implementation("org.slf4j:slf4j-api:2.0.1")
-    implementation("org.slf4j:slf4j-log4j12:2.0.1")
+    implementation("org.slf4j:slf4j-api:2.0.3")
+    implementation("org.slf4j:slf4j-log4j12:2.0.3")
 
     implementation("org.postgresql:postgresql")
     implementation("org.springframework:spring-jdbc")
@@ -59,11 +59,11 @@ dependencies {
     implementation("com.jetbrains.intellij.java:java-psi-impl:211.7628.21")
     implementation(kotlin("compiler-embeddable"))
     implementation("com.google.guava:guava:31.1-jre")
-    implementation("it.unimi.dsi:fastutil:8.5.8")
+    implementation("it.unimi.dsi:fastutil:8.5.9")
     implementation("info.debatty:java-string-similarity:2.0.0")
     implementation("commons-codec:commons-codec:1.15")
 
-    implementation(platform("org.testcontainers:testcontainers-bom:1.17.3"))
+    implementation(platform("org.testcontainers:testcontainers-bom:1.17.5"))
     testImplementation("org.testcontainers:testcontainers")
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("org.testcontainers:postgresql")
