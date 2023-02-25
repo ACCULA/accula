@@ -12,7 +12,9 @@ import reactor.test.StepVerifier;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Executors;
+import java.util.function.Predicate;
 
 import static org.accula.api.util.TestData.lamtevHighload2017;
 import static org.accula.api.util.TestData.polisHighload2017;
@@ -225,6 +227,14 @@ class CodeLoaderTest {
     void testLoadCommit() {
         StepVerifier.create(codeLoader.loadCommit(vaddyaHighload2019, "7a490a1e518df228c203c3690100bd2d0ab559c5"))
             .expectNextMatches(commit -> commit.sha().equals("7a490a1e518df228c203c3690100bd2d0ab559c5"))
+            .expectComplete()
+            .verify();
+    }
+
+    @Test
+    void testLoadAllCommitsSha() {
+        StepVerifier.create(codeLoader.loadAllCommitsSha(lamtevHighload2017))
+            .expectNextMatches(Predicate.not(Set::isEmpty))
             .expectComplete()
             .verify();
     }
