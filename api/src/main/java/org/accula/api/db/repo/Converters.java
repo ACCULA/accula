@@ -87,7 +87,7 @@ final class Converters {
         if (NOTHING.equals(pullId) || NOTHING.equals(pullNumber)) {
             return null;
         }
-        return Snapshot.PullInfo.of(longInteger(row, pullId), integer(row, pullNumber));
+        return new Snapshot.PullInfo(longInteger(row, pullId), integer(row, pullNumber));
     }
 
     static Snapshot convertSnapshot(final Row row,

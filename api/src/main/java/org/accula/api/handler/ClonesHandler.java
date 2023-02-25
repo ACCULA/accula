@@ -133,7 +133,7 @@ public final class ClonesHandler {
                                 .loadSnippets(
                                         snippetFlux.key(),
                                         snippets.stream()
-                                                .map(s -> SnippetMarker.of(s.file(), LineRange.of(s.fromLine(), s.toLine())))
+                                                .map(s -> new SnippetMarker(s.file(), LineRange.of(s.fromLine(), s.toLine())))
                                                 .toList()
                                 )
                                 .zipWithIterable(snippets)

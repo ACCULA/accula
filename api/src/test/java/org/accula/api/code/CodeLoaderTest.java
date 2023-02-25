@@ -61,16 +61,16 @@ class CodeLoaderTest {
                 .builder()
                 .commit(Commit.shaOnly("ecb40217f36891809693e4d9d37a3e841ff740b9"))
                 .repo(lamtevHighload2017)
-                .pullInfo(Snapshot.PullInfo.of(10L, 7))
+                .pullInfo(new Snapshot.PullInfo(10L, 7))
                 .build();
         final var s2 = s1.withCommit(Commit.shaOnly("5d66d3b0c3f07c07eb841b1620dcba2b0a970bc7"))
-                .withPullInfo(Snapshot.PullInfo.of(11L, 10));
+                .withPullInfo(new Snapshot.PullInfo(11L, 10));
         final var s3 = s1.withCommit(Commit.shaOnly("38f07e6b48c6594d9b3cfaa64b76a9aecc811b25"))
-                .withPullInfo(Snapshot.PullInfo.of(12L, 11));
+                .withPullInfo(new Snapshot.PullInfo(12L, 11));
         final var s4 = s3.withCommit(Commit.shaOnly("38f07e6b48c6594d9b3cfaa64b76a9aecc811b25"))
-                .withPullInfo(Snapshot.PullInfo.of(13L, 12));
+                .withPullInfo(new Snapshot.PullInfo(13L, 12));
         final var s5 = s3.withCommit(Commit.shaOnly("38f07e6b48c6594d9b3cfaa64b76a9aecc811b25"))
-                .withPullInfo(Snapshot.PullInfo.of(14L, 13));
+                .withPullInfo(new Snapshot.PullInfo(14L, 13));
         var files = codeLoader.loadFiles(s1.repo(), List.of(s1, s2, s5, s3, s1, s4), JvmFileFilter.JVM_MAIN)
                 .collectList().block();
         assertNotNull(files);
@@ -80,7 +80,7 @@ class CodeLoaderTest {
 
     @Test
     void testGetFileSnippetSingleLine() {
-        var snippet = codeLoader.loadSnippets(COMMIT, List.of(SnippetMarker.of(README, LineRange.of(4, 4)))).blockFirst();
+        var snippet = codeLoader.loadSnippets(COMMIT, List.of(new SnippetMarker(README, LineRange.of(4, 4)))).blockFirst();
         assertNotNull(snippet);
         assertEquals("""
                 ## Этап 1. HTTP + storage (deadline 2019-10-05)
@@ -90,8 +90,8 @@ class CodeLoaderTest {
     @Test
     void testGetFileSnippetMultipleLines() {
         StepVerifier.create(codeLoader.loadSnippets(COMMIT, List.of(
-                SnippetMarker.of(README, LineRange.of(4, 5)),
-                SnippetMarker.of("NOT_EXISTENT_FILE", LineRange.of(1, 1))))
+                new SnippetMarker(README, LineRange.of(4, 5)),
+                new SnippetMarker("NOT_EXISTENT_FILE", LineRange.of(1, 1))))
                 .map(FileEntity::content))
                 .expectNextMatches(content -> content.equals("""
                         ## Этап 1. HTTP + storage (deadline 2019-10-05)
@@ -105,11 +105,11 @@ class CodeLoaderTest {
     void testLoadManySnippetsFromSameFile() {
         final var snippets = codeLoader
                 .loadSnippets(COMMIT, List.of(
-                        SnippetMarker.of(README, LineRange.of(1, 5)),
-                        SnippetMarker.of(README, LineRange.of(4, 10)),
-                        SnippetMarker.of(CLUSTER_JAVA, LineRange.of(38, 39)),
-                        SnippetMarker.of(README, LineRange.of(7, 15)),
-                        SnippetMarker.of(CLUSTER_JAVA, LineRange.of(51, 56))
+                        new SnippetMarker(README, LineRange.of(1, 5)),
+                        new SnippetMarker(README, LineRange.of(4, 10)),
+                        new SnippetMarker(CLUSTER_JAVA, LineRange.of(38, 39)),
+                        new SnippetMarker(README, LineRange.of(7, 15)),
+                        new SnippetMarker(CLUSTER_JAVA, LineRange.of(51, 56))
                 ))
                 .collectList()
                 .block();

@@ -131,7 +131,7 @@ final class GitTest {
         assertDoesNotThrow(() -> {
             final Git.Repo repo = testRepo();
 
-            final var snippet = Snippet.of(
+            final var snippet = new Snippet(
                     GitFile.of("3c19d0d", "api/src/main/java/org/accula/api/auth/jwt/JwtRefreshFilter.java"),
                     LineRange.of(10, 38)
             );

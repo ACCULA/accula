@@ -1,7 +1,6 @@
 package org.accula.api.db.model;
 
 import lombok.Builder;
-import lombok.Value;
 import lombok.With;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,14 +10,7 @@ import org.jetbrains.annotations.Nullable;
  */
 @Builder
 @With
-@Value
-public class Snapshot {
-    Commit commit;
-    String branch;
-    GithubRepo repo;
-    @Nullable
-    PullInfo pullInfo;
-
+public record Snapshot(Commit commit, String branch, GithubRepo repo, @Nullable PullInfo pullInfo) {
     public Id id() {
         return new Id(commit.sha(), repo.id(), branch);
     }
@@ -28,7 +20,7 @@ public class Snapshot {
     }
 
     public Snapshot withPull(final Pull pull) {
-        return withPullInfo(PullInfo.of(pull.id(), pull.number()));
+        return withPullInfo(new PullInfo(pull.id(), pull.number()));
     }
 
     @Override
@@ -37,16 +29,9 @@ public class Snapshot {
     }
 
     @SuppressWarnings("PMD.ShortClassName")
-    @Value
-    public static class Id {
-        String sha;
-        Long repoId;
-        String branch;
+    public record Id(String sha, Long repoId, String branch) {
     }
 
-    @Value(staticConstructor = "of")
-    public static class PullInfo {
-        Long id;
-        Integer number;
+    public record PullInfo(Long id, Integer number) {
     }
 }

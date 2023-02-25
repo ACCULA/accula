@@ -294,7 +294,7 @@ public class GithubWebhookRouterTest {
         when(projectRepo.idByRepoId(anyLong()))
             .thenReturn(Mono.just(1L));
         when(projectService.init(any(GithubApiPull.class)))
-            .thenReturn(Mono.just(PullSnapshots.of(pull, List.of(pull.head()))));
+            .thenReturn(Mono.just(new PullSnapshots(pull, List.of(pull.head()))));
         when(cloneDetectionService.detectClonesInNewFilesAndSaveToDb(anyLong(), any(), anyIterable()))
             .thenReturn(Flux.empty());
 
@@ -314,7 +314,7 @@ public class GithubWebhookRouterTest {
         when(projectRepo.idByRepoId(anyLong()))
             .thenReturn(Mono.just(1L));
         when(projectService.updateWithNewCommits(any()))
-            .thenReturn(Mono.just(PullSnapshots.of(pull, List.of(pull.head(), pull.base()))));
+            .thenReturn(Mono.just(new PullSnapshots(pull, List.of(pull.head(), pull.base()))));
         when(cloneDetectionService.detectClonesInNewFilesAndSaveToDb(anyLong(), any(), anyIterable()))
             .thenReturn(Flux.empty());
 

@@ -3,7 +3,6 @@ package org.accula.api.auth.jwt.crypto;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
-import lombok.Value;
 
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
@@ -41,9 +40,6 @@ public final class Jwt {
         return verifier.verify(jwt).getSubject();
     }
 
-    @Value
-    public static class Details {
-        String token;
-        Instant expirationDate;
+    public record Details(String token, Instant expirationDate) {
     }
 }

@@ -84,7 +84,7 @@ class ClonesRouterTest {
         .commit(Commit.shaOnly("sha1"))
         .branch("main")
         .repo(repo1)
-        .pullInfo(Snapshot.PullInfo.of(1L, 25))
+        .pullInfo(new Snapshot.PullInfo(1L, 25))
         .build();
     static final Clone.Snippet target = Clone.Snippet.builder()
         .id(1L)
@@ -111,7 +111,7 @@ class ClonesRouterTest {
         .commit(Commit.shaOnly("sha2"))
         .branch("master")
         .repo(repo2)
-        .pullInfo(Snapshot.PullInfo.of(2L, 10))
+        .pullInfo(new Snapshot.PullInfo(2L, 10))
         .build();
     static final Clone.Snippet source = Clone.Snippet.builder()
         .id(2L)
@@ -166,9 +166,9 @@ class ClonesRouterTest {
     void testGetClonesByPullNumber() {
         when(cloneRepo.findByPullNumber(anyLong(), anyInt()))
             .thenReturn(Flux.fromIterable(clones));
-        when(codeLoader.loadSnippets(snap1, List.of(SnippetMarker.of(target.file(), LineRange.of(target.fromLine(), target.toLine())))))
+        when(codeLoader.loadSnippets(snap1, List.of(new SnippetMarker(target.file(), LineRange.of(target.fromLine(), target.toLine())))))
             .thenReturn(Flux.just(snippets.get(0)));
-        when(codeLoader.loadSnippets(snap2, List.of(SnippetMarker.of(source.file(), LineRange.of(source.fromLine(), source.toLine())))))
+        when(codeLoader.loadSnippets(snap2, List.of(new SnippetMarker(source.file(), LineRange.of(source.fromLine(), source.toLine())))))
             .thenReturn(Flux.just(snippets.get(1)));
         when(pullRepo.findById(anyCollection()))
             .thenReturn(Flux.just(pull1, pull2));

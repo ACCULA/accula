@@ -75,7 +75,7 @@ class ProjectServiceTest {
             .thenReturn(Mono.empty());
 
         StepVerifier.create(projectService.init(GithubWebhookRouterTest.pullOpenedPayload.pull()))
-            .expectNext(PullSnapshots.of(pull, List.of(snap)))
+            .expectNext(new PullSnapshots(pull, List.of(snap)))
             .verifyComplete();
     }
 
@@ -101,7 +101,7 @@ class ProjectServiceTest {
             .thenReturn(Mono.empty());
 
         StepVerifier.create(projectService.updateWithNewCommits(GithubWebhookRouterTest.pullSynchronizePayload.pull()))
-            .expectNext(PullSnapshots.of(pull, List.of(pull.head(), pull.head().withCommit(pull.base().commit()))))
+            .expectNext(new PullSnapshots(pull, List.of(pull.head(), pull.head().withCommit(pull.base().commit()))))
             .verifyComplete();
     }
 

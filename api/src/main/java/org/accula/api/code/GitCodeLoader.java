@@ -332,7 +332,7 @@ public final class GitCodeLoader implements CodeLoader {
                     if (file == null) {
                         return null;
                     }
-                    return Snippet.of(file, marker.lines());
+                    return new Snippet(file, marker.lines());
                 })
                 .filter(Objects::nonNull)
                 .toList();

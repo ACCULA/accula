@@ -19,7 +19,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Stream;
 
 import static org.accula.api.db.repo.ConnectionProvidedRepo.convertMany;
 
@@ -158,7 +157,7 @@ public final class ProjectRepoImpl implements ProjectRepo, ConnectionProvidedRep
                         .bind("$2", creatorId)
                         .execute())
                 .flatMap(PostgresqlResult::getRowsUpdated)
-                .map(Integer.valueOf(1)::equals));
+                .map(Long.valueOf(1L)::equals));
     }
 
     @Override
