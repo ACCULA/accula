@@ -24,9 +24,9 @@ configure(subprojects.filterNot(project(":web")::equals)) {
     }
 
     dependencies {
-        compileOnly("org.jetbrains:annotations:23.0.0")
+        compileOnly("org.jetbrains:annotations:24.0.0")
 
-        val lombok = "org.projectlombok:lombok:1.18.24"
+        val lombok = "org.projectlombok:lombok:1.18.26"
         compileOnly(lombok)
         annotationProcessor(lombok)
         testCompileOnly(lombok)
@@ -35,7 +35,7 @@ configure(subprojects.filterNot(project(":web")::equals)) {
 
     java {
         toolchain {
-            languageVersion.set(JavaLanguageVersion.of(18))
+            languageVersion.set(JavaLanguageVersion.of(19))
         }
     }
 

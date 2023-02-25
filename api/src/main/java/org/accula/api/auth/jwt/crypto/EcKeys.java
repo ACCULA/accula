@@ -33,12 +33,10 @@ public final class EcKeys {
         return keyProducer.apply(factory, spec);
     }
 
-    @SuppressWarnings("NullableProblems")
     public static ECPrivateKey privateKey(final Path keyPath) {
         return (ECPrivateKey) key(keyPath, PKCS8EncodedKeySpec::new, KeyFactory::generatePrivate);
     }
 
-    @SuppressWarnings("NullableProblems")
     public static ECPublicKey publicKey(final Path keyPath) {
         return (ECPublicKey) key(keyPath, X509EncodedKeySpec::new, KeyFactory::generatePublic);
     }

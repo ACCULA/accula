@@ -1,7 +1,7 @@
 plugins {
-    id("org.springframework.boot") version "2.7.4"
-    id("io.spring.dependency-management") version "1.0.14.RELEASE"
-    kotlin("jvm") version "1.7.10"
+    id("org.springframework.boot") version "3.0.3"
+    id("io.spring.dependency-management") version "1.1.0"
+    kotlin("jvm") version "1.8.10"
 }
 
 repositories {
@@ -22,6 +22,12 @@ repositories {
 
 version = "1.0-SNAPSHOT"
 
+configurations {
+    all {
+        exclude(group="ch.qos.logback", module="logback-classic")
+    }
+}
+
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-webflux")
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
@@ -40,14 +46,14 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
     implementation("org.springframework.security:spring-security-oauth2-client")
 
-    implementation("com.auth0:java-jwt:4.0.0")
+    implementation("com.auth0:java-jwt:4.3.0")
 
     implementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
     implementation("org.postgresql:r2dbc-postgresql")
     implementation("io.r2dbc:r2dbc-pool")
 
-    implementation("org.slf4j:slf4j-api:2.0.3")
-    implementation("org.slf4j:slf4j-log4j12:2.0.3")
+    implementation("org.slf4j:slf4j-api:2.0.6")
+    implementation("org.slf4j:slf4j-log4j12:2.0.6")
 
     implementation("org.postgresql:postgresql")
     implementation("org.springframework:spring-jdbc")
@@ -55,15 +61,16 @@ dependencies {
 
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
+    implementation("javax.annotation:javax.annotation-api:1.3.2")
     implementation("org.codeclone:suffix-tree:1.0.0")
     implementation("com.jetbrains.intellij.java:java-psi-impl:211.7628.21")
     implementation(kotlin("compiler-embeddable"))
     implementation("com.google.guava:guava:31.1-jre")
-    implementation("it.unimi.dsi:fastutil:8.5.9")
+    implementation("it.unimi.dsi:fastutil:8.5.11")
     implementation("info.debatty:java-string-similarity:2.0.0")
     implementation("commons-codec:commons-codec:1.15")
 
-    implementation(platform("org.testcontainers:testcontainers-bom:1.17.5"))
+    implementation(platform("org.testcontainers:testcontainers-bom:1.17.6"))
     testImplementation("org.testcontainers:testcontainers")
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("org.testcontainers:postgresql")
