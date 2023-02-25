@@ -6,8 +6,10 @@ import org.accula.api.github.model.GithubApiHook;
 import org.accula.api.github.model.GithubApiPull;
 import org.accula.api.github.model.GithubApiRepo;
 import org.accula.api.github.model.GithubApiUserPermission;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
@@ -19,6 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import static java.util.function.Predicate.not;
 import static org.accula.api.github.model.GithubApiUserPermission.Permission.ADMIN;
 
 /**
@@ -158,16 +161,45 @@ public final class GithubClientImpl implements GithubClient {
     }
 
     @Override
-    public Mono<Void> createHook(final String owner, final String repo, final GithubApiHook hook) {
+    public Mono<List<GithubApiHook>> listHooks(final String owner, final String repo) {
         return withAccessToken(accessToken -> githubApiWebClient
-                .post()
-                .uri("/repos/{owner}/{repo}/hooks", owner, repo)
-                .headers(h -> h.setBearerAuth(accessToken))
-                .bodyValue(hook)
-                .exchangeToMono(r -> Mono.<Void>empty())
-                .doOnSuccess(p -> log.info("Created GitHub webhook for {}/{}", owner, repo))
-                .doOnError(e -> log.error("Cannot create hook for {}/{}", owner, repo, e)))
-                .onErrorMap(GithubClientException::new);
+            .get()
+            .uri("/repos/{owner}/{repo}/hooks", owner, repo)
+            .headers(h -> h.setBearerAuth(accessToken))
+            .retrieve()
+            .onStatus(not(HttpStatus.OK::equals), ClientResponse::createException)
+            .bodyToMono(GithubApiHook[].class)
+            .map(List::of))
+            .onErrorMap(GithubClientException::new);
+    }
+
+    @Override
+    public Mono<GithubApiHook> createHook(final String owner, final String repo, final GithubApiHook hook) {
+        return withAccessToken(accessToken -> githubApiWebClient
+            .post()
+            .uri("/repos/{owner}/{repo}/hooks", owner, repo)
+            .headers(h -> h.setBearerAuth(accessToken))
+            .bodyValue(hook)
+            .retrieve()
+            .onStatus(not(HttpStatus.CREATED::equals), ClientResponse::createException)
+            .bodyToMono(GithubApiHook.class)
+            .doOnSuccess(p -> log.info("Created GitHub webhook for {}/{}", owner, repo))
+            .doOnError(e -> log.error("Cannot create hook {} for {}/{}", hook, owner, repo, e)))
+            .onErrorMap(GithubClientException::new);
+    }
+
+    @Override
+    public Mono<Void> deleteHook(final String owner, final String repo, final Integer hookId) {
+        return withAccessToken(accessToken -> githubApiWebClient
+            .delete()
+            .uri("/repos/{owner}/{repo}/hooks/{hookId}", owner, repo, hookId)
+            .headers(h -> h.setBearerAuth(accessToken))
+            .retrieve()
+            .onStatus(not(HttpStatus.NO_CONTENT::equals), ClientResponse::createException)
+            .bodyToMono(Void.class)
+            .doOnSuccess(p -> log.info("Deleted GitHub webhook with id {} for {}/{}", hookId, owner, repo))
+            .doOnError(e -> log.error("Cannot delete hook with id {} for {}/{}", hookId, owner, repo, e)))
+            .onErrorMap(GithubClientException::new);
     }
 
     private <T> Mono<T> withAccessToken(final Function<String, Mono<T>> transform) {
