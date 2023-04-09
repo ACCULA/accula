@@ -14,7 +14,9 @@ plugins:
         enabled: false # More than 7 arguments :(
       squid:S1186:
         enabled: false # Method is empty. So many false positives on java records
-      squid:S1172:
+      java:S1186:
+        enabled: false # To avoid 'Add a nested comment explaining why this method is empty, throw an UnsupportedOperationException or complete the implementation' on record declaration
+      java:S1172:
         enabled: false # To avoid 'Remove these unused method parameters' or record declaration
 
   pmd:
