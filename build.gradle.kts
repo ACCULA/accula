@@ -20,11 +20,11 @@ configure(subprojects.filterNot(project(":web")::equals)) {
     apply(plugin = "jacoco")
 
     jacoco {
-        toolVersion = "0.8.8"
+        toolVersion = "0.8.9"
     }
 
     dependencies {
-        compileOnly("org.jetbrains:annotations:24.0.0")
+        compileOnly("org.jetbrains:annotations:24.0.1")
 
         val lombok = "org.projectlombok:lombok:1.18.26"
         compileOnly(lombok)
