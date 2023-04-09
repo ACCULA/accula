@@ -196,7 +196,7 @@ public final class ProjectService {
                     final var newHeadCommitSnapshots = commits.getT1();
                     final var baseCommitSnapshot = commits.getT2();
                     final var snapshots = Iterables.concat(newHeadCommitSnapshots, List.of(baseCommitSnapshot));
-                    final var pullSnapshots = PullSnapshots.of(pull, newHeadCommitSnapshots);
+                    final var pullSnapshots = new PullSnapshots(pull, newHeadCommitSnapshots);
                     return snapshotRepo.insert(snapshots)
                             .then(pullRepo.upsert(pull))
                             .thenMany(pullRepo.mapSnapshots(pullSnapshots))
@@ -222,7 +222,7 @@ public final class ProjectService {
                 .flatMap(pull -> completeSnapshotWithCommits(pull.head())
                         .collectList()
                         .filter(not(List::isEmpty))
-                        .map(snapshots -> PullSnapshots.of(pull, snapshots)))
+                        .map(snapshots -> new PullSnapshots(pull, snapshots)))
                 .sequential()
                 .collectList();
     }

@@ -8,15 +8,15 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Set up JDK 18
+    - name: Set up JDK 19
       uses: actions/setup-java@v3
       with:
-        java-version: 18
+        java-version: 19
         distribution: 'liberica'
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
     - name: Build with Gradle
-      run: ./gradlew build -x web:build
+      run: ./gradlew build -x web:build && ./gradlew jacocoTestReport -x web:build
       env:
         GPR_USERNAME: ${{ secrets.GPR_USERNAME }}
         GPR_TOKEN: ${{ secrets.GPR_TOKEN }}

@@ -20,13 +20,13 @@ configure(subprojects.filterNot(project(":web")::equals)) {
     apply(plugin = "jacoco")
 
     jacoco {
-        toolVersion = "0.8.8"
+        toolVersion = "0.8.9"
     }
 
     dependencies {
-        compileOnly("org.jetbrains:annotations:23.0.0")
+        compileOnly("org.jetbrains:annotations:24.0.1")
 
-        val lombok = "org.projectlombok:lombok:1.18.24"
+        val lombok = "org.projectlombok:lombok:1.18.26"
         compileOnly(lombok)
         annotationProcessor(lombok)
         testCompileOnly(lombok)
@@ -35,7 +35,7 @@ configure(subprojects.filterNot(project(":web")::equals)) {
 
     java {
         toolchain {
-            languageVersion.set(JavaLanguageVersion.of(18))
+            languageVersion.set(JavaLanguageVersion.of(19))
         }
     }
 
@@ -55,6 +55,8 @@ configure(subprojects.filterNot(project(":web")::equals)) {
                 xml.required.set(true)
                 html.required.set(true)
             }
+
+            dependsOn(test)
         }
 
         test {
@@ -66,8 +68,6 @@ configure(subprojects.filterNot(project(":web")::equals)) {
 
             val testSingleLineRangeCacheSize: String by project
             systemProperty("org.accula.api.code.lines.LineRange.Single.Cache.size", testSingleLineRangeCacheSize)
-
-            finalizedBy(jacocoTestReport)
 
             jvmArgs("--enable-preview")
         }

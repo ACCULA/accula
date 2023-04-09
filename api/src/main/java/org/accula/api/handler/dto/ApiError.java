@@ -2,7 +2,6 @@ package org.accula.api.handler.dto;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.Value;
 import org.jetbrains.annotations.Nullable;
 
 import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
@@ -13,12 +12,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
  */
 @JsonInclude(NON_NULL)
 @JsonAutoDetect(fieldVisibility = ANY)
-@Value
-public class ApiError {
-    String code;
-    @Nullable
-    String description;
-
+public record ApiError(String code, @Nullable String description) {
     public static ApiError with(final Code code) {
         return new ApiError(code.stringRepresentation(), null);
     }

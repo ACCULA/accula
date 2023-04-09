@@ -1,7 +1,6 @@
 package org.accula.api.handler.dto;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import lombok.Value;
 
 import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
 
@@ -13,14 +12,10 @@ public final class AddRepoDto {
     }
 
     @JsonAutoDetect(fieldVisibility = ANY)
-    @Value
-    public static class ByUrl implements InputDto {
-        String url;
+    public record ByUrl(String url) implements InputDto {
     }
 
     @JsonAutoDetect(fieldVisibility = ANY)
-    @Value
-    public static class ByInfo implements InputDto {
-        RepoShortDto info;
+    public record ByInfo(RepoShortDto info) implements InputDto {
     }
 }

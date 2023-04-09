@@ -2,7 +2,7 @@ plugins:
   sonar-java:
     enabled: true
     config:
-      sonar.java.source: "18"
+      sonar.java.source: "19"
     checks:
       squid:S1068:
         enabled: false # Unused fields. Since we use lombok, the check results so many false positives
@@ -12,6 +12,12 @@ plugins:
         enabled: false # Use constants in interfaces
       squid:S00107:
         enabled: false # More than 7 arguments :(
+      squid:S1186:
+        enabled: false # Method is empty. So many false positives on java records
+      java:S1186:
+        enabled: false # To avoid 'Add a nested comment explaining why this method is empty, throw an UnsupportedOperationException or complete the implementation' on record declaration
+      java:S1172:
+        enabled: false # To avoid 'Remove these unused method parameters' or record declaration
 
   pmd:
     enabled: true

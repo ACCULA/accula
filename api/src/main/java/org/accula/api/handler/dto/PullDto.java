@@ -38,9 +38,6 @@ public class PullDto {
     }
 
     @JsonAutoDetect(fieldVisibility = ANY)
-    @Value
-    public static class Marker {
-        String url;
-        String label;
+    public record Marker(String url, String label) {
     }
 }

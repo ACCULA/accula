@@ -61,7 +61,7 @@ public final class GithubApiToModelConverter {
     }
 
     public static Snapshot.PullInfo convertInfo(final GithubApiPull pull) {
-        return Snapshot.PullInfo.of(pull.id(), pull.number());
+        return new Snapshot.PullInfo(pull.id(), pull.number());
     }
 
     public static Snapshot convert(final GithubApiSnapshot snapshot, final GithubApiPull pull) {

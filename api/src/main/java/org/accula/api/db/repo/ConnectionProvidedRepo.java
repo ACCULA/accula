@@ -4,6 +4,7 @@ import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.Result;
 import io.r2dbc.spi.Row;
 import org.reactivestreams.Publisher;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -88,8 +89,12 @@ public interface ConnectionProvidedRepo {
     }
 
     private Publisher<Void> handleTransactionError(final Connection connection, final Throwable t) {
-        LoggerFactory.getLogger(getClass()).error("Error during transaction", t);
+        log().error("Error during transaction", t);
         return rollbackAndClose(connection);
+    }
+
+    private Logger log() {
+        return LoggerFactory.getLogger(getClass());
     }
 
     private static Publisher<Void> commitAndClose(final Connection connection) {
